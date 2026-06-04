@@ -30,8 +30,8 @@ def run_occlusion_filter(video_id: str) -> dict:
     
     # Get all copied whiteboard frames
     frames = sorted(pizarra_dir.glob("*.jpg"))
-    # Filter out any files inside debug directory
-    frames = [f for f in frames if f.parent == pizarra_dir]
+    # Filter out any files inside debug directory, and best_ copies
+    frames = [f for f in frames if f.parent == pizarra_dir and f.name.startswith(video_id)]
     
     if not frames:
         console.print("[yellow]⚠[/] No whiteboard frames found to analyze.")
