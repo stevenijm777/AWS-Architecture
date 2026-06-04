@@ -27,10 +27,13 @@ SERVICE_KEYWORDS = {
     "cloudfront": ["cloudfront", "cloud front"],
     "cloudwatch": ["cloudwatch", "cloud watch"],
     "lambda": ["lambda"],
-    "s3": ["s3", "simple storage"],
+    "s3": ["s3", "simple storage", "bucket"],
     "spotinstance": ["spot instance", "spotinstance", "spot", "sport instance", "sport"],
     "sqs": ["sqs", "simple queue"],
-    "stepfunctions": ["step function", "stepfunctions", "step-function"]
+    "stepfunctions": ["step function", "stepfunctions", "step-function"],
+    "phone": ["mobile", "phone", "device"],
+    "machine": ["pc", "computer", "machine"],
+    "cloudsearch": ["cloudsearch", "cloud search", "search"]
 }
 
 def get_services_from_transcript(transcript_path: Path) -> list[str]:
@@ -56,7 +59,7 @@ def get_services_from_transcript(transcript_path: Path) -> list[str]:
                 
     return mentioned
 
-def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.70) -> dict:
+def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.75) -> dict:
     pizarra_dir = FRAMES_DIR / f"{video_id}_pizarra"
     templates_dir = Path(__file__).resolve().parent.parent / "data" / "templates"
     transcript_path = RAW_DIR / f"{video_id}_transcript.json"
@@ -65,32 +68,38 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
     
     if not pizarra_dir.exists():
         raise FileNotFoundError(f"Whiteboard directory not found: {pizarra_dir}. Please run pizarra_filter.py first.")
-    if not templates_dir.exists() or not list(templates_dir.glob("*.jpg")):
-        raise FileNotFoundError(f"Template directory or icons not found in: {templates_dir}")
-        
-    debug_dir.mkdir(parents=True, exist_ok=True)
     
-    # 1. Parse Whisper transcript to get mentioned services
+    # 1. Load available templates in grayscale (scan both PNG and JPG, case-insensitively)
+    available_templates = {}
+    if templates_dir.exists():
+        for p in templates_dir.glob("*"):
+            if p.suffix.lower() not in [".png", ".jpg"]:
+                continue
+            if p.name == "verify_crops.jpg":
+                continue
+            available_templates[p.stem.lower()] = {
+                "name": p.stem,  # Preserve original casing for reporting
+                "img": cv2.imread(str(p), cv2.IMREAD_GRAYSCALE)
+            }
+            
+    if not available_templates:
+        raise FileNotFoundError(f"No templates found in: {templates_dir}")
+        
+    # 2. Parse Whisper transcript to get mentioned services
     mentioned_services = get_services_from_transcript(transcript_path)
     
-    if mentioned_services:
-        console.print(f"[green]✓[/] Services identified in transcript: [bold cyan]{', '.join(mentioned_services)}[/]")
-    else:
-        console.print("[yellow]⚠[/] No service keywords found in transcript. Falling back to matching all available templates.")
-        # Fallback to all templates in the templates directory
-        mentioned_services = [p.stem for p in templates_dir.glob("*.jpg") if p.name != "verify_crops.jpg"]
-        
-    # 2. Load the subset of templates in grayscale
+    # Filter templates based on transcript mentions
     templates = {}
-    for service in mentioned_services:
-        template_file = templates_dir / f"{service}.jpg"
-        if template_file.exists():
-            templates[service] = cv2.imread(str(template_file), cv2.IMREAD_GRAYSCALE)
-        else:
-            console.print(f"[yellow]⚠[/] Template file not found for mentioned service: {template_file.name}")
-            
+    if mentioned_services:
+        for service in mentioned_services:
+            if service in available_templates:
+                templates[available_templates[service]["name"]] = available_templates[service]["img"]
+        console.print(f"[green]✓[/] Services identified in transcript: [bold cyan]{', '.join(mentioned_services)}[/]")
+    
+    # Fallback to all templates if none matched or transcript is empty
     if not templates:
-        raise ValueError("No templates could be loaded for template matching.")
+        console.print("[yellow]⚠[/] No service keywords matched. Falling back to matching all available templates.")
+        templates = {data["name"]: data["img"] for data in available_templates.values()}
         
     # 3. Get all copied whiteboard frames
     frames = sorted(pizarra_dir.glob("*.jpg"))
@@ -105,7 +114,7 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
     
     frame_results = []
     
-    # Process each frame
+    # 4. Process each frame
     for idx, fp in enumerate(frames):
         img_color = cv2.imread(str(fp))
         if img_color is None:
@@ -116,13 +125,17 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
         matched_services = {}
         blocked_services = []
         
-        # Match each filtered template using multi-scale search (1.85, 1.90, 1.95)
+        # Match each filtered template using multi-scale search
+        # Scales [0.70, 0.75, 0.80] for larger PNG templates,
+        # and [1.85, 1.90, 1.95] for smaller JPG templates.
+        scales_to_test = [0.70, 0.75, 0.80, 1.85, 1.90, 1.95]
+        
         for t_name, t_img in templates.items():
             best_val = 0.0
             best_loc = (0, 0)
             best_scale = 1.0
             
-            for scale in [1.85, 1.90, 1.95]:
+            for scale in scales_to_test:
                 w = int(t_img.shape[1] * scale)
                 h = int(t_img.shape[0] * scale)
                 if w > img_gray.shape[1] or h > img_gray.shape[0]:
@@ -470,7 +483,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Run whiteboard template matching filter using Whisper transcript.")
     parser.add_argument("video_id", help="YouTube video ID")
-    parser.add_argument("--threshold", type=float, default=0.70, help="Matching confidence threshold")
+    parser.add_argument("--threshold", type=float, default=0.75, help="Matching confidence threshold")
     args = parser.parse_args()
     
     try:
