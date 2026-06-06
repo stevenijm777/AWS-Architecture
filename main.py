@@ -135,12 +135,12 @@ def run_pipeline(
         best_occl_path = pizarra_dir / "best_whiteboard.jpg"
         
         best_frame = None
-        if best_tmpl_path.exists():
-            best_frame = best_tmpl_path
-            console.print(f"[green]✓[/] Using best whiteboard frame (Template Matching): [bold]{best_frame.name}[/]")
-        elif best_occl_path.exists():
+        if best_occl_path.exists():
             best_frame = best_occl_path
             console.print(f"[green]✓[/] Using best whiteboard frame (Occlusion): [bold]{best_frame.name}[/]")
+        elif best_tmpl_path.exists():
+            best_frame = best_tmpl_path
+            console.print(f"[green]✓[/] Using best whiteboard frame (Template Matching): [bold]{best_frame.name}[/]")
         else:
             best_frame = frames[-1] if frames else None
             if best_frame:
