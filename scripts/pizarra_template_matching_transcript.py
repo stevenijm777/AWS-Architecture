@@ -133,16 +133,22 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
     
     # Filter templates based on transcript mentions
     templates = {}
+    template_to_service = {}
     if mentioned_services:
         for service in mentioned_services:
-            if service in available_templates:
-                templates[available_templates[service]["name"]] = available_templates[service]["img"]
+            for temp_key, temp_data in available_templates.items():
+                if temp_key == service or temp_key.startswith(service + "_"):
+                    templates[temp_data["name"]] = temp_data["img"]
+                    template_to_service[temp_data["name"]] = service
         console.print(f"[green]✓[/] Services identified in transcript: [bold cyan]{', '.join(mentioned_services)}[/]")
     
     # Fallback to all templates if none matched or transcript is empty
     if not templates:
         console.print("[yellow]⚠[/] No service keywords matched. Falling back to matching all available templates.")
         templates = {data["name"]: data["img"] for data in available_templates.values()}
+        for k, data in available_templates.items():
+            base_name = k.split("_")[0]
+            template_to_service[data["name"]] = base_name
         
     # 3. Get all copied whiteboard frames
     frames = sorted(pizarra_dir.glob("*.jpg"))
@@ -218,11 +224,16 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
         debug_fp = debug_dir / fp.name
         cv2.imwrite(str(debug_fp), debug_img)
         
+        matched_service_names = set()
+        for t_name in matched_services.keys():
+            base_service = template_to_service.get(t_name, t_name.lower())
+            matched_service_names.add(base_service)
+            
         frame_results.append({
             "name": fp.name,
             "original_path": fp,
             "debug_path": debug_fp,
-            "matched_count": len(matched_services),
+            "matched_count": len(matched_service_names),
             "matched_services": matched_services,
             "blocked_services": sorted(blocked_services),
             "index": idx
@@ -240,11 +251,13 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
     best_whiteboard_path = pizarra_dir / "best_whiteboard_template_transcript.jpg"
     shutil.copy(best_frame["original_path"], best_whiteboard_path)
     
-    console.print(f"[bold green]✓[/] Best frame selected: [bold]{best_frame['name']}[/] (Matched: {best_frame['matched_count']}/{len(templates)})")
+    total_distinct_services = len(set(template_to_service.values())) if template_to_service else len(templates)
+    
+    console.print(f"[bold green]✓[/] Best frame selected: [bold]{best_frame['name']}[/] (Matched: {best_frame['matched_count']}/{total_distinct_services})")
     console.print(f"[green]✓[/] Copied to [bold]{best_whiteboard_path}[/]")
     
     # Generate HTML Report
-    generate_html_report(video_id, frame_results, best_frame, len(templates), report_path, templates)
+    generate_html_report(video_id, frame_results, best_frame, total_distinct_services, report_path, templates)
     
     return {
         "best_frame": best_frame["name"],
