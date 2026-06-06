@@ -86,8 +86,18 @@ def create_graph_from_cloudscape_json(
 
         # Normalize service name casing and resolve generic services
         service_lower = service.lower()
-        if service_lower in valid_services:
-            service = valid_services[service_lower]
+        service_clean = service_lower.replace(" ", "").replace("-", "").replace("_", "")
+        
+        if "cloudwatch" in service_clean:
+            service = "CloudWatch"
+        elif "stepfunction" in service_clean:
+            service = "StepFunctions"
+        elif "apigateway" in service_clean:
+            service = "ApiGateway"
+        elif "renderingengine" in service_clean or "spotinstance" in service_clean:
+            service = "EC2"
+        elif service_clean in valid_services:
+            service = valid_services[service_clean]
         elif service_lower == "database":
             # Map generic Database to ThirdParty (or RDS/DynamoDB if specified in name/notes)
             if "dynamodb" in name.lower() or "dynamodb" in notes.lower():
@@ -99,7 +109,7 @@ def create_graph_from_cloudscape_json(
                 if not name:
                     name = "unspecified AWS database services"
         
-        # If still not valid, default to ThirdParty and preserve original service in name
+        # Final validation against valid_services
         if service.lower() not in valid_services and service:
             console.print(f"[yellow]⚠[/] Unknown service '{service}' normalized to 'ThirdParty'")
             if not name:

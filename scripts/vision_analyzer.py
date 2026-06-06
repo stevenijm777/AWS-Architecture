@@ -49,10 +49,10 @@ Cloudscape dataset schema (FAST25 paper by Satija et al.).
 ## RULES:
 1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", \
 "EC2", "DynamoDB", "EKS", "CloudFront", "Aurora", "ElastiCache", "MSK", \
-"SQS", "SNS", "ApiGateway", "Pinpoint", "KMS", etc.
-2. For end users, use: "UserConsumerMobile", "UserConsumerWeb", \
-"UserCompanyAnalyst", etc.
-3. Do NOT use "ThirdParty" for internal microservices (e.g., "Friend Graph", "SnapDB", "Messaging Service"). Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda"), putting the microservice name in the `notes` field. Use "ThirdParty" only for external third-party software (e.g. MySQL, Nginx).
+"SQS", "SNS", "ApiGateway", "Pinpoint", "KMS", "CloudWatch", "StepFunctions", etc.
+2. For end users, use: "UserConsumerWebMobile" if both mobile and web users are represented in the same flow, or "UserConsumerMobile" / "UserConsumerWeb" if distinct.
+3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
+4. Do NOT use "ThirdParty" for internal microservices (e.g., "Friend Graph", "SnapDB", "Messaging Service"). Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda"), putting the microservice name in the `notes` field. Use "ThirdParty" only for external third-party software (e.g. MySQL, Nginx).
 4. Each node can appear MULTIPLE times if shown multiple times in the diagram \
 (keep duplicate nodes as in Cloudscape).
 5. Edges must have: flow_id (integer, grouping related interactions into \
