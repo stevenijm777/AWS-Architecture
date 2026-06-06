@@ -36,6 +36,49 @@ SERVICE_KEYWORDS = {
     "cloudsearch": ["cloudsearch", "cloud search", "search"]
 }
 
+def non_max_suppression(boxes: list[tuple[int, int, int, int, float]], overlap_thresh: float = 0.3) -> list[tuple[int, int, int, int, float]]:
+    """
+    Perform Non-Maximum Suppression (NMS) on boxes.
+    Each box is (x1, y1, x2, y2, score).
+    """
+    if not boxes:
+        return []
+    
+    # Convert to numpy array
+    boxes_arr = np.array(boxes, dtype=np.float32)
+    x1 = boxes_arr[:, 0]
+    y1 = boxes_arr[:, 1]
+    x2 = boxes_arr[:, 2]
+    y2 = boxes_arr[:, 3]
+    scores = boxes_arr[:, 4]
+    
+    areas = (x2 - x1) * (y2 - y1)
+    order = scores.argsort()[::-1]
+    
+    keep = []
+    while order.size > 0:
+        i = order[0]
+        keep.append(i)
+        
+        xx1 = np.maximum(x1[i], x1[order[1:]])
+        yy1 = np.maximum(y1[i], y1[order[1:]])
+        xx2 = np.minimum(x2[i], x2[order[1:]])
+        yy2 = np.minimum(y2[i], y2[order[1:]])
+        
+        w = np.maximum(0.0, xx2 - xx1)
+        h = np.maximum(0.0, yy2 - yy1)
+        inter = w * h
+        
+        denom = (areas[i] + areas[order[1:]] - inter)
+        iou = np.zeros_like(inter)
+        valid = denom > 0
+        iou[valid] = inter[valid] / denom[valid]
+        
+        inds = np.where(iou <= overlap_thresh)[0]
+        order = order[inds + 1]
+        
+    return [boxes[i] for i in keep]
+
 def get_services_from_transcript(transcript_path: Path) -> list[str]:
     """Parse Whisper transcript and identify mentioned AWS services based on keywords."""
     if not transcript_path.exists():
@@ -131,9 +174,7 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
         scales_to_test = [0.70, 0.75, 0.80, 1.85, 1.90, 1.95]
         
         for t_name, t_img in templates.items():
-            best_val = 0.0
-            best_loc = (0, 0)
-            best_scale = 1.0
+            template_boxes = []
             
             for scale in scales_to_test:
                 w = int(t_img.shape[1] * scale)
@@ -142,26 +183,34 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
                     continue
                 resized_t = cv2.resize(t_img, (w, h))
                 res = cv2.matchTemplate(img_gray, resized_t, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, max_loc = cv2.minMaxLoc(res)
-                if max_val > best_val:
-                    best_val = max_val
-                    best_loc = max_loc
-                    best_scale = scale
+                
+                # Find local maxima in 5x5 neighborhood above threshold
+                res_dilated = cv2.dilate(res, np.ones((5, 5)))
+                local_max = (res == res_dilated) & (res >= threshold)
+                y_coords, x_coords = np.where(local_max)
+                
+                for y, x in zip(y_coords, x_coords):
+                    score = float(res[y, x])
+                    template_boxes.append((x, y, x + w, y + h, score))
+                    
+            keep_boxes = non_max_suppression(template_boxes, overlap_thresh=0.3)
             
-            if best_val >= threshold:
-                x1, y1 = best_loc
-                w_scaled = int(t_img.shape[1] * best_scale)
-                h_scaled = int(t_img.shape[0] * best_scale)
-                x2, y2 = x1 + w_scaled, y1 + h_scaled
+            if keep_boxes:
+                best_box = keep_boxes[0]
+                best_x1, best_y1, best_x2, best_y2, best_score = best_box
                 
                 matched_services[t_name] = {
-                    "confidence": best_val,
-                    "box": (x1, y1, x2, y2)
+                    "confidence": best_score,
+                    "box": (int(best_x1), int(best_y1), int(best_x2), int(best_y2)),
+                    "boxes": [(int(bx1), int(by1), int(bx2), int(by2), float(bs)) for bx1, by1, bx2, by2, bs in keep_boxes],
+                    "count": len(keep_boxes)
                 }
-                # Draw green bounding box for matches
-                cv2.rectangle(debug_img, (x1, y1), (x2, y2), (0, 255, 0), 3)
-                cv2.putText(debug_img, f"{t_name} ({best_val:.2f})", (x1, y1 - 10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+                
+                # Draw green bounding boxes for matches
+                for bx1, by1, bx2, by2, bs in keep_boxes:
+                    cv2.rectangle(debug_img, (int(bx1), int(by1)), (int(bx2), int(by2)), (0, 255, 0), 3)
+                    cv2.putText(debug_img, f"{t_name} ({bs:.2f})", (int(bx1), int(by1) - 10), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
             else:
                 blocked_services.append(t_name)
                 
@@ -438,8 +487,11 @@ def generate_html_report(video_id: str, results: list[dict], best_frame: dict, t
         tags = []
         for name in sorted(templates.keys()):
             if name in r["matched_services"]:
-                conf = r["matched_services"][name]["confidence"]
-                tags.append(f'<span class="service-tag service-tag-match">✓ {name} ({conf:.2f})</span>')
+                m_info = r["matched_services"][name]
+                conf = m_info["confidence"]
+                count = m_info.get("count", 1)
+                count_str = f" x{count}" if count > 1 else ""
+                tags.append(f'<span class="service-tag service-tag-match">✓ {name}{count_str} ({conf:.2f})</span>')
             else:
                 tags.append(f'<span class="service-tag service-tag-block">✗ {name}</span>')
                 

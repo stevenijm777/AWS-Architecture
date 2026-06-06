@@ -128,8 +128,24 @@ def run_pipeline(
             s.get("text", "").strip() for s in segments
         )
 
-        # Use the LAST frame (most complete whiteboard) with transcript
-        best_frame = frames[-1] if frames else None
+        # Use the best whiteboard frame from second-layer filters if available,
+        # otherwise fallback to the last frame.
+        pizarra_dir = FRAMES_DIR / f"{video_id}_pizarra"
+        best_tmpl_path = pizarra_dir / "best_whiteboard_template_transcript.jpg"
+        best_occl_path = pizarra_dir / "best_whiteboard.jpg"
+        
+        best_frame = None
+        if best_tmpl_path.exists():
+            best_frame = best_tmpl_path
+            console.print(f"[green]✓[/] Using best whiteboard frame (Template Matching): [bold]{best_frame.name}[/]")
+        elif best_occl_path.exists():
+            best_frame = best_occl_path
+            console.print(f"[green]✓[/] Using best whiteboard frame (Occlusion): [bold]{best_frame.name}[/]")
+        else:
+            best_frame = frames[-1] if frames else None
+            if best_frame:
+                console.print(f"[yellow]⚠[/] No second-layer filtered frame found. Falling back to last frame: [bold]{best_frame.name}[/]")
+
         if best_frame:
             analysis_result = analyze_frame(
                 best_frame,

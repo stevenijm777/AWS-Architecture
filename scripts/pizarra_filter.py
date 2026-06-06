@@ -3,6 +3,7 @@ pizarra_filter.py — Local whiteboard frame filtering and deduplication reporti
 """
 from __future__ import annotations
 
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -12,7 +13,7 @@ import numpy as np
 # Add project root to sys.path
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from config.settings import FRAMES_DIR
+from config.settings import FRAMES_DIR, RAW_DIR, FRAME_INTERVAL_SEC
 from rich.console import Console
 
 console = Console()
@@ -56,22 +57,56 @@ def filter_pizarra_frames(video_id: str, dark_threshold: float | None = None) ->
         
     pizarra_dir.mkdir(parents=True, exist_ok=True)
     
+    # Clean up old copied frames in pizarra_dir (starting with video_id)
+    if pizarra_dir.exists():
+        for fp in pizarra_dir.glob(f"{video_id}_frame_*.jpg"):
+            try:
+                fp.unlink()
+            except Exception:
+                pass
+                
     if dark_threshold is None:
         age = get_video_age_from_csv(video_id)
         if age == "hace 1 año" or age == "unknown":
             dark_threshold = 75.0
             console.print(f"[cyan]Video age is '{age}'. Using default dark_threshold = {dark_threshold}[/]")
         else:
-            dark_threshold = 45.0
+            dark_threshold = 38.0
             console.print(f"[cyan]Video age is '{age}' (older). Using adaptive dark_threshold = {dark_threshold}[/]")
     else:
         console.print(f"[cyan]Forcing user-specified dark_threshold = {dark_threshold}[/]")
         
+    # Load transcript speech end if available
+    transcript_path = RAW_DIR / f"{video_id}_transcript.json"
+    last_speech_end = None
+    if transcript_path.exists():
+        try:
+            with open(transcript_path, "r", encoding="utf-8") as f:
+                segments = json.load(f)
+            if segments:
+                last_speech_end = segments[-1].get("end")
+                console.print(f"[cyan]Loaded transcript. Last speech ends at {last_speech_end}s[/]")
+        except Exception as e:
+            console.print(f"[yellow]⚠ Failed to load transcript for timing check: {e}[/]")
+            
     frames = sorted(video_frames_dir.glob("*.jpg"))
     close_ups = []
     
     # 1. Identify and copy close-up blackboard frames
     for fp in frames:
+        # Extract frame number to compute frame time
+        try:
+            frame_num_str = fp.stem.split("_frame_")[-1]
+            frame_num = int(frame_num_str)
+        except Exception:
+            frame_num = None
+            
+        if last_speech_end is not None and frame_num is not None:
+            frame_time = (frame_num * FRAME_INTERVAL_SEC) - (FRAME_INTERVAL_SEC / 2)
+            if frame_time > last_speech_end:
+                console.print(f"[yellow]Skipping frame {fp.name} (frame_time {frame_time}s > last speech end {last_speech_end}s)[/]")
+                continue
+
         img = cv2.imread(str(fp))
         if img is None:
             continue
