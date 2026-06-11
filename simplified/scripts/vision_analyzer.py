@@ -53,8 +53,12 @@ Cloudscape dataset schema (FAST25 paper by Satija et al.).
 2. For actors/users, choose the most specific type from this list based on the video context: UserCompanyDeveloper, UserConsumerWebMobile, UserConsumerMobile, UserConsumerWeb, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserConsumerFarmer, UserConsumerArtist, UserConsumerSatellite, UserConsumerCamera, UserCompanyDataStream, UserConsumerDeveloper, UserCompanyElementalLiveDevice, UserCompanyHeadEnd, UserCompanyWebsite, UserConsumerEdge, UserConsumerAPI, UserCompanyDomainExpert.
 3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
 4. Do NOT use "ThirdParty" for internal microservices (e.g., "Friend Graph", "SnapDB", "Messaging Service"). Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda"), putting the microservice name in the `notes` field. Use "ThirdParty" only for external third-party software (e.g. MySQL, Nginx).
-5. Each node can appear MULTIPLE times if shown multiple times in the diagram \
-(keep duplicate nodes as in Cloudscape).
+5. NODE MULTIPLICITY (CRITICAL): Each node can appear MULTIPLE times. \
+If the transcript explicitly describes multiple instances, distinct phases, \
+or separate functions for a single service (e.g., "three separate Lambda \
+functions", "first it hits a Lambda, then another Lambda"), you MUST create \
+a distinct JSON node for EACH instance, even if the whiteboard diagram only \
+shows a single icon. Do NOT group distinct functions into a single node.
 6. Edges must have: flow_id (integer, grouping related interactions into \
 workflows), seq (string, ordering within flow), type ("data" for data \
 movement, "meta" for request triggers / ack responses), and notes (CRITICAL: notes in edges MUST be completely empty, i.e. ""). Default to "data" for all edges. Only use "meta" for edges that represent: (a) monitoring/observability signals to CloudWatch, (b) orchestration/triggers from StepFunctions, or (c) acknowledgment responses that don't carry payload data.
@@ -64,13 +68,18 @@ movement, "meta" for request triggers / ack responses), and notes (CRITICAL: not
 10. The `notes` field for nodes should capture context from the transcript: \
 how the service is used, data volumes, configurations mentioned. Use \
 prefixes like "DATA_PEEK:" for data info and "WORKLOAD_PEEK:" for workload.
-11. IMPORTANT: Use the TRANSCRIPT as the primary source of truth for \
-understanding the architecture. The image shows the visual layout. When \
-they conflict, prefer the transcript.
+11. TRANSCRIPT OVERRIDES IMAGE (SOURCE OF TRUTH): The transcript dictates \
+the actual execution flow. The image is often simplified due to limited \
+whiteboard space. If the image shows 1 icon (e.g., 1 Lambda) but the \
+transcript details a sequence of 3 Lambdas, your output MUST contain 3 \
+separate Lambda nodes with their specific distinct edges mapping the true \
+chronological workflow. When image and transcript conflict, ALWAYS prefer \
+the transcript.
 
 ## OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown fences):
 {
+  "step_by_step_reasoning": "Analyze the transcript chronologically. Identify every single component mentioned. Explicitly state if a visual icon represents multiple distinct functions. (e.g., 'The speaker mentions 3 Lambdas: one to check the API, one to store in S3, one to create proxy URLs. So I will create 3 Lambda nodes.')",
   "graph": {
     "name": "<title of the architecture>",
     "link": "<youtube URL if known, else empty string>",
