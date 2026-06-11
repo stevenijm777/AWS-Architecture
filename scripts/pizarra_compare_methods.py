@@ -133,28 +133,6 @@ def generate_comparison_report(video_id: str, occl_res: dict, tmpl_res: dict, re
             width: 100%;
             height: 100%;
             object-fit: contain;
-            transition: opacity 0.3s;
-        }}
-        .img-wrapper img.overlay {{
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-        }}
-        .img-wrapper:hover img.overlay {{
-            opacity: 1;
-        }}
-        .hover-tag {{
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #ffffff;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            pointer-events: none;
-            border: 1px solid #4b5563;
         }}
         .metric-badge {{
             display: flex;
@@ -240,9 +218,7 @@ def generate_comparison_report(video_id: str, occl_res: dict, tmpl_res: dict, re
                     último 10% del video con menor obstrucción.
                 </p>
                 <div class="img-wrapper">
-                    <img src="{occl_orig_url}" alt="Frame original Oclusión">
-                    <img class="overlay" src="{occl_debug_url}" alt="Depuración Oclusión">
-                    <div class="hover-tag">Pasa el mouse para ver oclusión (en rojo)</div>
+                    <img src="{occl_debug_url}" alt="Depuración Oclusión">
                 </div>
             </div>
             <div>
@@ -267,9 +243,7 @@ def generate_comparison_report(video_id: str, occl_res: dict, tmpl_res: dict, re
                     la mayor cantidad de estos logos sin oclusión.
                 </p>
                 <div class="img-wrapper">
-                    <img src="{tmpl_orig_url}" alt="Frame original Plantillas">
-                    <img class="overlay" src="{tmpl_debug_url}" alt="Depuración Plantillas">
-                    <div class="hover-tag">Pasa el mouse para ver detecciones (en verde)</div>
+                    <img src="{tmpl_debug_url}" alt="Depuración Plantillas">
                 </div>
             </div>
             <div>

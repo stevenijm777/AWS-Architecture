@@ -47,6 +47,27 @@ def run_occlusion_filter(video_id: str) -> dict:
     
     frame_results = []
     
+    # Lazy loader for PyTorch person detector
+    model = None
+    device = "cpu"
+    
+    def get_person_detector():
+        nonlocal model, device
+        if model is not None:
+            return model, device
+            
+        import torch
+        import torchvision
+        from torchvision.models.detection import ssdlite320_mobilenet_v3_large, SSDLite320_MobileNet_V3_Large_Weights
+        
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        console.print(f"[dim]  Initializing SSD-Lite person detector on {device}...[/]")
+        weights = SSDLite320_MobileNet_V3_Large_Weights.DEFAULT
+        model = ssdlite320_mobilenet_v3_large(weights=weights)
+        model.to(device)
+        model.eval()
+        return model, device
+        
     # 2. Process each frame
     for idx, fp in enumerate(frames):
         img = cv2.imread(str(fp))
@@ -60,11 +81,61 @@ def run_occlusion_filter(video_id: str) -> dict:
         roi_y1, roi_y2 = 200, 900
         
         roi = gray[roi_y1:roi_y2, roi_x1:roi_x2]
-        col_means = np.mean(roi, axis=0)
+        is_candidate = idx >= candidate_start_idx
         
-        # Determine blocked columns (intensity > 55.0)
-        occluded_cols = col_means > 55.0
-        occlusion_pct = (np.sum(occluded_cols) / len(col_means)) * 100
+        # Fast intensity-based occlusion as default/fallback
+        col_means = np.mean(roi, axis=0)
+        original_occluded_cols = col_means > 55.0
+        
+        occluded_cols = np.zeros_like(original_occluded_cols, dtype=bool)
+        use_fallback = True
+        
+        # Only run deep learning person detection on candidate frames (last 10%)
+        if is_candidate:
+            try:
+                det_model, det_device = get_person_detector()
+                import torch
+                import torchvision
+                
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                img_tensor = torchvision.transforms.functional.to_tensor(img_rgb).to(det_device)
+                
+                with torch.no_grad():
+                    predictions = det_model([img_tensor])
+                    
+                pred = predictions[0]
+                boxes = pred["boxes"].cpu().numpy()
+                labels = pred["labels"].cpu().numpy()
+                scores = pred["scores"].cpu().numpy()
+                
+                person_detected = False
+                for i in range(len(boxes)):
+                    # Class 1 is 'person' in COCO dataset
+                    if labels[i] == 1 and scores[i] > 0.3:
+                        person_detected = True
+                        px1, py1, px2, py2 = boxes[i]
+                        
+                        # Project onto the columns of the central ROI if vertical overlap exists
+                        if py1 <= roi_y2 and py2 >= roi_y1:
+                            x_start = max(int(px1), roi_x1)
+                            x_end = min(int(px2), roi_x2)
+                            if x_start < x_end:
+                                occluded_cols[x_start - roi_x1 : x_end - roi_x1] = True
+                                
+                if person_detected:
+                    use_fallback = False
+                else:
+                    # If no person detected, fallback to original intensity-based method
+                    use_fallback = True
+                    
+            except Exception as e:
+                console.print(f"[yellow]  ⚠ Failed running PyTorch person detection on {fp.name}: {e}. Using fallback intensity-based method.[/]")
+                use_fallback = True
+                
+        if use_fallback:
+            occluded_cols = original_occluded_cols
+            
+        occlusion_pct = (np.sum(occluded_cols) / len(occluded_cols)) * 100
         
         # Create debug visualization
         debug_img = img.copy()
@@ -84,8 +155,6 @@ def run_occlusion_filter(video_id: str) -> dict:
         # Save debug image
         debug_fp = debug_dir / fp.name
         cv2.imwrite(str(debug_fp), debug_img)
-        
-        is_candidate = idx >= candidate_start_idx
         
         frame_results.append({
             "name": fp.name,

@@ -69,16 +69,17 @@ def run_template_matching_filter(video_id: str, threshold: float = 0.90) -> dict
     
     if not pizarra_dir.exists():
         raise FileNotFoundError(f"Whiteboard directory not found: {pizarra_dir}. Please run pizarra_filter.py first.")
-    if not templates_dir.exists() or not list(templates_dir.glob("*.jpg")):
+    
+    # Get all template paths (supporting both png and jpg)
+    template_paths = [p for p in templates_dir.glob("*") if p.suffix.lower() in [".png", ".jpg"] and p.name != "verify_crops.jpg"]
+    if not templates_dir.exists() or not template_paths:
         raise FileNotFoundError(f"Template directory or icons not found in: {templates_dir}")
         
     debug_dir.mkdir(parents=True, exist_ok=True)
     
     # Load all template images in grayscale
     templates = {}
-    for p in templates_dir.glob("*.jpg"):
-        if p.name == "verify_crops.jpg":
-            continue
+    for p in template_paths:
         templates[p.stem] = cv2.imread(str(p), cv2.IMREAD_GRAYSCALE)
         
     # Get all copied whiteboard frames
@@ -272,27 +273,6 @@ def generate_html_report(video_id: str, results: list[dict], best_frame: dict, t
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: opacity 0.3s;
-        }}
-        .img-container img.overlay-img {{
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-        }}
-        .img-container:hover img.overlay-img {{
-            opacity: 1;
-        }}
-        .hover-hint {{
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background-color: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            pointer-events: none;
         }}
         .card-content {{
             padding: 20px;
@@ -406,7 +386,6 @@ def generate_html_report(video_id: str, results: list[dict], best_frame: dict, t
         else:
             bar_color = "#ef4444" # Red
             
-        orig_img_src = f"./{video_id}_pizarra/{r['name']}"
         debug_img_src = f"./{video_id}_pizarra/template_debug/{r['name']}"
         
         # Render service tags
@@ -424,9 +403,7 @@ def generate_html_report(video_id: str, results: list[dict], best_frame: dict, t
         html.append(f"""
         <div class="{card_class}">
             <div class="img-container">
-                <img src="{orig_img_src}" alt="{r['name']}">
-                <img class="overlay-img" src="{debug_img_src}" alt="Depuración {r['name']}">
-                <div class="hover-hint">Pasa el mouse para ver bounding boxes (en verde)</div>
+                <img src="{debug_img_src}" alt="Depuración {r['name']}">
             </div>
             <div class="card-content">
                 <div class="card-header">

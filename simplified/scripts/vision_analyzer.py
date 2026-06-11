@@ -50,19 +50,21 @@ Cloudscape dataset schema (FAST25 paper by Satija et al.).
 1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", \
 "EC2", "DynamoDB", "EKS", "CloudFront", "Aurora", "ElastiCache", "MSK", \
 "SQS", "SNS", "ApiGateway", "Pinpoint", "KMS", "CloudWatch", "StepFunctions", etc.
-2. For end users, use: "UserConsumerWebMobile" if both mobile and web users are represented in the same flow, or "UserConsumerMobile" / "UserConsumerWeb" if distinct.
+2. For actors/users, choose the most specific type from this list based on the video context: UserCompanyDeveloper, UserConsumerWebMobile, UserConsumerMobile, UserConsumerWeb, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserConsumerFarmer, UserConsumerArtist, UserConsumerSatellite, UserConsumerCamera, UserCompanyDataStream, UserConsumerDeveloper, UserCompanyElementalLiveDevice, UserCompanyHeadEnd, UserCompanyWebsite, UserConsumerEdge, UserConsumerAPI, UserCompanyDomainExpert.
 3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
 4. Do NOT use "ThirdParty" for internal microservices (e.g., "Friend Graph", "SnapDB", "Messaging Service"). Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda"), putting the microservice name in the `notes` field. Use "ThirdParty" only for external third-party software (e.g. MySQL, Nginx).
-4. Each node can appear MULTIPLE times if shown multiple times in the diagram \
+5. Each node can appear MULTIPLE times if shown multiple times in the diagram \
 (keep duplicate nodes as in Cloudscape).
-5. Edges must have: flow_id (integer, grouping related interactions into \
+6. Edges must have: flow_id (integer, grouping related interactions into \
 workflows), seq (string, ordering within flow), type ("data" for data \
-movement, "meta" for request triggers / ack responses), and notes (CRITICAL: notes in edges MUST be completely empty, i.e. "").
-6. CRITICAL RULE FOR EDGES: The notes field in the edges list MUST be completely empty (i.e. "notes": ""). Do NOT write any description sentences or texts on edges. All step descriptions must go in the node's notes or in an external document, NEVER on the graph edges.
-7. The `notes` field for nodes should capture context from the transcript: \
+movement, "meta" for request triggers / ack responses), and notes (CRITICAL: notes in edges MUST be completely empty, i.e. ""). Default to "data" for all edges. Only use "meta" for edges that represent: (a) monitoring/observability signals to CloudWatch, (b) orchestration/triggers from StepFunctions, or (c) acknowledgment responses that don't carry payload data.
+7. CRITICAL RULE FOR EDGES: The notes field in the edges list MUST be completely empty (i.e. "notes": ""). Do NOT write any description sentences or texts on edges. All step descriptions must go in the node's notes or in an external document, NEVER on the graph edges.
+8. Every workflow/flow that starts from an actor/user node MUST include the return path back to the user. If a user/client sends a request, the flow must end with the final response/data arriving back to that user (e.g. from EC2, CloudFront, ApiGateway, etc. back to the User).
+9. Minimize the number of flows. Group related sequential interactions into a single flow. A typical architecture should have 2-5 flows, not more.
+10. The `notes` field for nodes should capture context from the transcript: \
 how the service is used, data volumes, configurations mentioned. Use \
 prefixes like "DATA_PEEK:" for data info and "WORKLOAD_PEEK:" for workload.
-8. IMPORTANT: Use the TRANSCRIPT as the primary source of truth for \
+11. IMPORTANT: Use the TRANSCRIPT as the primary source of truth for \
 understanding the architecture. The image shows the visual layout. When \
 they conflict, prefer the transcript.
 

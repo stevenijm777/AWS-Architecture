@@ -107,6 +107,7 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
     templates_dir = Path(__file__).resolve().parent.parent / "data" / "templates"
     transcript_path = RAW_DIR / f"{video_id}_transcript.json"
     debug_dir = pizarra_dir / "template_transcript_debug"
+    debug_dir.mkdir(parents=True, exist_ok=True)
     report_path = FRAMES_DIR / f"{video_id}_template_transcript_report.html"
     
     if not pizarra_dir.exists():
@@ -128,27 +129,13 @@ def run_template_matching_transcript_filter(video_id: str, threshold: float = 0.
     if not available_templates:
         raise FileNotFoundError(f"No templates found in: {templates_dir}")
         
-    # 2. Parse Whisper transcript to get mentioned services
-    mentioned_services = get_services_from_transcript(transcript_path)
-    
-    # Filter templates based on transcript mentions
-    templates = {}
+    # 2. Use all templates directly (transcript filtering disabled)
+    templates = {data["name"]: data["img"] for data in available_templates.values()}
     template_to_service = {}
-    if mentioned_services:
-        for service in mentioned_services:
-            for temp_key, temp_data in available_templates.items():
-                if temp_key == service or temp_key.startswith(service + "_"):
-                    templates[temp_data["name"]] = temp_data["img"]
-                    template_to_service[temp_data["name"]] = service
-        console.print(f"[green]✓[/] Services identified in transcript: [bold cyan]{', '.join(mentioned_services)}[/]")
-    
-    # Fallback to all templates if none matched or transcript is empty
-    if not templates:
-        console.print("[yellow]⚠[/] No service keywords matched. Falling back to matching all available templates.")
-        templates = {data["name"]: data["img"] for data in available_templates.values()}
-        for k, data in available_templates.items():
-            base_name = k.split("_")[0]
-            template_to_service[data["name"]] = base_name
+    for k, data in available_templates.items():
+        base_name = k.split("_")[0]
+        template_to_service[data["name"]] = base_name
+    console.print(f"[dim]Using all {len(templates)} templates for matching (transcript filtering disabled).[/]")
         
     # 3. Get all copied whiteboard frames
     frames = sorted(pizarra_dir.glob("*.jpg"))
@@ -359,27 +346,6 @@ def generate_html_report(video_id: str, results: list[dict], best_frame: dict, t
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: opacity 0.3s;
-        }}
-        .img-container img.overlay-img {{
-            position: absolute;
-            top: 0;
-            left: 0;
-            opacity: 0;
-        }}
-        .img-container:hover img.overlay-img {{
-            opacity: 1;
-        }}
-        .hover-hint {{
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background-color: rgba(0,0,0,0.7);
-            color: #fff;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            pointer-events: none;
         }}
         .card-content {{
             padding: 20px;
@@ -493,7 +459,6 @@ def generate_html_report(video_id: str, results: list[dict], best_frame: dict, t
         else:
             bar_color = "#ef4444" # Red
             
-        orig_img_src = f"./{video_id}_pizarra/{r['name']}"
         debug_img_src = f"./{video_id}_pizarra/template_transcript_debug/{r['name']}"
         
         # Render service tags based on the current frame's matches
@@ -511,9 +476,7 @@ def generate_html_report(video_id: str, results: list[dict], best_frame: dict, t
         html.append(f"""
         <div class="{card_class}">
             <div class="img-container">
-                <img src="{orig_img_src}" alt="{r['name']}">
-                <img class="overlay-img" src="{debug_img_src}" alt="Depuración {r['name']}">
-                <div class="hover-hint">Pasa el mouse para ver bounding boxes (en verde)</div>
+                <img src="{debug_img_src}" alt="Depuración {r['name']}">
             </div>
             <div class="card-content">
                 <div class="card-header">
