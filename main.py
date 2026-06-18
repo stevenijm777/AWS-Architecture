@@ -43,6 +43,8 @@ def run_pipeline(
     interval: int = FRAME_INTERVAL_SEC,
     skip_vision: bool = False,
     language: str | None = None,
+    force: bool = False,
+    force_vision: bool = False,
 ) -> Path:
     """
     Execute the full extraction pipeline:
@@ -89,7 +91,7 @@ def run_pipeline(
     # ── Step 4: Transcribe ───────────────────────────────────
     console.rule("[bold cyan]Step 4 · Transcribe Audio (Whisper + GPU)")
     transcript_path = RAW_DIR / f"{video_id}_transcript.json"
-    if transcript_path.exists():
+    if transcript_path.exists() and not force:
         console.print(
             f"[yellow]⚠[/] Transcript already exists at [bold]{transcript_path}[/]. Skipping transcription."
         )
@@ -114,7 +116,7 @@ def run_pipeline(
     if skip_vision:
         console.print("[yellow]⚠  Skipping vision analysis (--skip-vision)[/]")
         analysis_result = {"graph": {}, "nodes": [], "edges": []}
-    elif analysis_path.exists():
+    elif analysis_path.exists() and not force and not force_vision:
         console.print(
             f"[yellow]⚠[/] Vision analysis cache found at [bold]{analysis_path}[/]. Skipping Gemini API call."
         )
@@ -274,6 +276,14 @@ Examples:
         "--lang", default=None,
         help="Audio language hint for Whisper (e.g. 'en', 'es'). Auto-detect if omitted.",
     )
+    parser.add_argument(
+        "--force", action="store_true",
+        help="Force execution ignoring caches (transcript and vision analysis)",
+    )
+    parser.add_argument(
+        "--force-vision", action="store_true",
+        help="Force vision analysis, ignoring cached vision analysis but reusing transcript",
+    )
     return parser.parse_args()
 
 
@@ -285,6 +295,8 @@ if __name__ == "__main__":
             interval=args.interval,
             skip_vision=args.skip_vision,
             language=args.lang,
+            force=args.force,
+            force_vision=args.force_vision,
         )
         console.print(f"\n[bold green]🎉 Done![/] GraphML → {output}\n")
     except KeyboardInterrupt:
