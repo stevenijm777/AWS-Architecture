@@ -1,0 +1,115 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">SQL Server</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">DATA_PEEK: transactional databases (jobs, job requests, workers); data needs to be up-to-date for accurate matching. WORKLOAD_PEEK: large farm of transactional databases across North America.</data>
+    </node>
+    <node id="1">
+      <data key="d5">AWS DMS</data>
+      <data key="d6">DMS</data>
+      <data key="d7">Migrates transactional databases from SQL Server to AWS. Uses native integration with SQL Server.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Landing Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Accumulates parquet files (inserts, updates, deletes) for transactional tables, serving as a landing zone for data migrated by DMS.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Event Queues</data>
+      <data key="d6">SQS</data>
+      <data key="d7">DATA_PEEK: Captures S3 event notifications (low S3 locations) from the Landing Bucket. WORKLOAD_PEEK: Three SQS queues, categorized by table latency requirements, accumulating events for downstream consumption by Glue jobs.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Scheduling Rules</data>
+      <data key="d6">EventBridge</data>
+      <data key="d7">WORKLOAD_PEEK: Configured with three time-based rules (10-minute, 60-minute, 3-hour) to invoke Step Functions directly. These rules are based on different latency requirements for processing various tables.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Glue Workflow Orchestration</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates a workflow of Glue jobs. Invoked directly by EventBridge based on scheduled intervals. Responsible for managing the process of combining inserts, updates, and deletes into consistent views.</data>
+    </node>
+    <node id="6">
+      <data key="d5">ETL Jobs</data>
+      <data key="d6">Glue</data>
+      <data key="d7">WORKLOAD_PEEK: Implements a serverless-first approach, replacing EMR clusters. An 'extractor' Glue job reads S3 locations from the SQS queues. Performs ETL operations to update tables in the Delta Lake by combining inserts, updates, and deletes into consistent views. Used by both data engineers and data scientists.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Delta Lake</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Stores processed data in a Delta Lake format with three tiers: bronze (raw), silver (joined views/feature store for ML), and gold. Tables are kept up-to-date and consistent by Glue jobs. This is the source for data scientists' queries.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Data Scientist</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Queries the Delta Lake (across bronze, silver, and gold tiers) using Pi Spark SQL to extract datasets. These datasets are crucial for machine learning to perform accurate job matches.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Transactional data from SQL Server is migrated by DMS.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Migrated transactional data lands in S3 as parquet files (inserts, updates, deletes) in the Landing Bucket.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">S3 event notifications (e.g., new objects created) are sent to SQS queues, indicating new data in the Landing Bucket.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The Glue 'extractor' job reads messages from the SQS queues to get S3 locations of the new data in the Landing Bucket that needs processing.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EventBridge rules periodically invoke Step Functions to start the Glue workflow, based on defined latency requirements (e.g., every 10 minutes).</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Step Functions orchestrates and invokes the Glue ETL jobs as part of the data processing workflow.</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Glue jobs process the data, perform upserts, and write the updated, consistent tables to the Delta Lake in S3.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="7" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Data scientists query the tables within the Delta Lake (bronze, silver, or gold tiers) using Pi Spark SQL for their analytical and ML needs.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">True Blue's Event-Driven Data Lake for On-Demand Job Matching</data>
+    <data key="d1">https://www.youtube.com/watch?v=iKYvG5aiIn8</data>
+    <data key="d2">True Blue, a staffing company, uses this serverless AWS architecture to connect people to blue-collar jobs on demand across North America. The core challenge is matching the right people to the right jobs, requiring up-to-date data for jobs, requests, and workers. The architecture focuses on migrating transactional data from SQL Server, building an event-driven data lake, and using AWS Glue for serverless ETL processing, maintaining data consistency, and enabling data scientists to query for accurate matches. The system leverages SQS and EventBridge for managing different latency requirements for data updates, moving from an EMR-based approach to a serverless Glue-based solution due to skill set preference and operational complexity.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

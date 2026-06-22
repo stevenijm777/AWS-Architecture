@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="user_client">
+      <data key="d5">Client (iOS/Android)</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">WORKLOAD_PEEK: Over 300 million daily active users (DAU). Generates 5B+ Snaps per day. Interacts with the EKS Gateway for sending snaps and receives messages/media from it.</data>
+    </node>
+    <node id="eks_gateway">
+      <data key="d5">EKS Gateway</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: The primary gateway service for client communication. It is an EKS service built by Snap. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+    </node>
+    <node id="eks_media_delivery">
+      <data key="d5">Media Delivery Service</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Processes media uploads from the client. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+    </node>
+    <node id="cloudfront">
+      <data key="d5">CloudFront CDN</data>
+      <data key="d6">CloudFront</data>
+      <data key="d7">DATA_PEEK: Used to push media closer to recipients for faster delivery and retrieve media. Improves latency for media delivery.</data>
+    </node>
+    <node id="s3">
+      <data key="d5">S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Stores snap media (images/videos).</data>
+    </node>
+    <node id="eks_mcs">
+      <data key="d5">Core Orchestration Service (MCS)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: The core orchestration service for snap sending. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+    </node>
+    <node id="eks_friend_graph">
+      <data key="d5">Friend Graph</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Microservice used to check permissions, ensuring the sender can send a message to the recipient. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+    </node>
+    <node id="eks_snapdb_service">
+      <data key="d5">SnapDB Service</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Snap's custom database layer built on DynamoDB. Provides higher-level features like transactions, TTL, efficient ephemeral data handling, and incremental state synchronization to reduce burden on DynamoDB and control costs. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+    </node>
+    <node id="dynamodb">
+      <data key="d5">SnapDB Underlying DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Stores conversation metadata. Stores over 400 terabytes of data. WORKLOAD_PEEK: Nightly scans process 2 billion rows per minute for friend suggestions and ephemeral data deletion. Underlying storage for SnapDB service.</data>
+    </node>
+    <node id="eks_messaging_service">
+      <data key="d5">Messaging Service</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Handles the receiving and pushing of messages to clients. Very latency sensitive. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+    </node>
+    <node id="elasticache">
+      <data key="d5">ElastiCache</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">DATA_PEEK: Stores connection IDs, server IDs for persistent client connections, and media IDs. WORKLOAD_PEEK: Used for low-latency lookups to quickly push messages to clients, crucial for latency-sensitive snap reception.</data>
+    </node>
+    <edge source="user_client" target="eks_gateway" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Client sends snap request to the EKS Gateway.</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="user_client" target="eks_mcs" id="0">
+      <data key="d8">0</data>
+      <data key="d9">After media is persisted, the client makes a request to the Core Orchestration Service (MCS) to handle conversation metadata.</data>
+      <data key="d10">4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="user_client" target="cloudfront" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Client retrieves media from CloudFront using the media ID received in the message.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="eks_gateway" target="eks_media_delivery" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Gateway forwards media to the Media Delivery Service for processing.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="eks_gateway" target="user_client" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EKS Gateway delivers the message to the client (iOS/Android).</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="eks_media_delivery" target="cloudfront" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Media Delivery Service sends media to CloudFront for distribution and caching.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="cloudfront" target="s3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFront persists the media to S3 for storage.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="cloudfront" target="s3" id="1">
+      <data key="d8">1</data>
+      <data key="d9">CloudFront fetches the media from S3.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="cloudfront" target="user_client" id="0">
+      <data key="d8">1</data>
+      <data key="d9">CloudFront delivers the media to the client.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="s3" target="cloudfront" id="0">
+      <data key="d8">1</data>
+      <data key="d9">S3 delivers the media to CloudFront.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="eks_mcs" target="eks_friend_graph" id="0">
+      <data key="d8">0</data>
+      <data key="d9">MCS checks sender permissions with the Friend Graph service.</data>
+      <data key="d10">5</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="eks_mcs" target="eks_snapdb_service" id="0">
+      <data key="d8">0</data>
+      <data key="d9">MCS persists conversation metadata via the SnapDB service.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="eks_friend_graph" target="eks_mcs" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Friend Graph returns the permission check result to MCS.</data>
+      <data key="d10">6</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="eks_snapdb_service" target="dynamodb" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SnapDB service writes the conversation metadata to the underlying DynamoDB.</data>
+      <data key="d10">8</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="eks_messaging_service" target="elasticache" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Messaging service looks up connection ID and server ID from ElastiCache for the recipient's persistent connection.</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="eks_messaging_service" target="eks_gateway" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Messaging service pushes the message to the recipient via the EKS Gateway's persistent connection.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="elasticache" target="eks_messaging_service" id="0">
+      <data key="d8">1</data>
+      <data key="d9">ElastiCache returns connection metadata to the Messaging service.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Snapchat Snap Sending and Receiving Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=Cgv0kfp_6xQ</data>
+    <data key="d2">Architecture for Snapchat's core 'Snap sending and receiving' functionality. Supports over 300 million daily active users and 5 billion+ Snaps per day. Emphasizes low latency (24% P50 reduction in snap sending latency) and cost optimization using auto-scaling and Graviton instances across 900+ EKS clusters, many with 1000+ instances. Custom SnapDB built on DynamoDB for features like transactions, TTL, ephemeral data handling, and incremental state synchronization to manage 400TB of data and 2 billion rows/minute nightly scans efficiently. ElastiCache is critical for low-latency message delivery by caching connection metadata.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

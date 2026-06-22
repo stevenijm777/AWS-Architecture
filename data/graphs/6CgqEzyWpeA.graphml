@@ -1,0 +1,195 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">End User (Mobile/PC)</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">Accesses personalized video bill links from mobile or PC devices; plays video segments via CloudFront.</data>
+    </node>
+    <node id="1">
+      <data key="d5">API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Handles initial requests for rendering. Configured with throttling, usage plans, and API keys to control load on the rendering farm. Part of the 'Russ ecosystem'.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Rus Service Front End</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Receives rendering requests from API Gateway, performs validations, and pushes rendering instructions to the SQS Rendering Job Queue. Also pulls responses from the SQS Rendering Response Queue to provide playlist links back to users.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Rendering Job Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">DATA_PEEK: Stores rendering job instructions pushed by the Rus Service Front End. WORKLOAD_PEEK: Rendering engines pull jobs from this queue when they have capacity.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Rendering Engines ASG</data>
+      <data key="d6">EC2</data>
+      <data key="d7">WORKLOAD_PEEK: Runs personalized video rendering 'engine service' on spot instances, across multiple Availability Zones with diversified instance types for high availability. Rendering jobs are highly efficient, designed to finish within the 2-minute spot interruption notice. Pushes CloudWatch metrics for scaling. Individual instances can receive API calls to stop polling SQS and drain jobs, and are detached from the ASG during spot interruptions. ASG desired capacity is adjusted by the auto-scaling handler Lambda.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Rendering Response Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Receives immediate responses from rendering engines after a job request is received (acknowledgement of job acceptance). The Rus Service Front End pulls from this queue.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Video Segment Storage</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Stores personalized video segments uploaded by the rendering engines. Serves as the origin for CloudFront.</data>
+    </node>
+    <node id="7">
+      <data key="d5">CloudFront CDN</data>
+      <data key="d6">CloudFront</data>
+      <data key="d7">Delivers personalized video segments to end users globally, pulling from S3 origin.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Spot Interruption Monitoring</data>
+      <data key="d6">CloudWatch</data>
+      <data key="d7">Monitors EC2 instances and emits events when a spot instance receives a 2-minute interruption notice.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Spot Interruption Handler</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Triggered by CloudWatch events for spot interruptions. Interacts with the specific EC2 instance (Node 4) via an API call to tell it to stop polling rendering jobs from SQS and drain current work. Also detaches the instance from the Auto Scaling Group (Node 4).</data>
+    </node>
+    <node id="10">
+      <data key="d5">Scaling Metrics Collection</data>
+      <data key="d6">CloudWatch</data>
+      <data key="d7">Collects metrics pushed from the rendering instances (Node 4). Used by the scaling Lambda function to calculate required capacity.</data>
+    </node>
+    <node id="11">
+      <data key="d5">Scaling Orchestrator</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Triggers the auto-scaling handler Lambda function (Node 12) every 15 seconds to evaluate and adjust rendering capacity.</data>
+    </node>
+    <node id="12">
+      <data key="d5">Auto Scaling Handler</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Triggered by Step Functions. Consumes CloudWatch metrics (Node 10) from rendering instances. Calculates required rendering capacity and interacts with the Auto Scaling Group (Node 4) to increase or decrease the number of instances in service.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User requests personalized video link via mobile/PC device</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="0" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User device requests video segment from CloudFront using playlist link</data>
+      <data key="d10">8</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">API Gateway forwards request to Lambda front end</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda pushes rendering instruction to SQS Rendering Job Queue</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda front end polls and pulls response from SQS Rendering Response Queue</data>
+      <data key="d10">5</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda provides user with link to playlist file (containing CloudFront links to video segments)</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Rendering engines pull rendering jobs from SQS queue when capacity is available</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Rendering engine sends immediate response (acknowledgement) to SQS Rendering Response Queue</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Rendering engine uploads personalized video segments to S3</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Rendering instances push metrics (e.g., capacity, load) to CloudWatch</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFront pulls video segment from S3 origin</data>
+      <data key="d10">9</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFront delivers video segment to user device</data>
+      <data key="d10">10</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">CloudWatch Event notifies Lambda of impending spot instance interruption</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="9" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda interacts with specific EC2 instance via API to stop polling SQS and drain jobs</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="9" target="4" id="1">
+      <data key="d8">1</data>
+      <data key="d9">Lambda detaches the instance from the Auto Scaling Group</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="11" target="12" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Step Functions triggers scaling Lambda function every 15 seconds</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="12" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Scaling Lambda consumes CloudWatch metrics to calculate required capacity</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="12" target="4" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Scaling Lambda interacts with ASG to adjust desired capacity (increase/decrease instance count)</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <data key="d0">Sunday Sky's Personalized Video Rendering as a Service (RaaS)</data>
+    <data key="d1">https://www.youtube.com/watch?v=6CgqEzyWpeA</data>
+    <data key="d2">Sunday Sky provides personalized video experiences for their customers. This architecture describes their Rendering as a Service (RaaS) ecosystem, which generates personalized videos (e.g., Telco bills as video). WORKLOAD_PEEK: The system generates billions of videos yearly, millions daily. Key design decisions include cost-efficiency through spot instances, high availability via multi-AZ deployment and instance type diversification, and robust handling of spot interruptions and auto-scaling.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
