@@ -29,7 +29,8 @@ GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
 # ── Whisper ──────────────────────────────────────────────────
 WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "turbo")
-WHISPER_DEVICE: str = "cuda"  # RTX 5070 Ti
+import torch
+WHISPER_DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 # ── Frame Extraction ────────────────────────────────────────

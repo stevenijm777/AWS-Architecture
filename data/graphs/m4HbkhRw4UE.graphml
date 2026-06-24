@@ -1,0 +1,333 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Consumers</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">WORKLOAD_PEEK: Place orders, especially during peak periods (Friday 5-7 PM, weekends).</data>
+    </node>
+    <node id="1">
+      <data key="d5">Order Processing Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Uses Lambda resolvers for order syncing and notifications. Helps during scale. DATA_PEEK: Processes consumer orders.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Order Data Store</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Stores order data. Moved from Aurora. Chosen for length/breadth of services and managed scaling during peak periods (spikes, not gradual increase).</data>
+    </node>
+    <node id="3">
+      <data key="d5">Restaurant Owners</data>
+      <data key="d6">UserCompanyAgent</data>
+      <data key="d7">WORKLOAD_PEEK: Process orders fast, need to see daily stats before closing shop.</data>
+    </node>
+    <node id="4">
+      <data key="d5">DynamoDB Streams for Orders</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Change data capture from order data, used to pass data for insights.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Data Stream for Insights</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">DATA_PEEK: Manages state for data streaming from DynamoDB Streams to S3.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Data Lake for Insights</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Stores all data from Kinesis. ETLs are run over this data for computing insights. WORKLOAD_PEEK: Serves stats to 28,000+ restaurants hitting concurrently at 11 PM.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Dashboarding Tool</data>
+      <data key="d6">QuickSight</data>
+      <data key="d7">Used for dashboarding for restaurant owners and internal back office people to view daily stats and insights (e.g., campaign planning).</data>
+    </node>
+    <node id="8">
+      <data key="d5">Drivers</data>
+      <data key="d6">UserCompanyAgent</data>
+      <data key="d7">WORKLOAD_PEEK: Uses scanner to record package scans. High volume (1500 scans per minute).</data>
+    </node>
+    <node id="9">
+      <data key="d5">Scan Ingestion API</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">API built on Fargate to consume scans from different sources. Chosen for ease of integration, performance, cost-effectiveness, and DynamoDB Streams. Replaced Amazon MQ.</data>
+    </node>
+    <node id="10">
+      <data key="d5">Scans Data Store</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Persists package scan data. Chosen for performance, cost-effectiveness, and integration with DynamoDB Streams. WORKLOAD_PEEK: Copes with different loads during the day.</data>
+    </node>
+    <node id="11">
+      <data key="d5">DynamoDB Streams for Scans</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Feeds scans to downstream services.</data>
+    </node>
+    <node id="12">
+      <data key="d5">Scan Processor Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Picks up scan data from DynamoDB Streams and passes it to SNS for fan-out.</data>
+    </node>
+    <node id="13">
+      <data key="d5">Scan Notifications</data>
+      <data key="d6">SNS</data>
+      <data key="d7">Fans out scan messages to multiple SQS queues for processing by different services. Replaced Amazon MQ due to scaling issues (1500 scans/min).</data>
+    </node>
+    <node id="14">
+      <data key="d5">Image Processing Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Dedicated queue for a service that processes images coming from scans.</data>
+    </node>
+    <node id="15">
+      <data key="d5">Image Processing Service</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">Processes images that come through on the scans. Enables rapid feature development.</data>
+    </node>
+    <node id="16">
+      <data key="d5">Chemists Client</data>
+      <data key="d6">UserCompanyDeveloper</data>
+      <data key="d7">Client application on laptops used by chemists (non-technical users) to submit search requests.</data>
+    </node>
+    <node id="17">
+      <data key="d5">Search API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Receives POST requests with JSON payload including search type and desired worker fleet size.</data>
+    </node>
+    <node id="18">
+      <data key="d5">Search Orchestrator Trigger</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Enriches search requests with additional details from a relational database and dynamically creates the search environment (Fargate fleet).</data>
+    </node>
+    <node id="19">
+      <data key="d5">Relational Database</data>
+      <data key="d6">RDS</data>
+      <data key="d7">DATA_PEEK: Stores additional details used to enrich search requests (e.g. for molecule search parameters).</data>
+    </node>
+    <node id="20">
+      <data key="d5">Fargate Search Orchestrator</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Runs as a single Fargate task. Drives the intelligent search, communicates with workers, and influences the search based on worker feedback.</data>
+    </node>
+    <node id="21">
+      <data key="d5">RabbitMQ on Amazon MQ</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">WORKLOAD_PEEK: Used by the orchestrator to communicate with search workers (telling where to look next) and for workers to report back.</data>
+    </node>
+    <node id="22">
+      <data key="d5">Fargate Search Workers</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Runs as a Fargate Spot fleet. Pick up work from MQ, execute the search, and report back details to the orchestrator.</data>
+    </node>
+    <node id="23">
+      <data key="d5">Internal Back Office</data>
+      <data key="d6">UserCompanyAnalyst</data>
+      <data key="d7">WORKLOAD_PEEK: Users for campaign planning and general insights on restaurant performance.</data>
+    </node>
+    <node id="24">
+      <data key="d5">Other Services Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">One of multiple SQS queues for other downstream services interested in scan data.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Consumers place orders.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda stores order data in DynamoDB.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Restaurant owners interact with the system (likely via application UI) to process orders rapidly. Implies data flow for order updates.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">DynamoDB changes are captured by DynamoDB Streams.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Restaurant owners trigger order processing actions via the Lambda-backed system.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Data from streams is passed to Kinesis.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Kinesis pushes data to S3 data lake.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">QuickSight sources data for dashboards from S3 after ETLs are run.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Restaurant owners view dashboards with stats and insights.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="23" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Internal back office people view dashboards for campaign planning and insights.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Drivers submit scans via an API.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Scan Ingestion API persists scan data in DynamoDB.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Fargate API sends acknowledgement back to the driver's scanner device after scan consumption.</data>
+      <data key="d10">1.1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="11" id="0">
+      <data key="d8">2</data>
+      <data key="d9">DynamoDB changes (new scans) are fed to DynamoDB Streams.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="11" target="12" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Lambda picks up scan data from DynamoDB Streams.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="12" target="13" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Lambda passes scan data to SNS for fan-out.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="13" target="14" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SNS fans out scan data to Image Processing SQS queue.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="13" target="24" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SNS fans out scan data to other SQS queues for different services.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="14" target="15" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Image Processing Service consumes messages from its SQS queue.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="15" target="10" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Processed image data or metadata might be updated back to DynamoDB or other storage (implicit, common pattern).</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="16" target="17" id="0">
+      <data key="d8">4</data>
+      <data key="d9">Chemists submit search requests (POST with JSON payload) to API Gateway.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="17" target="18" id="0">
+      <data key="d8">4</data>
+      <data key="d9">API Gateway forwards search request to Lambda.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="18" target="19" id="0">
+      <data key="d8">4</data>
+      <data key="d9">Lambda retrieves additional details from RDS to enrich the search.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="18" target="20" id="0">
+      <data key="d8">4</data>
+      <data key="d9">Lambda dynamically spins up/orchestrates the Fargate Search Orchestrator task on ECS based on search parameters.</data>
+      <data key="d10">4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="19" target="18" id="0">
+      <data key="d8">4</data>
+      <data key="d9">RDS returns enrichment data to Lambda.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="20" target="21" id="0">
+      <data key="d8">5</data>
+      <data key="d9">Orchestrator tells search workers (via RabbitMQ) where to look next.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="20" target="21" id="1">
+      <data key="d8">5</data>
+      <data key="d9">Orchestrator, based on worker feedback, further influences the search by sending new instructions via RabbitMQ.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="20" target="16" id="0">
+      <data key="d8">5</data>
+      <data key="d9">Final search results or status are returned/made available to the Chemists Client.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="21" target="22" id="0">
+      <data key="d8">5</data>
+      <data key="d9">Search workers pick up work from RabbitMQ.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="21" target="22" id="1">
+      <data key="d8">5</data>
+      <data key="d9">Search workers receive new instructions from RabbitMQ.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="22" target="20" id="0">
+      <data key="d8">5</data>
+      <data key="d9">Search workers report back search progress and details to the orchestrator.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">AWS Serverless Architectures (Food Hub, Freightways, Vertex Pharmaceuticals)</data>
+    <data key="d1">https://www.youtube.com/watch?v=m4HbkhRw4UE</data>
+    <data key="d2">This architecture consolidates three distinct customer solutions leveraging AWS serverless technologies. Food Hub handles high-scale order processing and real-time dashboarding with Lambda, DynamoDB, Kinesis, S3, and QuickSight. Freightways uses Fargate, DynamoDB, Lambda, SNS, and SQS for a scalable package tracking system, managing 1500 scans per minute. Vertex Pharmaceuticals built an intelligent molecule search platform using API Gateway, Lambda, RDS, ECS (Fargate orchestrator and workers), and Amazon MQ with RabbitMQ for computational chemistry, dynamically spinning up resources for tens of billions of potential molecules.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
