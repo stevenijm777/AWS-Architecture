@@ -13,167 +13,162 @@
   <key id="d1" for="graph" attr.name="link" attr.type="string" />
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
-    <node id="user_client">
-      <data key="d5">Client (iOS/Android)</data>
+    <node id="0">
+      <data key="d5">Snapchat Client (iOS/Android)</data>
       <data key="d6">UserConsumerWebMobile</data>
-      <data key="d7">WORKLOAD_PEEK: Over 300 million daily active users (DAU). Generates 5B+ Snaps per day. Interacts with the EKS Gateway for sending snaps and receives messages/media from it.</data>
+      <data key="d7">WORKLOAD_PEEK: Over 300 million daily active users interact with the app on iOS and Android devices.</data>
     </node>
-    <node id="eks_gateway">
-      <data key="d5">EKS Gateway</data>
+    <node id="1">
+      <data key="d5">Gateway</data>
       <data key="d6">EKS</data>
-      <data key="d7">WORKLOAD_PEEK: The primary gateway service for client communication. It is an EKS service built by Snap. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+      <data key="d7">Acts as the primary API gateway for client applications. Described as an EKS service, handling incoming requests from mobile clients.</data>
     </node>
-    <node id="eks_media_delivery">
+    <node id="2">
       <data key="d5">Media Delivery Service</data>
       <data key="d6">EKS</data>
-      <data key="d7">WORKLOAD_PEEK: Processes media uploads from the client. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+      <data key="d7">Handles the processing, storage coordination, and delivery of snap content. Responsible for sending snap data to CloudFront and metadata to SnapDB. Runs on EKS clusters.</data>
     </node>
-    <node id="cloudfront">
+    <node id="3">
       <data key="d5">CloudFront CDN</data>
       <data key="d6">CloudFront</data>
-      <data key="d7">DATA_PEEK: Used to push media closer to recipients for faster delivery and retrieve media. Improves latency for media delivery.</data>
+      <data key="d7">Global Content Delivery Network (CDN) used for edge caching and fast delivery of snap media content closer to recipients. Uses S3 as its origin.</data>
     </node>
-    <node id="s3">
-      <data key="d5">S3 Bucket</data>
+    <node id="4">
+      <data key="d5">Snap Media Storage</data>
       <data key="d6">S3</data>
-      <data key="d7">DATA_PEEK: Stores snap media (images/videos).</data>
+      <data key="d7">DATA_PEEK: Stores the actual ephemeral snap media (images, videos). Serves as the origin for CloudFront.</data>
     </node>
-    <node id="eks_mcs">
-      <data key="d5">Core Orchestration Service (MCS)</data>
+    <node id="5">
+      <data key="d5">SnapDB</data>
       <data key="d6">EKS</data>
-      <data key="d7">WORKLOAD_PEEK: The core orchestration service for snap sending. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+      <data key="d7">Custom database layer built on EKS, operating 'under the covers' of DynamoDB. Provides higher-level features like transactions, TTL (Time-to-Live), and efficient management of ephemeral data. Manages incremental state synchronization to reduce the burden on DynamoDB. WORKLOAD_PEEK: Involved in nightly scans on DynamoDB for tasks like deleting ephemeral data.</data>
     </node>
-    <node id="eks_friend_graph">
-      <data key="d5">Friend Graph</data>
-      <data key="d6">EKS</data>
-      <data key="d7">WORKLOAD_PEEK: Microservice used to check permissions, ensuring the sender can send a message to the recipient. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
-    </node>
-    <node id="eks_snapdb_service">
-      <data key="d5">SnapDB Service</data>
-      <data key="d6">EKS</data>
-      <data key="d7">WORKLOAD_PEEK: Snap's custom database layer built on DynamoDB. Provides higher-level features like transactions, TTL, efficient ephemeral data handling, and incremental state synchronization to reduce burden on DynamoDB and control costs. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
-    </node>
-    <node id="dynamodb">
-      <data key="d5">SnapDB Underlying DynamoDB</data>
+    <node id="6">
+      <data key="d5">Snap Metadata Database</data>
       <data key="d6">DynamoDB</data>
-      <data key="d7">DATA_PEEK: Stores conversation metadata. Stores over 400 terabytes of data. WORKLOAD_PEEK: Nightly scans process 2 billion rows per minute for friend suggestions and ephemeral data deletion. Underlying storage for SnapDB service.</data>
+      <data key="d7">DATA_PEEK: Stores approximately 400 terabytes of snap metadata. WORKLOAD_PEEK: Subject to very heavy usage, including nightly scans processing 2 billion rows per minute for various operations (e.g., friend suggestions, ephemeral data deletion).</data>
     </node>
-    <node id="eks_messaging_service">
+    <node id="7">
+      <data key="d5">Connection/Media ID Cache</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">Stores connection IDs, server IDs, and media IDs for rapid lookup by the Messaging Service. Critical for low-latency delivery of snap messages.</data>
+    </node>
+    <node id="8">
       <data key="d5">Messaging Service</data>
       <data key="d6">EKS</data>
-      <data key="d7">WORKLOAD_PEEK: Handles the receiving and pushing of messages to clients. Very latency sensitive. Part of 900+ EKS clusters, many with over 1000 instances. Uses auto-scaling and Graviton instances for cost efficiency.</data>
+      <data key="d7">A highly latency-sensitive EKS service responsible for pushing snap notifications and messages to clients. Queries ElastiCache for client connection information to establish persistent connections. Achieved a 24% reduction in P50 (median) latency for sending snaps after moving to this architecture.</data>
     </node>
-    <node id="elasticache">
-      <data key="d5">ElastiCache</data>
-      <data key="d6">ElastiCache</data>
-      <data key="d7">DATA_PEEK: Stores connection IDs, server IDs for persistent client connections, and media IDs. WORKLOAD_PEEK: Used for low-latency lookups to quickly push messages to clients, crucial for latency-sensitive snap reception.</data>
+    <node id="9">
+      <data key="d5">Friend Graph</data>
+      <data key="d6">EKS</data>
+      <data key="d7">An EKS service that manages user friendship relationships. WORKLOAD_PEEK: Participates in nightly scans of DynamoDB to look for and suggest new friends.</data>
     </node>
-    <edge source="user_client" target="eks_gateway" id="0">
+    <edge source="0" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9">Client sends snap request to the EKS Gateway.</data>
+      <data key="d9">Client sends a snap request to the Gateway.</data>
       <data key="d10">0</data>
-      <data key="d11">meta</data>
+      <data key="d11">data</data>
     </edge>
-    <edge source="user_client" target="eks_mcs" id="0">
-      <data key="d8">0</data>
-      <data key="d9">After media is persisted, the client makes a request to the Core Orchestration Service (MCS) to handle conversation metadata.</data>
-      <data key="d10">4</data>
-      <data key="d11">meta</data>
-    </edge>
-    <edge source="user_client" target="cloudfront" id="0">
+    <edge source="0" target="3" id="0">
       <data key="d8">1</data>
-      <data key="d9">Client retrieves media from CloudFront using the media ID received in the message.</data>
+      <data key="d9">Recipient client uses the media ID from the notification to request the actual snap content from CloudFront.</data>
       <data key="d10">4</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="eks_gateway" target="eks_media_delivery" id="0">
+    <edge source="1" target="2" id="0">
       <data key="d8">0</data>
-      <data key="d9">Gateway forwards media to the Media Delivery Service for processing.</data>
+      <data key="d9">Gateway forwards the snap request/payload to the Media Delivery Service.</data>
       <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="eks_gateway" target="user_client" id="0">
+    <edge source="1" target="0" id="0">
       <data key="d8">1</data>
-      <data key="d9">EKS Gateway delivers the message to the client (iOS/Android).</data>
+      <data key="d9">Gateway pushes the snap notification to the recipient's mobile client.</data>
       <data key="d10">3</data>
-      <data key="d11">meta</data>
+      <data key="d11">data</data>
     </edge>
-    <edge source="eks_media_delivery" target="cloudfront" id="0">
+    <edge source="2" target="3" id="0">
       <data key="d8">0</data>
-      <data key="d9">Media Delivery Service sends media to CloudFront for distribution and caching.</data>
+      <data key="d9">Media Delivery Service pushes the snap content to CloudFront for distribution and caching.</data>
       <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="cloudfront" target="s3" id="0">
+    <edge source="2" target="5" id="0">
       <data key="d8">0</data>
-      <data key="d9">CloudFront persists the media to S3 for storage.</data>
+      <data key="d9">Media Delivery Service sends snap metadata (e.g., media ID) to the SnapDB layer.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFront persists the snap media content into S3.</data>
       <data key="d10">3</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="cloudfront" target="s3" id="1">
+    <edge source="3" target="4" id="1">
       <data key="d8">1</data>
-      <data key="d9">CloudFront fetches the media from S3.</data>
+      <data key="d9">CloudFront retrieves the snap media content from S3 (its origin).</data>
       <data key="d10">5</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="cloudfront" target="user_client" id="0">
+    <edge source="3" target="0" id="0">
       <data key="d8">1</data>
-      <data key="d9">CloudFront delivers the media to the client.</data>
+      <data key="d9">CloudFront delivers the snap media content to the recipient's mobile client.</data>
       <data key="d10">7</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="s3" target="cloudfront" id="0">
+    <edge source="4" target="3" id="0">
       <data key="d8">1</data>
-      <data key="d9">S3 delivers the media to CloudFront.</data>
+      <data key="d9">S3 delivers the snap media content back to CloudFront.</data>
       <data key="d10">6</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="eks_mcs" target="eks_friend_graph" id="0">
+    <edge source="5" target="6" id="0">
       <data key="d8">0</data>
-      <data key="d9">MCS checks sender permissions with the Friend Graph service.</data>
+      <data key="d9">SnapDB stores the snap metadata in DynamoDB.</data>
       <data key="d10">5</data>
-      <data key="d11">meta</data>
-    </edge>
-    <edge source="eks_mcs" target="eks_snapdb_service" id="0">
-      <data key="d8">0</data>
-      <data key="d9">MCS persists conversation metadata via the SnapDB service.</data>
-      <data key="d10">7</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="eks_friend_graph" target="eks_mcs" id="0">
+    <edge source="5" target="6" id="1">
+      <data key="d8">2</data>
+      <data key="d9">SnapDB service performs nightly scans on DynamoDB to delete ephemeral data.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="7" id="0">
       <data key="d8">0</data>
-      <data key="d9">Friend Graph returns the permission check result to MCS.</data>
+      <data key="d9">SnapDB also persists the media ID into ElastiCache for quick lookups during snap retrieval.</data>
       <data key="d10">6</data>
-      <data key="d11">meta</data>
-    </edge>
-    <edge source="eks_snapdb_service" target="dynamodb" id="0">
-      <data key="d8">0</data>
-      <data key="d9">SnapDB service writes the conversation metadata to the underlying DynamoDB.</data>
-      <data key="d10">8</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="eks_messaging_service" target="elasticache" id="0">
+    <edge source="7" target="8" id="0">
       <data key="d8">1</data>
-      <data key="d9">Messaging service looks up connection ID and server ID from ElastiCache for the recipient's persistent connection.</data>
+      <data key="d9">ElastiCache returns the lookup results (connection/server ID) to the Messaging Service.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Messaging Service looks up the recipient's connection ID and server ID from ElastiCache to deliver the snap message.</data>
       <data key="d10">0</data>
-      <data key="d11">meta</data>
+      <data key="d11">data</data>
     </edge>
-    <edge source="eks_messaging_service" target="eks_gateway" id="0">
+    <edge source="8" target="1" id="0">
       <data key="d8">1</data>
-      <data key="d9">Messaging service pushes the message to the recipient via the EKS Gateway's persistent connection.</data>
+      <data key="d9">Messaging Service sends the snap message/notification (containing media ID) through the Gateway for delivery.</data>
       <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="elasticache" target="eks_messaging_service" id="0">
-      <data key="d8">1</data>
-      <data key="d9">ElastiCache returns connection metadata to the Messaging service.</data>
-      <data key="d10">1</data>
+    <edge source="9" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Friend Graph service performs nightly scans on DynamoDB for friend suggestions.</data>
+      <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
     <data key="d0">Snapchat Snap Sending and Receiving Architecture</data>
     <data key="d1">https://www.youtube.com/watch?v=Cgv0kfp_6xQ</data>
-    <data key="d2">Architecture for Snapchat's core 'Snap sending and receiving' functionality. Supports over 300 million daily active users and 5 billion+ Snaps per day. Emphasizes low latency (24% P50 reduction in snap sending latency) and cost optimization using auto-scaling and Graviton instances across 900+ EKS clusters, many with 1000+ instances. Custom SnapDB built on DynamoDB for features like transactions, TTL, ephemeral data handling, and incremental state synchronization to manage 400TB of data and 2 billion rows/minute nightly scans efficiently. ElastiCache is critical for low-latency message delivery by caching connection metadata.</data>
-    <data key="d3">data_ingestion, interactive, compute_intensive</data>
+    <data key="d2">Snapchat's core architecture for sending and receiving snaps, supporting over 300 million daily active users. Leverages a microservices approach built on AWS EKS, with over 900 clusters and 1000+ instances per cluster. Key design decisions include building a custom 'SnapDB' layer over DynamoDB for advanced features and optimizing for low latency (24% P50 reduction in snap sending) and cost efficiency using auto-scaling and Graviton instances. Handles massive data scale with 400TB in DynamoDB and nightly scans processing 2 billion rows per minute.</data>
+    <data key="d3">interactive, data_ingestion, compute_intensive</data>
     <data key="d4">True</data>
   </graph>
 </graphml>

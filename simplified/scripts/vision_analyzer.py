@@ -192,8 +192,69 @@ def analyze_frame(
             except json.JSONDecodeError:
                 pass
 
+    if isinstance(data, list):
+        console.print("[yellow]WARNING: Gemini returned a list of architectures. Merging them into a single graph...[/]")
+        merged = {
+            "step_by_step_reasoning": "",
+            "graph": {
+                "name": "",
+                "link": "",
+                "categories": "",
+                "graph_usable": True,
+                "notes": ""
+            },
+            "nodes": [],
+            "edges": []
+        }
+        reasonings = []
+        names = []
+        notes_list = []
+        categories_set = set()
+        
+        for idx, sub in enumerate(data):
+            reasonings.append(f"--- Architecture {idx+1} ({sub.get('graph', {}).get('name', 'Unnamed')}) ---\n{sub.get('step_by_step_reasoning', '')}")
+            names.append(sub.get("graph", {}).get("name", ""))
+            notes_list.append(sub.get("graph", {}).get("notes", ""))
+            
+            # Categories
+            cats = sub.get("graph", {}).get("categories", "")
+            if cats:
+                for c in cats.split(","):
+                    c_clean = c.strip()
+                    if c_clean:
+                        categories_set.add(c_clean)
+                        
+            # Map nodes and assign unique IDs
+            id_map = {}
+            for node in sub.get("nodes", []):
+                orig_id = str(node.get("id", ""))
+                new_id = str(len(merged["nodes"]))
+                id_map[orig_id] = new_id
+                
+                node_copy = dict(node)
+                node_copy["id"] = new_id
+                merged["nodes"].append(node_copy)
+                
+            # Map edges using the new IDs
+            for edge in sub.get("edges", []):
+                edge_copy = dict(edge)
+                orig_src = str(edge.get("source", ""))
+                orig_tgt = str(edge.get("target", ""))
+                edge_copy["source"] = id_map.get(orig_src, orig_src)
+                edge_copy["target"] = id_map.get(orig_tgt, orig_tgt)
+                merged["edges"].append(edge_copy)
+                
+        # Consolidate metadata
+        merged["step_by_step_reasoning"] = "\n\n".join(reasonings)
+        merged["graph"]["name"] = f"Consolidated AWS Architectures ({', '.join([n for n in names if n])})"
+        merged["graph"]["link"] = data[0].get("graph", {}).get("link", "") if data else ""
+        merged["graph"]["categories"] = ", ".join(sorted(categories_set))
+        merged["graph"]["notes"] = " ".join([n for n in notes_list if n])
+        
+        data = merged
+
     if data is None:
-        console.print(f"[yellow]⚠[/]  Failed to parse Gemini response as JSON")
+        console.print(f"[yellow]WARNING: Failed to parse Gemini response as JSON[/]")
         console.print(f"[dim]{raw_text[:500]}[/]")
         data = {"graph": {}, "nodes": [], "edges": []}
 
