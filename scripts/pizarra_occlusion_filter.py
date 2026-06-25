@@ -34,7 +34,7 @@ def run_occlusion_filter(video_id: str) -> dict:
     frames = [f for f in frames if f.parent == pizarra_dir and f.name.startswith(video_id)]
     
     if not frames:
-        console.print("[yellow]⚠[/] No whiteboard frames found to analyze.")
+        console.print("[yellow]WARNING:[/]" + " No whiteboard frames found to analyze.")
         return {}
         
     console.print(f"\n[bold cyan]🔍 Analyzing presenter occlusion for {video_id}[/] ({len(frames)} frames)...")
@@ -129,7 +129,7 @@ def run_occlusion_filter(video_id: str) -> dict:
                     use_fallback = True
                     
             except Exception as e:
-                console.print(f"[yellow]  ⚠ Failed running PyTorch person detection on {fp.name}: {e}. Using fallback intensity-based method.[/]")
+                console.print(f"[yellow]  WARNING: Failed running PyTorch person detection on {fp.name}: {e}. Using fallback intensity-based method.[/]")
                 use_fallback = True
                 
         if use_fallback:

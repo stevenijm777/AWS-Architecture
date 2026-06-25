@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Users</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">WORKLOAD_PEEK: Multiple PCs; Initiates HTTP requests to the platform; Users can be located globally but are routed to the closest API Gateway.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Route 53</data>
+      <data key="d6">Route53</data>
+      <data key="d7">WORKLOAD_PEEK: Uses latency-based routing to provide VIP addresses of the API Gateway; Minimizes latency for initial DNS resolution by directing users to the closest API Gateway endpoint.</data>
+    </node>
+    <node id="2">
+      <data key="d5">API Gateway (Region A)</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">WORKLOAD_PEEK: Entry point for HTTP requests after DNS resolution; Calls a Lambda function for tenant routing logic. Located in Region A (example region for initial ingress).</data>
+    </node>
+    <node id="3">
+      <data key="d5">Lambda (Region A)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Accessed by API Gateway; Primary function to determine the target region for a given tenant by querying DynamoDB; Routes requests to the correct EKS cluster, either within the same region or cross-region via Transit Gateway.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Tenant-Region Mapping (Global Table)</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Stores the association between a tenant UID and its assigned AWS region; Configured as a global table, making the mapping data available and consistent across all regions to ensure low latency for routing logic.</data>
+    </node>
+    <node id="5">
+      <data key="d5">EKS Cluster (Region A)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Hosts HTTP endpoints for customer workloads; Serves as a potential target destination for requests from tenants associated with Region A.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Transit Gateway (Region A)</data>
+      <data key="d6">TransitGateway</data>
+      <data key="d7">WORKLOAD_PEEK: Facilitates secure and efficient cross-region communication; Used to route requests from Lambda in Region A to EKS clusters in other regions (B or C) via peering.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Transit Gateway (Region B)</data>
+      <data key="d6">TransitGateway</data>
+      <data key="d7">WORKLOAD_PEEK: Part of the inter-region routing network; Peers with other Transit Gateways (e.g., in Region A) to direct incoming requests to the EKS cluster in Region B.</data>
+    </node>
+    <node id="8">
+      <data key="d5">EKS Cluster (Region B)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Hosts HTTP endpoints for customer workloads; Serves as a potential target destination for requests from tenants associated with Region B.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Transit Gateway (Region C)</data>
+      <data key="d6">TransitGateway</data>
+      <data key="d7">WORKLOAD_PEEK: Part of the inter-region routing network; Peers with other Transit Gateways (e.g., in Region A) to direct incoming requests to the EKS cluster in Region C.</data>
+    </node>
+    <node id="10">
+      <data key="d5">EKS Cluster (Region C)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Hosts HTTP endpoints for customer workloads; Serves as a potential target destination for requests from tenants associated with Region C; Example: Some customers have their entire data storage and EKS endpoints deployed in Region C.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User initiates DNS query for API Gateway.</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User sends HTTP request to the API Gateway.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Route 53 returns API Gateway IP address based on latency-based routing.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">API Gateway triggers Lambda function to determine routing.</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda queries DynamoDB to retrieve tenant-to-region mapping.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda directly routes the request to EKS Cluster in Region A if the tenant is associated with Region A.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Lambda routes the request to Transit Gateway in Region A to initiate cross-region communication if the tenant is in another region.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">DynamoDB returns tenant's assigned region to Lambda.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Transit Gateway in Region A communicates with Transit Gateway in Region B via peering.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Transit Gateway in Region A communicates with Transit Gateway in Region C via peering.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Transit Gateway in Region B routes the request to EKS Cluster in Region B.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Transit Gateway in Region C routes the request to EKS Cluster in Region C.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Next Think Experience Cloud Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=unF9tdYjqvU</data>
+    <data key="d2">The architecture provides a multi-tenant platform for digital employee experience, where each customer is associated with a specific AWS region for their data storage and EKS endpoints. The primary challenge is to route HTTP requests from end users to the correct, customer-assigned EKS cluster with minimal latency, regardless of the user's geographical location or the customer's assigned region. Route 53 with latency-based routing directs users to the closest API Gateway. A Lambda function then queries a global DynamoDB table to retrieve the customer's assigned region. Requests are then routed to the target EKS cluster, either directly if in the same region, or cross-region via Transit Gateway peering.</data>
+    <data key="d3">interactive, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

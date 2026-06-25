@@ -33,10 +33,10 @@ def get_video_age_from_csv(video_id: str) -> str:
         if not title:
             return "unknown"
         df = pd.read_csv(csv_path)
-        title_clean = title.replace(":", "").replace("-", "").replace(" ", "")
+        title_clean = "".join(title.split()).replace(":", "").replace("-", "")
         for _, row in df.iterrows():
             row_title = str(row["title"]).strip().lower()
-            row_title_clean = row_title.replace(":", "").replace("-", "").replace(" ", "")
+            row_title_clean = "".join(row_title.split()).replace(":", "").replace("-", "")
             if title_clean in row_title_clean or row_title_clean in title_clean:
                 return str(row["age"]).strip()
     except Exception:
@@ -87,7 +87,25 @@ def filter_pizarra_frames(video_id: str, dark_threshold: float | None = None) ->
                 last_speech_end = segments[-1].get("end")
                 console.print(f"[cyan]Loaded transcript. Last speech ends at {last_speech_end}s[/]")
         except Exception as e:
-            console.print(f"[yellow]⚠ Failed to load transcript for timing check: {e}[/]")
+            console.print(f"[yellow]WARNING: Failed to load transcript for timing check: {e}[/]")
+    
+    # Clamp last_speech_end to video duration (Whisper sometimes generates
+    # timestamps that exceed the actual video length, making the filter useless).
+    # When this happens, we also subtract a safety margin because the outro
+    # screen ("Thank you for watching") typically appears ~8-10s before the end.
+    OUTRO_SAFETY_MARGIN = 10  # seconds to subtract when Whisper timestamps are inflated
+    info_path = RAW_DIR / f"{video_id}.info.json"
+    if last_speech_end is not None and info_path.exists():
+        try:
+            with open(info_path, "r", encoding="utf-8") as f:
+                info_data = json.load(f)
+            video_duration = info_data.get("duration")
+            if video_duration is not None and last_speech_end > video_duration:
+                clamped = video_duration - OUTRO_SAFETY_MARGIN
+                console.print(f"[yellow]WARNING: Whisper last_speech_end ({last_speech_end}s) exceeds video duration ({video_duration}s). Clamping to {clamped}s (duration - {OUTRO_SAFETY_MARGIN}s margin).[/]")
+                last_speech_end = clamped
+        except Exception as e:
+            console.print(f"[yellow]WARNING: Failed to load info.json for duration check: {e}[/]")
             
     frames = sorted(video_frames_dir.glob("*.jpg"))
     close_ups = []
@@ -134,6 +152,15 @@ def filter_pizarra_frames(video_id: str, dark_threshold: float | None = None) ->
             
     console.print(f"[green]✓[/] Copied [bold]{len(close_ups)}[/] close-up blackboard frames to {pizarra_dir}/")
     
+    # Run outro filter to remove intro/outro branded screens from the copied set
+    try:
+        from scripts.pizarra_outro_filter import detect_outro_frames
+        outro_results = detect_outro_frames(video_id, dry_run=False)
+        removed_names = set(outro_results.get("removed", []))
+        close_ups = [c for c in close_ups if c["name"] not in removed_names]
+    except Exception as e:
+        console.print(f"[yellow]WARNING: Failed to run outro filter: {e}[/]")
+        
     # 2. Compare consecutive close-ups to build deduplication report
     report_path = FRAMES_DIR / f"{video_id}_pizarra_report.html"
     

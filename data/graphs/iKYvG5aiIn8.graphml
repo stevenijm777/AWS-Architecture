@@ -1,0 +1,154 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">SQL Server Farm</data>
+      <data key="d6">UserCompanyInternalPlatform</data>
+      <data key="d7">Represents the on-premises database environment managed by Trublue, containing transactional data for jobs, job requests, and workers. DATA_PEEK: transactional tables, inserts, updates, deletes. WORKLOAD_PEEK: Data needs to be up-to-date for accurate matching.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Database Migration Service</data>
+      <data key="d6">DMS</data>
+      <data key="d7">Used to migrate transactional databases from on-premises SQL servers to AWS. Transforms data into Parquet files for inserts, updates, and deletes.</data>
+    </node>
+    <node id="2">
+      <data key="d5">S3 Landing Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Landing zone for migrated data from SQL Servers. DATA_PEEK: Stores Parquet files containing inserts, updates, and deletes for transactional tables. These files accumulate here.</data>
+    </node>
+    <node id="3">
+      <data key="d5">SQS Event Queues</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Captures S3 object creation notifications from the landing bucket. These are conceptual 'SQSQs one for each category of tables based on latency' to support different processing requirements.</data>
+    </node>
+    <node id="4">
+      <data key="d5">EventBridge 10-min Rule</data>
+      <data key="d6">EventBridge</data>
+      <data key="d7">A scheduled rule in EventBridge that triggers the Step Functions workflow every 10 minutes, catering to tables with near real-time latency requirements.</data>
+    </node>
+    <node id="5">
+      <data key="d5">EventBridge 60-min Rule</data>
+      <data key="d6">EventBridge</data>
+      <data key="d7">A scheduled rule in EventBridge that triggers the Step Functions workflow every 60 minutes, for tables with hourly latency requirements.</data>
+    </node>
+    <node id="6">
+      <data key="d5">EventBridge 3-hour Rule</data>
+      <data key="d6">EventBridge</data>
+      <data key="d7">A scheduled rule in EventBridge that triggers the Step Functions workflow every 3 hours, for tables with less strict latency requirements.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Step Functions Orchestrator</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates a workflow of Glue jobs (extractor and upsert/writer). Invoked directly by EventBridge rules based on different schedules.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Glue Extractor Job</data>
+      <data key="d6">Glue</data>
+      <data key="d7">The first Glue job in the orchestrated workflow. It reads S3 object locations from the SQS event queues and fetches the corresponding Parquet files from the S3 Landing Bucket. WORKLOAD_PEEK: Replaces previous EMR usage due to serverless preference and complexity management challenges.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Glue Upserter/Writer Job</data>
+      <data key="d6">Glue</data>
+      <data key="d7">Performs ETL/ELT operations, specifically combining inserts, updates, and deletes into consistent views of tables (upserts). Writes/updates the Delta Lake in S3. Achieves the same outcome as EMR but in a serverless fashion. Supports bronze, silver, and gold tiers.</data>
+    </node>
+    <node id="10">
+      <data key="d5">S3 Delta Lake</data>
+      <data key="d6">S3</data>
+      <data key="d7">The target data lake, storing consistent and up-to-date views of transactional tables. Organized into three logical tiers: Bronze (raw), Silver (joined views/feature store for ML), and Gold.</data>
+    </node>
+    <node id="11">
+      <data key="d5">Data Scientist</data>
+      <data key="d6">UserCompanyAnalyst</data>
+      <data key="d7">Consumes data from the Delta Lake. Uses PySpark SQL to query tables from the bronze, silver, or gold tiers for extracting datasets and performing accurate matches for job placements.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">AWS Database Migration Service (DMS) is used to migrate transactional databases from the on-premises SQL Server farm to AWS.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">DMS writes migrated data as Parquet files (inserts, updates, deletes) into the S3 landing bucket.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">S3 object creation notifications (containing S3 locations of new files) are sent to categorized SQS queues. 'we set up S3 of our notifications on this bucket and now this is actually feeding to SQSQs'</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EventBridge rule triggers the Step Functions workflow every 10 minutes. 'It invokes a step function directly'</data>
+      <data key="d10">3a</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EventBridge rule triggers the Step Functions workflow every 60 minutes. 'It invokes a step function directly'</data>
+      <data key="d10">3b</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EventBridge rule triggers the Step Functions workflow every 3 hours. 'It invokes a step function directly'</data>
+      <data key="d10">3c</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions orchestrates and invokes the first Glue job, the Extractor. 'this step function is orchestrating a workflow of glue jobs where the first glue job the extractor'</data>
+      <data key="d10">4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="8" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Glue Extractor job reads S3 object locations (event data) from the SQS event queues. 'the extractor is going to read from this SQSQ'</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Glue Extractor job reads the actual Parquet data files from the S3 Landing Bucket using the locations obtained from SQS.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Logical handover of extracted data/processing to the Upserter/Writer job within the Step Functions workflow. 'and then it's going to write tables or update tables'</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Glue Upserter/Writer job writes and updates the Delta Lake tables in S3, combining inserts, updates, and deletes. 'we write those Delta Lake in S3'</data>
+      <data key="d10">8</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="11" target="10" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Data Scientists query the Delta Lake in S3 using PySpark SQL to extract datasets. 'data scientists actually over here and they use Picepart SQL typically to read the tables from from this Delta Lake'</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Trublue's Data Lake for Job Matching</data>
+    <data key="d1">https://www.youtube.com/watch?v=iKYvG5aiIn8</data>
+    <data key="d2">Trublue connects people to blue-collar jobs on demand. The architecture addresses the challenge of matching the right people to the right jobs by maintaining up-to-date data. Key design decisions include an event-driven serverless architecture, using AWS DMS for initial migration, S3 for data lake storage, SQS for event queuing, EventBridge and Step Functions for orchestration, and Glue for ETL/ELT, specifically for handling upserts and creating a Delta Lake. Developers prefer a serverless-first approach and found Glue efficient for combining inserts, updates, and deletes into consistent views, replacing an earlier EMR-based solution.</data>
+    <data key="d3">data_ingestion, compute_intensive</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

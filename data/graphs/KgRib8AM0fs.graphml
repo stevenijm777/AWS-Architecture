@@ -1,0 +1,106 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Coaches</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">Users interact via mobile app, web platform, or Huddle focus cameras. Uploads raw video and consumes transcoded video content.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Video Buckets</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores ingested raw video content and transcoded playable video formats. DATA_PEEK: Raw and playable video files. WORKLOAD_PEEK: Content is returned in a playable format within 2 minutes end-to-end from receipt in S3.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Transcoding Job Queues</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Multiple queues are used for job prioritization based on performance/time sensitivity and job size to prevent clogging. DATA_PEEK: Handles approximately 30,000 messages per minute ingested at scale.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Transcoding Engines (SpotFleet/ASG)</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Auto Scaling Group leveraging SpotFleet for transcoding jobs. Starts with over 20 instances, scaling to 10,000+ instances at peak. WORKLOAD_PEEK: Processes around 30,000 jobs per minute during busiest periods. Achieved a 28% decrease in total compute cost for transcoding services. Leverages Spot Advisor and watches for interruption messages to handle failures, experiencing no spot interruptions even during high load.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Scaling Metrics</data>
+      <data key="d6">CloudWatch</data>
+      <data key="d7">Monitors SQS queue depth (number of messages) and EC2 instance count for target tracking and scaling purposes.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Auto-Scaling Logic</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Huddle's custom Lambda function that leverages CloudWatch metrics to compare the SQS message count to the current EC2 instance count. It calculates a target ratio and informs the Auto Scaling Group (managing EC2 instances/SpotFleet) to scale in or out for cost-effectiveness and performance, also assisting with seasonality.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Coaches upload raw video content via mobile app, web platform, or Huddle focus cameras into S3.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Content upload to S3 programmatically triggers the creation of an SQS message for a transcoding job.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Users access and play the transcoded video content from S3.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EC2 instances in the Auto Scaling Group (SpotFleet) pull transcoding jobs from the SQS queues.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">CloudWatch collects metrics on SQS queue depth (number of messages).</data>
+      <data key="d10">0.1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="3" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Transcoded content in a playable format is stored back into S3 buckets by the EC2 instances.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">CloudWatch collects metrics on EC2 instance count within the Auto Scaling Group.</data>
+      <data key="d10">0.2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda retrieves SQS message count and EC2 instance count metrics from CloudWatch.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda informs the Auto Scaling Group (managing EC2 instances) to scale in or out based on calculated ratios.</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <data key="d0">Huddle's Sports Video Transcoding Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=KgRib8AM0fs</data>
+    <data key="d2">Huddle's architecture for ingesting raw sports video from coaches and transforming it into playable formats rapidly. The system prioritizes jobs, leverages AWS Spot Instances for cost-effective, high-scale transcoding (30k jobs/min, 10k+ instances), and dynamically scales compute resources using Lambda and CloudWatch, resulting in a 28% cost reduction and sub-2-minute end-to-end processing.</data>
+    <data key="d3">data_ingestion, compute_intensive, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
