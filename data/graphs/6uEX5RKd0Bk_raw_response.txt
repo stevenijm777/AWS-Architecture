@@ -1,0 +1,225 @@
+{
+  "graph": {
+    "name": "Grindr Next-Gen Chat System",
+    "link": "https://aws.amazon.com/solutions/case-studies/grindr-aws-chat-system/",
+    "categories": "Messaging, Social, Real-time",
+    "graph_usable": true,
+    "notes": "Architecture for Grindr's next-generation chat system focusing on high-scale, real-time messaging and robust data management on AWS."
+  },
+  "nodes": [
+    {
+      "id": "user_mobile",
+      "service": "UserConsumerMobile",
+      "name": "User Mobile App",
+      "notes": "Initiates and receives chat messages, interacts with WebSocket layer and receives push notifications."
+    },
+    {
+      "id": "eks_websocket_gateway",
+      "service": "EKS",
+      "name": "WebSocket Gateway (REST & WebSocket)",
+      "notes": "DATA_PEEK: Handles initial user connections (W1, W2), manages WebSocket sessions, performs basic user validation (login, credentials, blocks)."
+    },
+    {
+      "id": "eks_chat_metadata",
+      "service": "EKS",
+      "name": "Chat Metadata Services",
+      "notes": "WORKLOAD_PEEK: The 'brain of the operation', microservice-based, performs further checks, orchestrates message persistence and delivery, encrypts chat content via KMS."
+    },
+    {
+      "id": "dynamodb_content",
+      "service": "DynamoDB",
+      "name": "Chat Content Store",
+      "notes": "DATA_PEEK: Stores encrypted chat message body, designed for high-scale, write-heavy workloads; content encrypted at application layer."
+    },
+    {
+      "id": "aurora_metadata",
+      "service": "Aurora",
+      "name": "Chat Metadata & Inbox DB (Postgres)",
+      "notes": "DATA_PEEK: Stores message metadata (headers, envelope) and inbox information (last message, order, timestamp), designed for read-heavy workloads."
+    },
+    {
+      "id": "elasticache_redis",
+      "service": "ElastiCache",
+      "name": "Inbox Cache (Redis)",
+      "notes": "DATA_PEEK: Caches active user inbox data for rapid retrieval, reduces load on Aurora for frequent inbox reads."
+    },
+    {
+      "id": "pinpoint_notifications",
+      "service": "Pinpoint",
+      "name": "Push Notification Service",
+      "notes": "Sends push notifications to users who are offline (no active WebSocket session)."
+    },
+    {
+      "id": "msk_event_bus",
+      "service": "MSK",
+      "name": "Metadata Event Bus (Kafka)",
+      "notes": "DATA_PEEK: Publishes chat metadata events for asynchronous processing by various consumers, supports easy scaling and message replay."
+    },
+    {
+      "id": "kms_encryption",
+      "service": "KMS",
+      "name": "Key Management Service",
+      "notes": "Provides encryption keys for application-layer encryption of chat content before storage in DynamoDB."
+    },
+    {
+      "id": "thirdparty_consumers",
+      "service": "ThirdParty",
+      "name": "Async Consumers (Anti-spam, Tracking)",
+      "notes": "Consumes metadata events from MSK to perform asynchronous operations like anti-spam checks and user connection tracking."
+    }
+  ],
+  "edges": [
+    {
+      "source": "user_mobile",
+      "target": "eks_websocket_gateway",
+      "flow_id": 0,
+      "seq": "0.0",
+      "type": "data",
+      "notes": "User sends chat message via WebSocket (W1)"
+    },
+    {
+      "source": "eks_websocket_gateway",
+      "target": "eks_chat_metadata",
+      "flow_id": 0,
+      "seq": "0.1",
+      "type": "data",
+      "notes": "Forward message for validation and processing"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "kms_encryption",
+      "flow_id": 0,
+      "seq": "0.2a",
+      "type": "meta",
+      "notes": "Request encryption key/service for chat content"
+    },
+    {
+      "source": "kms_encryption",
+      "target": "eks_chat_metadata",
+      "flow_id": 0,
+      "seq": "0.2b",
+      "type": "meta",
+      "notes": "Return encryption key/result"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "dynamodb_content",
+      "flow_id": 0,
+      "seq": "0.3a",
+      "type": "data",
+      "notes": "Persist encrypted chat content body"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "aurora_metadata",
+      "flow_id": 0,
+      "seq": "0.3b",
+      "type": "data",
+      "notes": "Persist chat message metadata and inbox updates"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "msk_event_bus",
+      "flow_id": 0,
+      "seq": "0.4",
+      "type": "data",
+      "notes": "Publish metadata event to Kafka for asynchronous processing"
+    },
+    {
+      "source": "msk_event_bus",
+      "target": "thirdparty_consumers",
+      "flow_id": 0,
+      "seq": "0.5",
+      "type": "data",
+      "notes": "Consume metadata events for anti-spam/tracking"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "eks_websocket_gateway",
+      "flow_id": 1,
+      "seq": "1.0",
+      "type": "meta",
+      "notes": "Check if recipient user is online (active WebSocket session)"
+    },
+    {
+      "source": "eks_websocket_gateway",
+      "target": "user_mobile",
+      "flow_id": 1,
+      "seq": "1.1",
+      "type": "data",
+      "notes": "Deliver message to recipient via active WebSocket session (W2)"
+    },
+    {
+      "source": "eks_websocket_gateway",
+      "target": "pinpoint_notifications",
+      "flow_id": 2,
+      "seq": "2.0",
+      "type": "data",
+      "notes": "No active WebSocket session found, send push notification request"
+    },
+    {
+      "source": "pinpoint_notifications",
+      "target": "user_mobile",
+      "flow_id": 2,
+      "seq": "2.1",
+      "type": "data",
+      "notes": "Deliver push notification to mobile device"
+    },
+    {
+      "source": "user_mobile",
+      "target": "eks_websocket_gateway",
+      "flow_id": 3,
+      "seq": "3.0",
+      "type": "data",
+      "notes": "User connects to fetch inbox over REST"
+    },
+    {
+      "source": "eks_websocket_gateway",
+      "target": "eks_chat_metadata",
+      "flow_id": 3,
+      "seq": "3.1",
+      "type": "data",
+      "notes": "Request inbox data"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "elasticache_redis",
+      "flow_id": 3,
+      "seq": "3.2a",
+      "type": "data",
+      "notes": "Check ElastiCache for user inbox"
+    },
+    {
+      "source": "elasticache_redis",
+      "target": "eks_chat_metadata",
+      "flow_id": 3,
+      "seq": "3.2b",
+      "type": "data",
+      "notes": "Return cached inbox data (cache hit)"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "aurora_metadata",
+      "flow_id": 3,
+      "seq": "3.3a",
+      "type": "data",
+      "notes": "Fetch full inbox from Aurora (cache miss)"
+    },
+    {
+      "source": "aurora_metadata",
+      "target": "eks_chat_metadata",
+      "flow_id": 3,
+      "seq": "3.3b",
+      "type": "data",
+      "notes": "Return inbox data from DB"
+    },
+    {
+      "source": "eks_chat_metadata",
+      "target": "elasticache_redis",
+      "flow_id": 3,
+      "seq": "3.4",
+      "type": "data",
+      "notes": "Populate ElastiCache with refreshed inbox data"
+    }
+  ]
+}

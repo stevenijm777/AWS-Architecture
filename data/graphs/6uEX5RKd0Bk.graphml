@@ -1,0 +1,203 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Sending User's Mobile App</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">The user interacts with the Grindr app on their phone to send chat messages. Also receives messages and push notifications. Triggers chat workflows and inbox requests.</data>
+    </node>
+    <node id="1">
+      <data key="d5">WebSocket Layer (Sender)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: First step in the chat message journey. Handles initial connection from the user's phone. Performs basic low-level validations (e.g., user logged in, credentials, not blocked). Identified as W1 in the transcript, acting as the sender's WebSocket endpoint.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Chat Metadata Services</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: The 'brain of the operation', a microservice-based architecture hosted on EKS. Performs further checks after initial WebSocket contact, persists messages, manages encryption, handles inbox logic (fetching/refreshing from Aurora and caching in ElastiCache), and dispatches metadata events to MSK. Encrypts chat content using KMS before persistence. Receives inbox requests over REST from mobile clients.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Chat Content Storage</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Stores the chat content (body of the message). Chosen for huge scale and write-heavy loads, as message content grows quickly but is not read often once sent. Encrypted in the application using KMS.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Metadata (Postgres)</data>
+      <data key="d6">Aurora</data>
+      <data key="d7">DATA_PEEK: Stores chat metadata (headers, message envelope, inbox information). Chosen for read-heavy loads as inbox information (last sender, ordering, timestamp) is constantly changing and frequently accessed.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Key Management Service</data>
+      <data key="d6">KMS</data>
+      <data key="d7">Used by the Chat Metadata Services for application-level encryption of chat content (message body) before it is stored in DynamoDB.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Kafka Event Bus</data>
+      <data key="d6">MSK</data>
+      <data key="d7">WORKLOAD_PEEK: Managed service for Kafka in AWS. Used as an event bus to send metadata events every time a message is sent. Enables easy addition of new consumers and message replay, decoupling producers from consumers for asynchronous operations like anti-spam and tracking. DATA_PEEK: Carries metadata events.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Anti-Spam/Tracking Consumers</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Consumers that sit off the MSK Kafka topic. Perform asynchronous operations such as anti-spam analysis and tracking user connections based on metadata events from MSK. Implied to run on EKS given the heavy EKS usage for other microservices.</data>
+    </node>
+    <node id="8">
+      <data key="d5">WebSocket Layer (Recipient)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: If the recipient user is online, the system sends the message back out over their active WebSocket session. Identified as W2 in the transcript, acting as the recipient's WebSocket endpoint.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Push Notification Service</data>
+      <data key="d6">Pinpoint</data>
+      <data key="d7">Used to send push notifications over the telephony network to the recipient's phone if they are determined to be offline (no active WebSocket connection). This prompts the user to open the app.</data>
+    </node>
+    <node id="10">
+      <data key="d5">Inbox Cache (Redis)</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">WORKLOAD_PEEK: Redis flavor of ElastiCache used to cache user inbox information. When a user connects, the system checks this cache first. If available, the inbox is served immediately with no load on Aurora. If not, Aurora is queried to refresh and then the cache is populated. Kept up-to-date until the user goes offline. DATA_PEEK: Stores inbox metadata.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User sends chat message from mobile app to the WebSocket layer (W1).</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">User's mobile app connects over REST to the Chat Metadata Services (brain) to request inbox data.</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">WebSocket layer (W1) contacts internal Chat Metadata Services for further checks and processing.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="1" target="8" id="0">
+      <data key="d8">0</data>
+      <data key="d9">If recipient is online, the sender's WebSocket layer (W1) sends the message to the recipient's WebSocket layer (W2).</data>
+      <data key="d10">8a</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="9" id="0">
+      <data key="d8">0</data>
+      <data key="d9">If recipient is offline, the sender's WebSocket layer (W1) instructs Pinpoint to send a push notification.</data>
+      <data key="d10">8b</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Chat Metadata Services request encryption keys from KMS for chat content encryption.</data>
+      <data key="d10">2a</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Chat Metadata Services persist encrypted chat content (message body) to DynamoDB.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Chat Metadata Services persist chat metadata (headers, inbox info) to Aurora Postgres.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="1">
+      <data key="d8">2</data>
+      <data key="d9">If inbox data is not in cache (or stale), Chat Metadata Services query Aurora Postgres to refresh the entire inbox.</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Chat Metadata Services send a metadata event to the MSK Kafka event bus after message persistence.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Chat Metadata Services inform the WebSocket layer (W1) to check if the recipient is online.</data>
+      <data key="d10">7</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Chat Metadata Services check ElastiCache (Redis) for the user's inbox availability.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="10" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Chat Metadata Services populate/update the ElastiCache (Redis) with the refreshed inbox data.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="0" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Chat Metadata Services serve cached inbox data to the user's mobile app.</data>
+      <data key="d10">2b</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="0" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Chat Metadata Services serve refreshed inbox data to the user's mobile app.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Aurora Postgres returns refreshed inbox data to Chat Metadata Services.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">KMS provides encryption keys to Chat Metadata Services.</data>
+      <data key="d10">2b</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">MSK streams metadata events to Anti-Spam/Tracking Consumers for asynchronous processing.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="0" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Recipient's WebSocket layer (W2) sends the message to the recipient's mobile app.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="0" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Pinpoint sends a push notification to the recipient's mobile app.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">If inbox data is in cache, ElastiCache serves it immediately to Chat Metadata Services.</data>
+      <data key="d10">2a</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Grindr's Next-Gen Chat System</data>
+    <data key="d1">https://www.youtube.com/watch?v=6uEX5RKd0Bk</data>
+    <data key="d2">Grindr's chat system handles massive scale (121 billion chats/year) for its LGBTQ dating app, allowing users to initiate conversations without matching. Key architectural decisions include: 1. Bifurcating message content (chat body) and metadata (headers, inbox info) into different storage systems to optimize for their distinct access patterns. 2. DynamoDB is used for high-volume, write-heavy chat content that grows quickly and isn't frequently re-read. 3. Aurora (Postgres) and ElastiCache (Redis) are used for read-heavy, constantly changing inbox metadata, with ElastiCache providing an intelligent caching layer for readily available inbox data. 4. WebSocket layers on EKS handle real-time messaging, with Amazon Pinpoint for offline push notifications. 5. All chat content is encrypted in the application using KMS. 6. An MSK (Kafka) event bus decouples asynchronous operations like anti-spam and user tracking, allowing flexible addition of new consumers.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive, other</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
