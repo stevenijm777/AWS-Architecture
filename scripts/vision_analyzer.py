@@ -5,6 +5,7 @@ vision_analyzer.py — Gemini API vision analysis of architecture keyframes
 from __future__ import annotations
 
 import base64
+import csv
 import json
 import sys
 from pathlib import Path
@@ -38,7 +39,39 @@ def _get_client() -> genai.Client:
 
 # ── Cloudscape-compatible Prompt ─────────────────────────────
 
-CLOUDSCAPE_PROMPT = """\
+def load_services_catalog() -> tuple[list[str], list[str]]:
+    """
+    Load valid AWS services and user actors from services.csv.
+    """
+    csv_path = Path(__file__).resolve().parent.parent / "data" / "cloudscape_gt" / "services.csv"
+    if not csv_path.exists():
+        return [], []
+    
+    aws_services = set()
+    user_actors = set()
+    try:
+        with open(csv_path, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                name = row.get("name", "").strip()
+                capability = row.get("capability", "").strip().lower()
+                if not name:
+                    continue
+                if capability == "user" or name.startswith("User"):
+                    user_actors.add(name)
+                else:
+                    aws_services.add(name)
+    except Exception as e:
+        console.print(f"[yellow]⚠ Failed to load services catalog: {e}[/]")
+    return sorted(list(aws_services)), sorted(list(user_actors))
+
+
+AWS_SERVICES, USER_ACTORS = load_services_catalog()
+aws_services_str = ", ".join(AWS_SERVICES)
+user_actors_str = ", ".join(USER_ACTORS)
+
+
+CLOUDSCAPE_PROMPT_TEMPLATE = """\
 You are an expert AWS Solutions Architect. You are analyzing a whiteboard \
 screenshot from an AWS "This is My Architecture" YouTube video, along with \
 the full transcript of the video.
@@ -50,7 +83,10 @@ Cloudscape dataset schema (FAST25 paper by Satija et al.).
 1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", \
 "EC2", "DynamoDB", "EKS", "CloudFront", "Aurora", "ElastiCache", "MSK", \
 "SQS", "SNS", "ApiGateway", "Pinpoint", "KMS", "CloudWatch", "StepFunctions", etc.
-2. For actors/users, choose the most specific type from this list based on the video context: UserCompanyDeveloper, UserConsumerWebMobile, UserConsumerMobile, UserConsumerWeb, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserConsumerFarmer, UserConsumerArtist, UserConsumerSatellite, UserConsumerCamera, UserCompanyDataStream, UserConsumerDeveloper, UserCompanyElementalLiveDevice, UserCompanyHeadEnd, UserCompanyWebsite, UserConsumerEdge, UserConsumerAPI, UserCompanyDomainExpert.
+2. For actors/users: ONLY add User nodes that are EXPLICITLY shown as \
+icons on the whiteboard OR explicitly mentioned as actors in the \
+transcript (e.g., "the end user", "our developers", "mobile app users"). \
+Do NOT invent User nodes to complete a flow. Choose from this list based on the video context: <USER_ACTORS_PLACEHOLDER>.
 3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
 4. Do NOT use "ThirdParty" for internal microservices (e.g., "Friend Graph", "SnapDB", "Messaging Service"). Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda"), putting the microservice name in the `notes` field. Use "ThirdParty" only for external third-party software (e.g. MySQL, Nginx).
 5. NODE MULTIPLICITY (CRITICAL): Each node can appear MULTIPLE times. \
@@ -62,7 +98,10 @@ shows a single icon. Do NOT group distinct functions into a single node.
 6. Edges must have: flow_id (integer, grouping related interactions into \
 workflows), seq (string, ordering within flow), type ("data" for data \
 movement, "meta" for request triggers / ack responses). Default to "data" for all edges. Only use "meta" for edges that represent: (a) monitoring/observability signals to CloudWatch, (b) orchestration/triggers from StepFunctions, or (c) acknowledgment responses that don't carry payload data.
-7. Every workflow/flow that starts from an actor/user node MUST include the return path back to the user. If a user/client sends a request, the flow must end with the final response/data arriving back to that user (e.g. from EC2, CloudFront, ApiGateway, etc. back to the User).
+7. Map ONLY the edges that represent actual data movement or control flow \
+shown on the whiteboard or described in the transcript. Do NOT add \
+return/response paths unless they are explicitly drawn on the diagram \
+or explicitly described as a separate step in the transcript.
 8. Minimize the number of flows. Group related sequential interactions into a single flow. A typical architecture should have 2-5 flows, not more.
 9. The `notes` field for nodes should capture context from the transcript: \
 how the service is used, data volumes, configurations mentioned. Use \
@@ -74,6 +113,23 @@ transcript details a sequence of 3 Lambdas, your output MUST contain 3 \
 separate Lambda nodes with their specific distinct edges mapping the true \
 chronological workflow. When image and transcript conflict, ALWAYS prefer \
 the transcript.
+
+## COMMON CONFUSION PAIRS (be careful):
+- ALB and ELB are DIFFERENT services. ALB = Application Load Balancer. ELB = Classic Elastic Load Balancer. Use whichever the speaker mentions.
+- EC2, ECS, EKS, Fargate are DIFFERENT compute services. Do NOT substitute.
+- Kinesis, KinesisDataStreams, KinesisDataFirehose, KinesisAnalytics are DIFFERENT. Use the exact sub-service mentioned.
+- OpenSearch (formerly Elasticsearch Service) is a specific service.
+
+## PARSIMONY PRINCIPLE:
+Prefer FEWER nodes and edges over more. If you are unsure whether a service \
+exists in the architecture, DO NOT include it. It is better to miss a real \
+service than to hallucinate a fake one. The ground truth typically has 6-12 \
+nodes and 5-15 edges. If your output has significantly more, you are likely \
+over-generating.
+
+## VALID SERVICE NAMES:
+You MUST only use names from this list of canonical services when defining the `service` field in the nodes list (do not invent names or use raw abbreviations unless listed here):
+<AWS_SERVICES_PLACEHOLDER>
 
 ## OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown fences):
@@ -97,6 +153,12 @@ Return ONLY valid JSON (no markdown fences):
 If the image does NOT contain an AWS architecture diagram, return:
 {"graph": {}, "nodes": [], "edges": []}
 """
+
+CLOUDSCAPE_PROMPT = CLOUDSCAPE_PROMPT_TEMPLATE.replace(
+    "<USER_ACTORS_PLACEHOLDER>", user_actors_str
+).replace(
+    "<AWS_SERVICES_PLACEHOLDER>", aws_services_str
+)
 
 
 # ── Public API ───────────────────────────────────────────────

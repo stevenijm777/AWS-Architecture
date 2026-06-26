@@ -119,11 +119,6 @@ def detect_symbols(
         
     img_gray = cv2.cvtColor(img_color, cv2.COLOR_BGR2GRAY)
     
-    # Create directory for processed filter visualizations
-    processed_dir = image_path.parent / "processed_filters"
-    processed_dir.mkdir(parents=True, exist_ok=True)
-    cv2.imwrite(str(processed_dir / "whiteboard_gray.jpg"), img_gray)
-    
     # 1. Load available templates
     available_templates = {}
     if templates_dir.exists():
@@ -142,8 +137,6 @@ def detect_symbols(
                 "base_service": base_service,
                 "img": t_img_gray
             }
-            # Save the processed grayscale template for debugging
-            cv2.imwrite(str(processed_dir / f"template_{p.stem}_gray.jpg"), t_img_gray)
             
     if not available_templates:
         console.print(f"[yellow]Warning: No templates found in {templates_dir}[/]")
