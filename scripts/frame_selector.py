@@ -477,8 +477,8 @@ def select_best_frame(
     # Sort by total score descending
     scored_frames.sort(key=lambda x: x["total_score"], reverse=True)
 
-    # Phase 3: Among top 5 candidates, pick the one with least occlusion
-    top_n = min(5, len(scored_frames))
+    # Phase 3: Among top 10 candidates, pick the one with least occlusion
+    top_n = min(10, len(scored_frames))
     top_candidates = scored_frames[:top_n]
 
     console.print(f"\n  [bold]Top {top_n} candidates:[/]")
