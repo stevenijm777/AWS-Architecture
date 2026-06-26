@@ -113,6 +113,18 @@ def run_pipeline(
     # ── Step 5: Vision Analysis (Cloudscape schema) ─────────
     console.rule("[bold cyan]Step 5 · Analyze Keyframes (Gemini Vision)")
     analysis_path = RAW_DIR / f"{video_id}_vision_analysis.json"
+
+    # Automatically select the best whiteboard frame locally if not already done
+    pizarra_dir = FRAMES_DIR / f"{video_id}_pizarra"
+    best_occl_path = pizarra_dir / "best_whiteboard.jpg"
+    if not best_occl_path.exists():
+        console.print("[dim]Running frame selector locally to find best whiteboard...[/]")
+        try:
+            from scripts.frame_selector import select_best_frame
+            select_best_frame(video_id, debug=True)
+        except Exception as e:
+            console.print(f"[yellow]⚠ Frame selector failed: {e}[/]")
+
     if skip_vision:
         console.print("[yellow]⚠  Skipping vision analysis (--skip-vision)[/]")
         analysis_result = {"graph": {}, "nodes": [], "edges": []}
@@ -132,9 +144,7 @@ def run_pipeline(
 
         # Use the best whiteboard frame from second-layer filters if available,
         # otherwise fallback to the last frame.
-        pizarra_dir = FRAMES_DIR / f"{video_id}_pizarra"
         best_tmpl_path = pizarra_dir / "best_whiteboard_template_transcript.jpg"
-        best_occl_path = pizarra_dir / "best_whiteboard.jpg"
         
         best_frame = None
         if best_occl_path.exists():
@@ -189,27 +199,31 @@ def run_pipeline(
             f"[green]✓[/] Analysis saved → [bold]{analysis_path}[/]"
         )
 
-    # ── Step 6: Build Graph (Cloudscape-compatible) ──────────
-    console.rule("[bold cyan]Step 6 · Build Graph & Export GraphML")
-    G = create_graph_from_cloudscape_json(
-        analysis_result,
-        video_id=video_id,
-        video_url=url,
-    )
+    if skip_vision:
+        console.print("[yellow]⚠  Skipping graph building and export in local-only mode.[/]")
+        graphml_path = None
+    else:
+        # ── Step 6: Build Graph (Cloudscape-compatible) ──────────
+        console.rule("[bold cyan]Step 6 · Build Graph & Export GraphML")
+        G = create_graph_from_cloudscape_json(
+            analysis_result,
+            video_id=video_id,
+            video_url=url,
+        )
 
-    graphml_path = export_graphml(G, video_id)
-    try:
-        export_yed_graphml(G, video_id)
-    except Exception as e:
-        console.print(f"[yellow]⚠ Failed to export visual GraphML:[/] {e}")
-    print_graph_summary(G)
+        graphml_path = export_graphml(G, video_id)
+        try:
+            export_yed_graphml(G, video_id)
+        except Exception as e:
+            console.print(f"[yellow]⚠ Failed to export visual GraphML:[/] {e}")
+        print_graph_summary(G)
 
-    # ── Step 7: Compare with Ground Truth (if available) ─────
-    gt_path = Path("data/cloudscape_gt") / f"{video_id}.graphml"
-    if gt_path.exists():
-        console.rule("[bold cyan]Step 7 · Compare with Ground Truth")
-        from scripts.graph_builder import compare_with_ground_truth
-        compare_with_ground_truth(G, gt_path)
+        # ── Step 7: Compare with Ground Truth (if available) ─────
+        gt_path = Path("data/cloudscape_gt") / f"{video_id}.graphml"
+        if gt_path.exists():
+            console.rule("[bold cyan]Step 7 · Compare with Ground Truth")
+            from scripts.graph_builder import compare_with_ground_truth
+            compare_with_ground_truth(G, gt_path)
 
     # ── Summary ──────────────────────────────────────────────
     _print_summary(video_id, title, frames, segments, [analysis_result], graphml_path)
