@@ -1,6 +1,6 @@
 # Evaluation Report: Generated Graphs vs Cloudscape Ground Truth
 
-*Generated: 2026-06-26 10:59:20*
+*Generated: 2026-06-26 11:22:43*
 
 ## 1. Executive Summary
 
@@ -8,11 +8,11 @@
 
 | Metric | Precision | Recall | F1 |
 |--------|-----------|--------|----|
-| **Services (unique set)** | 76.4% | 84.5% | 79.4% |
-| **Services (multiset)** | 73.8% | 82.8% | 77.1% |
-| **Edges (service pairs)** | 44.6% | 54.9% | 47.5% |
+| **Services (unique set)** | 76.7% | 84.6% | 79.6% |
+| **Services (multiset)** | 73.9% | 82.6% | 77.1% |
+| **Edges (service pairs)** | 45.7% | 53.7% | 47.3% |
 
-**Edge type accuracy (data/meta):** 78.6%
+**Edge type accuracy (data/meta):** 79.2%
 
 **Average node count ratio (gen/gt):** 1.20x
 
@@ -31,17 +31,17 @@
 
 | # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |
 |---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|
-| 1 | `iKYvG5aiIn8` | 100% | 100% | 100% | 100% | 100% | 100% | 12 | 12 | 12 | 12 | — | — |
-| 2 | `-3lnf5lzsH0` | 100% | 92% | 96% | 40% | 38% | 39% | 14 | 13 | 15 | 16 | OnPremDC | — |
-| 3 | `07lfvavMdfU` | 91% | 100% | 95% | 60% | 64% | 62% | 11 | 10 | 15 | 14 | — | Lambda |
-| 4 | `4WjXH8Wp0E4` | 100% | 90% | 95% | 59% | 59% | 59% | 11 | 14 | 22 | 22 | UserConsumerWeb | — |
-| 5 | `7LziNjUTo7w` | 89% | 100% | 94% | 87% | 81% | 84% | 9 | 9 | 15 | 16 | — | UserCompanyDeveloper |
-| 6 | `AzM_d7ZvzUE` | 89% | 100% | 94% | 76% | 65% | 70% | 12 | 11 | 17 | 20 | — | UserCompanyDeveloper |
-| 7 | `-ahWdCysMYw` | 100% | 88% | 93% | 56% | 56% | 56% | 7 | 8 | 9 | 9 | VPN | — |
-| 8 | `ww5fiygF6eg` | 88% | 100% | 93% | 75% | 90% | 82% | 12 | 10 | 24 | 20 | — | UserCompanyAgent |
-| 9 | `1aYoIZvabbk` | 86% | 100% | 92% | 44% | 80% | 57% | 7 | 6 | 9 | 5 | — | EC2 |
-| 10 | `A4Lfk1Zz1dE` | 86% | 100% | 92% | 40% | 80% | 53% | 9 | 8 | 10 | 5 | — | UserCompanyDeveloper |
-| 11 | `BlCXEMp_lqY` | 86% | 100% | 92% | 78% | 78% | 78% | 7 | 6 | 9 | 9 | — | UserCompanyAnalyst |
+| 1 | `BlCXEMp_lqY` | 100% | 100% | 100% | 100% | 56% | 71% | 6 | 6 | 5 | 9 | — | — |
+| 2 | `Cgv0kfp_6xQ` | 100% | 100% | 100% | 77% | 71% | 74% | 10 | 10 | 13 | 14 | — | — |
+| 3 | `iKYvG5aiIn8` | 100% | 100% | 100% | 100% | 100% | 100% | 12 | 12 | 12 | 12 | — | — |
+| 4 | `-3lnf5lzsH0` | 100% | 92% | 96% | 40% | 38% | 39% | 14 | 13 | 15 | 16 | OnPremDC | — |
+| 5 | `07lfvavMdfU` | 91% | 100% | 95% | 71% | 71% | 71% | 12 | 10 | 14 | 14 | — | Lambda |
+| 6 | `4WjXH8Wp0E4` | 100% | 90% | 95% | 59% | 59% | 59% | 11 | 14 | 22 | 22 | UserConsumerWeb | — |
+| 7 | `7LziNjUTo7w` | 89% | 100% | 94% | 92% | 69% | 79% | 9 | 9 | 12 | 16 | — | UserCompanyAgent |
+| 8 | `AzM_d7ZvzUE` | 89% | 100% | 94% | 76% | 65% | 70% | 12 | 11 | 17 | 20 | — | UserCompanyDeveloper |
+| 9 | `-ahWdCysMYw` | 100% | 88% | 93% | 56% | 56% | 56% | 7 | 8 | 9 | 9 | VPN | — |
+| 10 | `1aYoIZvabbk` | 86% | 100% | 92% | 44% | 80% | 57% | 7 | 6 | 9 | 5 | — | EC2 |
+| 11 | `A4Lfk1Zz1dE` | 86% | 100% | 92% | 40% | 80% | 53% | 9 | 8 | 10 | 5 | — | UserCompanyDeveloper |
 | 12 | `1kWxymroGeE` | 83% | 100% | 91% | 31% | 100% | 47% | 6 | 5 | 13 | 4 | — | UserCompanyInternalPlatform |
 | 13 | `6YkguepAQuQ` | 90% | 90% | 90% | 15% | 20% | 17% | 10 | 10 | 13 | 10 | VPC | UserCompanyAgent |
 | 14 | `2L0m28ZLmtE` | 85% | 92% | 88% | 15% | 36% | 21% | 15 | 13 | 27 | 11 | ThirdParty | CloudFormation, UserCompanyAnalyst |
@@ -50,15 +50,15 @@
 | 17 | `wjtSHyENv0I` | 86% | 86% | 86% | 62% | 71% | 67% | 8 | 8 | 16 | 14 | UserConsumerWeb | UserCompanyAgent |
 | 18 | `0gNMEyei-co` | 80% | 89% | 84% | 64% | 69% | 67% | 13 | 9 | 14 | 13 | UserCompanyDataStream | Glue, UserCompanyAPI |
 | 19 | `2e3vOxsHekE` | 83% | 83% | 83% | 67% | 67% | 67% | 6 | 6 | 6 | 6 | UserConsumerEdge | UserConsumerIOT |
-| 20 | `Cgv0kfp_6xQ` | 83% | 83% | 83% | 53% | 64% | 58% | 10 | 10 | 17 | 14 | UserConsumerMobile | UserConsumerWebMobile |
-| 21 | `D9qTotVJYss` | 83% | 83% | 83% | 44% | 40% | 42% | 6 | 6 | 9 | 10 | UserCompanyAgent | UserCompanyInternalPlatform |
-| 22 | `0F7KDLz-kIQ` | 82% | 82% | 82% | 45% | 32% | 38% | 12 | 13 | 20 | 28 | Fargate, UserConsumerWeb | ECS, UserConsumerWebMobile |
-| 23 | `BZ32w0SSAoY` | 80% | 80% | 80% | 71% | 63% | 67% | 7 | 7 | 17 | 19 | ThirdParty | RDS |
-| 24 | `8s0wGRkiDrw` | 67% | 100% | 80% | 67% | 100% | 80% | 7 | 5 | 6 | 4 | — | UserCompanyAnalyst, UserConsumerWeb |
-| 25 | `5f3z1Z_9BJA` | 75% | 86% | 80% | 40% | 35% | 38% | 12 | 11 | 15 | 17 | UserCompanyDataStream | ThirdParty, UserCompanyAnalyst |
-| 26 | `6EUknQqaV1w` | 75% | 86% | 80% | 13% | 18% | 15% | 12 | 9 | 15 | 11 | KinesisDataStream | EKS, Kinesis |
-| 27 | `D77FSUkPJ3o` | 75% | 86% | 80% | 36% | 42% | 38% | 10 | 8 | 14 | 12 | UserConsumerWeb | KMS, UserCompanyInternalPlatform |
-| 28 | `Yju3yReAQtc` | 75% | 86% | 80% | 31% | 57% | 40% | 13 | 7 | 13 | 7 | UserCompanyInternalPlatform | EC2, UserConsumerWeb |
+| 20 | `D9qTotVJYss` | 83% | 83% | 83% | 44% | 40% | 42% | 6 | 6 | 9 | 10 | UserCompanyAgent | UserCompanyInternalPlatform |
+| 21 | `0F7KDLz-kIQ` | 82% | 82% | 82% | 45% | 32% | 38% | 12 | 13 | 20 | 28 | Fargate, UserConsumerWeb | ECS, UserConsumerWebMobile |
+| 22 | `BZ32w0SSAoY` | 80% | 80% | 80% | 71% | 63% | 67% | 7 | 7 | 17 | 19 | ThirdParty | RDS |
+| 23 | `8s0wGRkiDrw` | 67% | 100% | 80% | 67% | 100% | 80% | 7 | 5 | 6 | 4 | — | UserCompanyAnalyst, UserConsumerWeb |
+| 24 | `5f3z1Z_9BJA` | 75% | 86% | 80% | 40% | 35% | 38% | 12 | 11 | 15 | 17 | UserCompanyDataStream | ThirdParty, UserCompanyAnalyst |
+| 25 | `6EUknQqaV1w` | 75% | 86% | 80% | 13% | 18% | 15% | 12 | 9 | 15 | 11 | KinesisDataStream | EKS, Kinesis |
+| 26 | `D77FSUkPJ3o` | 75% | 86% | 80% | 36% | 42% | 38% | 10 | 8 | 14 | 12 | UserConsumerWeb | KMS, UserCompanyInternalPlatform |
+| 27 | `Yju3yReAQtc` | 75% | 86% | 80% | 31% | 57% | 40% | 13 | 7 | 13 | 7 | UserCompanyInternalPlatform | EC2, UserConsumerWeb |
+| 28 | `ww5fiygF6eg` | 75% | 86% | 80% | 69% | 45% | 55% | 11 | 10 | 13 | 20 | UserCompanyDrone | OnPremDC, UserCompanyAgent |
 | 29 | `2f_NYiPJQt4` | 69% | 90% | 78% | 32% | 67% | 43% | 13 | 10 | 19 | 9 | S2SVPN | ThirdParty, UserCompanyAgent, UserCompanyDeveloper (+1) |
 | 30 | `8TExnSvZqt0` | 75% | 82% | 78% | 0% | 0% | 0% | 12 | 11 | 11 | 0 | AMI, AWSConfig | EC2, ThirdParty, UserCompanyInternalPlatform |
 | 31 | `7wBOFcP1HwA` | 78% | 78% | 78% | 35% | 60% | 44% | 11 | 10 | 17 | 10 | ThirdParty, UserConsumerWeb | EC2, UserConsumerWebMobile |
@@ -95,7 +95,7 @@ Services present in ground truth but NOT in generated graphs.
 | UserConsumerWeb | 10 | User |
 | ThirdParty | 7 | ThirdParty |
 | UserCompanyDataStream | 6 | User |
-| UserConsumerMobile | 5 | User |
+| UserConsumerMobile | 4 | User |
 | UserCompanyAgent | 4 | User |
 | UserConsumerAPI | 4 | User |
 | ALB | 3 | networking |
@@ -119,12 +119,12 @@ Services in generated graphs but NOT in ground truth.
 
 | Service | Times Hallucinated | Capability |
 |---------|-------------------|------------|
-| UserCompanyDeveloper | 11 | User |
-| UserConsumerWebMobile | 10 | User |
-| UserCompanyAnalyst | 8 | User |
+| UserCompanyDeveloper | 10 | User |
+| UserConsumerWebMobile | 9 | User |
 | ThirdParty | 8 | ThirdParty |
+| UserCompanyAnalyst | 7 | User |
+| UserCompanyAgent | 7 | User |
 | EC2 | 6 | compute |
-| UserCompanyAgent | 6 | User |
 | UserCompanyInternalPlatform | 5 | User |
 | Lambda | 4 | compute |
 | UserCompanyAPI | 4 | User |
@@ -132,12 +132,12 @@ Services in generated graphs but NOT in ground truth.
 | UserCompanyDomainExpert | 3 | User |
 | RDS | 3 | storage |
 | UserConsumerWeb | 3 | User |
+| OnPremDC | 2 | OnPremDC |
 | UserConsumerIOT | 2 | User |
 | EKS | 2 | compute |
 | Kinesis | 2 | integration |
 | VPC | 2 | networking |
 | UserCompanyEdge | 1 | User |
-| OnPremDC | 1 | OnPremDC |
 | ECS | 1 | compute |
 
 ## 6. Most Frequently Missing Edges
@@ -147,10 +147,9 @@ Services in generated graphs but NOT in ground truth.
 | CloudFront→UserConsumerWeb | 5 |
 | EC2→S3 | 5 |
 | EC2→ThirdParty | 4 |
-| UserConsumerMobile→EKS | 4 |
 | S3→EC2 | 4 |
 | UserConsumerWeb→CloudFront | 4 |
-| DynamoDB→EKS | 3 |
+| UserConsumerMobile→EKS | 3 |
 | S3→ECS | 3 |
 | Lambda→Kinesis | 3 |
 | Kinesis→Lambda | 3 |
@@ -158,35 +157,36 @@ Services in generated graphs but NOT in ground truth.
 | UserConsumerWeb→ThirdParty | 3 |
 | S3→Firehose | 3 |
 | S3→Lambda | 3 |
-| EKS→UserConsumerMobile | 2 |
+| DynamoDB→EKS | 2 |
+| ThirdParty→EC2 | 2 |
 
 ## 7. Most Frequently Hallucinated Edges
 
 | Edge (src → tgt) | Times Hallucinated |
 |------------------|--------------------|
 | Lambda→S3 | 8 |
-| CloudFront→UserConsumerWebMobile | 7 |
 | EC2→S3 | 7 |
-| EKS→EC2 | 6 |
-| UserConsumerWebMobile→CloudFront | 6 |
-| EKS→DynamoDB | 5 |
+| CloudFront→UserConsumerWebMobile | 6 |
+| UserConsumerWebMobile→CloudFront | 5 |
+| EKS→EC2 | 5 |
 | EC2→EC2 | 4 |
 | Lambda→DynamoDB | 4 |
-| ThirdParty→ThirdParty | 4 |
 | Lambda→EC2 | 4 |
 | SQS→EC2 | 3 |
-| UserCompanyAnalyst→QuickSight | 3 |
-| EC2→UserConsumerWeb | 3 |
 | ApiGateway→CloudFront | 3 |
 | ELB→ECS | 3 |
+| ApiGateway→Lambda | 3 |
+| UserCompanyDeveloper→ApiGateway | 3 |
+| ThirdParty→Lambda | 3 |
+| Lambda→ELB | 3 |
 
 ## 8. Performance by Service Capability
 
 | Capability | GT Count | Correct | Missed | Hallucinated | Recall |
 |------------|----------|---------|--------|--------------|--------|
-| OnPremDC | 1 | 0 | 1 | 1 | 0.0% |
+| OnPremDC | 1 | 0 | 1 | 2 | 0.0% |
 | ThirdParty | 20 | 13 | 7 | 8 | 65.0% |
-| User | 55 | 18 | 37 | 57 | 32.7% |
+| User | 55 | 18 | 37 | 55 | 32.7% |
 | compute | 109 | 105 | 4 | 13 | 96.3% |
 | control | 35 | 33 | 2 | 4 | 94.3% |
 | integration | 36 | 33 | 3 | 5 | 91.7% |
@@ -200,8 +200,8 @@ Services in generated graphs but NOT in ground truth.
 |----------|----------|------------|-------------|
 | compute_intensive | 7 | 77.5% | 51.0% |
 | control | 9 | 77.3% | 41.6% |
-| data_ingestion | 22 | 81.3% | 54.1% |
-| interactive | 21 | 80.4% | 51.7% |
+| data_ingestion | 22 | 81.1% | 53.0% |
+| interactive | 21 | 80.5% | 50.9% |
 | other | 4 | 74.9% | 19.9% |
 
 ## 10. Bottom 10 Worst Performing Videos
