@@ -223,7 +223,7 @@ def analyze_frame(
         console.print(f"  [dim]  Including transcript ({len(transcript)} chars)[/]")
 
     import time
-    max_retries = 3
+    max_retries = 5
     retry_delay = 10
     response = None
 
@@ -249,9 +249,10 @@ def analyze_frame(
             break
         except Exception as e:
             err_msg = str(e)
-            if attempt < max_retries - 1 and any(x in err_msg.upper() or y in err_msg for x in ["503", "429", "UNAVAILABLE", "LIMIT"] for y in ["demand", "ResourceExhausted"]):
-                console.print(f"  [yellow]⚠ Gemini API returned error: {err_msg}. Retrying in {retry_delay}s... (Attempt {attempt+1}/{max_retries})[/]")
-                time.sleep(retry_delay)
+            if attempt < max_retries - 1 and any(x in err_msg.upper() or y in err_msg for x in ["503", "429", "UNAVAILABLE", "LIMIT"] for y in ["demand", "ResourceExhausted", "quota"]):
+                delay = 65 if ("429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg.upper() or "quota" in err_msg.lower()) else retry_delay
+                console.print(f"  [yellow]⚠ Gemini API returned error: {err_msg}. Retrying in {delay}s... (Attempt {attempt+1}/{max_retries})[/]")
+                time.sleep(delay)
                 retry_delay *= 2
             else:
                 raise e
