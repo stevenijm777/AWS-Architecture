@@ -1,0 +1,257 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="user_customer">
+      <data key="d5">Clumio Customer</data>
+      <data key="d6">UserCompanyAPI</data>
+      <data key="d7">Represents the customer of Clumio, interacting to enable the service and initiate backups.</data>
+    </node>
+    <node id="cloudformation_template">
+      <data key="d5">Clumio CFT</data>
+      <data key="d6">CloudFormation</data>
+      <data key="d7">Provided to the customer to install in their AWS environment. It deploys EventBridge, CloudWatch (for events), and necessary IAM roles in the customer's account.</data>
+    </node>
+    <node id="iam_role_customer">
+      <data key="d5">ClumioAccessRole (Customer)</data>
+      <data key="d6">IAM</data>
+      <data key="d7">Installed in the customer's AWS account by the CloudFormation template. This role is leveraged by Clumio to extract metadata from data sources (EBS, RDS, DynamoDB) and to extract data for backup copies.</data>
+    </node>
+    <node id="eventbridge_customer">
+      <data key="d5">Customer EventBridge</data>
+      <data key="d6">EventBridge</data>
+      <data key="d7">Installed in the customer's AWS account. Captures environmental changes detected by CloudWatch event triggers and forwards them to Clumio's SQS queue.</data>
+    </node>
+    <node id="cloudwatch_customer">
+      <data key="d5">Customer CloudWatch Events</data>
+      <data key="d6">CloudWatch</data>
+      <data key="d7">Installed in the customer's AWS account. Used for event triggers to capture initial and subsequent changes in the customer's data sources (EBS, RDS, DynamoDB).</data>
+    </node>
+    <node id="ebs_customer">
+      <data key="d5">Customer EBS Volumes</data>
+      <data key="d6">EBS</data>
+      <data key="d7">Source of data and metadata for Clumio's backup service. Changes trigger CloudWatch events.</data>
+    </node>
+    <node id="rds_customer">
+      <data key="d5">Customer RDS Databases</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Source of data and metadata for Clumio's backup service. Changes trigger CloudWatch events.</data>
+    </node>
+    <node id="dynamodb_customer">
+      <data key="d5">Customer DynamoDB Tables</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Source of metadata for Clumio's backup service. Changes trigger CloudWatch events.</data>
+    </node>
+    <node id="kms_clumio">
+      <data key="d5">Clumio KMS Key</data>
+      <data key="d6">KMS</data>
+      <data key="d7">Created in Clumio's dedicated AWS account (on behalf of the customer). Used for encrypting all data moved for backup, ensuring secure data transit and storage.</data>
+    </node>
+    <node id="iam_role_clumio">
+      <data key="d5">Clumio Worker Role</data>
+      <data key="d6">IAM</data>
+      <data key="d7">Created in Clumio's dedicated AWS account. Assumed by Clumio's Lambda functions for operations on S3 objects during data post-processing.</data>
+    </node>
+    <node id="sqs_metadata_queue">
+      <data key="d5">Metadata Event Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Receives metadata change events from the customer's EventBridge. These messages are then consumed by Clumio's metadata analysis Lambda functions.</data>
+    </node>
+    <node id="lambda_metadata_analysis">
+      <data key="d5">Metadata Analysis Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Represents 'different Lambda functions' that continuously consume metadata messages from the SQS queue, analyze them, and generate output for Clumio's data engines. DATA_PEEK: Output messages contain insights about data protection in the customer's environment.</data>
+    </node>
+    <node id="eks_clumio_metadata_engine">
+      <data key="d5">Clumio Metadata Engine</data>
+      <data key="d6">EKS</data>
+      <data key="d7">WORKLOAD_PEEK: Clumio's internal application ('data engine') for storing and processing output messages from metadata analysis Lambdas. Used to create various reports and recommendations (e.g., compliance, audit, cost reports) about data protection. Running on unspecified AWS compute (EKS used as a representative service for an internal 'engine').</data>
+    </node>
+    <node id="s3_clumio_metadata_output">
+      <data key="d5">Clumio Metadata Output S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">One of the 'different data engines' where output messages from metadata analysis Lambdas are stored. This S3 bucket likely holds raw or processed metadata insights used for reporting.</data>
+    </node>
+    <node id="s3_customer_backup_data">
+      <data key="d5">Clumio Customer Backup S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Dedicated S3 buckets in Clumio's account for storing encrypted customer backup data. Designed to leverage S3's scalability and reliability. Data is copied across accounts, and can be configured for cross-region storage.</data>
+    </node>
+    <node id="lambda_data_postprocessing">
+      <data key="d5">Data Post-processing Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Represents 'a very large number of Lambda functions' that are triggered when data lands in the 'Clumio Customer Backup S3'. They perform heavy and complex post-processing operations like compression, data optimizations, data integrity checks, data verification, indexing, and cataloging. Minimizes processing burden on the customer's side.</data>
+    </node>
+    <node id="s3_processed_data">
+      <data key="d5">Clumio Processed Data S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores data after post-processing by Clumio's Lambda functions. This includes compressed, optimized, and cataloged backup data, distinct from the initial raw backup S3.</data>
+    </node>
+    <edge source="user_customer" target="cloudformation_template" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Customer deploys Clumio's CloudFormation template into their AWS account.</data>
+      <data key="d10">0.1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="user_customer" target="iam_role_customer" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Customer initiates a backup through Clumio, which leverages the provisioned IAM role in the customer's account.</data>
+      <data key="d10">2.1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="cloudformation_template" target="eventbridge_customer" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFormation template installs EventBridge in the customer's account.</data>
+      <data key="d10">0.2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="cloudformation_template" target="cloudwatch_customer" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFormation template installs CloudWatch (for event triggers) in the customer's account.</data>
+      <data key="d10">0.3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="cloudformation_template" target="iam_role_customer" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFormation template installs necessary IAM roles for Clumio to access customer resources.</data>
+      <data key="d10">0.4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="iam_role_customer" target="ebs_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">IAM role used to extract initial metadata about EBS volumes.</data>
+      <data key="d10">1.1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="iam_role_customer" target="ebs_customer" id="1">
+      <data key="d8">2</data>
+      <data key="d9">IAM role extracts EBS volume data for backup.</data>
+      <data key="d10">2.2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="iam_role_customer" target="rds_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">IAM role used to extract initial metadata about RDS databases.</data>
+      <data key="d10">1.2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="iam_role_customer" target="rds_customer" id="1">
+      <data key="d8">2</data>
+      <data key="d9">IAM role extracts RDS database data for backup.</data>
+      <data key="d10">2.3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="iam_role_customer" target="dynamodb_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">IAM role used to extract initial metadata about DynamoDB tables.</data>
+      <data key="d10">1.3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="eventbridge_customer" target="sqs_metadata_queue" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Captured events are sent as SQS messages to Clumio's metadata queue.</data>
+      <data key="d10">1.8</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="cloudwatch_customer" target="eventbridge_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">CloudWatch events are captured by EventBridge in the customer's account.</data>
+      <data key="d10">1.7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="ebs_customer" target="cloudwatch_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Subsequent changes in EBS volumes trigger CloudWatch events.</data>
+      <data key="d10">1.4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="ebs_customer" target="kms_clumio" id="0">
+      <data key="d8">2</data>
+      <data key="d9">EBS data is sent for encryption using Clumio's KMS key during cross-account movement.</data>
+      <data key="d10">2.4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="rds_customer" target="cloudwatch_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Subsequent changes in RDS databases trigger CloudWatch events.</data>
+      <data key="d10">1.5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="rds_customer" target="kms_clumio" id="0">
+      <data key="d8">2</data>
+      <data key="d9">RDS data is sent for encryption using Clumio's KMS key during cross-account movement.</data>
+      <data key="d10">2.5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="dynamodb_customer" target="cloudwatch_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Subsequent changes in DynamoDB tables trigger CloudWatch events.</data>
+      <data key="d10">1.6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="kms_clumio" target="s3_customer_backup_data" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Encrypted backup data is sent directly to the dedicated S3 bucket in Clumio's account.</data>
+      <data key="d10">2.6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="sqs_metadata_queue" target="lambda_metadata_analysis" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Metadata analysis Lambda functions consume messages from the SQS queue.</data>
+      <data key="d10">1.9</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="lambda_metadata_analysis" target="eks_clumio_metadata_engine" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda functions generate and store output messages (metadata insights) into the Clumio Metadata Engine.</data>
+      <data key="d10">1.10</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="lambda_metadata_analysis" target="s3_clumio_metadata_output" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda functions also store metadata analysis output into a dedicated S3 bucket.</data>
+      <data key="d10">1.11</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="eks_clumio_metadata_engine" target="user_customer" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Clumio's Metadata Engine provides reports and recommendations (e.g., compliance, cost) to the customer.</data>
+      <data key="d10">1.12</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="s3_customer_backup_data" target="lambda_data_postprocessing" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Data landing in the customer backup S3 bucket triggers a large number of Lambda functions for post-processing.</data>
+      <data key="d10">3.1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="lambda_data_postprocessing" target="iam_role_clumio" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Post-processing Lambdas assume Clumio's IAM role for operations on S3 objects.</data>
+      <data key="d10">3.2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="lambda_data_postprocessing" target="s3_processed_data" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Processed data (e.g., compressed, optimized, cataloged) is stored in a separate S3 bucket after post-processing.</data>
+      <data key="d10">3.3</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Clumio Backup-as-a-Service Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=Ozbv9qBsDG8</data>
+    <data key="d2">Clumio provides a backup-as-a-service for AWS workloads, offering insights and automation. Key design decisions include minimizing processing on the customer side, leveraging S3's scalability and reliability for secure data movement, cross-account and cross-region backups for compliance and disaster recovery, and robust encryption using KMS. The architecture enables metadata capture and analysis for reporting, alongside secure data backup and post-processing.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive, control, other</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

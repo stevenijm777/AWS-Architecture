@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">CMS</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Content Management System used by MX Player's content team to ingest video data. DATA_PEEK: Raw video files are ingested here.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Ingestion API</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Receives ingested files from the CMS. Initiates the pre-transcoding workflow by invoking workers, sending messages to SQS, and creating tasks in ElastiCache.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Transcoding Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Used to send messages between the ingestion API, pre-transcoding workers, and actual transcoding workers. WORKLOAD_PEEK: Can handle around 100K videos ingested.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Transcoding Task Cache</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">Used to create and mark transcoding tasks as done. WORKLOAD_PEEK: Tasks are created by the Ingestion API and marked done by transcoding workers.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Pre-Transcoding Workers</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Auto-scaling group of EC2 instances. Performs basic checks on raw videos and does audio and subtitle transcoding. Utilizes GPU instances and normal CPU-weight instances. WORKLOAD_PEEK: Uses spot instances for cost efficiency. DATA_PEEK: Processes huge raw video sizes.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Transcoding Workers</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Auto-scaling group of EC2 instances for the actual video transcoding. Retrieves data from S3, transcodes it, marks tasks in ElastiCache, and sends the output back to S3. Utilizes GPU instances and CPU instances. WORKLOAD_PEEK: Uses spot instances, scaled up to around 3,000 instances to finish 100K videos in one hour. Implements multiple codec transformations (e.g., H.266, H.265, AV1) for compression.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Video Content Storage</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores raw video files, receives final transcoded video files, and serves as the origin for CloudFront for content delivery. DATA_PEEK: Final media files (e.g., H.266, H.265, AV1 formats) are stored here.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Content Delivery Network</data>
+      <data key="d6">CloudFront</data>
+      <data key="d7">Serves video content to end-users with S3 as its backend. Optimizes content delivery and reduces user bandwidth consumption (up to 50% less with H.266 codec). WORKLOAD_PEEK: Reduces CDN data out costs.</data>
+    </node>
+    <node id="8">
+      <data key="d5">End User</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">Users of the MX Player app (mobile/web) who hit the play button to stream videos. WORKLOAD_PEEK: Over 300 million MAUs.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Content team ingests data via CMS, which pushes to the Ingestion API.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Pre-transcoding API (on EC2) invokes the pre-transcoding workers.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingestion API sends a message to SQS.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingestion API creates a task entry in ElastiCache.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Transcoding workers get tasks/messages from SQS to initiate main transcoding.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">After pre-transcoding is done, sends data/message back to SQS.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Pre-transcoding workers hit the actual transcoding API (implied direct invocation in addition to SQS).</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Transcoding workers request raw video data from S3.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="1">
+      <data key="d8">1</data>
+      <data key="d9">Transcoding workers send the final transcoded video back to S3.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Transcoding workers mark the task as done in ElastiCache.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">S3 provides raw video data to transcoding workers.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">S3 delivers video content to CloudFront.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">CloudFront fetches video content from S3 (origin).</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">CloudFront delivers video content to the end user.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">User hits play button, request goes directly to CloudFront.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">MX Player Video Transcoding and Delivery Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=NfUwtK8ALtw</data>
+    <data key="d2">MX Player is India's largest digital entertainment ecosystem with 1 billion+ app downloads and 300 million+ MAUs. This architecture describes their scalable video transcoding and delivery pipeline for 200k+ hours of video content. Key design decisions include using EC2 spot instances with GPU/CPU for both pre-transcoding and main transcoding workers, leveraging auto-scaling for elasticity, and using CloudFront with S3 for efficient, cost-effective content delivery with advanced codecs (e.g., S266) to reduce user bandwidth consumption by 50%.</data>
+    <data key="d3">data_ingestion, compute_intensive, interactive</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
