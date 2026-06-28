@@ -222,23 +222,39 @@ def analyze_frame(
     if transcript:
         console.print(f"  [dim]  Including transcript ({len(transcript)} chars)[/]")
 
-    response = client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=[
-            {
-                "parts": [
-                    {"text": full_prompt},
+    import time
+    max_retries = 3
+    retry_delay = 10
+    response = None
+
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=[
                     {
-                        "inline_data": {
-                            "mime_type": mime,
-                            "data": image_b64,
-                        }
-                    },
-                ]
-            }
-        ],
-        config={"response_mime_type": "application/json"},
-    )
+                        "parts": [
+                            {"text": full_prompt},
+                            {
+                                "inline_data": {
+                                    "mime_type": mime,
+                                    "data": image_b64,
+                                }
+                            },
+                        ]
+                    }
+                ],
+                config={"response_mime_type": "application/json"},
+            )
+            break
+        except Exception as e:
+            err_msg = str(e)
+            if attempt < max_retries - 1 and any(x in err_msg.upper() or y in err_msg for x in ["503", "429", "UNAVAILABLE", "LIMIT"] for y in ["demand", "ResourceExhausted"]):
+                console.print(f"  [yellow]⚠ Gemini API returned error: {err_msg}. Retrying in {retry_delay}s... (Attempt {attempt+1}/{max_retries})[/]")
+                time.sleep(retry_delay)
+                retry_delay *= 2
+            else:
+                raise e
 
     # Parse the JSON response
     raw_text = response.text.strip()

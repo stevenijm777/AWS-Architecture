@@ -19,6 +19,22 @@ from config.settings import RAW_DIR, VIDEO_FORMAT
 console = Console()
 
 
+def extract_video_id(url: str) -> str | None:
+    if "v=" in url:
+        part = url.split("v=")[1]
+        return part.split("&")[0].split("#")[0]
+    elif "youtu.be/" in url:
+        part = url.split("youtu.be/")[1]
+        return part.split("?")[0].split("#")[0]
+    elif "embed/" in url:
+        part = url.split("embed/")[1]
+        return part.split("?")[0].split("#")[0]
+    elif "youtube.com/v/" in url:
+        part = url.split("youtube.com/v/")[1]
+        return part.split("?")[0].split("#")[0]
+    return None
+
+
 def download_video(url: str, output_dir: Path | None = None) -> dict[str, Any]:
     """
     Download a YouTube video in the best quality and return its metadata.
@@ -37,6 +53,17 @@ def download_video(url: str, output_dir: Path | None = None) -> dict[str, Any]:
     """
     output_dir = output_dir or RAW_DIR
 
+    video_id = extract_video_id(url)
+    if video_id:
+        info_path = output_dir / f"{video_id}.info.json"
+        video_path = output_dir / f"{video_id}.mp4"
+        if info_path.exists() and video_path.exists():
+            console.print(f"[yellow]⚠[/] Video and metadata for {video_id} already exist locally. Skipping download.")
+            with open(info_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+
+    cookies_path = Path(__file__).resolve().parent.parent / "cookies.txt"
+
     ydl_opts: dict[str, Any] = {
         "format": VIDEO_FORMAT,
         "outtmpl": str(output_dir / "%(id)s.%(ext)s"),
@@ -45,8 +72,13 @@ def download_video(url: str, output_dir: Path | None = None) -> dict[str, Any]:
         "writethumbnail": False,
         "quiet": False,
         "no_warnings": False,
+        "extractor_args": {"youtube": ["player_client=android"]},
         "progress_hooks": [_progress_hook],
     }
+
+    if cookies_path.exists():
+        ydl_opts["cookiefile"] = str(cookies_path)
+        console.print("[green]✓[/] Using cookies from cookies.txt")
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         console.print(f"\n[bold cyan]⬇  Downloading:[/] {url}")

@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Security/Product Dev Ops Teams</data>
+      <data key="d6">UserCompanyDeveloper</data>
+      <data key="d7">Represents both 'security dev op teams' responsible for onboarding and 'dev op teams from a product team' responsible for key generation and deletion. Pushes mapping files, generates/deletes keys, receives notifications.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Git</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Source code repository where 'mappings.json' files are pushed by security dev ops teams. These files define AWS accounts for virtual tenants.</data>
+    </node>
+    <node id="2">
+      <data key="d5">S3 Onboarding Artifacts</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores 'mappings.json' files uploaded from Git. An upload event to this bucket triggers the onboarding Step Functions workflow.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Onboarding Workflow</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates the virtual tenant onboarding process. Its parts include creating IAM roles, provisioning virtual tenants in KMS, triggering Lambda for setup, and sending notifications.</data>
+    </node>
+    <node id="4">
+      <data key="d5">IAM Role Creation</data>
+      <data key="d6">IAM</data>
+      <data key="d7">Used by Step Functions to create IAM roles in specific AWS accounts. These roles allow Talas to assume permissions for key operations.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Talas (On-Prem KMS)</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Raiffeisen Bank's on-premises key management system (HSM). Generates symmetric 256-bit master keys (CMKs) and imports them to AWS KMS. Also handles key deletion requests for replication to KMS. WORKLOAD_PEEK: Generates symmetric 256-bit encryption keys.</data>
+    </node>
+    <node id="6">
+      <data key="d5">AWS KMS</data>
+      <data key="d6">KMS</data>
+      <data key="d7">AWS Key Management Service. Manages customer managed keys (CMKs) which are virtual wrappers for keys generated on Talas. Used to encrypt data in AWS services like S3 and EBS. Creates the 'virtual tenant' key wrapper during onboarding. DATA_PEEK: Stores data encryption keys (DEK) composed of data and master keys.</data>
+    </node>
+    <node id="7">
+      <data key="d5">KMS/Talas Integrator</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Triggered by Step Functions. Facilitates communication and specific setup between the on-premises Talas KMS and AWS KMS based on the created IAM role, enabling direct operations.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Onboarding Notifications</data>
+      <data key="d6">SNS</data>
+      <data key="d7">Used by Step Functions to send notifications to security dev op teams upon successful completion of the onboarding workflow.</data>
+    </node>
+    <node id="9">
+      <data key="d5">S3 Encrypted Data</data>
+      <data key="d6">S3</data>
+      <data key="d7">AWS S3 buckets where application data is stored encrypted using KMS customer managed keys.</data>
+    </node>
+    <node id="10">
+      <data key="d5">EBS Encrypted Volumes</data>
+      <data key="d6">EBS</data>
+      <data key="d7">AWS EBS volumes where application data is stored encrypted using KMS customer managed keys.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Security dev op teams push 'mappings.json' file into Git repository.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Product dev op teams generate a symmetric 256-bit master key on Talas.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="5" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Dev op teams make an API call to Talas to delete a master key for revocation.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Git action uploads 'mappings.json' artifact to S3.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">S3 upload event triggers the Step Functions onboarding workflow.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions creates an IAM role in specific AWS accounts.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions creates the virtual tenant (key wrapper) in KMS.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions triggers a Lambda function for specific configuration or connectivity setup.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="8" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions notifies completion of the onboarding flow via SNS.</data>
+      <data key="d10">9</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The created IAM role allows the on-premises Talas system to assume permissions for operations with a key.</data>
+      <data key="d10">4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The generated master key from Talas is imported into KMS as a customer managed key (CMK), forming a data encryption key (DEK).</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Talas replicates the master key deletion to the corresponding CMK in KMS, removing the secret and revoking access.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">KMS uses the DEK to encrypt data stored in S3.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="10" id="0">
+      <data key="d8">1</data>
+      <data key="d9">KMS uses the DEK to encrypt data on EBS volumes.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda facilitates interaction/communication with the on-premises Talas system after initial setup.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda facilitates interaction/communication with AWS KMS after initial setup.</data>
+      <data key="d10">8</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SNS sends notification to the security dev op teams that onboarding is complete.</data>
+      <data key="d10">10</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">RBI On-Premises Key Management with AWS</data>
+    <data key="d1">https://www.youtube.com/watch?v=H_S7CxtHgSM</data>
+    <data key="d2">Raiffeisen Bank International (RBI) built an architecture to maintain on-premises key management and control over their encryption for compliance reasons. The solution consists of two main elements: an onboarding process for virtual tenants and a key operation lifecycle. The onboarding phase uses Git and S3 for configuration file ingestion, orchestrated by Step Functions to create IAM roles and provision virtual keys in AWS KMS, notifying relevant dev ops teams. The key operation lifecycle allows dev ops teams to generate symmetric 256-bit CMKs on their on-premises Thales (Talas) HSM, import them into AWS KMS, and then use these customer-managed keys (CMKs) to encrypt data in various AWS services like S3 and EBS. The architecture also supports key revocation initiated from Talas and replicated to KMS.</data>
+    <data key="d3">data_ingestion, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

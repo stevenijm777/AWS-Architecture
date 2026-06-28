@@ -1,0 +1,134 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Satellites</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">DATA_PEEK: Provides a series of modestly processed and corrected imagery tiles daily from organizations like NASA. WORKLOAD_PEEK: Data comes in throughout the day.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Spot Instances Cluster</data>
+      <data key="d6">EC2</data>
+      <data key="d7">WORKLOAD_PEEK: A big cluster of spot instances spun up quickly to post-process incoming satellite data (further corrections, format conversion) and then spun down. Part of the ingestion workflow.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Bulk Imagery Data</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Stores big bulk imagery data. Catalog spans 30 years, ~5 petabytes in total, growing by ~100 gigabytes daily. Uses HTTP range requests for reading parts of objects, enabling efficient retrieval of subsections of data.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Metadata Database</data>
+      <data key="d6">RDS</data>
+      <data key="d7">DATA_PEEK: Stores metadata corresponding to the bulk imagery data in S3. Used for looking up source imagery.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Farmers/Users</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">WORKLOAD_PEEK: Users log into the app to view maps of the United States with imagery, select layers and timeframes. Also define areas of interest for backend computations.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Web Tile Server</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">WORKLOAD_PEEK: Serves web map tiles. Receives individual requests for 16 different tiles when a map loads. Performs image stitching, downsampling, color correction, and color mapping (e.g., greenness values to RGB space) before serving tiles back to the user.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Redis Tile Cache</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">DATA_PEEK: Uses Redis as a central cache for frequently accessed map tiles (e.g., entire US map tiles). Stores computed tiles to avoid re-computation on the fly.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Time Series Computation</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: A series of Lambda functions designed to compute time series data (e.g., average greenness over time for a field). Dynamically processes raw imagery based on custom farmer-defined areas of interest (e.g., clipping imagery to a specific field and computing summaries like mean greenness).</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Satellite tiles ingested for post-processing</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Processed bulk imagery data stored</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Extracted metadata stored</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">User requests map tiles</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Fargate checks for cached tiles</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="1">
+      <data key="d8">1</data>
+      <data key="d9">Fargate writes newly processed tile to cache</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Fargate looks up source imagery metadata (if cache miss)</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Fargate pulls imagery data using HTTP range requests (if cache miss)</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Fargate serves processed map tile to user</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Cached tile (if hit) returned to Fargate</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="3" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Lambda looks up imagery metadata for computation</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Lambda reads raw imagery data for time series computation</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Indigo Carbon Regenerative Agriculture Platform</data>
+    <data key="d1">https://www.youtube.com/watch?v=FfSNnH2bbNc</data>
+    <data key="d2">Indigo Carbon helps farmers with regenerative agriculture by leveraging satellite imagery. The platform ingests 100 GB/day of new imagery, adding to a 5PB catalog spanning 10-30 years. It provides user-facing map tile access with caching and performs serverless backend computations for time-series data related to field health, optimizing for cost by processing data on the fly.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

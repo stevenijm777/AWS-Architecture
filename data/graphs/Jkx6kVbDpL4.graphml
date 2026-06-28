@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">External Data Source</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">DATA_PEEK: Files containing marketing segmentation data from different resources. WORKLOAD_PEEK: 250 billion events/day, 17 million files/day on peak.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Raw Files S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Initial storage for incoming files. WORKLOAD_PEEK: Can handle up to 55 terabytes of data on peak days.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Spark EMR Cluster</data>
+      <data key="d6">EMR</data>
+      <data key="d7">WORKLOAD_PEEK: Used for transformations and formatting of segmentation data using Spark.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Processed Files S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Stores data after initial transformations by EMR.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Postgres Metadata Database</data>
+      <data key="d6">RDS</data>
+      <data key="d7">DATA_PEEK: Stores metadata about files and their processing status. WORKLOAD_PEEK: Experienced connection limit issues when Lambdas directly reported status, leading to SQS introduction.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Work Manager Lambda 1 (EMR Orchestration)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Reads metadata from RDS, makes decisions on file processing, and sends tasks to the Spark EMR cluster. This is the 'little work manager Lambda'.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Work Manager Lambda 2 (Fan-out &amp; Rate Limiting)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Reads information about processed files from RDS. Implements a fan-out architecture by invoking many Uploader Lambdas. Contains intelligent rate limiting logic based on file size, event count, and configured limits per network (e.g., megabits per second, HTTP connections).</data>
+    </node>
+    <node id="7">
+      <data key="d5">Uploader Lambdas</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Many instances invoked by Work Manager 2. Perform final formatting and upload data to over 100 different ad networks. 30 million Lambda invocations on peak days, with 3000 concurrent Lambdas in some minutes. Optimized for cost by tuning memory footprint and HTTP connection/request batching.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Ad Network Output Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">DATA_PEEK: Buffers data to ad networks, ensuring adherence to rate limits. WORKLOAD_PEEK: Data stays in this queue and is gradually sent out if transfer rates exceed network limits.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Ad Networks</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">DATA_PEEK: External partner platforms receiving marketing segmentation data. WORKLOAD_PEEK: Over 100 different networks. Required rate limiting to prevent 'DDoS-like' behavior.</data>
+    </node>
+    <node id="10">
+      <data key="d5">Lambda Status Return Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">DATA_PEEK: Buffer for status updates from Uploader Lambdas back to the database. Introduced to alleviate RDS connection limits. WORKLOAD_PEEK: Stores status updates (success/failure) for a few seconds before being processed.</data>
+    </node>
+    <node id="11">
+      <data key="d5">SQS Processor Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">WORKLOAD_PEEK: Reads status updates in batches from the SQS Return Queue and writes them to the RDS database. This is the 'one Lambda that picks it up in batches'.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Files containing marketing segmentation data from various sources are written into the S3 bucket.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Raw files are processed by the Spark EMR cluster for transformations and formatting.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Transformed and formatted data is written to an intermediate S3 bucket.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EMR writes back status updates and processed file metadata to the RDS database.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Work Manager Lambda 1 reads file processing information and metadata from RDS.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Work Manager Lambda 2 reads information about processed files and metadata from RDS for fan-out decisions.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Work Manager Lambda 1 orchestrates and sends processing tasks to the EMR cluster.</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Work Manager Lambda 2 invokes many Uploader Lambdas with rate limiting logic applied.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Uploader Lambdas send data to the Ad Network Output Queue for rate-limited delivery.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="10" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Uploader Lambdas report their processing status (success/failure) back to the SQS Return Queue.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The SQS queue gradually sends data out to partner Ad Networks, adhering to configured rate limits.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="11" id="0">
+      <data key="d8">3</data>
+      <data key="d9">The SQS Processor Lambda picks up status updates from the Return Queue in batches.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="11" target="4" id="0">
+      <data key="d8">3</data>
+      <data key="d9">The SQS Processor Lambda writes the batched status updates to the RDS metadata database.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Nielsen Marketing Cloud - Data Out System</data>
+    <data key="d1">https://www.youtube.com/watch?v=Jkx6kVbDpL4</data>
+    <data key="d2">Nielsen Marketing Cloud's 'Data Out' system processes marketing segmentation data for ad campaigns. It handles 250 billion events per day, with peak days reaching 55 TB of data across 17 million files and 30 million Lambda invocations. Key challenges included scaling, implementing rate limiting for partner ad networks (to avoid DDoS-like behavior), and cost optimization. The system leverages serverless components for auto-scaling and has optimized costs from $7.7 to $4.25 per billion events through code efficiency and memory/connection tuning.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
