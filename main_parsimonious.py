@@ -215,6 +215,12 @@ def run_pipeline(
         output_dir.mkdir(parents=True, exist_ok=True)
         graphml_path = export_graphml(G, video_id, output_dir=output_dir)
         try:
+            from scripts.tracker import add_to_tracker
+            add_to_tracker(video_id, "version_3")
+        except Exception as e:
+            console.print(f"[yellow]⚠ Failed to register in tracker:[/] {e}")
+            
+        try:
             export_yed_graphml(G, video_id, output_dir=output_dir)
         except Exception as e:
             console.print(f"[yellow]⚠ Failed to export visual GraphML:[/] {e}")
