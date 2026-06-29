@@ -57,10 +57,21 @@ def download_video(url: str, output_dir: Path | None = None) -> dict[str, Any]:
     if video_id:
         info_path = output_dir / f"{video_id}.info.json"
         video_path = output_dir / f"{video_id}.mp4"
-        if info_path.exists() and video_path.exists():
-            console.print(f"[yellow]⚠[/] Video and metadata for {video_id} already exist locally. Skipping download.")
-            with open(info_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+        if video_path.exists():
+            console.print(f"[yellow]⚠[/] Video for {video_id} already exists locally. Skipping download.")
+            if info_path.exists():
+                with open(info_path, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            else:
+                dummy_info = {
+                    "id": video_id,
+                    "title": f"Video {video_id}",
+                    "duration": 0,
+                    "description": ""
+                }
+                with open(info_path, "w", encoding="utf-8") as f:
+                    json.dump(dummy_info, f, indent=2, ensure_ascii=False)
+                return dummy_info
 
     cookies_path = Path(__file__).resolve().parent.parent / "cookies.txt"
 

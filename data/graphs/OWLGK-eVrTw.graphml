@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Client Applications (Dedicated Server)</data>
+      <data key="d6">UserCompanyAPI</data>
+      <data key="d7">Represents dedicated servers or other application types making database calls to the Heimdall proxy. No code changes required, only endpoint configuration change.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Client Applications (Lambda Functions)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Represents serverless Lambda functions making database calls to the Heimdall proxy. No code changes required, only endpoint configuration change.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Heimdall Data NLB</data>
+      <data key="d6">NLB</data>
+      <data key="d7">Database calls connect through to this NLB, which acts as the database endpoint for clients. It distributes traffic to the Heimdall proxy instances.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Heimdall Proxy Instance 1</data>
+      <data key="d6">EC2</data>
+      <data key="d7">WORKLOAD_PEEK: An instance running the Heimdall Data proxy software, part of an Auto Scaling Group. It establishes database connections, provides an L1 cache layer, and leverages ElastiCache as an L2 cache.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Heimdall Proxy Instance 2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">WORKLOAD_PEEK: An instance running the Heimdall Data proxy software, part of an Auto Scaling Group. It establishes database connections, provides an L1 cache layer, and leverages ElastiCache as an L2 cache.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Heimdall Distributed Cache (L2)</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">DATA_PEEK: An additional layer of caching (L2 cache) leveraged by Heimdall proxies. It operates across multiple proxy instances and provides a synchronized cache layer to avoid unnecessary database pulls.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Customer Database</data>
+      <data key="d6">RDS</data>
+      <data key="d7">DATA_PEEK: The underlying relational database (Postgres, MySQL, SQL Server in future) from which data is pulled if not found in the proxy's L1 cache or ElastiCache's L2 cache.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Heimdall Central Manager</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">WORKLOAD_PEEK: A management server responsible for configuring cache invalidation, eviction policies, and other settings for the Heimdall proxies. It operates as a separate control plane and can be standalone or behind an NLB.</data>
+    </node>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Dedicated server clients connect to the NLB for database calls.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda function clients connect to the NLB for database calls.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">NLB distributes database calls to the proxy instance.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">NLB distributes database calls to the proxy instance.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Proxy instance checks ElastiCache (L2 cache) for data if not found in L1 cache.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Proxy instance pulls data from RDS if not found in any cache layer.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Proxy instance checks ElastiCache (L2 cache) for data if not found in L1 cache.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Proxy instance pulls data from RDS if not found in any cache layer.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Central Manager configures cache policies (invalidation, eviction) for the proxy instance.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Central Manager configures cache policies (invalidation, eviction) for the proxy instance.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Heimdall Data - Database Proxy with Caching</data>
+    <data key="d1">https://www.youtube.com/watch?v=OWLGK-eVrTw</data>
+    <data key="d2">Heimdall Data provides a transparent database proxy solution to improve performance and scalability of database access. It acts as an L1 cache on proxy instances and uses ElastiCache as an L2 synchronized cache, sitting in front of RDS. Applications connect to the NLB, which directs traffic to the proxy fleet without requiring code changes. A separate control plane, the Central Manager, handles cache configuration.</data>
+    <data key="d3">interactive, compute_intensive</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
