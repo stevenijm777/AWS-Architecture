@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-TRACKER_PATH = Path("/home/stemjara/Projects/AWS-Architecture/data/processed_tracker.json")
+TRACKER_PATH = Path(__file__).resolve().parent.parent / "data" / "processed_tracker.json"
 
 def load_tracker():
     default_structure = {
