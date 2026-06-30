@@ -14,64 +14,104 @@
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
     <node id="0">
-      <data key="d5" />
-      <data key="d6">UserConsumerAPI</data>
-      <data key="d7" />
+      <data key="d5">Traders</data>
+      <data key="d6">UserCompanyAgent</data>
+      <data key="d7">Internal traders triggering quantitative pricing requests.</data>
     </node>
     <node id="1">
       <data key="d5">External Data</data>
       <data key="d6">ThirdParty</data>
-      <data key="d7">NAME: External Data</data>
+      <data key="d7">External market data combined with trade information.</data>
     </node>
     <node id="2">
-      <data key="d5" />
+      <data key="d5">Application Load Balancer</data>
       <data key="d6">ALB</data>
-      <data key="d7" />
+      <data key="d7">Traffics request inputs to the Pricing Engine.</data>
     </node>
     <node id="3">
-      <data key="d5" />
+      <data key="d5">Pricing Engine</data>
       <data key="d6">ECS</data>
-      <data key="d7">WORKLOAD_PEEK: Pricing Engine</data>
+      <data key="d7">Manages initial request ingestion, queuing, and final result retrieval.</data>
     </node>
     <node id="4">
-      <data key="d5" />
+      <data key="d5">Pricing Workers (CPU)</data>
+      <data key="d6">ECS</data>
+      <data key="d7">WORKLOAD_PEEK: Scales up to 5,000 workers using Auto Scaling and Spot Instances.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Pricing Workers (GPU)</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Used for accelerated high-intensity mathematical computations.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Amazon ElastiCache for Redis</data>
       <data key="d6">ElastiCache</data>
-      <data key="d7">DATA_PEEK: unclear format</data>
+      <data key="d7">DATA_PEEK: Acts as task queues, processing queues, payload storage, and Pub/Sub channel.</data>
     </node>
     <edge source="0" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9" />
+      <data key="d9">Traders initiate requests with market data.</data>
       <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
     <edge source="1" target="2" id="0">
       <data key="d8">0</data>
-      <data key="d9" />
+      <data key="d9">Routes external data/requests.</data>
       <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
     <edge source="2" target="3" id="0">
       <data key="d8">0</data>
-      <data key="d9" />
+      <data key="d9">Sends payload traffic to the core Pricing Engine.</data>
       <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="3" target="4" id="0">
+    <edge source="3" target="6" id="0">
       <data key="d8">0</data>
-      <data key="d9" />
+      <data key="d9">Stores job ID in Task Queue and trade payload in Redis.</data>
       <data key="d10">3</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="4" target="3" id="0">
-      <data key="d8">0</data>
-      <data key="d9" />
+    <edge source="3" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Returns pricing results back through load balancer.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">CPU workers poll Task Queue, move to Processing Queue, and retrieve payloads.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="1">
+      <data key="d8">1</data>
+      <data key="d9">Saves computation results back and triggers Pub/Sub channel.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">GPU workers poll, process high-intensity tasks, and retrieve payloads.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="1">
+      <data key="d8">1</data>
+      <data key="d9">Saves GPU computation results back and triggers Pub/Sub channel.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Notifies Pricing Engine of result availability via Redis Pub/Sub.</data>
       <data key="d10">4</data>
       <data key="d11">data</data>
     </edge>
-    <data key="d0">DBS Bank: Architecting Quant Pricing Engine for Performance with Amazon ElastiCache</data>
+    <data key="d0">DBS Bank Quantitative Pricing Engine</data>
     <data key="d1">https://www.youtube.com/watch?v=bqZWYmRAka0</data>
-    <data key="d2" />
-    <data key="d3">compute_intensive</data>
+    <data key="d2">Quantitative pricing engine built on AWS ECS and ElastiCache for Redis. Migrated from on-premises, reducing computation time from 2 minutes to nearly 0.5 seconds (100x performance boost).</data>
+    <data key="d3">compute_intensive, interactive</data>
     <data key="d4">True</data>
   </graph>
 </graphml>

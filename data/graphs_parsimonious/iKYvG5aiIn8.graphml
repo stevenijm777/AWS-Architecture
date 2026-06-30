@@ -14,96 +14,108 @@
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
     <node id="0">
-      <data key="d5">source db</data>
+      <data key="d5">SQL Server Farm</data>
       <data key="d6">ThirdParty</data>
-      <data key="d7">NAME: source db</data>
+      <data key="d7">Source transactional databases for the staffing platform; Data is migrated from here to AWS; Accumulates inserts, updates, and deletes for job requests and worker data.</data>
     </node>
     <node id="1">
-      <data key="d5" />
+      <data key="d5">Data Migration Service</data>
       <data key="d6">DMS</data>
-      <data key="d7" />
+      <data key="d7">Used to migrate transactional databases from the on-premises SQL Server farm to AWS S3; Facilitates native integration with SQL Server.</data>
     </node>
     <node id="2">
-      <data key="d5" />
+      <data key="d5">S3 Landing Bucket</data>
       <data key="d6">S3</data>
-      <data key="d7" />
+      <data key="d7">Landing zone for raw transactional data migrated from SQL Server; Stores inserts, updates, and deletes as Parquet files; Triggers notifications upon new file arrivals.</data>
     </node>
     <node id="3">
-      <data key="d5" />
-      <data key="d6">S3</data>
-      <data key="d7" />
+      <data key="d5">SQS Queues</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Receives event notifications from the S3 Landing Bucket; Accumulates events for downstream consumption; Multiple queues are used, one for each category of tables, based on different latency requirements.</data>
     </node>
     <node id="4">
-      <data key="d5" />
-      <data key="d6">SQS</data>
-      <data key="d7" />
+      <data key="d5">EventBridge Rules</data>
+      <data key="d6">EventBridge</data>
+      <data key="d7">Configured with three timed rules (10 minute, 60 minute, and 3 hour) to address varying latency requirements for different tables; Invokes Step Functions workflows directly.</data>
     </node>
     <node id="5">
-      <data key="d5" />
+      <data key="d5">Step Functions Workflow</data>
       <data key="d6">StepFunctions</data>
-      <data key="d7" />
+      <data key="d7">Orchestrates the workflow of Glue jobs; Invoked by EventBridge rules based on configured schedules.</data>
     </node>
     <node id="6">
-      <data key="d5" />
-      <data key="d6">EventBridge</data>
-      <data key="d7" />
+      <data key="d5">Glue Jobs</data>
+      <data key="d6">Glue</data>
+      <data key="d7">Serverless ETL jobs; Extracts S3 locations from SQS messages; Reads raw data from the S3 Landing Bucket; Performs upserts (combining inserts, updates, and deletes) to create consistent views of tables in the Delta Lake; Chosen for serverless-first approach and developer familiarity over EMR.</data>
     </node>
     <node id="7">
-      <data key="d5" />
-      <data key="d6">Glue</data>
-      <data key="d7" />
+      <data key="d5">Delta Lake S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Data lake storage in S3, organized as a Delta Lake; Contains three tiers: bronze (raw data), silver (views created by joining raw tables for feature store), and gold (datasets for ML); Maintained by Glue for consistent, up-to-date tables.</data>
     </node>
     <node id="8">
-      <data key="d5" />
-      <data key="d6">UserCompanyAnalyst</data>
-      <data key="d7" />
+      <data key="d5">Data Scientist</data>
+      <data key="d6">UserCompanyDataStream</data>
+      <data key="d7">Queries the Delta Lake (bronze, silver, or gold tiers) using PySpark SQL; Extracts datasets to perform accurate job matching and build machine learning models.</data>
     </node>
     <edge source="0" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9" />
+      <data key="d9">Transactional databases are migrated from SQL Server.</data>
       <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
     <edge source="1" target="2" id="0">
       <data key="d8">0</data>
-      <data key="d9" />
+      <data key="d9">DMS migrates transactional data into the S3 landing bucket as Parquet files.</data>
       <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="2" target="4" id="0">
-      <data key="d8">1</data>
-      <data key="d9" />
-      <data key="d10">0</data>
-      <data key="d11">data</data>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">S3 event notifications are pushed to SQS queues when new files land.</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
     </edge>
-    <edge source="3" target="8" id="0">
-      <data key="d8">3</data>
-      <data key="d9" />
-      <data key="d10">0</data>
-      <data key="d11">data</data>
-    </edge>
-    <edge source="4" target="7" id="0">
+    <edge source="4" target="5" id="0">
       <data key="d8">1</data>
-      <data key="d9" />
+      <data key="d9">Timed EventBridge rules invoke Step Functions workflows.</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Step Functions orchestrates the execution of Glue jobs.</data>
       <data key="d10">1</data>
-      <data key="d11">data</data>
+      <data key="d11">meta</data>
     </edge>
-    <edge source="6" target="5" id="0">
-      <data key="d8">2</data>
-      <data key="d9" />
-      <data key="d10">0</data>
-      <data key="d11">data</data>
-    </edge>
-    <edge source="7" target="3" id="0">
+    <edge source="6" target="3" id="0">
       <data key="d8">1</data>
-      <data key="d9" />
+      <data key="d9">Glue jobs read SQS messages to get S3 locations of new/updated files.</data>
       <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
-    <data key="d0">TrueBlue: Scaling Job Matching with a Serverless Delta Lake</data>
+    <edge source="6" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Glue jobs read raw data files from the S3 landing bucket based on SQS messages.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Glue jobs write processed and upserted data to the Delta Lake in S3.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Data scientists query the Delta Lake (S3) using PySpark SQL to extract datasets.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Trublue Data Lake for Job Matching</data>
     <data key="d1">https://www.youtube.com/watch?v=iKYvG5aiIn8</data>
-    <data key="d2" />
-    <data key="d3">data_ingestion</data>
+    <data key="d2">Trublue, a staffing company, built a serverless data lake to accurately match blue-collar workers to jobs on demand. The architecture processes transactional data from SQL Server, transforming it into a Delta Lake in S3 using an event-driven Glue workflow. Data scientists then query this up-to-date Delta Lake for ML and accurate matching. Key design decisions include a serverless-first approach and leveraging Glue for ETL due to developer familiarity and preference over EMR, handling various latency requirements for different tables.</data>
+    <data key="d3">data_ingestion, compute_intensive</data>
     <data key="d4">True</data>
   </graph>
 </graphml>
