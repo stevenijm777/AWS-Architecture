@@ -548,62 +548,43 @@ def generate_csv(results: list[dict], output_path: Path) -> None:
 # ── Main ─────────────────────────────────────────────────────────
 
 
-def main(gen_dir: Path, gt_dir: Path, output_dir: Path) -> None:
-    """Run the full evaluation pipeline."""
-    console.print(Panel.fit(
-        "[bold white]Graph Evaluation Pipeline[/]\n"
-        "[dim]Generated vs Cloudscape Ground Truth[/]",
-        border_style="cyan",
-    ))
+def get_copied_video_ids() -> set[str]:
+    """Identify videos whose vision cache was copied from Ground Truth."""
+    copied = set()
+    raw_dir = Path("data/raw")
+    if raw_dir.exists():
+        for f in raw_dir.glob("*_vision_analysis_parsimonious.json"):
+            try:
+                with open(f, "r", encoding="utf-8") as file:
+                    data = json.load(file)
+                reasoning = data.get("step_by_step_reasoning", "")
+                if "Mapping Ground Truth" in reasoning:
+                    copied.add(f.name.replace("_vision_analysis_parsimonious.json", ""))
+            except Exception:
+                pass
+    return copied
 
-    # Load services catalog
-    services_csv = gt_dir / "services.csv"
-    if not services_csv.exists():
-        # Try Cloudscape repo as fallback
-        services_csv = Path(__file__).resolve().parent.parent.parent / "Cloudscape" / "data" / "services.csv"
-    catalog = load_services_catalog(services_csv)
-    console.print(f"[green]✓[/] Loaded {len(catalog)} services from catalog")
 
-    # Find matching graph pairs
+def evaluate_dir_helper(gen_dir: Path, gt_dir: Path, catalog: dict) -> list[dict]:
+    """Evaluate all matching graph pairs in a single directory."""
     gen_files = {f.stem: f for f in gen_dir.glob("*.graphml")}
     gt_files = {f.stem: f for f in gt_dir.glob("*.graphml")}
     matching_ids = sorted(set(gen_files.keys()) & set(gt_files.keys()))
-
-    console.print(f"\n[bold]Found:[/]")
-    console.print(f"  Generated graphs: {len(gen_files)}")
-    console.print(f"  Ground truth:     {len(gt_files)}")
-    console.print(f"  [bold cyan]Matching pairs:   {len(matching_ids)}[/]\n")
-
-    if not matching_ids:
-        console.print("[red]✗[/] No matching graph pairs found!")
-        return
-
-    # Evaluate each pair
     results = []
-    console.rule("[bold cyan]Evaluating Graph Pairs")
-    for i, vid in enumerate(matching_ids, 1):
+    for vid in matching_ids:
         try:
             gen_g = nx.read_graphml(str(gen_files[vid]))
             gt_g = nx.read_graphml(str(gt_files[vid]))
             result = evaluate_pair(gen_g, gt_g, vid, catalog)
             results.append(result)
-
-            # Progress indicator
-            emoji = "🟢" if result["svc_f1"] >= 0.9 else "🟡" if result["svc_f1"] >= 0.7 else "🟠" if result["svc_f1"] >= 0.5 else "🔴"
-            console.print(
-                f"  {emoji} [{i:3d}/{len(matching_ids)}] {vid} — "
-                f"Svc F1: {result['svc_f1']:.0%}  Edge F1: {result['edge_f1']:.0%}  "
-                f"({result['gen_nodes']}n/{result['gen_edges']}e vs {result['gt_nodes']}n/{result['gt_edges']}e)"
-            )
         except Exception as e:
-            console.print(f"  [red]✗[/] [{i:3d}/{len(matching_ids)}] {vid} — Error: {e}")
+            console.print(f"  [red]✗[/] Error evaluating {vid} in {gen_dir.name}: {e}")
+    return results
 
-    # Aggregate
-    console.rule("[bold cyan]Computing Aggregate Statistics")
-    agg = aggregate_results(results, catalog)
 
-    # Print summary table
-    summary_table = Table(title="Evaluation Summary", border_style="cyan", show_lines=True)
+def print_summary_table(agg: dict[str, Any], title: str) -> None:
+    """Print an evaluation summary table to the console."""
+    summary_table = Table(title=title, border_style="cyan", show_lines=True)
     summary_table.add_column("Metric", style="bold")
     summary_table.add_column("Value", style="green")
     summary_table.add_row("Videos Evaluated", str(agg["total_evaluated"]))
@@ -612,24 +593,11 @@ def main(gen_dir: Path, gt_dir: Path, output_dir: Path) -> None:
     summary_table.add_row("Avg Edge F1", f"{agg['avg_edge_f1']:.1%}")
     summary_table.add_row("Avg Edge Type Accuracy", f"{agg['avg_edge_type_accuracy']:.1%}")
     summary_table.add_row("Avg Node Ratio (gen/gt)", f"{agg['avg_node_count_ratio']:.2f}x")
-    summary_table.add_row("Excellent (≥90%)", f"{agg['f1_distribution']['excellent_90+']}")
-    summary_table.add_row("Good (70-89%)", f"{agg['f1_distribution']['good_70_90']}")
-    summary_table.add_row("Fair (50-69%)", f"{agg['f1_distribution']['fair_50_70']}")
-    summary_table.add_row("Poor (<50%)", f"{agg['f1_distribution']['poor_<50']}")
     console.print(summary_table)
 
-    # Generate outputs
-    console.rule("[bold cyan]Generating Reports")
-    output_dir.mkdir(parents=True, exist_ok=True)
 
-    report_path = output_dir / "evaluation_report.md"
-    generate_markdown_report(results, agg, report_path, catalog)
-
-    csv_path = output_dir / "evaluation_per_video.csv"
-    generate_csv(results, csv_path)
-
-    json_path = output_dir / "evaluation_results.json"
-    # Serialize aggregate + per-video
+def save_json_results(results: list[dict], agg: dict[str, Any], json_path: Path) -> None:
+    """Save evaluation results to a JSON file."""
     json_output = {
         "generated_at": datetime.now().isoformat(),
         "summary": {k: v for k, v in agg.items() if not k.startswith("top_")},
@@ -643,18 +611,172 @@ def main(gen_dir: Path, gt_dir: Path, output_dir: Path) -> None:
     )
     console.print(f"[green]✓[/] JSON saved → [bold]{json_path}[/]")
 
-    console.print(f"\n[bold green]🎉 Evaluation complete![/] See {report_path}")
+
+def generate_combined_markdown_report(
+    all_evals: dict[str, dict[str, Any]],
+    output_path: Path,
+    catalog: dict[str, dict],
+    copied_ids: set[str],
+) -> None:
+    """Generate a combined multi-section markdown evaluation report."""
+    lines = []
+    lines.append("# Combined Evaluation Report: Generated Graphs vs Cloudscape Ground Truth\n")
+    lines.append(f"*Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*\n")
+
+    # ── 1. Executive Summary ──
+    lines.append("## 1. Executive Summary (Side-by-Side Comparison)\n")
+    lines.append("This table compares performance metrics across all generated graph directories.\n")
+    lines.append("| Run Directory | Videos | Service F1 (unique) | Service F1 (multiset) | Edge F1 | Edge Type Acc | Node Ratio |")
+    lines.append("|---|---|---|---|---|---|---|")
+    for label, eval_data in all_evals.items():
+        agg = eval_data["agg"]
+        lines.append(
+            f"| **{label}** | {agg['total_evaluated']} | {agg['avg_svc_f1']:.1%} | {agg['avg_ms_f1']:.1%} | "
+            f"{agg['avg_edge_f1']:.1%} | {agg['avg_edge_type_accuracy']:.1%} | {agg['avg_node_count_ratio']:.2f}x |"
+        )
+    lines.append("\n---\n")
+
+    # ── 2. Detailed Performance by Directory ──
+    for label, eval_data in all_evals.items():
+        lines.append(f"## {label} Evaluation Details\n")
+
+        path = eval_data["path"]
+        results = eval_data["results"]
+        agg = eval_data["agg"]
+
+        is_parsimonious = "parsimonious" in path.name
+
+        if is_parsimonious and copied_ids:
+            copied_in_run = [r for r in results if r["video_id"] in copied_ids]
+            genuine_in_run = [r for r in results if r["video_id"] not in copied_ids]
+
+            lines.append("> [!WARNING]")
+            lines.append("> **Ground Truth Copied/Mocked Graphs Identified!**")
+            lines.append(f"> Out of **{len(results)}** evaluated videos in this folder, **{len(copied_in_run)}** were compiled from Ground Truth cache files generated by `bulk_process_good_whiteboards.py` (which directly copy GT node and edge structures into the vision cache).")
+            lines.append("> This explains why their Service F1 and Edge F1 scores are **100%**.")
+            lines.append(f"> Only **{len(genuine_in_run)}** videos were genuinely analyzed and processed by the Gemini Vision LLM.")
+            lines.append("")
+
+            if genuine_in_run:
+                gen_agg = aggregate_results(genuine_in_run, catalog)
+                lines.append("### Genuine LLM Performance (Excluding Copied Ground Truths)\n")
+                lines.append(f"Evaluating ONLY the **{len(genuine_in_run)}** genuine LLM-processed videos in this directory:\n")
+                lines.append("| Metric | Precision | Recall | F1 |")
+                lines.append("|---|---|---|---|")
+                lines.append(f"| **Services (unique set)** | {gen_agg['avg_svc_precision']:.1%} | {gen_agg['avg_svc_recall']:.1%} | {gen_agg['avg_svc_f1']:.1%} |")
+                lines.append(f"| **Services (multiset)** | {gen_agg['avg_ms_precision']:.1%} | {gen_agg['avg_ms_recall']:.1%} | {gen_agg['avg_ms_f1']:.1%} |")
+                lines.append(f"| **Edges (service pairs)** | {gen_agg['avg_edge_precision']:.1%} | {gen_agg['avg_edge_recall']:.1%} | {gen_agg['avg_edge_f1']:.1%} |")
+                lines.append("")
+                lines.append(f"- **Edge type accuracy (data/meta):** {gen_agg['avg_edge_type_accuracy']:.1%}\n")
+                lines.append(f"- **Average node count ratio (gen/gt):** {gen_agg['avg_node_count_ratio']:.2f}x\n")
+
+            lines.append("### List of Copied Ground Truth Videos (Identified for Removal)\n")
+            lines.append("These videos were generated from Ground Truth and have artificial 100% scores:\n")
+            lines.append(", ".join([f"`{r['video_id']}`" for r in sorted(copied_in_run, key=lambda x: x["video_id"])]))
+            lines.append("\n")
+
+            table_results = genuine_in_run if genuine_in_run else results
+            lines.append("### Detailed Results Table (Sorted by Service F1, showing Genuine only)\n")
+        else:
+            table_results = results
+            lines.append("### Detailed Results Table (Sorted by Service F1)\n")
+
+        lines.append("| # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |")
+        lines.append("|---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|")
+        sorted_results = sorted(table_results, key=lambda r: r["svc_f1"], reverse=True)
+        for idx, r in enumerate(sorted_results, 1):
+            missing_str = ", ".join(r["services_missing"][:3])
+            if len(r["services_missing"]) > 3:
+                missing_str += f" (+{len(r['services_missing'])-3})"
+            halluc_str = ", ".join(r["services_hallucinated"][:3])
+            if len(r["services_hallucinated"]) > 3:
+                halluc_str += f" (+{len(r['services_hallucinated'])-3})"
+
+            lines.append(
+                f"| {idx} | `{r['video_id']}` | {r['svc_precision']:.0%} | {r['svc_recall']:.0%} | {r['svc_f1']:.0%} "
+                f"| {r['edge_precision']:.0%} | {r['edge_recall']:.0%} | {r['edge_f1']:.0%} "
+                f"| {r['gen_nodes']} | {r['gt_nodes']} | {r['gen_edges']} | {r['gt_edges']} "
+                f"| {missing_str or '—'} | {halluc_str or '—'} |"
+            )
+        lines.append("\n---\n")
+
+    output_path.write_text("\n".join(lines), encoding="utf-8")
+    console.print(f"[green]✓[/] Combined report saved → [bold]{output_path}[/]")
 
 
-# ── CLI ──────────────────────────────────────────────────────────
+def main(gen_dir: Path | None, gt_dir: Path, output_dir: Path) -> None:
+    """Run the evaluation pipeline."""
+    # Load services catalog
+    services_csv = gt_dir / "services.csv"
+    if not services_csv.exists():
+        # Try Cloudscape repo as fallback
+        services_csv = Path(__file__).resolve().parent.parent.parent / "Cloudscape" / "data" / "services.csv"
+    catalog = load_services_catalog(services_csv)
+    console.print(f"[green]✓[/] Loaded {len(catalog)} services from catalog")
+
+    copied_ids = get_copied_video_ids()
+    console.print(f"[yellow]ℹ[/] Identified {len(copied_ids)} Ground Truth copied/mocked videos in cache.")
+
+    if gen_dir is not None:
+        # Single directory evaluation
+        console.print(f"Evaluating single directory: {gen_dir}")
+        results = evaluate_dir_helper(gen_dir, gt_dir, catalog)
+        if not results:
+            console.print("[red]✗[/] No matching graph pairs found!")
+            return
+        agg = aggregate_results(results, catalog)
+
+        print_summary_table(agg, f"Evaluation Summary: {gen_dir.name}")
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        generate_markdown_report(results, agg, output_dir / "evaluation_report.md", catalog)
+        generate_csv(results, output_dir / "evaluation_per_video.csv")
+        save_json_results(results, agg, output_dir / "evaluation_results.json")
+    else:
+        # Multi-directory evaluation (Default)
+        dirs_to_evaluate = {
+            "Standard (data/graphs)": Path("data/graphs"),
+            "Parsimonious API (data/graphs_parsimonious)": Path("data/graphs_parsimonious"),
+        }
+
+        all_evals = {}
+        for label, path in dirs_to_evaluate.items():
+            if not path.exists():
+                console.print(f"[yellow]⚠ Directory {path} does not exist. Skipping.[/]")
+                continue
+            console.print(f"\n[bold cyan]Evaluating {label}...[/]")
+            results = evaluate_dir_helper(path, gt_dir, catalog)
+            if results:
+                agg = aggregate_results(results, catalog)
+                all_evals[label] = {
+                    "path": path,
+                    "results": results,
+                    "agg": agg
+                }
+
+        if not all_evals:
+            console.print("[red]✗[/] No evaluations completed!")
+            return
+
+        output_dir.mkdir(parents=True, exist_ok=True)
+        generate_combined_markdown_report(all_evals, output_dir / "evaluation_report.md", catalog, copied_ids)
+
+        if "Standard (data/graphs)" in all_evals:
+            generate_csv(all_evals["Standard (data/graphs)"]["results"], output_dir / "evaluation_per_video.csv")
+            save_json_results(
+                all_evals["Standard (data/graphs)"]["results"],
+                all_evals["Standard (data/graphs)"]["agg"],
+                output_dir / "evaluation_results.json"
+            )
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Evaluate generated graphs against Cloudscape ground truth"
     )
     parser.add_argument(
-        "--gen-dir", type=Path, default=Path("data/graphs"),
-        help="Directory with generated .graphml files (default: data/graphs)",
+        "--gen-dir", type=Path, default=None,
+        help="Directory with generated .graphml files (default: None, which evaluates all three)",
     )
     parser.add_argument(
         "--gt-dir", type=Path, default=Path("data/cloudscape_gt"),
@@ -667,3 +789,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args.gen_dir, args.gt_dir, args.output_dir)
+
