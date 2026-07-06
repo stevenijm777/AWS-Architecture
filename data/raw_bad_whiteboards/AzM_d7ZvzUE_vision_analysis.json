@@ -1,0 +1,222 @@
+{
+  "step_by_step_reasoning": "We trace the architecture from left to right. It starts with the Client Lambda function sending logs via CloudWatch subscription to the first Kinesis stream. A Transform Lambda function consumes this stream, querying and updating a DynamoDB table for customer config and state. This Transform Lambda sends processed logs into a second Kinesis stream. From here, the flow splits into two paths: (1) Fast query path: A Lambda function writes events to Serverless Aurora. (2) Analytical path: Firehose converts JSON to Parquet using Glue's schema and stores it in S3, which is then queried by Athena. A developer actor queries the system for dashboards.",
+  "graph": {
+    "name": "Epsagon Serverless Telemetry Processing & Analytics Engine",
+    "link": "https://www.youtube.com/watch?v=AzM_d7ZvzUE",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles billions of customer lambda invocations monthly. Uses a split fast-path (Aurora) and analytical-path (Firehose/S3/Athena) pattern. Leverages Kinesis to protect Aurora from connection overloading."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Lambda",
+      "name": "Client Lambda",
+      "notes": "WORKLOAD_PEEK: Monitored function in customer account running billions of times monthly."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Ingestion Kinesis",
+      "notes": "DATA_PEEK: Streams filtered CloudWatch logs from customer account."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Transform Lambda",
+      "notes": "Extracts log records into structured invocation records."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Customer Metadata DB",
+      "notes": "Stores metadata about customer functions and partial invocation details."
+    },
+    {
+      "id": "4",
+      "service": "Kinesis",
+      "name": "Invocation Records Kinesis",
+      "notes": "Streams uniform parsed invocation records."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Aurora Writer Lambda",
+      "notes": "Writes records to Aurora. Managed concurrency prevents database connection exhaustion."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Serverless Aurora",
+      "notes": "Optimized database for fast single-item invocation queries."
+    },
+    {
+      "id": "7",
+      "service": "Firehose",
+      "name": "Firehose Parquet Converter",
+      "notes": "Batches incoming records and converts them to Parquet."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue Data Catalog",
+      "notes": "Provides structural schema definition for Firehose Parquet conversion."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Optimized storage bucket for long-term telemetry analysis."
+    },
+    {
+      "id": "10",
+      "service": "Athena",
+      "name": "Athena Query Engine",
+      "notes": "Performs fast aggregated queries over S3 telemetry."
+    },
+    {
+      "id": "11",
+      "service": "UserCompanyDeveloper",
+      "name": "Epsagon UI Developer",
+      "notes": "Represents the user or internal developer querying monitoring metrics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends log data via CloudWatch integration."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers transform function."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Queries customer function details."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Returns config and partial status."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Emits parsed invocation records."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers write lambda."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes data under concurrency limits."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams data for aggregations."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1a",
+      "type": "meta",
+      "notes": "Fetches target Parquet schema."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1b",
+      "type": "meta",
+      "notes": "Returns schema definition."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes optimized Parquet data."
+    },
+    {
+      "source": "11",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries specific trace details."
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Returns trace query result."
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Initiates aggregate metric dashboard query."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries historical Parquet records."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns queried segments."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 4,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns aggregated analytics dashboard data."
+    }
+  ]
+}

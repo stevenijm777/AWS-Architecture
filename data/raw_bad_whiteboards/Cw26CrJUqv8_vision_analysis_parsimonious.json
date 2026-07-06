@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "We identify two primary flows: a Control Plane Flow for setup/teardown, and a Data Plane Flow for secure multi-tenant routing. For the Control Plane: the admin initiates configuration via the Salesforce UI (UserCompanyCRM), which routes through AWS API Gateway to a Lambda function. This Lambda manages configurations, updates metadata in DynamoDB, and provisions the AWS PrivateLink connection. State changes on PrivateLink trigger SNS notifications. For the Data Plane: traffic from the Salesforce Datacenter (OnPremDC) goes over a Site-to-Site VPN to Transit Gateway, then to Connection Forwarders running on EKS. The EKS forwarders query DynamoDB to resolve customer routing metadata and forward traffic through the correct PrivateLink endpoint to the Customer's VPC.",
+  "graph": {
+    "name": "Salesforce Private Connect to AWS VPC",
+    "link": "https://www.youtube.com/watch?v=Cw26CrJUqv8",
+    "categories": "data_ingestion, compute_intensive, control",
+    "graph_usable": true,
+    "notes": "Salesforce Private Connect provides secure, private, and automated connectivity between Salesforce DC and AWS Customer VPCs using API-driven serverless control planes and multi-tenant connection forwarders on EKS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyCRM",
+      "name": "Salesforce UI",
+      "notes": "Used by customers to set up and tear down private connections."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "Control Plane API Gateway",
+      "notes": "Receives setup/teardown requests from Salesforce UI."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Setup / Teardown Lambda",
+      "notes": "Configures PrivateLink and manages connection metadata."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Metadata Store",
+      "notes": "DATA_PEEK: Stores multi-tenant customer connection metadata."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "State Change Notifications",
+      "notes": "Gets notified of AWS PrivateLink connection state changes."
+    },
+    {
+      "id": "5",
+      "service": "OnPremDC",
+      "name": "Salesforce Datacenter",
+      "notes": "Source of customer data to be synchronized with AWS workloads."
+    },
+    {
+      "id": "6",
+      "service": "TransitGateway",
+      "name": "Transit Gateway",
+      "notes": "Terminates site-to-site VPN from Salesforce Datacenter."
+    },
+    {
+      "id": "7",
+      "service": "EKS",
+      "name": "Connection Forwarders",
+      "notes": "WORKLOAD_PEEK: Multi-tenant routing containers that forward traffic based on customer metadata."
+    },
+    {
+      "id": "8",
+      "service": "PrivateLink",
+      "name": "AWS PrivateLink",
+      "notes": "Establishes secure private endpoints."
+    },
+    {
+      "id": "9",
+      "service": "VPC",
+      "name": "Customer VPC",
+      "notes": "The target AWS environment for secure data processing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Admin triggers connection setup from UI."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway triggers orchestration Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda registers metadata in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda provisions PrivateLink endpoint connection."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "SNS receives updates on PrivateLink state changes."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data travels over encrypted Site-to-Site VPN to Transit Gateway."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transit Gateway routes traffic to EKS Connection Forwarders."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS queries DynamoDB to lookup routing metadata."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EKS forwards customer traffic via correct PrivateLink."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Traffic is securely delivered into Customer VPC."
+    }
+  ]
+}

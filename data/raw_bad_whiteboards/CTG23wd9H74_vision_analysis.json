@@ -1,0 +1,256 @@
+{
+  "step_by_step_reasoning": "The transcript describes scientists authenticating through CloudFront (using Lambda@Edge), downloading a SPA from S3, and communicating with an ECS Fargate API layer via API Gateway backed by DynamoDB. Publishing models is triggered via Git to Step Functions which coordinates helper Lambdas to deploy code/files onto an EC2-based HPC cluster. Model execution is initiated from the Fargate API to the HPC cluster, which writes results to S3 for retrieval.",
+  "graph": {
+    "name": "3M Serverless Modeling and High-Performance Computing Platform",
+    "link": "https://www.youtube.com/watch?v=CTG23wd9H74",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "HPC platform hosting physics-based and ML models. Built using serverless web technologies (ECS Fargate, Lambda, API Gateway) and orchestrated with Step Functions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDomainExpert",
+      "name": "3M Scientists & Engineers",
+      "notes": "End users running simulations and developers publishing models."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CDN & Entry Point",
+      "notes": "Delivers the SPA and handles ingress routing."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda@Edge Auth",
+      "notes": "Authenticates requests with external identity provider."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "App & Data Storage",
+      "notes": "Hosts static SPA assets and receives simulation results."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Secures and routes frontend API requests."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "API Layer (Fargate)",
+      "notes": "WORKLOAD_PEEK: Handles user requests, configurations, and job triggers."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Metadata Store",
+      "notes": "DATA_PEEK: Holds frontend configurations and access management rules."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Git Repository",
+      "notes": "Triggers publishing pipeline upon code commits."
+    },
+    {
+      "id": "8",
+      "service": "StepFunctions",
+      "name": "CICD Orchestrator",
+      "notes": "Coordinates model publishing workflow."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Publishing Workers",
+      "notes": "Processes files and pushes definitions to HPC."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "HPC Cluster",
+      "notes": "WORKLOAD_PEEK: Runs physics-based and ML model simulations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User accesses web application"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Inspects request for authentication"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns validated context"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Requests SPA assets"
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Serves SPA assets"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Loads web app in browser"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "API request sent from SPA"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes API call"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards validated API requests"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Retrieves configuration and metadata"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns configurations"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns response"
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Passes payload back"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Delivers metadata to SPA UI"
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Scientist pushes model updates"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Webhook triggers publishing orchestrator"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers execution lambdas"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Deploys model files and configurations"
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Submits execution job via API"
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Instantiates simulation execution"
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves computed outputs/artifacts"
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Downloads execution results via SPA"
+    }
+  ]
+}

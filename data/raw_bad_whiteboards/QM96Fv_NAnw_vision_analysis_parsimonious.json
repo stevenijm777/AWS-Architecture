@@ -1,0 +1,120 @@
+{
+  "step_by_step_reasoning": "The architecture is extracted directly from the whiteboard diagram and transcript. First, the 'Client Display' (UserConsumerWeb) accesses the system through the main reverse proxy hosted on an EC2 instance. This instance handles authentication via Amazon Cognito and reads/writes project configurations/access rights using an Amazon RDS Postgres instance. For retrieving geoscience data, the EC2 server interfaces with custom microservice adapters (represented by the small boxes on the board). These adapters query metadata via the OSDU API Gateway and fetch massive seismic datasets directly from OSDU's Amazon S3 storage using parallel queries. The data is processed, compressed on the fly, and streamed back to the client for rendering.",
+  "graph": {
+    "name": "INT IVAP Seismic Visualization Architecture",
+    "link": "https://www.youtube.com/watch?v=QM96Fv_NAnw",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Visualizes massive seismic datasets (terabytes to petabytes) in the browser. Uses Cognito for auth, RDS Postgres for project metadata, custom adapters to integrate with OSDU API/S3, and parallel byte-range requests to optimize S3 throughput."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Client Display",
+      "notes": "Browser-based UI rendering seismic data via HTML5 Canvas and decompressing payloads using WebAssembly."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "IVAP Server (EC2)",
+      "notes": "Runs reverse proxy and Node.js backend. Compresses data using AVX extension instructions for up to 6x speedup."
+    },
+    {
+      "id": "2",
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "Used for user authentication and managing user identities."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS (Postgres)",
+      "notes": "Stores role-based access control rules and project configurations."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Adapters (Microservices)",
+      "notes": "Custom microservices designed to connect with various backends, including OSDU."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "OSDU API Gateway",
+      "notes": "Handles metadata queries, backed by Elasticsearch inside OSDU."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "OSDU S3 Bucket",
+      "notes": "DATA_PEEK: Stores massive seismic trace datasets (up to petabyte scale). Queried in parallel via byte-offset indexes."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User login and visualization requests."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Authenticates users via Cognito."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Checks project settings and RBAC permissions."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Forwards seismic search/data requests to OSDU adapter."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Searches for files and datasets."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Performs parallel byte-range reads on seismic files."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Sends requested traces back for server-side compression."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Streams compressed seismic trace data back to client UI."
+    }
+  ]
+}

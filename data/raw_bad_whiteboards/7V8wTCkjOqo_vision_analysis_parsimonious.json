@@ -1,0 +1,114 @@
+{
+  "step_by_step_reasoning": "We identify the Service Teams as UserCompanyDeveloper. The whiteboard shows ECS running Kong, triggering a Lambda orchestration engine (annotated with x25 instances). This Lambda writes pipeline build events to DynamoDB. When promoting, Lambda queries RDS PostgreSQL for compliance rules and matches them against DynamoDB events. If successful, Lambda triggers SNS to notify the production account.",
+  "graph": {
+    "name": "National Australia Bank Automated Compliance & Deployment Framework",
+    "link": "https://www.youtube.com/watch?v=7V8wTCkjOqo",
+    "categories": "compute_intensive, control",
+    "graph_usable": true,
+    "notes": "An automated compliance validation engine that evaluates non-prod pipeline build metadata against relational regulatory rules before promoting artifacts to production environments."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Service Teams",
+      "notes": "WORKLOAD_PEEK: Developers running CI/CD pipelines in non-production environments."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "Kong Gateway on ECS",
+      "notes": "WORKLOAD_PEEK: API gateway publishing endpoints and receiving pipeline events."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Assessment Engine",
+      "notes": "WORKLOAD_PEEK: Orchestration logic that validates evidence and coordinates deployments. Scaled to multiple concurrent executions."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Build Events Store",
+      "notes": "DATA_PEEK: Key-value store holding immutable pipeline execution and audit evidence."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "Compliance Rules DB",
+      "notes": "DATA_PEEK: PostgreSQL DB managing relational standards, regulatory controls, and rules."
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "Deployment SNS",
+      "notes": "WORKLOAD_PEEK: Fan-out messaging system notifying target prod environment of verified builds."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pipelines push build event evidence to API gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ECS forwards API events to Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda records build evidence in DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Service teams initiate a deployment/promotion request."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Gateway routes promotion call to Lambda."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda reads target compliance rules from RDS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda fetches build evidence to verify compliance."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Upon verification, Lambda triggers prod SNS notification."
+    }
+  ]
+}

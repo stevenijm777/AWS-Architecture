@@ -1,0 +1,192 @@
+{
+  "step_by_step_reasoning": "Based on the whiteboard diagram and transcript, there are three main EC2-based components (Web Server/Job Manager, G3 GPU instance with Asset Manager, and IMF Wrapper), a Database, S3, a Lambda function, and a Web Browser actor. The workflow consists of three distinct flows: 1) metadata extraction and display, 2) typical GPU retiming/processing, and 3) IMF-wrapped video processing.",
+  "graph": {
+    "name": "Cinefilm PixelStrings Video Processing Platform",
+    "link": "https://youtu.be/BZ32w0SSAoY",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "PixelStrings runs video processing (retiming, deinterlacing, noise removal) on GPU-enabled G3 EC2 instances, leveraging AWS Lambda to extract metadata and write to S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Browser",
+      "notes": "User accesses the PixelStrings platform via Chrome."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Web Server & Job Manager",
+      "notes": "Handles user login, database queries, and parallel job orchestration."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "Database",
+      "notes": "Caches metadata. The web server reads from it to update the client UI."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "User-managed bucket storing input and output video clips."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Metadata Lambda",
+      "notes": "Runs MediaInfo to fetch metadata from video clips in S3."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "G3 GPU Instance (Asset Manager)",
+      "notes": "Runs GPU-accelerated workloads (Wormhole, Spacetime, Dark Energy)."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "IMF Wrapping Server",
+      "notes": "Formats finished video clips into Netflix-compatible Interoperable Master Format."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "User logs in and inputs S3 credentials."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Job Manager invokes Lambda to get video metadata."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda queries video files in S3."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns file metadata to Lambda."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda returns extracted metadata."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Job Manager caches metadata in the database."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Web server retrieves cached metadata to show in browser."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "User submits processing job."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Job Manager tells Asset Manager on G3 to fetch the input clip."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Asset Manager copies clip from S3 to local G3 storage."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Asset Manager copies processed output clip back to S3."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Job completed status updated on UI."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "User submits IMF wrapping workflow."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Asset Manager fetches clip from S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Job Manager routes completed GPU output directly to IMF server."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "IMF wrap output copied back to customer S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Web UI displays job complete status."
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "Based on the whiteboard and transcript, there are nine main components: Customer Applications (represented as UserCompanyAPI), Kinesis, Fargate, Aurora, S3, a Scheduler (EventBridge), EMR, EventBridge (for violations), and SQS. The ingestion flow goes from Applications through Kinesis and Fargate to Aurora and S3. The analytical flow is triggered by the Scheduler to Fargate, which spins up an EMR job reading from Aurora and S3, then sends violations to EventBridge, SQS, and back to Fargate for processing.",
+  "graph": {
+    "name": "Infor Governance Risk and Compliance Architecture",
+    "link": "https://www.youtube.com/watch?v=0gNMEyei-co",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Ingests millions of transactions daily into Aurora and S3. Uses Fargate and EMR Spark to scope and execute rule audits, forwarding violations to EventBridge/SQS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAPI",
+      "name": "Applications",
+      "notes": "Customer transactional and security source applications."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Stream for ingesting high-volume data."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Parses ingestion data, manages scoping of analysis, and processes violations."
+    },
+    {
+      "id": "3",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Stores parsed security and transaction logs."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Long-term data lake storage; transformed via Glue."
+    },
+    {
+      "id": "5",
+      "service": "EventBridge",
+      "name": "Scheduler",
+      "notes": "Triggers schedule-based analytical runs."
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Spark cluster executing audit rule analysis."
+    },
+    {
+      "id": "7",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Receives violation events from EMR."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues violations for final decoration."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams data from apps."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Parses data on Fargate."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves structured records."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Backs up raw files."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers audit run schedule."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers Spark analysis."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves analytical data."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads data for rules engine."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Publishes violations."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Queues events."
+    },
+    {
+      "source": "8",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Pulls for decoration and customer alert SMTP."
+    }
+  ]
+}

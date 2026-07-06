@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "We trace the architecture starting from the internal developer requesting an account. The request passes through AWS API Gateway to AWS Step Functions (AVM). This AVM step function reads/writes target state metadata in DynamoDB and triggers AWS Control Tower to provision the AWS account. Once the account is created, a second Step Functions execution (Blueprint) configures the account with required IAM, security, and networking blueprints. Finally, SES sends an email notification back to the user. A separate CodePipeline flow also exists to continuously push blueprint updates directly into vended accounts.",
+  "graph": {
+    "name": "Vitesco Technologies Automated Cloud Landing Zone",
+    "link": "https://www.youtube.com/watch?v=9-a9Y5THTYo",
+    "categories": "control",
+    "graph_usable": true,
+    "notes": "Automated cloud lending zone allowing internal users to create AWS accounts. Scale: Over 850 accounts created. Platform managed by only four engineers using automated blueprints."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Internal Developer",
+      "notes": "Requests new AWS accounts through a self-developed web portal."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives the portal metadata and routes requests."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Step Functions (AVM)",
+      "notes": "Account Vending Machine orchestrating account provisioning steps."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DATA_PEEK: Stores target state, CIDR ranges, and account IDs to ensure idempotency."
+    },
+    {
+      "id": "4",
+      "service": "ControlTower",
+      "name": "Control Tower",
+      "notes": "Provisions new accounts via a custom Service Catalog item."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "Step Functions (Blueprint)",
+      "notes": "Deploys customized blueprints (IAM, security, network configurations)."
+    },
+    {
+      "id": "6",
+      "service": "SES",
+      "name": "SES Email Service",
+      "notes": "Sends details and responsibilities to the account owner."
+    },
+    {
+      "id": "7",
+      "service": "Organizations",
+      "name": "Vended AWS Account",
+      "notes": "The target environment deployed for internal teams."
+    },
+    {
+      "id": "8",
+      "service": "CodePipeline",
+      "name": "CodePipeline",
+      "notes": "Deploys blueprint changes centrally to customer accounts within 3 hours."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User submits network configurations and metadata."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers Account Vending Machine workflow."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves state and fetches CIDR block ranges."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Launches custom service catalog item to provision account."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Initiates blueprint application stage."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Applies IAM, security, and networking configs to the account."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Triggers email notification upon completion."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Delivers account details to developer."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes updated blueprints directly across dev, QA, and prod accounts."
+    }
+  ]
+}

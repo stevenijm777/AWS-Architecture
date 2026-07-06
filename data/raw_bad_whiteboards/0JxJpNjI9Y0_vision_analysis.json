@@ -1,0 +1,216 @@
+{
+  "step_by_step_reasoning": "We trace the architecture from the transcript and visual layout. The system serves public users, content editors (newsroom), and software developers. Public users request pages which go through an Origin Proxy on ECS. Static resources are served from one S3 bucket, and pre-rendered pages from another S3 bucket. If cache is missed, request goes to a rendering Lambda function. Lambda queries templates in DynamoDB (managed by Newsroom) and pulls content via an ECS Content Proxy. This proxy caches raw CMS JSON data in ElastiCache with a TTL, retrieving from external CMS/APIs when needed. Developers upload web rendering JavaScript directly to Lambda.",
+  "graph": {
+    "name": "Arc Publishing Web Rendering Platform",
+    "link": "https://www.youtube.com/watch?v=0JxJpNjI9Y0",
+    "categories": "interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Highly available multi-tier rendering architecture supporting 5-10% dynamic cache misses, leveraging ElastiCache for raw content API cache and S3 for pre-rendered pages."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Public Readers",
+      "notes": "Readers accessing WashingtonPost.com or client sites."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyDeveloper",
+      "name": "Web Developers",
+      "notes": "Deploys code updates to the Lambda rendering engine."
+    },
+    {
+      "id": "2",
+      "service": "UserCompanyDomainExpert",
+      "name": "Newsroom Editors",
+      "notes": "Creates page layouts via Page Builder Admin."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS Origin Proxy",
+      "notes": "WORKLOAD_PEEK: Handles traffic routing to static, cached, or dynamic targets."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Static Resources",
+      "notes": "Stores assets like JS and CSS files."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Pre-Render Content",
+      "notes": "Stores pre-rendered HTML files for fast load times."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda Page Renderer",
+      "notes": "WORKLOAD_PEEK: Dynamically constructs web pages on-demand using JavaScript engine."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB Templates",
+      "notes": "DATA_PEEK: Stores page builder web templates."
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "ECS Content Proxy",
+      "notes": "Bridges internal rendering with external or internal CMS APIs."
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "DATA_PEEK: Caches raw JSON story/media payloads with active TTL."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "CMS & APIs",
+      "notes": "External content management APIs serving raw data (stories, videos)."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests web page."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches static resources (JS/CSS)."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Checks for pre-rendered HTML content."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Forwards to Lambda on cache miss."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Retrieves active page template configuration."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Requests story raw JSON content."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Attempts to fetch raw content from cache."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Fetches raw API content on cache miss."
+    },
+    {
+      "source": "10",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Returns raw CMS payload."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Saves content payload to ElastiCache with a TTL."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "Returns content payload to renderer."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "11",
+      "type": "data",
+      "notes": "Returns compiled HTML page."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "12",
+      "type": "data",
+      "notes": "Renders web page to reader."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Modifies or saves site layout templates."
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Confirms template saved."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes new JavaScript page versions."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Confirms deployment."
+    }
+  ]
+}

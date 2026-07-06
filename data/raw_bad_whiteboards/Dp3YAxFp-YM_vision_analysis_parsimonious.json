@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "We first map the 'STUDENTS' and 'AUTHORS' users as UserConsumerWebMobile and UserConsumerWeb respectively. Student traffic flows into S3 for raw event collection and ELB for inference. Data stored in S3 is sent to Redshift alongside authoring metadata. A dedicated EKS training cluster (running Kubeflow) pulls training data from Redshift and integrates with SageMaker for hyperparameter tuning. Optimized models are saved to ECR as docker images and deployed to the EKS inference cluster. CloudWatch monitors both training and inference stages.",
+  "graph": {
+    "name": "Alph Education Personalized Learning Recommendation System",
+    "link": "https://www.youtube.com/watch?v=Dp3YAxFp-YM",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "E-learning platform with 120k active students. Scalable architecture separating model training (EKS, Kubeflow, SageMaker) from real-time recommendation inference (ELB, EKS)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Students",
+      "notes": "DATA_PEEK: 120k active students generating over 100 million performance events."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Distributes student traffic to the Kubernetes-based recommendation serving cluster."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS Inference",
+      "notes": "WORKLOAD_PEEK: Autoscaling inference cluster serving recommendations based on 65k daily events."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "DATA_PEEK: Collects raw performance and assessment events from students."
+    },
+    {
+      "id": "4",
+      "service": "UserConsumerWeb",
+      "name": "Authors",
+      "notes": "DATA_PEEK: Educational content creators contributing 65k authoring data points."
+    },
+    {
+      "id": "5",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "DATA_PEEK: Over 3TB of consolidated learning and authoring data warehouse."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "EKS Training",
+      "notes": "WORKLOAD_PEEK: Kubeflow running on EKS for training and fine-tuning machine learning models."
+    },
+    {
+      "id": "7",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "WORKLOAD_PEEK: Performs hyperparameter tuning using F1 score and recall metrics."
+    },
+    {
+      "id": "8",
+      "service": "ECR",
+      "name": "ECR",
+      "notes": "Stores the best performing model packaged into a Docker container image."
+    },
+    {
+      "id": "9",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Monitors training drift, triggers early stopping, and tracks accuracy for production models."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends real-time requests for personalized learning paths."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes requests to the inference endpoints."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests learning events."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Spark streaming job processes and stores unstructured events into Redshift."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Inserts authoring metadata."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pulls unified student dataset for ML training."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Passes parameters for tuning jobs."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Publishes the best optimized model as docker image."
+    },
+    {
+      "source": "8",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Deploys model container to the inference cluster."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Sends training logs to monitor convergence."
+    },
+    {
+      "source": "2",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Sends inference metrics to monitor accuracy drift."
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "We identify Edge Nodes (N) and Supernodes (SN) as Edge devices. EKS hosts the Mobile Discovery Service (MDS). MDS uses MongoDB for proximity clustering and DynamoDB for profile and association services. Supernodes send telemetry directly to Kinesis Data Streams, which feeds into Firehose, archives in S3, and is queried by Snowflake.",
+  "graph": {
+    "name": "Mimic Edge Engine Architecture",
+    "link": "https://www.youtube.com/watch?v=-S-R7MWRpaI",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Edge Engine allows microservices to run directly on Android/iOS devices. Supernodes coordinate discovery and local clustering while forwarding logs to AWS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "Edge Node",
+      "notes": "Standard mobile/IoT edge device running Edge Engine."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyEdge",
+      "name": "Supernode",
+      "notes": "Coordinates local network node registrations and reports telemetry."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS (MDS)",
+      "notes": "Runs the Mobile Discovery Service."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "MongoDB",
+      "notes": "Document DB used to define clusters based on physical proximity."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores profile data and hierarchical peer associations."
+    },
+    {
+      "id": "5",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams",
+      "notes": "Ingests real-time logs and business logic metrics. Handles ~1000 msg/sec."
+    },
+    {
+      "id": "6",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Buffers and formats stream data."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Long-term data lake storage."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Snowflake",
+      "notes": "Performs SQL queries over archived data for analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "New node registers with Supernode."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Supernode registers the new node in MDS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves proximity metadata."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fetches profile / association information."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends API logs and business metrics."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams telemetry."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Archives raw metrics to S3."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries telemetry archive data."
+    }
+  ]
+}

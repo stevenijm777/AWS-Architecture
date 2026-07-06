@@ -1,6 +1,6 @@
 # Combined Evaluation Report: Generated Graphs vs Cloudscape Ground Truth
 
-*Generated: 2026-07-06 13:51:45*
+*Generated: 2026-07-06 13:57:11*
 
 ## 1. Executive Summary (Side-by-Side Comparison)
 

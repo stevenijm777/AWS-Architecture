@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "The transcript describes a recommendation system for ZTore. Phase 1 trains a daily model on EC2 triggered by CloudWatch, writing direct recommendations into DynamoDB which is queried by an ECS Fargate microservice via an ELB when users access the web platform. Phase 2 introduces a Cart-to-Item recommendation system where the EC2 instance outputs the trained model to S3 and triggers a rolling deployment in ECS, allowing newly provisioned containers to pull the model directly from S3.",
+  "graph": {
+    "name": "ZTore ML-Powered Recommendation System",
+    "link": "https://www.youtube.com/watch?v=CDCLwX2fo2g",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "E-commerce recommendation engine scaling to 100x current traffic. Uses DynamoDB and ECS Fargate for auto-scaling capabilities."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "E-commerce Customers",
+      "notes": "Over 250,000 users accessing website."
+    },
+    {
+      "id": "1",
+      "service": "CloudWatch",
+      "name": "CloudWatch Scheduler",
+      "notes": "Schedules daily ML model training."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "P2 Training Instance",
+      "notes": "WORKLOAD_PEEK: Retrains ML model daily."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Recommendations DB",
+      "notes": "DATA_PEEK: Stores precomputed user recommendations. Configured with auto-scaling."
+    },
+    {
+      "id": "4",
+      "service": "ELB",
+      "name": "Load Balancer",
+      "notes": "Distributes frontend incoming traffic."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "Fargate Microservices API",
+      "notes": "Runs API containers under Fargate. Auto-scales based on traffic."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Model Bucket",
+      "notes": "DATA_PEEK: Stores trained model artifacts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers daily retraining"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes precomputed recommendations per user"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Requests website content"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Passes user context and ID"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches recommendations using User ID"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns recommendation data"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends API response"
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Displays recommended products"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Daily trigger"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Uploads new ML model file"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers ECS Rolling Deployment"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "New tasks load trained model artifact on startup"
+    }
+  ]
+}

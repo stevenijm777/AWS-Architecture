@@ -1,0 +1,144 @@
+{
+  "step_by_step_reasoning": "The architecture shows an automation platform for managing Amazon WorkSpaces. Administrators and end users access a self-service console hosted on S3. Authentication is secured using Cognito integrated with the customer's SAML IdP. To sync users and groups, a customer-hosted Lambda function sends data via API Gateway to Synchronet's central Lambda. This central Lambda writes state to RDS and puts provisioning jobs into SQS. SQS triggers another Lambda to launch Step Functions, which orchestrate the 20-minute WorkSpaces provisioning lifecycle.",
+  "graph": {
+    "name": "Synchronet Amazon WorkSpaces Provisioning Automation Engine",
+    "link": "https://www.youtube.com/watch?v=Q6r_QbYXFpg",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Automates the deployment, provisioning, and lifecycle of thousands of workspaces using AWS Step Functions to manage state transitions and coordinate tasks."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Console",
+      "notes": "WORKLOAD_PEEK: Hosts the admin and end-user self-service console UI."
+    },
+    {
+      "id": "1",
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "WORKLOAD_PEEK: Implements secure user login federated with SAML."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "SAML IdP",
+      "notes": "WORKLOAD_PEEK: Customer's internal identity provider."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Sync Lambda",
+      "notes": "WORKLOAD_PEEK: Runs in customer account to pull users/groups from directory services."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "WORKLOAD_PEEK: Secure endpoint ingestion for customer sync messages."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "CRUD & Calc Lambda",
+      "notes": "WORKLOAD_PEEK: Handles database operations and computes necessary delta updates."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "RDS DB",
+      "notes": "WORKLOAD_PEEK: Stores configurations, platform metadata, and state."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "Job SQS Queue",
+      "notes": "WORKLOAD_PEEK: Decouples platform computation from long-running workspaces jobs."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Trigger Lambda",
+      "notes": "WORKLOAD_PEEK: Consumes queue messages and triggers corresponding orchestration workflows."
+    },
+    {
+      "id": "9",
+      "service": "StepFunctions",
+      "name": "Step Functions Orchestration",
+      "notes": "WORKLOAD_PEEK: Coordinates long-running (20+ min) WorkSpaces provisioning steps without wasting active runtime."
+    },
+    {
+      "id": "10",
+      "service": "WorkSpaces",
+      "name": "Customer WorkSpaces",
+      "notes": "DATA_PEEK: Up to thousands of cloud desktops provisioned dynamically."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "SAML federation authentication flow"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes directory lists to the API Gateway"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers platform logic"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes and updates metadata and current workspace states"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enqueues provisioning/lifecycle tasks"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers execution dynamically"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Launches the step functions execution workflow"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Provisions, modifies, and terminates Virtual Desktops"
+    }
+  ]
+}

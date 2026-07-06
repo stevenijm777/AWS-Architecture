@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "We first identify the user/image input node on the whiteboard, mapping it to UserConsumerWebMobile since users upload images via SDK, API, and web/mobile apps. Following the physical whiteboard diagram, we map API Gateway, ALB, ECS, SQS, and the EC2 processing layer (running CPU/GPU workloads) as the ingestion and processing flow. For the ML pipeline, we map the 'TP' training input source, S3, SageMaker, and Lambda, which coordinates model training and syncs weights back to the EC2 instances.",
+  "graph": {
+    "name": "Spine.ai - High-Scale AI Cataloging Architecture",
+    "link": "https://www.youtube.com/watch?v=0wnNlOg42dc",
+    "categories": "data_ingestion, compute_intensive, other",
+    "graph_usable": true,
+    "notes": "Handles processing of 100k images/day for digital cataloging using hybrid CPU/GPU instances and cost-effective SageMaker training."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "IMAGE",
+      "notes": "Images uploaded via SDK, API, or web/mobile."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for image uploads."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Routes traffic to the correct ECS cluster."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Saves metadata to RDS and routes to processing queues."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues partitioned by processing category."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Processing Layer",
+      "notes": "WORKLOAD_PEEK: CPU instances for pre/post processing, G5 GPU instances for inference."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "TP",
+      "notes": "Training data source pipeline."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "DATA_PEEK: Stores training data and model weights."
+    },
+    {
+      "id": "8",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "WORKLOAD_PEEK: Trains models using SageMaker Spot instances."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Triggers weight sync to processing layer."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "User uploads images"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards to ALB"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Routes based on image category"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pushes tasks to appropriate SQS queue"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Consumed by AI service instances"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Uploads training data"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker downloads training dataset"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves trained model weights"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Triggers Lambda after evaluation passes"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Syncs model weights to processing layer"
+    }
+  ]
+}

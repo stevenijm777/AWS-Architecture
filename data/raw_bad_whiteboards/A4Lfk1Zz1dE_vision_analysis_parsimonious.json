@@ -1,0 +1,128 @@
+{
+  "step_by_step_reasoning": "The transcript describes a cross-account SaaS architecture for Spot.io. In the customer account, the user deploys a CloudFormation template to create a secure IAM role. This role allows Spot.io's data collectors (running on EKS in the Spot.io SaaS account) to describe and monitor the customer's EC2 and EKS workloads. The SaaS platform stores billions of metrics in Amazon Aurora, which SageMaker analyzes to predict Spot interruptions. If an interruption is predicted, the Spot.io EKS orchestrator proactive replaces the customer's EC2 Spot instances using the same IAM cross-account role.",
+  "graph": {
+    "name": "Spot.io Proactive Spot Instance Management",
+    "link": "https://www.youtube.com/watch?v=A4Lfk1Zz1dE",
+    "categories": "compute_intensive,control,data_ingestion",
+    "graph_usable": true,
+    "notes": "Spot.io leverages fully managed AWS services (Aurora, SageMaker, and EKS) to ingest 2 billion daily data points, predicting Spot instance interruptions with 85% accuracy up to 1 hour in advance, then executing automated proactive replacements in customer environments via secure IAM cross-account roles."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerDeveloper",
+      "name": "Customer Developer",
+      "notes": "Deploys Spot.io integration templates and manages workloads."
+    },
+    {
+      "id": "1",
+      "service": "CloudFormation",
+      "name": "CloudFormation",
+      "notes": "WORKLOAD_PEEK: Deploys cross-account IAM role and policy in the customer account."
+    },
+    {
+      "id": "2",
+      "service": "IAM",
+      "name": "Cross-Account IAM Role",
+      "notes": "Secures access using an external ID, permitting Spot.io to describe and modify customer infrastructure."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Customer Spot Instances",
+      "notes": "WORKLOAD_PEEK: Customer workloads, including Auto Scaling Groups and containerized EKS worker nodes."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Spot.io SaaS EKS",
+      "notes": "WORKLOAD_PEEK: Runs Spot.io data collectors and automation engine to orchestrate instance replacements."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "Amazon Aurora",
+      "notes": "DATA_PEEK: Stores 2 billion data points a day of real-time regional Spot capacity metrics."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "WORKLOAD_PEEK: Predicts Spot interruptions with 85% accuracy up to 1 hour in advance using machine learning."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers CloudFormation deployment."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Provisions cross-account IAM role."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Assumes cross-account role to collect metrics."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Describes customer EC2 instances and auto scaling groups."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Writes infrastructure metrics into Aurora database."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Feeds historical and real-time data into ML predictive models."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers proactive replacement on interruption prediction."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Assumes IAM role to modify customer instances."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Terminates and replaces Spot instances before interruption occurs."
+    }
+  ]
+}

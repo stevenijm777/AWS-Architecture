@@ -1,0 +1,204 @@
+{
+  "step_by_step_reasoning": "Chronological analysis of the architecture reveals two primary pipelines: Ingestion and Analysis/Notification. 1) Applications ingest data via Kinesis into a Fargate ingestion service. This service parses and stores raw data in Aurora and S3, with Glue processing ETL on S3 data. 2) A scheduler triggers an Analysis Fargate service to scope analysis and launch an EMR job. 3) The EMR job reads data from S3 and Aurora to run rules, generating violation events sent to EventBridge. 4) EventBridge queues violations to SQS, which are read and decorated by a Fargate decorator service, then emailed via SMTP. We separate Fargate into three nodes representing distinct services as described in the transcript.",
+  "graph": {
+    "name": "Infor Governance Risk and Compliance Architecture",
+    "link": "https://www.youtube.com/watch?v=0gNMEyei-co",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles risk and compliance auditing. Scales to millions of records per day per customer. Uses Spark on EMR for rule execution on big data stored in Aurora and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAPI",
+      "name": "Customer Applications",
+      "notes": "Generates security and transactional data."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Kinesis Stream",
+      "notes": "Ingests real-time security and transactional logs."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "Ingestion Service",
+      "notes": "Parses and routes incoming streams."
+    },
+    {
+      "id": "3",
+      "service": "Aurora",
+      "name": "Aurora DB",
+      "notes": "Stores transactional metadata."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores raw and processed historical audit data."
+    },
+    {
+      "id": "5",
+      "service": "Glue",
+      "name": "Glue ETL Jobs",
+      "notes": "Scheduled ETL to transform raw S3 logs."
+    },
+    {
+      "id": "6",
+      "service": "EventBridge",
+      "name": "Scheduler",
+      "notes": "Manages schedule-based triggers for analysis."
+    },
+    {
+      "id": "7",
+      "service": "Fargate",
+      "name": "Analysis Engine (Scoping)",
+      "notes": "Determines scope and triggers EMR jobs."
+    },
+    {
+      "id": "8",
+      "service": "EMR",
+      "name": "EMR Spark Cluster",
+      "notes": "Runs auditing logic and identifies violations."
+    },
+    {
+      "id": "9",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Routes violation events."
+    },
+    {
+      "id": "10",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Queues violations for email processing."
+    },
+    {
+      "id": "11",
+      "service": "Fargate",
+      "name": "Violation Decorator Service",
+      "notes": "Enriches violation data for notification."
+    },
+    {
+      "id": "12",
+      "service": "ThirdParty",
+      "name": "SMTP Server",
+      "notes": "Dispatches compliance alerts to clients."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams security events."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Consumes stream data."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves structured records."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves raw payload."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Reads raw data."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Writes back transformed data."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers schedule."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Spins up/triggers EMR Job."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EMR pulls transactional details."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EMR pulls audit logs."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Publishes violations."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Queues violations."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Pulls violations."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Sends compliance emails."
+    }
+  ]
+}

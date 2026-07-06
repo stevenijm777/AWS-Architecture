@@ -1,0 +1,256 @@
+{
+  "step_by_step_reasoning": "We identify NHS clinical users accessing the system via Direct Connect to query and store patient medical records. Structured records are queried by an Integration Engine microservice from third parties, formatted via a FHIR microservice, and persisted in Postgres RDS. Unstructured documents are mirrored via Storage Gateway to S3, triggering an SQS-to-Lambda pipeline that processes metadata and content into the Document Service, which saves them to RDS and S3.",
+  "graph": {
+    "name": "Kainos NHS Healthcare Interoperability Platform",
+    "link": "https://www.youtube.com/watch?v=4WjXH8Wp0E4",
+    "categories": "interactive, control, data_ingestion",
+    "graph_usable": true,
+    "notes": "A multi-tenant microservices architecture designed to normalize siloed healthcare data into the FHIR standard and provide clinicians with a unified longitudinal view of patient health records. Serves over 650,000 patients and 10,000 health care workers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerHospital",
+      "name": "NHS Clinicians & Care Workers",
+      "notes": "WORKLOAD_PEEK: 10,000 total users, 2,000 active concurrent users accessing patient records."
+    },
+    {
+      "id": "1",
+      "service": "DirectConnect",
+      "name": "AWS Direct Connect",
+      "notes": "Provides secure network ingestion from the NHS N3 network into AWS."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Integration Engine Microservice",
+      "notes": "Orchestrates microservice workflows and coordinates queries to external healthcare silos."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "NHS External Systems",
+      "notes": "Siloed healthcare systems containing external patient databases."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "FHIR Service Microservice",
+      "notes": "Standardizes raw data inputs into standard HL7 FHIR records."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "Amazon RDS PostgreSQL",
+      "notes": "DATA_PEEK: Stores normalized patient FHIR data models and unstructured document metadata."
+    },
+    {
+      "id": "6",
+      "service": "StorageGateway",
+      "name": "AWS Storage Gateway",
+      "notes": "Bridges on-premises hospital environments to replicate local files to AWS."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores both raw incoming document content and final standardized patient letters/summaries."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "Amazon SQS",
+      "notes": "Acts as a message buffer and orchestrator for raw document ingestion events."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "Processes document metadata extraction and handles orchestration steps."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "Document Service Microservice",
+      "notes": "Manages patient document content and associates metadata records."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User queries patient file over secure N3 network."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route request to internal Integration Engine."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Query patient clinical data across external silos."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Return external record content to integration engine."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Forward raw data to FHIR standardization service."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Persist standardized FHIR data in PostgreSQL."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Return confirmed patient structured profile."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Hand off clean medical record structure to Integration Engine."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Transmit medical view payload back."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Deliver the standardized patient record view."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mirror local clinical documents to raw S3 bucket."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Trigger S3 upload notification to SQS queue."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Trigger Lambda function to process the file."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda forwards extracted document details to Document Service."
+    },
+    {
+      "source": "10",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Save structured metadata in database."
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Store the parsed document content in Amazon S3."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests patient document view."
+    },
+    {
+      "source": "1",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forward document requests to Document Service."
+    },
+    {
+      "source": "10",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieve document metadata checklist."
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Retrieve clinical files (PDFs, reports)."
+    },
+    {
+      "source": "10",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Send assembled digital patient chart."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Return patient documentation view to medical worker."
+    }
+  ]
+}

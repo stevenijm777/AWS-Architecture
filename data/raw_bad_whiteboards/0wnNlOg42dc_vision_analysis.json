@@ -1,0 +1,200 @@
+{
+  "step_by_step_reasoning": "The transcript describes an ingestion workflow starting from API/Web sources through a gateway and load balancer to ECS. Metadata is stored in RDS while processing queues are managed in SQS. The AI processing layer consists of two distinct EC2 instance classes: CPU instances for pre/post-processing and GPU instances (G5) for inference. Training is decoupled using SageMaker and S3, with Lambda synchronizing the model weights back to the EC2 instances.",
+  "graph": {
+    "name": "Spine.ai AI Cataloging Architecture",
+    "link": "https://www.youtube.com/watch?v=0wnNlOg42dc",
+    "categories": "compute_intensive, data_ingestion",
+    "graph_usable": true,
+    "notes": "Processes ~100k images daily using segregated CPU/GPU pipelines and spot instances on SageMaker for cost reduction."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAPI",
+      "name": "Enterprise Users",
+      "notes": "80+ enterprises in retail, food, fashion, and automobile uploading images and downloading catalogs."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Handles incoming image uploads from various sources (SDK, API, Web)."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "Application Load Balancer",
+      "notes": "Routes incoming traffic to the appropriate ECS services."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS Clusters",
+      "notes": "Categorizes images and handles parameters and metadata."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Stores metadata and powers the catalog dashboard."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "Amazon SQS",
+      "notes": "Task queues mapping to appropriate CPU or GPU processing tasks."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "CPU Instances (Pre/Post Processing)",
+      "notes": "Performs CPU-intensive tasks like resizing, color correction, and final image construction."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "GPU Instances (Inference)",
+      "notes": "G5 instances (8x GPUs) running AI model inferences."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores training datasets, catalog assets, and trained model weights."
+    },
+    {
+      "id": "9",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "Runs model training using cost-effective Spot instances."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Weight Syncer Lambda",
+      "notes": "Triggered post-benchmarking to synchronize trained model weights from S3 to EC2."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User uploads catalog images"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes image requests"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards to appropriate ECS categorization task"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves image metadata and parameters"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pushes tasks to categorized queues"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5a",
+      "type": "data",
+      "notes": "Triggers pre/post CPU processes"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5b",
+      "type": "data",
+      "notes": "Triggers GPU model inference"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6a",
+      "type": "data",
+      "notes": "Uploads finished catalog images"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6b",
+      "type": "data",
+      "notes": "Retrieves image payload for model consumption"
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Powers catalog dashboard for user views and downloads"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Loads training datasets"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Uploads trained model weights"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers weight sync lambda post-benchmarking"
+    },
+    {
+      "source": "10",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads weight files"
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pushes new weight models to inference engines"
+    }
+  ]
+}

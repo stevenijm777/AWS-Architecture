@@ -1,0 +1,252 @@
+{
+  "step_by_step_reasoning": "We first identify the ingestion layer consisting of AWS IoT Core connected to 40 mills and 20 apps. This data splits into two distinct paths: a top path representing OEE/job telemetry and a bottom path for additional machine metrics. Both paths feed into SQS queues, processed by Lambdas, and written to DynamoDB tables. There is an external Kafka (MSK) pipeline that also feeds the top DynamoDB via Lambda. For evaluations, an S3 bucket triggers a Lambda which aggregates data into the main Statistics DynamoDB. For the dashboard interface, Cognito and API Gateway connect to a Lambda backend. On the right, SNS and SES handle alerting, while a bottom-right Lambda/DynamoDB setup manages the ticketing and self-healing orchestration.",
+  "graph": {
+    "name": "Glidewell Dental IoT and Statistical Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=5RsZJ-1_sn4",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Real-time manufacturing analytics and self-healing orchestration platform. Scales to process over 1 million telemetry messages daily from smart milling devices."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "Milling Machines & Apps",
+      "notes": "DATA_PEEK: 40 milling machines and 20 client applications generating telemetry."
+    },
+    {
+      "id": "1",
+      "service": "IoTCore",
+      "name": "AWS IoT Core",
+      "notes": "WORKLOAD_PEEK: Central broker managing active device connections."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "Metadata DB",
+      "notes": "Stores structural metadata about milling jobs."
+    },
+    {
+      "id": "3",
+      "service": "MSK",
+      "name": "Amazon MSK",
+      "notes": "Kafka stream broker processing upstream manufacturing data."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Kafka Stream Consumer",
+      "notes": "Consumes stream records from Apache Kafka."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "Job Queue",
+      "notes": "Buffers job records and scheduling details."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Job Queue Processor",
+      "notes": "Processes and validates incoming milling jobs."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Jobs DB",
+      "notes": "Stores validated transaction histories for jobs."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "OEE Queue",
+      "notes": "Buffers Overall Equipment Effectiveness (OEE) metrics."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "OEE Processor",
+      "notes": "Processes raw machine state and execution timelines."
+    },
+    {
+      "id": "10",
+      "service": "DynamoDB",
+      "name": "OEE DB",
+      "notes": "Stores raw machine state history."
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "Dentist Evaluations",
+      "notes": "DATA_PEEK: Stores clinical diagnostic evaluations and quality metrics."
+    },
+    {
+      "id": "12",
+      "service": "Lambda",
+      "name": "Statistical Aggregator",
+      "notes": "Aggregates performance statistics from clinical files and storage."
+    },
+    {
+      "id": "13",
+      "service": "DynamoDB",
+      "name": "Statistics DB",
+      "notes": "Acts as the single source of truth for manufacturing quality trends."
+    },
+    {
+      "id": "14",
+      "service": "SNS",
+      "name": "Team Notifications",
+      "notes": "Sends real-time team alerts to Teams and chat services."
+    },
+    {
+      "id": "15",
+      "service": "SES",
+      "name": "Email Notifications",
+      "notes": "Dispatches operational escalation emails to supervisors."
+    },
+    {
+      "id": "16",
+      "service": "Cognito",
+      "name": "Dashboard Auth",
+      "notes": "Secures executive monitoring applications."
+    },
+    {
+      "id": "17",
+      "service": "ApiGateway",
+      "name": "Dashboard API",
+      "notes": "Exposes endpoints for the operational UI."
+    },
+    {
+      "id": "18",
+      "service": "Lambda",
+      "name": "Dashboard Backend",
+      "notes": "Retrieves statistical aggregates for visualization."
+    },
+    {
+      "id": "19",
+      "service": "DynamoDB",
+      "name": "Ticketing DB",
+      "notes": "Tracks maintenance ticket statuses and state."
+    },
+    {
+      "id": "20",
+      "service": "Lambda",
+      "name": "Self-Healing Controller",
+      "notes": "Orchestrates machine calibration blocks and maintenance schedules."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams real-time device telemetry."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pushes incoming job requests."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes machine diagnostic reports."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Appends job structural metadata."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams manufacturing logs."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves processed stream metrics."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Triggers batch execution."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Persists structured job data."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Triggers raw processing."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Persists machine activity state."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers parsing on new clinical files."
+    },
+    {
+      "source": "12",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Updates performance benchmarks."
+    },
+    {
+      "source": "17",
+      "target": "18",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Proxies analytics query requests."
+    },
+    {
+      "source": "18",
+      "target": "13",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads visual metrics."
+    }
+  ]
+}

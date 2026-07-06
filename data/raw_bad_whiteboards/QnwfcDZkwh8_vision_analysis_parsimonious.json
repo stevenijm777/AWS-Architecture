@@ -1,0 +1,194 @@
+{
+  "step_by_step_reasoning": "We identify the nodes directly from the whiteboard icons: the users/audience, AWS WAF, Application Load Balancer (ALB), ECS Fargate (represented as a single icon), MemoryDB for Redis, VPN, On-Premises Editorial System, CloudWatch, Kinesis Data Firehose, and Amazon S3. The workflow flows from the users through security and load balancing to Fargate and MemoryDB. Admin/editorial commands flow from the on-premise systems via VPN to Fargate and MemoryDB. Log data is sent to CloudWatch, then streamed via Firehose into S3.",
+  "graph": {
+    "name": "Mediaset Real-Time Voting Architecture",
+    "link": "https://www.youtube.com/watch?v=QnwfcDZkwh8",
+    "categories": "interactive, data_ingestion",
+    "graph_usable": true,
+    "notes": "Serverless, low-latency architecture designed to process >5 million votes within 10ms per vote under highly spiky traffic conditions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Audience / Voting Channels",
+      "notes": "WORKLOAD_PEEK: Voting via SMS, mobile apps, websites, and connected TVs."
+    },
+    {
+      "id": "1",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Restricts voting to users inside Italy using geographic checks."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Handles incoming spiky traffic and routes to frontend containers."
+    },
+    {
+      "id": "3",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "WORKLOAD_PEEK: Auto-scaled frontend and backend microservices that handle user auth, session verification, and request processing."
+    },
+    {
+      "id": "4",
+      "service": "MemoryDB",
+      "name": "Amazon MemoryDB for Redis",
+      "notes": "DATA_PEEK: Houses active contestants, active sessions, and limits. Executes Lua scripts for atomic vote counting under 10ms."
+    },
+    {
+      "id": "5",
+      "service": "VPN",
+      "name": "AWS Site-to-Site VPN",
+      "notes": "Securely tunnels admin/editorial commands from on-premises network."
+    },
+    {
+      "id": "6",
+      "service": "OnPremDC",
+      "name": "On-Premises Editorial System",
+      "notes": "Used by editorial teams to manage sessions and read final voting results for the broadcast."
+    },
+    {
+      "id": "7",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Aggregates logs and metrics from ALB and Fargate container environments."
+    },
+    {
+      "id": "8",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose",
+      "notes": "Buffers and streams logs from CloudWatch for persistent archival."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Acts as the final long-term storage data lake for vote audit certification."
+    }
+  ],
+  "edges": [
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Session configuration or results command transmitted."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate admin/backend microservice receives command."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves session configuration or closes the voting session."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns voting results data."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Forwards final results back to VPN."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Delivers results to on-premise system for host announcements."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User submits vote."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Valid geo-checked traffic passed to ALB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB distributes requests to active Fargate containers."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Executes Lua scripts in Redis to validate limits and increment counter."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Acks the vote status and updates limits remaining."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "ALB logs sent to CloudWatch."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Container logs sent to CloudWatch."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Logs streamed continuously."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Persists log batches for compliance auditing."
+    }
+  ]
+}

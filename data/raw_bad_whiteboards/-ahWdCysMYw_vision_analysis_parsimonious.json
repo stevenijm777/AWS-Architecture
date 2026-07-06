@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "Based on the whiteboard and transcript, there are seven distinct components. 1) EKS running multi-tenant SaaS pods. 2) Aurora (Postgres) storing database schemas per tenant. 3) Transit Gateway to connect the single-tenant QuickSight environments back to Aurora. 4) Control Tower to provision new tenant AWS accounts. 5) QuickSight deployed inside the customer account for data visualization. 6) VPN connecting customer on-premises data to QuickSight. 7) Customer Data (OnPremDC) representing the bank's on-premises databases connected via VPN.",
+  "graph": {
+    "name": "Multi-Tenant SaaS Loan Origination with Single Tenant Data Reporting",
+    "link": "https://www.youtube.com/watch?v=-ahWdCysMYw",
+    "categories": "data_ingestion, compute_intensive, control",
+    "graph_usable": true,
+    "notes": "A multi-tenant SaaS architecture running on EKS and Aurora PostgreSQL. Isolates analytical reporting for single tenants by automated provisioning of dedicated AWS accounts with QuickSight via AWS Control Tower."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EKS",
+      "name": "EKS Pods",
+      "notes": "WORKLOAD_PEEK: Multi-tenant SaaS application running isolated pods per tenant."
+    },
+    {
+      "id": "1",
+      "service": "Aurora",
+      "name": "Postgres Aurora",
+      "notes": "DATA_PEEK: Database with separate schemas per tenant to prevent data commingling."
+    },
+    {
+      "id": "2",
+      "service": "TransitGateway",
+      "name": "Transit Gateway",
+      "notes": "Peers QuickSight tenant VPCs with Postgres Aurora to fetch database views."
+    },
+    {
+      "id": "3",
+      "service": "ControlTower",
+      "name": "Control Tower",
+      "notes": "Uses Account Factory for Terraform to automatically provision new accounts."
+    },
+    {
+      "id": "4",
+      "service": "QuickSight",
+      "name": "QuickSight",
+      "notes": "Single-tenant reporting and BI tool pre-provisioned in each client account."
+    },
+    {
+      "id": "5",
+      "service": "VPN",
+      "name": "VPN",
+      "notes": "Securely connects QuickSight to community banks' on-premises data databases."
+    },
+    {
+      "id": "6",
+      "service": "OnPremDC",
+      "name": "Customer On-Prem DB",
+      "notes": "DATA_PEEK: Customer data hosted on-premises by external community banks."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EKS pods write transactional data to tenant-isolated Postgres Aurora schemas."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Control Tower automatically provisions dedicated client AWS accounts containing QuickSight."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Transit Gateway bridges connections from Aurora database schemas."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Delivers Aurora reporting data to QuickSight dashboards."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pipes on-premises customer databases through VPN tunnel."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Funnels bank's on-premises source data into QuickSight to join with SaaS platform metrics."
+    }
+  ]
+}

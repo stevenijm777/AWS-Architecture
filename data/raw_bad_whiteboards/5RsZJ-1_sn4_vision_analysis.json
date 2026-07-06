@@ -1,0 +1,312 @@
+{
+  "step_by_step_reasoning": "I analyzed the transcript chronologically to construct the architecture. First, there are 40 milling machines and 20 app machines that ingest job and telemetry data into AWS IoT Core. IoT Core routes this data into two separate SQS queues: the Job Queue and the OEE Queue, which write to distinct Job and OEE databases (RDS). Dentists upload restoration evaluations to an S3 bucket. A proprietary 'Statistical Service' (modeled on ECS) reads from both databases and the S3 bucket, processing the data and writing the result to a central Statistics Database. If thresholds are breached, this service coordinates with a Ticketing Service (ECS) to send a self-healing calibration command back to the machines via IoT Core, or creates a ticket in a third-party ticketing system. The Statistical Service also triggers email alerts (SES) and Teams notifications. Finally, executives use a custom dashboard to query the Statistics Database for historical analytics.",
+  "graph": {
+    "name": "Glidewell Laboratories IoT Dental Restoration Monitoring",
+    "link": "https://www.youtube.com/watch?v=5RsZJ-1_sn4",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Glidewell Laboratories scales from 3,400 to over 4,000 unique dental restorations per day. The architecture ingests 1 million IoT messages per day, calculates real-time operational statistics, and initiates automated machine recalibration (self-healing) or alerts human operators based on detected telemetry anomalies."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Milling Machines",
+      "notes": "DATA_PEEK: Approximately 40 milling machines producing unique dental restorations. WORKLOAD_PEEK: Generates telemetry data such as OEE and operational states."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyInternalPlatform",
+      "name": "App Machines",
+      "notes": "DATA_PEEK: Approximately 20 machines running local applications generating job data."
+    },
+    {
+      "id": "2",
+      "service": "IoTCore",
+      "name": "IoT Core Gateway",
+      "notes": "WORKLOAD_PEEK: Handles real-time messaging of around 1 million messages per day from machines and apps."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Job Queue",
+      "notes": "Buffers job-specific data from apps and IoT Core."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "OEE Queue",
+      "notes": "Buffers machine telemetry and overall equipment effectiveness data."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "Job Database",
+      "notes": "Stores transactional information about active dental restoration jobs."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "OEE Database",
+      "notes": "Stores raw telemetry and metrics of milling machine operations."
+    },
+    {
+      "id": "7",
+      "service": "UserCompanyDomainExpert",
+      "name": "Dentists",
+      "notes": "Dentists providing restoration evaluations."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Evals S3 Bucket",
+      "notes": "Stores evaluation documents and feedback from dentists."
+    },
+    {
+      "id": "9",
+      "service": "ECS",
+      "name": "Statistical Service",
+      "notes": "WORKLOAD_PEEK: The brain of the architecture. Calculates aggregate statistics about machines, apps, and personnel against predefined thresholds."
+    },
+    {
+      "id": "10",
+      "service": "RDS",
+      "name": "Statistics Database",
+      "notes": "Aggregated stats for trends, thresholds, and dashboard querying."
+    },
+    {
+      "id": "11",
+      "service": "ECS",
+      "name": "Ticketing Service",
+      "notes": "Interacts with the Statistical Service to manage machine recalibration commands and external support escalations."
+    },
+    {
+      "id": "12",
+      "service": "ThirdParty",
+      "name": "Ticketing System",
+      "notes": "External third-party software used to create operator action tickets."
+    },
+    {
+      "id": "13",
+      "service": "SES",
+      "name": "Email Notification Service",
+      "notes": "Generates threshold-breach alert emails to managers."
+    },
+    {
+      "id": "14",
+      "service": "UserCompanyAgent",
+      "name": "Supervisors & Managers",
+      "notes": "Receives email alerts regarding poorly performing machines."
+    },
+    {
+      "id": "15",
+      "service": "ThirdParty",
+      "name": "Microsoft Teams Webhook",
+      "notes": "Sends real-time alerts directly into support channels."
+    },
+    {
+      "id": "16",
+      "service": "UserCompanyAgent",
+      "name": "Operators & Support",
+      "notes": "Monitors the MS Teams support channel to troubleshoot offline machines."
+    },
+    {
+      "id": "17",
+      "service": "ECS",
+      "name": "Proprietary Dashboard",
+      "notes": "Custom-built business intelligence dashboard for non-technical executives."
+    },
+    {
+      "id": "18",
+      "service": "UserCompanyAnalyst",
+      "name": "Executives",
+      "notes": "Interrogates manufacturing line performance and analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends telemetry and job data."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends job transactional data."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes job-specific messages to Job Queue."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Routes machine OEE data to OEE Queue."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Persists job records."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Persists OEE metrics."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Dentists upload evaluations."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reads evaluation data."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches job stats."
+    },
+    {
+      "source": "9",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches machine stats."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves aggregated statistical data."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Triggers ticket/calibration workflow."
+    },
+    {
+      "source": "11",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Sends calibration request message."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Commands machine to run self-calibration block."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "7",
+      "type": "data",
+      "notes": "Fails over to manual support ticketing if calibration fails."
+    },
+    {
+      "source": "9",
+      "target": "13",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers manager alerts."
+    },
+    {
+      "source": "13",
+      "target": "14",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends notification email."
+    },
+    {
+      "source": "9",
+      "target": "15",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Posts notification hook to MS Teams."
+    },
+    {
+      "source": "15",
+      "target": "16",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Alerts operators to machine downtime."
+    },
+    {
+      "source": "18",
+      "target": "17",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Requests analytics metrics."
+    },
+    {
+      "source": "17",
+      "target": "10",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries historical statistics."
+    },
+    {
+      "source": "10",
+      "target": "17",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns statistics payload."
+    },
+    {
+      "source": "17",
+      "target": "18",
+      "flow_id": 4,
+      "seq": "3",
+      "type": "data",
+      "notes": "Renders dashboard panels."
+    }
+  ]
+}

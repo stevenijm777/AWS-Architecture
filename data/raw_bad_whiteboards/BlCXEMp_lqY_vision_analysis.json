@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "We identify the smart TV devices as the UserConsumerTV actor. This actor streams telemetry data into Kinesis, which routes it via Kinesis Firehose. From Firehose, raw data is archived in S3, while a structured subset is ingested into Redshift and visualized using QuickSight.",
+  "graph": {
+    "name": "Vizio Telemetry Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=BlCXEMp_lqY",
+    "categories": "data_ingestion, interactive",
+    "graph_usable": true,
+    "notes": "Ingests billions of telemetry events per month from millions of connected smart TVs. Uses a simple, schema-less raw ingestion flow backed by Redshift and QuickSight Spice for rapid reporting."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerTV",
+      "name": "Smart TVs",
+      "notes": "WORKLOAD_PEEK: Millions of connected devices generating billions of events per month (logs, performance telemetry, and user data)."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Kinesis Data Stream",
+      "notes": "Runs an 8-shard stream acting as the front door for all TV telemetry data."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Handles ingestion as-is without sticking to a rigid schema, distributing data to both S3 and Redshift."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Raw Store",
+      "notes": "DATA_PEEK: Serves as a cheap, long-term raw data store for future use and potential database reloads."
+    },
+    {
+      "id": "4",
+      "service": "RedShift",
+      "name": "Amazon Redshift",
+      "notes": "Columnar data warehouse optimized for running aggregations over billions of rows."
+    },
+    {
+      "id": "5",
+      "service": "QuickSight",
+      "name": "Amazon QuickSight",
+      "notes": "Visualizes data using its in-memory SPICE database with custom SQL queries for snappy dashboard performance."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "TVs post logs, performance data, and app utilization."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pipes stream events to Firehose."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Archives raw, unfiltered data to S3."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Dumps a subset of formatted columns into Redshift for analytics."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fetches analytical datasets into SPICE database for visualization."
+    }
+  ]
+}

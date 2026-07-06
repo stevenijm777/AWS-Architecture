@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "We identify two distinct user actors on the left: 'Public' users and 'Developer/Newsroom' users. The core flow routes public traffic through an origin proxy ECS cluster, which fetches static resources from S3 or pre-rendered content from S3. On cache miss, it routes to a Lambda rendering engine. The Lambda engine interacts with DynamoDB for templates, and with a secondary content proxy ECS cluster to fetch content. The content proxy checks ElastiCache and falls back to an external CMS cloud.",
+  "graph": {
+    "name": "Arc Publishing Web Rendering Platform",
+    "link": "https://www.youtube.com/watch?v=0JxJpNjI9Y0",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Web rendering platform for Washington Post and other media companies. Uses multi-tier caching (CDN, S3 pre-rendered pages, and ElastiCache for CMS JSON data) to guarantee high performance and availability."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Public Users",
+      "notes": "Access the website to view HTML pages like WashingtonPost.com."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer & Newsroom Users",
+      "notes": "Create page templates and deploy rendering code."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "Origin ECS",
+      "notes": "Handles traffic routing and origin proxying."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Static Resources",
+      "notes": "Stores static assets like CSS and JavaScript."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Pre-Rendered Content",
+      "notes": "Stores pre-rendered HTML content for faster delivery."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Rendering Lambda",
+      "notes": "Performs dynamic HTML page rendering when cache is missed."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "Content Proxy ECS",
+      "notes": "Proxies requests to external and internal CMS systems."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Template Store",
+      "notes": "Stores page builder templates and configurations."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "Raw JSON Cache",
+      "notes": "Caches raw CMS JSON payloads with a TTL."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "CMS & APIs",
+      "notes": "External content management systems and APIs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Public user requests page."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches static assets."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches pre-rendered HTML pages."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Falls back to dynamic Lambda rendering on cache miss."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda requests content details from content proxy."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Checks ElastiCache for raw JSON content."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches raw data from backend CMS systems."
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Newsroom configures templates stored in DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Developers deploy rendering code changes."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Retrieves page layouts and templates during execution."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves rendered output back to S3 pre-render store."
+    }
+  ]
+}

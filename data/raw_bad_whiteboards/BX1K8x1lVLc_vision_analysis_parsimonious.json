@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "We trace the architecture starting from the end-users accessing the web platform. Users hit CloudFront for caching and CDN delivery. Cache misses or dynamic requests go to Varnish caching servers running on EC2. From Varnish, requests are forwarded to Magento running on EKS. The EKS cluster runs separate pods for Web, Admin, and Cron workloads, pulling Docker images from ECR. EKS connects to Aurora MySQL for transactional data and ElastiCache (Redis) for caching. Since Magento didn't support S3 natively, an S3 bucket is mounted to the EKS pods as a file system using S3Fuse, and CloudFront serves media assets directly from this S3 bucket.",
+  "graph": {
+    "name": "Love Bonito: Scalable Magento E-Commerce on EKS",
+    "link": "https://www.youtube.com/watch?v=BX1K8x1lVLc",
+    "categories": "interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Migrated a legacy monolithic Magento deployment to EKS. Solved zero-downtime deployments and auto-scaling during peak sales. Implemented S3Fuse to mount S3 as a file system for Magento."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Users",
+      "notes": "Customers browsing and purchasing fashion items on the e-commerce site."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Caches static assets and acts as the entry point for global traffic."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Varnish Cache (EC2)",
+      "notes": "WORKLOAD_PEEK: Hosts Varnish Cache to offload Magento application rendering."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Magento on EKS",
+      "notes": "WORKLOAD_PEEK: Runs web pods, admin panel, and cron jobs in dedicated auto-scaling node groups."
+    },
+    {
+      "id": "4",
+      "service": "ECR",
+      "name": "Elastic Container Registry",
+      "notes": "Stores containerized Magento application images."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "Aurora MySQL",
+      "notes": "DATA_PEEK: Primary transactional relational database with Multi-AZ replicas."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "Caches database query results and sessions to speed up page loads."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Media S3 Bucket",
+      "notes": "DATA_PEEK: Stores media assets, mounted onto EKS containers using S3FS."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "User visits the e-commerce website."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Dynamic requests routed to Varnish cache on EC2."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Cache misses forwarded to the Magento backend application in EKS."
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "CloudFront directly fetches and serves static media assets stored in S3."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS pods read/write business data to Aurora MySQL."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS pods use Redis to cache relational database queries."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Magento writes assets/media to S3 via mounted S3FS file system."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS pulls updated Magento container images for deployments."
+    }
+  ]
+}

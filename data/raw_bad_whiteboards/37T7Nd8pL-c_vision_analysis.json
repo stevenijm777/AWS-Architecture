@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "Based on the transcript, users upload PDFs to S3. S3 sends events via EventBridge ('main bus'), which triggers a Step Functions state machine. Step Functions orchestrates several serverless steps: first, a Lambda converts pages into images; second, a SageMaker real-time endpoint analyzes the layout using a custom ML model; third, a managed text extraction API (Textract) extracts the text; and finally, a Lambda handles post-processing (reading order, semantic analysis) and publishes a completion event back to EventBridge to notify other services.",
+  "graph": {
+    "name": "Docebo Shape Serverless Document Processing and Noise Reduction Pipeline",
+    "link": "https://www.youtube.com/watch?v=37T7Nd8pL-c",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles 10-20 complex documents a day, processing 30-50 pages per minute. Successfully reduces document noise by about 80% to generate bite-sized e-learning courses."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "E-Learning Creators",
+      "notes": "Upload business documents, scientific papers, or presentations."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Input S3 Bucket",
+      "notes": "Stores uploaded raw PDFs and intermediate converted images."
+    },
+    {
+      "id": "2",
+      "service": "EventBridge",
+      "name": "Main Event Bus",
+      "notes": "Handles decoupled asynchronous communication across the application."
+    },
+    {
+      "id": "3",
+      "service": "StepFunctions",
+      "name": "Processing Orchestrator",
+      "notes": "State machine that manages the lifecycle and sequencing of document clean-up tasks."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Page-to-Image Converter",
+      "notes": "Converts each page of the document into a separate image."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker Real-Time Endpoint",
+      "notes": "Hosts custom ML model to recognize page structure and layout."
+    },
+    {
+      "id": "6",
+      "service": "Textract",
+      "name": "Amazon Textract",
+      "notes": "Extracts text content and raw structures from documents."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Post-Processor",
+      "notes": "Validates reading order, performs semantic analysis, and filters noise."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Uploads PDF documents."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers file upload event."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers state machine execution."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Invokes page conversion task."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stores converted page images."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sends page images for layout analysis."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Calls managed text extraction."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Triggers semantic analyzer."
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Sends event signifying processing completion."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "meta",
+      "notes": "Notifies the creator system that clean document is ready."
+    }
+  ]
+}

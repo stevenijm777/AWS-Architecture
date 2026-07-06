@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The transcript describes a serverless web application hosting a modeling platform at 3M. Users (scientists) connect via CloudFront, which uses Lambda@Edge to authenticate against a third-party IDP. The SPA is fetched from S3. The API layer is fronted by API Gateway, which targets ECS Fargate, backed by DynamoDB for configurations. For CI/CD model publishing, a Git repository triggers Step Functions with Lambdas, which copy model files to an HPC cluster running on EC2. Users submit jobs through the API layer (ECS), which triggers execution on the EC2 HPC cluster, which writes the output results back to S3.",
+  "graph": {
+    "name": "3M serverless model publishing and HPC platform",
+    "link": "https://www.youtube.com/watch?v=CTG23wd9H74",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Serverless architecture that automates ML/physics model publishing to an HPC cluster via step functions and Lambdas, with a secure frontend powered by ECS Fargate, Lambda@Edge, and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDomainExpert",
+      "name": "Scientist / User",
+      "notes": "3M corporate scientists who build, publish, and run physics and ML models."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Distributes SPA and acts as the entry point for the web application."
+    },
+    {
+      "id": "2",
+      "service": "LambdaAtEdge",
+      "name": "Auth Edge Lambda",
+      "notes": "Executes authentication checks and integrates with the external identity provider."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Hosts the SPA assets and stores completed HPC job results."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Secures and routes frontend API requests to the compute layer."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS Fargate",
+      "notes": "WORKLOAD_PEEK: Serverless API layer managing model configurations and initiating compute jobs."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB Table",
+      "notes": "DATA_PEEK: Stores user access permissions and frontend configuration settings."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Git Repository",
+      "notes": "Source control system holding model definitions and code, triggering Step Functions on update."
+    },
+    {
+      "id": "8",
+      "service": "StepFunctions",
+      "name": "Model Orchestrator",
+      "notes": "Coordinates serverless publishing workflows for models."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Publishing Lambdas",
+      "notes": "Executes deployment steps choreographed by Step Functions."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "EC2 HPC Cluster",
+      "notes": "WORKLOAD_PEEK: High-performance computing cluster processing submitted physics and ML model jobs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User accesses the platform."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Verifies credentials at the edge."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches SPA static assets."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User initiates API call to run a model."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes API call to the serverless container backend."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Validates configs and permissions."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Launches computing job on HPC cluster."
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves job outputs and simulation results."
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Scientist pushes model updates to Git."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers CI/CD orchestration pipeline."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers publishing steps."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Deploys model files into the HPC cluster directory."
+    }
+  ]
+}

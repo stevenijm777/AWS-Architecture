@@ -1,0 +1,204 @@
+{
+  "step_by_step_reasoning": "The transcript describes National Australia Bank's compliance framework called Deputy. It involves service teams running non-production pipelines. The architecture consists of the following steps: (1) Developers' pipelines send build events to Kong API gateway on ECS. (2) Kong routes them to an ingestion Lambda, which writes them to DynamoDB. (3) Upon promotion request, a promote API call is made via Kong to an assessment Lambda. (4) The assessment Lambda reads build events from DynamoDB and evaluates them against compliance standards stored in RDS Postgres. (5) If validated, the assessment Lambda triggers SNS to copy artifacts using a production Lambda, and sends a notification message to SQS to trigger deployment tools. Distinct Lambda nodes are modeled for Ingestion, Assessment, and Production Copy functions.",
+  "graph": {
+    "name": "National Australia Bank Automated Compliance Framework",
+    "link": "https://www.youtube.com/watch?v=7V8wTCkjOqo",
+    "categories": "control, data_ingestion",
+    "graph_usable": true,
+    "notes": "Automates compliance checks for 1000+ workloads moving to AWS. Evaluates pipeline build metadata against relational compliance frameworks."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Service Teams",
+      "notes": "NAB developers running pipelines in non-production environments."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "Kong API Gateway",
+      "notes": "WORKLOAD_PEEK: Publishes endpoints and routes incoming pipeline events."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "Captures and processes build events."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Build Events DB",
+      "notes": "DATA_PEEK: Key-value store capturing build events and code scan evidence."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Assessment Lambda",
+      "notes": "Executes compliance evaluation, matching build events against standards."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "Compliance DB",
+      "notes": "PostgreSQL instance containing standards, compliance rules, and team mappings."
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "Promotion Topic",
+      "notes": "Fans out secure notifications across accounts to trigger artifact promotion."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Production Copy Lambda",
+      "notes": "Runs in production account to copy validated artifacts."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "Deployment Queue",
+      "notes": "Receives notification messages to trigger automated deployment tools."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends build events from pipeline."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes request."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves evidence to DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Ack."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Ack."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Ack response."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends Promote API call."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes promotion request."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queries build evidence."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns evidence data."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Queries compliance standards."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns compliance rules."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Triggers promotion upon success."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Triggers prod artifact copy."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Sends deployment notification."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "meta",
+      "notes": "Acceptance response."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "meta",
+      "notes": "Success promotion ack."
+    }
+  ]
+}

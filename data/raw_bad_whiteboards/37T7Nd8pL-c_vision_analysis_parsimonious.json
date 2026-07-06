@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "We identify the nodes on the whiteboard: S3, EventBridge, Lambda, Step Functions, SageMaker, and Managed Textract, plus an incoming files actor which we map to UserConsumerWeb. Edges are mapped directly from the drawn arrows: Files upload to S3, Files trigger EventBridge, EventBridge triggers Step Functions, S3 data is read by Step Functions, Lambda interacts with SageMaker, Step Functions calls Managed Textract, and Step Functions sends completion events back to EventBridge.",
+  "graph": {
+    "name": "Docebo Serverless Document Noise Reduction Pipeline",
+    "link": "https://www.youtube.com/watch?v=37T7Nd8pL-c",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Serverless pipeline that reduces document noise by 80% to generate 5-minute e-learning modules. Processes 30 to 50 pages per minute."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "End User Files",
+      "notes": "Rich PDF files containing text and images uploaded by users."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "DATA_PEEK: Stores the uploaded PDF documents."
+    },
+    {
+      "id": "2",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Main event bus coordinating document ingestion and process completion notifications."
+    },
+    {
+      "id": "3",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates the serverless document processing workflow."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Converts document pages to images and coordinates post-processing semantic analysis."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker Endpoint",
+      "notes": "WORKLOAD_PEEK: Real-time ML endpoint executing a custom model to identify page layout and noise."
+    },
+    {
+      "id": "6",
+      "service": "Textract",
+      "name": "Managed Textract",
+      "notes": "Extracts raw text data from PDF pages."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Uploads raw PDFs."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sends file reference event to main event bus."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers Step Functions workflow."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Workflow retrieves PDF files for processing."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Analyzes page images for layout layout structure and noise filtering."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Performs text extraction on document content."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Publishes process completion events back to the main event bus."
+    }
+  ]
+}

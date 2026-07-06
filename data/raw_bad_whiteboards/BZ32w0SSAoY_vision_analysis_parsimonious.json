@@ -1,0 +1,144 @@
+{
+  "step_by_step_reasoning": "We identify the nodes based on the whiteboard icons and transcript. First, the 'Web Browser' is represented by UserConsumerWeb. Second, the 'WEB SERVER / JOB MANAGER' is on EC2. Third, 'DATABASE' is represented as RDS. Fourth, 'LAMBDA' is an AWS Lambda icon used for extracting video metadata. Fifth, 'S3' is the customer's storage bucket. Sixth, 'G3' is a GPU-enabled EC2 cluster for parallel video processing. Seventh, 'IMF' is an EC2 instance performing Interoperable Master Format wrapping.",
+  "graph": {
+    "name": "Cinefilm PixelStrings Cloud Architecture",
+    "link": "https://www.youtube.com/watch?v=BZ32w0SSAoY",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "PixelStrings is a video processing platform running on GPU-enabled AWS EC2 instances. It supports parallel video retiming, deinterlacing, and IMF wrapping, caching metadata via Lambda in an RDS database."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Browser",
+      "notes": "Web interface recommended on Chrome where users log in and configure video workflows."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Web Server / Job Manager",
+      "notes": "WORKLOAD_PEEK: Single EC2 instance managing user requests, orchestrating processing jobs, and coordinating metadata workflow."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "Database",
+      "notes": "Stores and caches metadata retrieved from S3 clips to serve the web UI."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "WORKLOAD_PEEK: Extracts video metadata on-the-fly from the customer's S3 bucket."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "DATA_PEEK: Customer-managed bucket holding source clips and receiving output processed files."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "G3 GPU Cluster",
+      "notes": "WORKLOAD_PEEK: GPU-accelerated EC2 instances (up to 200 parallel jobs) running proprietary processing engines (Wormhole, Spacetime, Dark Energy)."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "IMF wrapping",
+      "notes": "WORKLOAD_PEEK: Specialized packaging instance for Interoperable Master Format compilation."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User accesses web server and enters S3 keys."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Job manager triggers Lambda to extract clip metadata."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda reads metadata from the customer's S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves retrieved metadata into the database."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Web server retrieves metadata from database to show in browser."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User submits video processing workflow."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Job manager dispatches processing tasks to G3 GPU instances."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Asset manager copies input clip from S3 to G3 local disk."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "If workflow specifies IMF, G3 sends processed content to IMF wrapper."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Standard workflow: Asset manager copies output from G3 back to customer S3."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4b",
+      "type": "data",
+      "notes": "IMF workflow: Asset manager copies IMF package back to customer S3."
+    }
+  ]
+}

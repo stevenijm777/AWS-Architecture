@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "We analyzed the transcript and whiteboard to extract the architectural flow. Clients access individual client S3 buckets. These buckets are configured to deliver access logs to a dedicated S3 access logs bucket. The arrival of logs triggers a Lambda function. The Lambda function parses the logs, maps client IP addresses to country IDs using a geolocation database, adds custom metadata, and writes the enriched records into Amazon Elasticsearch (mapped to OpenSearch). Anomaly detection configured within OpenSearch detects suspicious access patterns (e.g., changes in source country or access times) and triggers alerts via SNS, which sends email notifications to the service team for investigation.",
+  "graph": {
+    "name": "Mobilewala Anomaly Detection for Data Access Logs",
+    "link": "https://www.youtube.com/watch?v=8s0wGRkiDrw",
+    "categories": "data_ingestion, control",
+    "graph_usable": true,
+    "notes": "A near real-time anomaly detection system built on AWS to monitor data access patterns of clients. It processes 18-20 million access log records per month, utilizing Lambda to enrich logs and Amazon Elasticsearch (OpenSearch) anomaly detector to learn patterns and spot anomalies like compromised keys or unusual geo-locations."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Clients",
+      "notes": "Clients accessing their dedicated data storage buckets."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Client S3 Buckets",
+      "notes": "Individual S3 buckets where data is shared with respective clients."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Access Logs Bucket",
+      "notes": "DATA_PEEK: Centralized bucket receiving access logs from all individual client buckets."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Log Parser & Enricher Lambda",
+      "notes": "WORKLOAD_PEEK: Processes 18-20 million logs per month. Parses S3 access logs, maps IP addresses to country numeric IDs via a geolocation database, and appends custom metadata like client name."
+    },
+    {
+      "id": "4",
+      "service": "OpenSearch",
+      "name": "Amazon Elasticsearch Service",
+      "notes": "Uses built-in anomaly detector feature to build historical access models per client and detect unusual access patterns or origin country changes."
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "AWS SNS",
+      "notes": "Sends real-time email notifications when anomalies are detected."
+    },
+    {
+      "id": "6",
+      "service": "UserCompanyAnalyst",
+      "name": "Service Team",
+      "notes": "Receives email alerts and performs investigations on anomalous access activities."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Clients access their data."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Access triggers server access logs delivered to log bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Log object creation triggers Lambda function."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda inserts enriched log records into Elasticsearch."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Anomaly detector triggers SNS alert upon suspicious activity."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "SNS delivers email notification to the service team."
+    }
+  ]
+}

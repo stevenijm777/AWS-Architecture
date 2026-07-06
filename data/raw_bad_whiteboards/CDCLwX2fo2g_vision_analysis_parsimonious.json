@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture diagram on the whiteboard displays two distinct recommendation systems side-by-side: a 'User-Item' recommendation flow on the left, and a 'Cart-Item' recommendation flow on the right. Both are scheduled by a central CloudWatch Schedule and fronted by a single ALB. Nodes have been defined to match the physical drawn icons (ALB, two ECS clusters, DynamoDB, S3, two EC2 training nodes, and CloudWatch Schedule) with an added User node for completeness of the HTTP flows. Edges precisely reflect the pink arrows physically drawn on the whiteboard.",
+  "graph": {
+    "name": "Slick e-Commerce Recommendation System using ECS Fargate",
+    "link": "https://www.youtube.com/watch?v=CDCLwX2fo2g",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Hybrid batch-trained and real-time model loading recommendation engines utilizing ECS Fargate for auto-scaling API serving and DynamoDB for low latency pre-computed lookups."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web/Mobile Users",
+      "notes": "Consumers browsing the e-commerce store."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Routes user traffic to User-Item and Cart-Item microservices."
+    },
+    {
+      "id": "2",
+      "service": "CloudWatch",
+      "name": "CloudWatch Schedule",
+      "notes": "Schedules daily retraining on EC2 instances."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 (User-Item Training)",
+      "notes": "WORKLOAD_PEEK: Retrains ML model daily on P2 instances and pre-computes recommendation results."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB (User-Item DB)",
+      "notes": "DATA_PEEK: Stores pre-computed recommendations. Configured with Auto Scaling to manage demand spikes."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS Fargate (User-Item)",
+      "notes": "WORKLOAD_PEEK: Serves user-item recommendation APIs. Scales container counts automatically."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 (Cart-Item Training)",
+      "notes": "WORKLOAD_PEEK: Retrains Cart-Item ML model daily, outputting model artifacts to S3."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 (Model Registry)",
+      "notes": "DATA_PEEK: Stores trained ML model artifacts for Cart-Item recommendation."
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "ECS Fargate (Cart-Item)",
+      "notes": "WORKLOAD_PEEK: Loads ML model from S3 during rolling deployment to run real-time predictions."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers daily retraining"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes pre-computed recommended results"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "HTTP Request"
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Routes user-item queries"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Retrieves pre-computed recommendations"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers daily retraining"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves trained model"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers ECS rolling redeployment"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Loads ML model during task startup"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "HTTP Request"
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Routes cart-item queries"
+    }
+  ]
+}
