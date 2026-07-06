@@ -317,22 +317,11 @@ def select_best_frame(
     debug: bool = False,
 ) -> dict:
     """
-    Select the best whiteboard frame for a video.
-    
-    Algorithm:
-    1. Load all frames for the video
-    2. Focus on the last 60% of frames (architecture builds up over time)
-    3. Discard credit/outro frames
-    4. Score each remaining frame by content richness (icons, edges)
-    5. Apply occlusion penalty to the top candidates
-    6. Select the frame with the best overall score
-    
-    Returns:
-        dict with keys:
-        - best_frame: Path to the selected frame
-        - score: float score
-        - all_scores: list of (frame_path, score, details) for all analyzed frames
-        - discarded: list of discarded frame names (credits, blanks)
+    Select the best whiteboard frame for a video using the updated layout algorithm:
+    1. Focus on the last 40% of frames (start_idx = 60%).
+    2. Filter 1: Eliminate clear screens (dark_px_pct < 20%).
+    3. Filter 2: Eliminate outros/logos (skin_pct < 1.5%).
+    4. Score based on edge density (masked AWS icons) and skin occlusion.
     """
     frames_dir = frames_dir or FRAMES_DIR
     video_frames_dir = frames_dir / video_id
@@ -352,36 +341,13 @@ def select_best_frame(
     total = len(all_frames)
     console.print(f"\n[bold cyan]🔍 Frame Selection for {video_id}[/] ({total} frames total)")
 
-    # Use transcript to determine where speech ends (skip post-speech frames)
-    transcript_path = RAW_DIR / f"{video_id}_transcript.json"
-    last_speech_sec = None
-    if transcript_path.exists():
-        try:
-            with open(transcript_path, "r", encoding="utf-8") as f:
-                segments = json.load(f)
-            if segments:
-                last_speech_sec = segments[-1].get("end")
-                # Clamp to video duration
-                info_path = RAW_DIR / f"{video_id}.info.json"
-                if info_path.exists():
-                    with open(info_path, "r", encoding="utf-8") as f:
-                        info = json.load(f)
-                    duration = info.get("duration")
-                    if duration and last_speech_sec and last_speech_sec > duration:
-                        last_speech_sec = duration - 10
-                console.print(f"  [dim]Last speech ends at {last_speech_sec:.0f}s[/]")
-        except Exception:
-            pass
-
-    # Focus on last 60% of frames (first 40% is typically intro + early explanation)
-    start_idx = max(0, int(total * 0.40))
+    # 1. Carga (Solo el último 40% del video, como solicitó el usuario)
+    start_idx = int(total * 0.6)
     candidate_frames = all_frames[start_idx:]
-    console.print(f"  [dim]Analyzing frames {start_idx+1}–{total} (last 60%)[/]")
+    console.print(f"  [dim]Analyzing {len(candidate_frames)} frames (last 40% of video)...[/]")
 
-    # Phase 1: Discard credits/blanks (scan from the end) and calculate dark percentage
+    scored_frames = []
     discarded = []
-    candidates_data = []
-    max_dark_pct = 0.0
 
     for fp in candidate_frames:
         img = cv2.imread(str(fp))
@@ -389,143 +355,127 @@ def select_best_frame(
             discarded.append({"name": fp.name, "reason": "unreadable"})
             continue
 
-        if is_blank_transition(img):
-            discarded.append({"name": fp.name, "reason": "blank/transition"})
-            continue
-
-        if is_credit_screen(img):
-            discarded.append({"name": fp.name, "reason": "credit/outro screen"})
-            continue
-
-        # Check if frame is past the last speech timestamp
-        try:
-            frame_num = int(fp.stem.split("_frame_")[-1])
-            frame_time = frame_num * FRAME_INTERVAL_SEC
-            if last_speech_sec and frame_time > last_speech_sec + 15:
-                discarded.append({"name": fp.name, "reason": f"post-speech ({frame_time}s > {last_speech_sec:.0f}s + 15s)"})
-                continue
-        except Exception:
-            pass
-
-        # Calculate percentage of dark pixels
         h, w = img.shape[:2]
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        dark_pct = (np.sum(gray < 50) / (h * w)) * 100
-        if dark_pct > max_dark_pct:
-            max_dark_pct = dark_pct
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        candidates_data.append({
-            "path": fp,
-            "dark_pct": dark_pct
-        })
-
-    # Apply Adaptive Max-Ratio Dark Pixel Threshold
-    valid_frames = []
-    adaptive_threshold = 0.0
-    if max_dark_pct > 55.0:
-        adaptive_threshold = 0.75 * max_dark_pct
-
-    for cand in candidates_data:
-        if cand["dark_pct"] < adaptive_threshold:
-            discarded.append({"name": cand["path"].name, "reason": f"adaptive dark threshold ({cand['dark_pct']:.1f}% < {adaptive_threshold:.1f}%)"})
-            continue
-        valid_frames.append(cand["path"])
-
-    if discarded:
-        console.print(f"  [yellow]⚠[/] Discarded {len(discarded)} frames:")
-        for d in discarded[-5:]:  # Show last 5
-            console.print(f"    • {d['name']}: {d['reason']}")
-
-    if not valid_frames:
-        console.print("[yellow]⚠ All frames discarded! Falling back to last non-blank frame.[/]")
-        # Fallback: use last non-blank from ALL frames
-        for fp in reversed(all_frames):
-            img = cv2.imread(str(fp))
-            if img is not None and not is_blank_transition(img):
-                valid_frames = [fp]
-                break
-        if not valid_frames:
-            valid_frames = [all_frames[-1]]
-
-    # Phase 2: Score valid frames by content richness
-    scored_frames = []
-    for fp in valid_frames:
-        img = cv2.imread(str(fp))
-        if img is None:
+        # ---------------------------------------------------------
+        # FILTRO 1: ELIMINACIÓN DE PANTALLAS CLARAS
+        # ---------------------------------------------------------
+        dark_px_pct = np.sum(gray < 45) / (h * w)
+        if dark_px_pct < 0.20:
+            discarded.append({"name": fp.name, "reason": f"light screen (dark={dark_px_pct:.1%})"})
             continue
 
-        content_score = score_whiteboard_content(img)
+        # ---------------------------------------------------------
+        # FILTRO 2: ELIMINACIÓN DE OUTROS / LOGOS (Falta de piel)
+        # ---------------------------------------------------------
+        skin_mask = cv2.inRange(hsv, (0, 30, 60), (25, 170, 255))
+        skin_pct = np.sum(skin_mask > 0) / skin_mask.size
+        if skin_pct < 0.015:
+            discarded.append({"name": fp.name, "reason": f"no presenter skin (skin={skin_pct:.2%})"})
+            continue
 
-        # Position bonus: later frames get a small bonus (diagram more complete)
-        try:
-            frame_num = int(fp.stem.split("_frame_")[-1])
-            position_ratio = frame_num / total
-        except Exception:
-            position_ratio = 0.5
+        # ---------------------------------------------------------
+        # SCORING (Solo llegan las verdaderas pizarras con humanos)
+        # ---------------------------------------------------------
+        # 1. Pintar íconos cuadrados de negro
+        sat_mask = (hsv[:, :, 1] > 80) & (hsv[:, :, 2] > 60)
+        contours, _ = cv2.findContours(sat_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        img_masked = img.copy()
+        for cnt in contours:
+            x, y, cw, ch = cv2.boundingRect(cnt)
+            if 0.05 * min(h, w) < cw < 0.15 * min(h, w) and 0.85 < (cw / ch) < 1.15:
+                cv2.rectangle(img_masked, (x, y), (x + cw, y + ch), (0, 0, 0), -1)
 
-        position_bonus = position_ratio * 0.15  # Up to 15% bonus for later frames
+        # Convert back to grayscale to do edge detection on the masked image
+        gray_masked = cv2.cvtColor(img_masked, cv2.COLOR_BGR2GRAY)
 
-        total_score = content_score + position_bonus
+        # 2. Densidad de Tiza (Centro)
+        roi_gray = gray_masked[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
+        edges = cv2.Canny(cv2.medianBlur(roi_gray, 7), 80, 200)
+        edge_density = np.sum(edges > 0) / edges.size
 
+        # 3. Penalización por Oclusión (Centro)
+        roi_skin = skin_mask[int(h * 0.15):int(h * 0.95), int(w * 0.28):int(w * 0.72)]
+        occlusion = np.sum(roi_skin > 0) / roi_skin.size
+
+        # Cálculo final
+        score = (edge_density * 50) - (occlusion * 5)
+        
         scored_frames.append({
             "path": fp,
-            "content_score": content_score,
-            "position_bonus": position_bonus,
-            "total_score": total_score,
+            "score": score,
+            "edge_density": edge_density,
+            "occlusion": occlusion,
+            "dark_px_pct": dark_px_pct,
+            "skin_pct": skin_pct
         })
 
-    # Sort by total score descending
-    scored_frames.sort(key=lambda x: x["total_score"], reverse=True)
-
-    # Phase 3: Among top 10 candidates, pick the one with least occlusion
-    top_n = min(10, len(scored_frames))
-    top_candidates = scored_frames[:top_n]
-
-    console.print(f"\n  [bold]Top {top_n} candidates:[/]")
-    for i, sf in enumerate(top_candidates):
-        img = cv2.imread(str(sf["path"]))
-        
-        debug_save_path = None
-        if debug:
-            pizarra_dir = frames_dir / f"{video_id}_pizarra"
-            pizarra_dir.mkdir(parents=True, exist_ok=True)
-            debug_save_path = pizarra_dir / f"{sf['path'].stem}_occlusion_debug.jpg"
+    # Robust Fallback: If ALL frames are discarded, try relaxing skin filter, then fall back to last non-blank
+    if not scored_frames:
+        console.print("[yellow]⚠ All frames discarded by filters. Running fallback...[/]")
+        for fp in candidate_frames:
+            img = cv2.imread(str(fp))
+            if img is None:
+                continue
+            h, w = img.shape[:2]
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
             
-        occlusion = estimate_occlusion_fast(img, debug_save_path=debug_save_path)
-        sf["occlusion_pct"] = occlusion
+            # Relaxed filters: just check that it's not a pure white/empty slide
+            dark_px_pct = np.sum(gray < 45) / (h * w)
+            if dark_px_pct < 0.10:
+                continue
+                
+            skin_mask = cv2.inRange(hsv, (0, 30, 60), (25, 170, 255))
+            roi_gray = gray[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
+            edges = cv2.Canny(cv2.medianBlur(roi_gray, 7), 80, 200)
+            edge_density = np.sum(edges > 0) / edges.size
+            roi_skin = skin_mask[int(h * 0.15):int(h * 0.95), int(w * 0.28):int(w * 0.72)]
+            occlusion = np.sum(roi_skin > 0) / roi_skin.size
+            
+            score = (edge_density * 50) - (occlusion * 5)
+            scored_frames.append({
+                "path": fp,
+                "score": score,
+                "edge_density": edge_density,
+                "occlusion": occlusion,
+                "dark_px_pct": dark_px_pct,
+                "skin_pct": 0.0
+            })
+            
+    # Absolute Fallback if still empty: use last frame
+    if not scored_frames:
+        console.print("[yellow]⚠ Fallback still empty. Using absolute last frame.[/]")
+        fp = all_frames[-1]
+        scored_frames.append({
+            "path": fp,
+            "score": 0.0,
+            "edge_density": 0.0,
+            "occlusion": 0.0,
+            "dark_px_pct": 0.5,
+            "skin_pct": 0.0
+        })
 
-        # Final score: penalize occlusion
-        occlusion_penalty = (occlusion / 100.0) * 0.3  # Up to 30% penalty
-        sf["final_score"] = sf["total_score"] - occlusion_penalty
+    scored_frames.sort(key=lambda x: x["score"], reverse=True)
 
-        marker = ""
-        if i == 0:
-            marker = " ← highest content"
-        console.print(
-            f"    {i+1}. {sf['path'].name}: "
-            f"content={sf['content_score']:.3f} "
-            f"pos_bonus={sf['position_bonus']:.3f} "
-            f"occlusion={occlusion:.1f}% "
-            f"final={sf['final_score']:.3f}{marker}"
-        )
+    # Output selection details
+    best = scored_frames[0]
+    console.print(f"  [bold green]✓ Selected:[/] {best['path'].name} "
+                  f"(score={best['score']:.3f}, edge_density={best['edge_density']:.3f}, occlusion={best['occlusion']:.1%})")
 
-    # Select the best by final score
-    best = max(top_candidates, key=lambda x: x["final_score"])
-
-    console.print(f"\n  [bold green]✓ Selected:[/] {best['path'].name} "
-                  f"(final_score={best['final_score']:.3f}, occlusion={best['occlusion_pct']:.1f}%)")
-
-    # Phase 4: Save as best_whiteboard.jpg in pizarra dir
+    # Save best_whiteboard.jpg
     pizarra_dir = frames_dir / f"{video_id}_pizarra"
     pizarra_dir.mkdir(parents=True, exist_ok=True)
     dest = pizarra_dir / "best_whiteboard.jpg"
-
+    
     import shutil
     shutil.copy(best["path"], dest)
     console.print(f"  [green]✓[/] Saved → {dest}")
 
-    # Debug: save all scores to JSON
     if debug:
+        # Save JSON debug
         debug_data = {
             "video_id": video_id,
             "total_frames": total,
@@ -534,13 +484,13 @@ def select_best_frame(
             "scores": [
                 {
                     "frame": sf["path"].name,
-                    "content_score": round(sf["content_score"], 4),
-                    "position_bonus": round(sf["position_bonus"], 4),
-                    "total_score": round(sf["total_score"], 4),
-                    "occlusion_pct": round(sf.get("occlusion_pct", -1), 2),
-                    "final_score": round(sf.get("final_score", sf["total_score"]), 4),
+                    "score": round(sf["score"], 4),
+                    "edge_density": round(sf["edge_density"], 4),
+                    "occlusion": round(sf["occlusion"], 4),
+                    "dark_px_pct": round(sf["dark_px_pct"], 4),
+                    "skin_pct": round(sf["skin_pct"], 4),
                 }
-                for sf in scored_frames[:20]  # Top 20 for debug
+                for sf in scored_frames[:20]
             ],
             "selected": best["path"].name,
         }
@@ -551,9 +501,9 @@ def select_best_frame(
     return {
         "best_frame": dest,
         "source_frame": best["path"],
-        "final_score": best["final_score"],
-        "content_score": best["content_score"],
-        "occlusion_pct": best.get("occlusion_pct", 0),
+        "final_score": best["score"],
+        "content_score": best["edge_density"],
+        "occlusion_pct": best["occlusion"] * 100,
         "discarded_count": len(discarded),
     }
 
