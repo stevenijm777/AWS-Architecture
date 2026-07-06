@@ -1,6 +1,6 @@
 # Combined Evaluation Report: Generated Graphs vs Cloudscape Ground Truth
 
-*Generated: 2026-07-05 23:32:10*
+*Generated: 2026-07-06 12:48:59*
 
 ## 1. Executive Summary (Side-by-Side Comparison)
 
@@ -9,7 +9,7 @@ This table compares performance metrics across all generated graph directories.
 | Run Directory | Videos | Service F1 (unique) | Service F1 (multiset) | Edge F1 | Edge Type Acc | Node Ratio |
 |---|---|---|---|---|---|---|
 | **Standard (data/graphs)** | 102 | 78.1% | 75.3% | 46.2% | 76.9% | 1.23x |
-| **Parsimonious API (data/graphs_parsimonious)** | 65 | 85.5% | 83.3% | 55.1% | 83.8% | 1.09x |
+| **Parsimonious API (data/graphs_parsimonious)** | 82 | 84.2% | 81.9% | 54.0% | 83.6% | 1.12x |
 
 ---
 
@@ -137,63 +137,80 @@ This table compares performance metrics across all generated graph directories.
 | 5 | `8TExnSvZqt0` | 100% | 100% | 100% | 0% | 0% | 0% | 11 | 11 | 5 | 0 | — | — |
 | 6 | `90rWUjKjnAE` | 100% | 100% | 100% | 88% | 70% | 78% | 9 | 8 | 8 | 10 | — | — |
 | 7 | `99nNHsbwBpg` | 100% | 100% | 100% | 0% | 0% | 0% | 5 | 2 | 4 | 0 | — | — |
-| 8 | `BlCXEMp_lqY` | 100% | 100% | 100% | 100% | 56% | 71% | 6 | 6 | 5 | 9 | — | — |
-| 9 | `Cgv0kfp_6xQ` | 100% | 100% | 100% | 100% | 71% | 83% | 11 | 10 | 10 | 14 | — | — |
-| 10 | `Q6r_QbYXFpg` | 100% | 100% | 100% | 100% | 89% | 94% | 11 | 11 | 8 | 9 | — | — |
-| 11 | `QnmmTIYZxNI` | 100% | 100% | 100% | 40% | 33% | 36% | 8 | 8 | 5 | 6 | — | — |
-| 12 | `fppIOuRMI2g` | 100% | 100% | 100% | 100% | 86% | 92% | 7 | 7 | 6 | 7 | — | — |
-| 13 | `jBffL9zUCSE` | 100% | 100% | 100% | 100% | 45% | 62% | 7 | 7 | 5 | 11 | — | — |
-| 14 | `lkDq9g43djw` | 100% | 100% | 100% | 50% | 50% | 50% | 7 | 5 | 4 | 4 | — | — |
-| 15 | `2L0m28ZLmtE` | 92% | 100% | 96% | 83% | 91% | 87% | 14 | 13 | 12 | 11 | — | UserCompanyAnalyst |
-| 16 | `2f_NYiPJQt4` | 91% | 100% | 95% | 73% | 89% | 80% | 11 | 10 | 11 | 9 | — | ThirdParty |
-| 17 | `7LziNjUTo7w` | 89% | 100% | 94% | 91% | 62% | 74% | 9 | 9 | 11 | 16 | — | UserConsumerDeveloper |
-| 18 | `bikXzsVihF4` | 88% | 100% | 93% | 57% | 40% | 47% | 8 | 7 | 7 | 10 | — | ServiceNow |
-| 19 | `unFVfqj9cQ8` | 100% | 88% | 93% | 100% | 86% | 92% | 7 | 8 | 6 | 7 | ControlTower | — |
-| 20 | `qi017F1UwvM` | 93% | 93% | 93% | 78% | 58% | 67% | 17 | 17 | 18 | 24 | UserConsumerWeb | UserCompanyWebsite |
-| 21 | `1aYoIZvabbk` | 86% | 100% | 92% | 57% | 80% | 67% | 7 | 6 | 7 | 5 | — | AutoScaling |
-| 22 | `5vR5aN_xdI0` | 100% | 86% | 92% | 62% | 50% | 56% | 9 | 9 | 8 | 10 | UserConsumerAPI | — |
-| 23 | `QM96Fv_NAnw` | 100% | 86% | 92% | 38% | 50% | 43% | 7 | 7 | 8 | 6 | ThirdParty | — |
-| 24 | `1kWxymroGeE` | 83% | 100% | 91% | 33% | 50% | 40% | 6 | 5 | 6 | 4 | — | ThirdParty |
-| 25 | `9yziTe6lBwk` | 90% | 90% | 90% | 89% | 50% | 64% | 10 | 10 | 9 | 16 | UserConsumerMobile | UserConsumerWebMobile |
-| 26 | `0wnNlOg42dc` | 80% | 100% | 89% | 80% | 67% | 73% | 10 | 8 | 10 | 12 | — | ThirdParty, UserConsumerWebMobile |
-| 27 | `6sY0AunanlM` | 80% | 100% | 89% | 0% | 0% | 0% | 6 | 4 | 6 | 0 | — | UserCompanyDeveloper |
-| 28 | `8s0wGRkiDrw` | 80% | 100% | 89% | 80% | 100% | 89% | 6 | 5 | 5 | 4 | — | UserCompanyAgent |
-| 29 | `AzM_d7ZvzUE` | 88% | 88% | 88% | 55% | 30% | 39% | 11 | 11 | 11 | 20 | Kinesis | KinesisDataStream |
-| 30 | `0F7KDLz-kIQ` | 83% | 91% | 87% | 82% | 50% | 62% | 14 | 13 | 17 | 28 | UserConsumerWeb | CloudFormation, ECS |
-| 31 | `-kA0ahrhX3I` | 86% | 86% | 86% | 50% | 62% | 56% | 11 | 9 | 10 | 8 | UserCompanyDeveloper | UserCompanyAnalyst |
-| 32 | `37T7Nd8pL-c` | 86% | 86% | 86% | 43% | 25% | 32% | 7 | 8 | 7 | 12 | UserConsumerAPI | UserConsumerWeb |
-| 33 | `5f3z1Z_9BJA` | 86% | 86% | 86% | 91% | 59% | 71% | 11 | 11 | 11 | 17 | UserCompanyDataStream | ThirdParty |
-| 34 | `6EUknQqaV1w` | 86% | 86% | 86% | 73% | 73% | 73% | 8 | 9 | 11 | 11 | UserCompanyDataStream | EC2 |
-| 35 | `2e3vOxsHekE` | 83% | 83% | 83% | 75% | 50% | 60% | 6 | 6 | 4 | 6 | UserConsumerEdge | UserCompanyEdge |
-| 36 | `7V8wTCkjOqo` | 83% | 83% | 83% | 25% | 29% | 27% | 6 | 7 | 8 | 7 | ThirdParty | UserCompanyDeveloper |
-| 37 | `pk5yddJpC_8` | 83% | 83% | 83% | 78% | 70% | 74% | 9 | 9 | 9 | 10 | UserCompanyDeveloper | UserCompanyAnalyst |
-| 38 | `rPGLNw1cOGM` | 83% | 83% | 83% | 89% | 40% | 55% | 8 | 8 | 9 | 20 | UserConsumerWeb | UserCompanyDomainExpert |
-| 39 | `0gNMEyei-co` | 88% | 78% | 82% | 82% | 69% | 75% | 9 | 9 | 11 | 13 | ThirdParty, UserCompanyDataStream | UserCompanyAPI |
-| 40 | `6LcSv9XocTY` | 88% | 78% | 82% | 67% | 33% | 44% | 10 | 11 | 9 | 18 | Firehose, UserConsumerWeb | UserConsumerWebMobile |
-| 41 | `bqZWYmRAka0` | 80% | 80% | 80% | 40% | 80% | 53% | 7 | 5 | 10 | 5 | UserConsumerAPI | UserCompanyAgent |
-| 42 | `-ahWdCysMYw` | 86% | 75% | 80% | 83% | 56% | 67% | 7 | 8 | 6 | 9 | ThirdParty, UserCompanyAnalyst | OnPremDC |
-| 43 | `0JxJpNjI9Y0` | 75% | 86% | 80% | 64% | 41% | 50% | 10 | 9 | 11 | 17 | UserConsumerAPI | UserCompanyDeveloper, UserConsumerWebMobile |
-| 44 | `1xLjtJnfZes` | 86% | 75% | 80% | 67% | 67% | 67% | 8 | 8 | 6 | 6 | UserCompanyDataStream, UserConsumerAPI | UserConsumerMobile |
-| 45 | `5EmA67lSJEs` | 86% | 75% | 80% | 58% | 35% | 44% | 10 | 11 | 12 | 20 | UserConsumerAPI, UserConsumerWeb | UserConsumerWebMobile |
-| 46 | `JYeXbUdFOdw` | 75% | 86% | 80% | 38% | 36% | 37% | 13 | 8 | 13 | 14 | UserConsumerWeb | EC2, UserConsumerWebMobile |
-| 47 | `gu54VVeDD10` | 86% | 75% | 80% | 67% | 44% | 53% | 7 | 8 | 6 | 9 | ECR, UserCompanyAnalyst | UserCompanyDeveloper |
-| 48 | `QnwfcDZkwh8` | 90% | 69% | 78% | 67% | 56% | 61% | 10 | 13 | 15 | 18 | UserCompanyDeveloper, UserConsumerMobile, UserConsumerTV (+1) | UserConsumerWebMobile |
-| 49 | `c-1GXhOOOww` | 78% | 78% | 78% | 45% | 31% | 37% | 9 | 9 | 11 | 16 | ThirdParty, UserConsumerMobile | CloudFront, UserConsumerWeb |
-| 50 | `4WjXH8Wp0E4` | 88% | 70% | 78% | 82% | 41% | 55% | 12 | 14 | 11 | 22 | ThirdParty, UserConsumerHospital, UserConsumerWeb | UserCompanyAgent |
-| 51 | `6iK4WNj6QqI` | 71% | 83% | 77% | 43% | 30% | 35% | 7 | 6 | 7 | 10 | UserConsumerWeb | CloudFront, UserConsumerWebMobile |
-| 52 | `9-a9Y5THTYo` | 71% | 83% | 77% | 62% | 83% | 71% | 8 | 7 | 8 | 6 | UserConsumerWeb | Organizations, UserCompanyDeveloper |
-| 53 | `QOtCpD23118` | 75% | 75% | 75% | 73% | 80% | 76% | 11 | 11 | 11 | 10 | ThirdParty, UserCompanyEdge | OnPremDC, UserConsumerIOT |
-| 54 | `GoziWpmFCS0` | 60% | 100% | 75% | 18% | 100% | 31% | 9 | 4 | 11 | 2 | — | UserCompanyDataStream, UserCompanyDomainExpert |
-| 55 | `-3lnf5lzsH0` | 100% | 58% | 74% | 33% | 19% | 24% | 9 | 13 | 9 | 16 | CloudTrail, GuardDuty, SNS (+2) | — |
-| 56 | `7wBOFcP1HwA` | 70% | 78% | 74% | 50% | 40% | 44% | 11 | 10 | 8 | 10 | ELB, UserConsumerWeb | ALB, EC2, UserConsumerWebMobile |
-| 57 | `-S-R7MWRpaI` | 71% | 71% | 71% | 50% | 45% | 48% | 10 | 8 | 10 | 11 | Kinesis, UserConsumerMobile | KinesisDataStream, UserCompanyEdge |
-| 58 | `2XVgpMwY5iE` | 71% | 71% | 71% | 56% | 42% | 48% | 8 | 7 | 9 | 12 | UserCompanyAgent, UserCompanyDataStream | ThirdParty, UserConsumerHospital |
-| 59 | `4-teOQ_dJvY` | 71% | 71% | 71% | 67% | 62% | 64% | 10 | 9 | 12 | 13 | UserCompanyAPI, UserCompanyEdge | ThirdParty, UserCompanyInternalPlatform |
-| 60 | `3WgTBTDlQN8` | 75% | 67% | 71% | 50% | 36% | 42% | 9 | 9 | 10 | 14 | EC2, UserCompanyAPI, UserConsumerMobile | ThirdParty, UserConsumerWebMobile |
-| 61 | `8ZRWzn0G39g` | 75% | 67% | 71% | 78% | 18% | 30% | 10 | 12 | 9 | 38 | EC2, ECS, UserConsumerAPI | UserCompanyAPI, UserConsumerWeb |
-| 62 | `9qTEHITVeLE` | 60% | 86% | 71% | 38% | 36% | 37% | 10 | 9 | 13 | 14 | UserConsumerWeb | EC2, OnPremDC, OpenSearch (+1) |
-| 63 | `-wLEkq21cvA` | 57% | 80% | 67% | 45% | 50% | 48% | 11 | 9 | 11 | 10 | UserCompanyAgent | AMI, OnPremDC, UserCompanyDeveloper |
-| 64 | `53sUjFv9ByI` | 67% | 67% | 67% | 60% | 50% | 55% | 6 | 6 | 5 | 6 | ThirdParty, UserCompanyDataStream | S3, UserCompanyAnalyst |
-| 65 | `3yJZ6rPoZfg` | 50% | 50% | 50% | 25% | 22% | 24% | 8 | 7 | 8 | 9 | EC2, UserConsumerEdge, VPC | AutoScaling, UserConsumerWebMobile, VPCPeering |
+| 8 | `9Cg81Xgg7LQ` | 100% | 100% | 100% | 71% | 71% | 71% | 7 | 7 | 7 | 7 | — | — |
+| 9 | `BX1K8x1lVLc` | 100% | 100% | 100% | 100% | 57% | 73% | 8 | 8 | 8 | 14 | — | — |
+| 10 | `BlCXEMp_lqY` | 100% | 100% | 100% | 100% | 56% | 71% | 6 | 6 | 5 | 9 | — | — |
+| 11 | `Cgv0kfp_6xQ` | 100% | 100% | 100% | 100% | 71% | 83% | 11 | 10 | 10 | 14 | — | — |
+| 12 | `Q6r_QbYXFpg` | 100% | 100% | 100% | 100% | 89% | 94% | 11 | 11 | 8 | 9 | — | — |
+| 13 | `QnmmTIYZxNI` | 100% | 100% | 100% | 40% | 33% | 36% | 8 | 8 | 5 | 6 | — | — |
+| 14 | `fppIOuRMI2g` | 100% | 100% | 100% | 100% | 86% | 92% | 7 | 7 | 6 | 7 | — | — |
+| 15 | `jBffL9zUCSE` | 100% | 100% | 100% | 100% | 45% | 62% | 7 | 7 | 5 | 11 | — | — |
+| 16 | `lkDq9g43djw` | 100% | 100% | 100% | 50% | 50% | 50% | 7 | 5 | 4 | 4 | — | — |
+| 17 | `2L0m28ZLmtE` | 92% | 100% | 96% | 83% | 91% | 87% | 14 | 13 | 12 | 11 | — | UserCompanyAnalyst |
+| 18 | `2f_NYiPJQt4` | 91% | 100% | 95% | 73% | 89% | 80% | 11 | 10 | 11 | 9 | — | ThirdParty |
+| 19 | `7LziNjUTo7w` | 89% | 100% | 94% | 91% | 62% | 74% | 9 | 9 | 11 | 16 | — | UserConsumerDeveloper |
+| 20 | `Dp3YAxFp-YM` | 89% | 100% | 94% | 82% | 64% | 72% | 10 | 10 | 11 | 14 | — | UserConsumerWebMobile |
+| 21 | `bikXzsVihF4` | 88% | 100% | 93% | 57% | 40% | 47% | 8 | 7 | 7 | 10 | — | ServiceNow |
+| 22 | `unFVfqj9cQ8` | 100% | 88% | 93% | 100% | 86% | 92% | 7 | 8 | 6 | 7 | ControlTower | — |
+| 23 | `qi017F1UwvM` | 93% | 93% | 93% | 78% | 58% | 67% | 17 | 17 | 18 | 24 | UserConsumerWeb | UserCompanyWebsite |
+| 24 | `1aYoIZvabbk` | 86% | 100% | 92% | 57% | 80% | 67% | 7 | 6 | 7 | 5 | — | AutoScaling |
+| 25 | `5vR5aN_xdI0` | 100% | 86% | 92% | 62% | 50% | 56% | 9 | 9 | 8 | 10 | UserConsumerAPI | — |
+| 26 | `A4Lfk1Zz1dE` | 86% | 100% | 92% | 33% | 60% | 43% | 7 | 8 | 9 | 5 | — | UserConsumerDeveloper |
+| 27 | `QM96Fv_NAnw` | 100% | 86% | 92% | 38% | 50% | 43% | 7 | 7 | 8 | 6 | ThirdParty | — |
+| 28 | `1kWxymroGeE` | 83% | 100% | 91% | 33% | 50% | 40% | 6 | 5 | 6 | 4 | — | ThirdParty |
+| 29 | `9yziTe6lBwk` | 90% | 90% | 90% | 89% | 50% | 64% | 10 | 10 | 9 | 16 | UserConsumerMobile | UserConsumerWebMobile |
+| 30 | `0wnNlOg42dc` | 80% | 100% | 89% | 80% | 67% | 73% | 10 | 8 | 10 | 12 | — | ThirdParty, UserConsumerWebMobile |
+| 31 | `6sY0AunanlM` | 80% | 100% | 89% | 0% | 0% | 0% | 6 | 4 | 6 | 0 | — | UserCompanyDeveloper |
+| 32 | `8s0wGRkiDrw` | 80% | 100% | 89% | 80% | 100% | 89% | 6 | 5 | 5 | 4 | — | UserCompanyAgent |
+| 33 | `AS2JeM2FUzE` | 89% | 89% | 89% | 89% | 67% | 76% | 9 | 9 | 9 | 12 | UserCompanyDataStream | ThirdParty |
+| 34 | `AzM_d7ZvzUE` | 88% | 88% | 88% | 55% | 30% | 39% | 11 | 11 | 11 | 20 | Kinesis | KinesisDataStream |
+| 35 | `0F7KDLz-kIQ` | 83% | 91% | 87% | 82% | 50% | 62% | 14 | 13 | 17 | 28 | UserConsumerWeb | CloudFormation, ECS |
+| 36 | `-kA0ahrhX3I` | 86% | 86% | 86% | 50% | 62% | 56% | 11 | 9 | 10 | 8 | UserCompanyDeveloper | UserCompanyAnalyst |
+| 37 | `37T7Nd8pL-c` | 86% | 86% | 86% | 43% | 25% | 32% | 7 | 8 | 7 | 12 | UserConsumerAPI | UserConsumerWeb |
+| 38 | `5f3z1Z_9BJA` | 86% | 86% | 86% | 91% | 59% | 71% | 11 | 11 | 11 | 17 | UserCompanyDataStream | ThirdParty |
+| 39 | `6EUknQqaV1w` | 86% | 86% | 86% | 73% | 73% | 73% | 8 | 9 | 11 | 11 | UserCompanyDataStream | EC2 |
+| 40 | `CDCLwX2fo2g` | 86% | 86% | 86% | 73% | 57% | 64% | 9 | 8 | 11 | 14 | UserConsumerMobile | UserConsumerWeb |
+| 41 | `Ccutfm_Srzw` | 86% | 86% | 86% | 60% | 43% | 50% | 10 | 11 | 10 | 14 | Kinesis | KinesisAnalytics |
+| 42 | `D77FSUkPJ3o` | 86% | 86% | 86% | 70% | 58% | 64% | 8 | 8 | 10 | 12 | UserConsumerWeb | UserCompanyAgent |
+| 43 | `2e3vOxsHekE` | 83% | 83% | 83% | 75% | 50% | 60% | 6 | 6 | 4 | 6 | UserConsumerEdge | UserCompanyEdge |
+| 44 | `7V8wTCkjOqo` | 83% | 83% | 83% | 25% | 29% | 27% | 6 | 7 | 8 | 7 | ThirdParty | UserCompanyDeveloper |
+| 45 | `pk5yddJpC_8` | 83% | 83% | 83% | 78% | 70% | 74% | 9 | 9 | 9 | 10 | UserCompanyDeveloper | UserCompanyAnalyst |
+| 46 | `rPGLNw1cOGM` | 83% | 83% | 83% | 89% | 40% | 55% | 8 | 8 | 9 | 20 | UserConsumerWeb | UserCompanyDomainExpert |
+| 47 | `0gNMEyei-co` | 88% | 78% | 82% | 82% | 69% | 75% | 9 | 9 | 11 | 13 | ThirdParty, UserCompanyDataStream | UserCompanyAPI |
+| 48 | `6LcSv9XocTY` | 88% | 78% | 82% | 67% | 33% | 44% | 10 | 11 | 9 | 18 | Firehose, UserConsumerWeb | UserConsumerWebMobile |
+| 49 | `BZ32w0SSAoY` | 80% | 80% | 80% | 73% | 42% | 53% | 7 | 7 | 11 | 19 | ThirdParty | RDS |
+| 50 | `bqZWYmRAka0` | 80% | 80% | 80% | 40% | 80% | 53% | 7 | 5 | 10 | 5 | UserConsumerAPI | UserCompanyAgent |
+| 51 | `-ahWdCysMYw` | 86% | 75% | 80% | 83% | 56% | 67% | 7 | 8 | 6 | 9 | ThirdParty, UserCompanyAnalyst | OnPremDC |
+| 52 | `0JxJpNjI9Y0` | 75% | 86% | 80% | 64% | 41% | 50% | 10 | 9 | 11 | 17 | UserConsumerAPI | UserCompanyDeveloper, UserConsumerWebMobile |
+| 53 | `1xLjtJnfZes` | 86% | 75% | 80% | 67% | 67% | 67% | 8 | 8 | 6 | 6 | UserCompanyDataStream, UserConsumerAPI | UserConsumerMobile |
+| 54 | `5EmA67lSJEs` | 86% | 75% | 80% | 58% | 35% | 44% | 10 | 11 | 12 | 20 | UserConsumerAPI, UserConsumerWeb | UserConsumerWebMobile |
+| 55 | `JYeXbUdFOdw` | 75% | 86% | 80% | 38% | 36% | 37% | 13 | 8 | 13 | 14 | UserConsumerWeb | EC2, UserConsumerWebMobile |
+| 56 | `gu54VVeDD10` | 86% | 75% | 80% | 67% | 44% | 53% | 7 | 8 | 6 | 9 | ECR, UserCompanyAnalyst | UserCompanyDeveloper |
+| 57 | `QnwfcDZkwh8` | 90% | 69% | 78% | 67% | 56% | 61% | 10 | 13 | 15 | 18 | UserCompanyDeveloper, UserConsumerMobile, UserConsumerTV (+1) | UserConsumerWebMobile |
+| 58 | `D6rG9eZ5Qus` | 78% | 78% | 78% | 62% | 56% | 59% | 9 | 9 | 8 | 9 | ThirdParty, UserCompanyDataStream | OnPremDC, SystemsManager |
+| 59 | `c-1GXhOOOww` | 78% | 78% | 78% | 45% | 31% | 37% | 9 | 9 | 11 | 16 | ThirdParty, UserConsumerMobile | CloudFront, UserConsumerWeb |
+| 60 | `4WjXH8Wp0E4` | 88% | 70% | 78% | 82% | 41% | 55% | 12 | 14 | 11 | 22 | ThirdParty, UserConsumerHospital, UserConsumerWeb | UserCompanyAgent |
+| 61 | `6iK4WNj6QqI` | 71% | 83% | 77% | 43% | 30% | 35% | 7 | 6 | 7 | 10 | UserConsumerWeb | CloudFront, UserConsumerWebMobile |
+| 62 | `9-a9Y5THTYo` | 71% | 83% | 77% | 62% | 83% | 71% | 8 | 7 | 8 | 6 | UserConsumerWeb | Organizations, UserCompanyDeveloper |
+| 63 | `D9qTotVJYss` | 71% | 83% | 77% | 67% | 40% | 50% | 7 | 6 | 6 | 10 | UserCompanyAgent | EventBridge, UserCompanyInternalPlatform |
+| 64 | `QOtCpD23118` | 75% | 75% | 75% | 73% | 80% | 76% | 11 | 11 | 11 | 10 | ThirdParty, UserCompanyEdge | OnPremDC, UserConsumerIOT |
+| 65 | `GoziWpmFCS0` | 60% | 100% | 75% | 18% | 100% | 31% | 9 | 4 | 11 | 2 | — | UserCompanyDataStream, UserCompanyDomainExpert |
+| 66 | `-3lnf5lzsH0` | 100% | 58% | 74% | 33% | 19% | 24% | 9 | 13 | 9 | 16 | CloudTrail, GuardDuty, SNS (+2) | — |
+| 67 | `CTG23wd9H74` | 64% | 88% | 74% | 42% | 45% | 43% | 11 | 8 | 12 | 11 | UserCompanyAnalyst | Lambda, LambdaAtEdge, ThirdParty (+1) |
+| 68 | `7wBOFcP1HwA` | 70% | 78% | 74% | 50% | 40% | 44% | 11 | 10 | 8 | 10 | ELB, UserConsumerWeb | ALB, EC2, UserConsumerWebMobile |
+| 69 | `Cw26CrJUqv8` | 70% | 78% | 74% | 50% | 56% | 53% | 10 | 10 | 10 | 9 | ThirdParty, UserConsumerWeb | OnPremDC, UserCompanyCRM, VPC |
+| 70 | `DAJZAygxDZA` | 80% | 67% | 73% | 22% | 13% | 17% | 9 | 8 | 9 | 15 | ThirdParty, UserCompanyAnalyst | StepFunctions |
+| 71 | `-S-R7MWRpaI` | 71% | 71% | 71% | 50% | 45% | 48% | 10 | 8 | 10 | 11 | Kinesis, UserConsumerMobile | KinesisDataStream, UserCompanyEdge |
+| 72 | `2XVgpMwY5iE` | 71% | 71% | 71% | 56% | 42% | 48% | 8 | 7 | 9 | 12 | UserCompanyAgent, UserCompanyDataStream | ThirdParty, UserConsumerHospital |
+| 73 | `4-teOQ_dJvY` | 71% | 71% | 71% | 67% | 62% | 64% | 10 | 9 | 12 | 13 | UserCompanyAPI, UserCompanyEdge | ThirdParty, UserCompanyInternalPlatform |
+| 74 | `3WgTBTDlQN8` | 75% | 67% | 71% | 50% | 36% | 42% | 9 | 9 | 10 | 14 | EC2, UserCompanyAPI, UserConsumerMobile | ThirdParty, UserConsumerWebMobile |
+| 75 | `8ZRWzn0G39g` | 75% | 67% | 71% | 78% | 18% | 30% | 10 | 12 | 9 | 38 | EC2, ECS, UserConsumerAPI | UserCompanyAPI, UserConsumerWeb |
+| 76 | `9qTEHITVeLE` | 60% | 86% | 71% | 38% | 36% | 37% | 10 | 9 | 13 | 14 | UserConsumerWeb | EC2, OnPremDC, OpenSearch (+1) |
+| 77 | `-wLEkq21cvA` | 57% | 80% | 67% | 45% | 50% | 48% | 11 | 9 | 11 | 10 | UserCompanyAgent | AMI, OnPremDC, UserCompanyDeveloper |
+| 78 | `53sUjFv9ByI` | 67% | 67% | 67% | 60% | 50% | 55% | 6 | 6 | 5 | 6 | ThirdParty, UserCompanyDataStream | S3, UserCompanyAnalyst |
+| 79 | `9-6hQdFeolc` | 80% | 57% | 67% | 40% | 25% | 31% | 6 | 8 | 5 | 8 | EKS, UserCompanyCRM, UserCompanyDeveloper | UserConsumerHospital |
+| 80 | `BPvr0qWpJlA` | 60% | 67% | 63% | 33% | 33% | 33% | 11 | 10 | 9 | 9 | UserCompanyCRM, UserCompanyDataStream, UserConsumerMobile | EC2, SES, ThirdParty (+1) |
+| 81 | `3yJZ6rPoZfg` | 50% | 50% | 50% | 25% | 22% | 24% | 8 | 7 | 8 | 9 | EC2, UserConsumerEdge, VPC | AutoScaling, UserConsumerWebMobile, VPCPeering |
+| 82 | `BgT_bDAejSQ` | 17% | 100% | 29% | 0% | 0% | 0% | 9 | 2 | 6 | 1 | — | ALB, NAT, OnPremDC (+2) |
 
 ---

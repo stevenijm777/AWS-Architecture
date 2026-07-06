@@ -65,11 +65,28 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `7wBOFcP1HwA` | Seera Group: Transforming Online Travel Booking with Microservices (Arabic) | **74%** | 77.8% | Standard supera a Parsimonious por 3.8%. El simplificado omitió detalles menores. |
 | `8ZRWzn0G39g` | Replicon: Multi-Tenant SaaS Solution with Bring Your Own Key (BYOK) Encryption for Enterprises | **71%** | N/A | Comparación no disponible. |
 | `8s0wGRkiDrw` | Mobilewalla: S3 Access Monitoring Using ML | **89%** | 80.0% | Parsimonious supera a Standard por 9.0%. El clásico alucina nodos por ruidos de la transcripción. |
+| `9-6hQdFeolc` | Lyniate: Scaling Healthcare Data Exchange At Scale with Tenant Isolation | **67%** | N/A | Comparación no disponible. |
 | `9-a9Y5THTYo` | Vitesco Technologies Cloud Foundation: A Scalable and Automated Cloud Landing Zone | **77%** | 71.4% | Parsimonious supera a Standard por 5.6%. El clásico alucina nodos por ruidos de la transcripción. |
 | `90rWUjKjnAE` | amazee.io: Kubernetes Deployments Made Easy | **100%** | 85.7% | Parsimonious supera a Standard por 14.3%. El clásico alucina nodos por ruidos de la transcripción. |
 | `99nNHsbwBpg` | SkyScanner: Building HighlyAvailable MultiRegion Kubernetes Clusters on 100 Amazon EC2 Spot | **100%** | 57.1% | Parsimonious supera a Standard por 42.9%. El clásico alucina nodos por ruidos de la transcripción. |
+| `9Cg81Xgg7LQ` | Pushpay Holdings Ltd.: Strangling a Monolithic Application While Moving to Microservices on AWS | **100%** | N/A | Comparación no disponible. |
 | `9qTEHITVeLE` | Majid Al Futtaim: Building a Custom Data Management Solution on AWS | **71%** | 70.6% | Parsimonious supera a Standard por 0.4%. El clásico alucina nodos por ruidos de la transcripción. |
 | `9yziTe6lBwk` | Ânima Educação: Digitizing Student Experience for Colleges in Brazil | **90%** | 90.0% | Rendimiento equivalente en detección de servicios. |
+| `A4Lfk1Zz1dE` | Spot.io: Optimizing Cloud Infrastructure Through Secure Cost Aware Automation | **92%** | 92.3% | Standard supera a Parsimonious por 0.3%. El simplificado omitió detalles menores. |
+| `AS2JeM2FUzE` | Intellect Design Arena: Insurance Risk Assessment with Intellect FABRIC Data Services | **89%** | 82.4% | Parsimonious supera a Standard por 6.6%. El clásico alucina nodos por ruidos de la transcripción. |
+| `BPvr0qWpJlA` | ContactSuite: Automated Omni-Channel Service Desk Workflow | **63%** | 73.7% | Standard supera a Parsimonious por 10.7%. El simplificado omitió detalles menores. |
+| `BX1K8x1lVLc` | Love, Bonito: Achieving Scalability Using Magento with Kubernetes | **100%** | 87.5% | Parsimonious supera a Standard por 12.5%. El clásico alucina nodos por ruidos de la transcripción. |
+| `BZ32w0SSAoY` | PixelStrings by Cinnafilm: A Flexible & Scalable Platform for Video Audio Optimization & Conversion | **80%** | 80.0% | Rendimiento equivalente en detección de servicios. |
+| `BgT_bDAejSQ` | GoDaddy: Empowering Agility with ZeroTrust Environment Best Practices | **29%** | 20.0% | Parsimonious supera a Standard por 9.0%. El clásico alucina nodos por ruidos de la transcripción. |
+| `CDCLwX2fo2g` | Ztore: Building a Recommendation System on AWS (Cantonese) | **86%** | 71.4% | Parsimonious supera a Standard por 14.6%. El clásico alucina nodos por ruidos de la transcripción. |
+| `CTG23wd9H74` | 3M: Building an HPC Modeling Platform to Simplify AWS Usage for Scientists and Engineers | **74%** | 77.8% | Standard supera a Parsimonious por 3.8%. El simplificado omitió detalles menores. |
+| `Ccutfm_Srzw` | Zulily: A Compelling Suggestive Search Experience Using Amazon DocumentDB with MongoDB Compatibility | **86%** | 85.7% | Parsimonious supera a Standard por 0.3%. El clásico alucina nodos por ruidos de la transcripción. |
+| `Cw26CrJUqv8` | Salesforce: Automating SaaS Application Connectivity | **74%** | 88.9% | Standard supera a Parsimonious por 14.9%. El simplificado omitió detalles menores. |
+| `D6rG9eZ5Qus` | Graham Media Group: Modernizing Traditional Broadcasting with AWS | **78%** | 70.0% | Parsimonious supera a Standard por 8.0%. El clásico alucina nodos por ruidos de la transcripción. |
+| `D77FSUkPJ3o` | Avio Aero, a GE Aviation Business: Serverless Application to Manage Expense Purchase Approvals | **86%** | 80.0% | Parsimonious supera a Standard por 6.0%. El clásico alucina nodos por ruidos de la transcripción. |
+| `D9qTotVJYss` | HBO Max: Using Canaries for Outside-in Validation | **77%** | 83.3% | Standard supera a Parsimonious por 6.3%. El simplificado omitió detalles menores. |
+| `DAJZAygxDZA` | BASF Digital Farming: Productionizing ML with a Cross-Account Model Deployment Solution | **73%** | 61.5% | Parsimonious supera a Standard por 11.5%. El clásico alucina nodos por ruidos de la transcripción. |
+| `Dp3YAxFp-YM` | Alef Education: Building an Adaptive Learning System for K12 Students using AWS | **94%** | 82.4% | Parsimonious supera a Standard por 11.6%. El clásico alucina nodos por ruidos de la transcripción. |
 | `GoziWpmFCS0` | iRobot: Serverless Data Cataloging for Data Scientists | **75%** | 85.7% | Standard supera a Parsimonious por 10.7%. El simplificado omitió detalles menores. |
 | `Q6r_QbYXFpg` | SynchroNet: Extending User Automation and Amazon WorkSpaces Provisioning with AWS Step Functions | **100%** | 94.7% | Parsimonious supera a Standard por 5.3%. El clásico alucina nodos por ruidos de la transcripción. |
 | `QM96Fv_NAnw` | INT: Seismic Data Visualization Platform Designed for Cloud | **92%** | 92.3% | Standard supera a Parsimonious por 0.3%. El simplificado omitió detalles menores. |
