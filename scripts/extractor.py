@@ -55,52 +55,87 @@ def extract_audio(video_path: Path, output_dir: Path | None = None) -> Path:
     console.print(f"[green]✓[/] Audio extracted → [bold]{audio_path}[/]")
     return audio_path
 
-
 def extract_keyframes(
     video_path: Path,
     interval_sec: int | None = None,
     output_dir: Path | None = None,
 ) -> list[Path]:
     """
-    Extract one frame every ``interval_sec`` seconds as JPEG.
-
-    Returns
-    -------
-    list[Path]
-        Sorted list of extracted frame file paths.
+    Extract keyframes from a video using the custom density strategy:
+    - First 80% of video duration: 1 frame every 10 seconds.
+    - Last 20% of video duration: 1 frame every 1 second.
+    - Saved as {stem}_frame_{frame_idx:05d}.jpg (using the actual raw frame index).
     """
-    interval_sec = interval_sec or FRAME_INTERVAL_SEC
+    import cv2
+    import numpy as np
+    
     output_dir = output_dir or FRAMES_DIR
     stem = video_path.stem
 
     # Create a sub-folder per video to keep frames organized
     frames_subdir = output_dir / stem
-    frames_subdir.mkdir(parents=True, exist_ok=True)
-
-    pattern = str(frames_subdir / f"{stem}_frame_%04d.jpg")
+    
+    # Clean previous frames to avoid mixing naming conventions
+    if frames_subdir.exists():
+        for f in frames_subdir.glob("*.jpg"):
+            try:
+                f.unlink()
+            except Exception:
+                pass
+    else:
+        frames_subdir.mkdir(parents=True, exist_ok=True)
 
     console.print(
-        f"[bold cyan]🖼  Extracting keyframes[/] every {interval_sec}s "
-        f"→ {frames_subdir}/"
+        f"[bold cyan]🖼  Extracting custom keyframes (80% @ 10s, 20% @ 1s)[/] → {frames_subdir}/"
     )
 
-    cmd = [
-        "ffmpeg", "-y",
-        "-i", str(video_path),
-        "-vf", f"fps=1/{interval_sec}",   # 1 frame per N seconds
-        "-q:v", "2",                       # JPEG quality (2 = high)
-        pattern,
-    ]
+    cap = cv2.VideoCapture(str(video_path))
+    if not cap.isOpened():
+        raise RuntimeError(f"Failed to open video: {video_path}")
+        
+    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = total_frames / fps if fps else 0.0
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        console.print(f"[red]✗[/] FFmpeg error:\n{result.stderr}")
-        raise RuntimeError(f"Frame extraction failed: {result.stderr[:500]}")
+    # Calculate timestamps
+    boundary = duration * 0.80
+    
+    timestamps = []
+    # 80% every 10 seconds
+    t = 0.0
+    while t < boundary:
+        timestamps.append(t)
+        t += 10.0
+        
+    # Last 20% every 1 second
+    t = boundary
+    while t <= duration:
+        timestamps.append(t)
+        t += 1.0
+        
+    # Deduplicate and sort
+    timestamps = sorted(list(set(timestamps)))
 
-    frames = sorted(frames_subdir.glob("*.jpg"))
-    console.print(f"[green]✓[/] Extracted [bold]{len(frames)}[/] keyframes")
-    return frames
-
+    frames = []
+    for idx, t_val in enumerate(timestamps):
+        frame_idx = int(round(t_val * fps))
+        if frame_idx >= total_frames:
+            frame_idx = total_frames - 1
+            
+        cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
+        ret, frame = cap.read()
+        if not ret:
+            continue
+            
+        # Name frame using its raw index to match the standard
+        frame_name = f"{stem}_frame_{frame_idx:05d}.jpg"
+        frame_path = frames_subdir / frame_name
+        cv2.imwrite(str(frame_path), frame)
+        frames.append(frame_path)
+        
+    cap.release()
+    console.print(f"[green]✓[/] Extracted [bold]{len(frames)}[/] keyframes using raw frame indices.")
+    return sorted(frames)
 
 if __name__ == "__main__":
     import argparse
