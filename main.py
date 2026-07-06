@@ -154,7 +154,15 @@ def run_pipeline(
 
     # ── Step 5: Vision Analysis (Cloudscape schema) ─────────
     console.rule("[bold cyan]Step 5 · Analyze Keyframes (Gemini Vision)")
-    analysis_path = RAW_DIR / f"{video_id}_vision_analysis.json"
+    
+    if not skip_vision:
+        good_whiteboard_path = Path(__file__).resolve().parent / "data" / "good_whiteboard" / f"{video_id}.jpg"
+        if not good_whiteboard_path.exists():
+            console.print(
+                f"[bold red]✗ Pipeline stopped: Video {video_id} has no approved frame in data/good_whiteboard/.[/]\n"
+                f"[dim]Please review the whiteboard frame first and copy it to data/good_whiteboard/{video_id}.jpg to allow API processing.[/]"
+            )
+            return None
 
     # Automatically select the best whiteboard frame locally if not already done
     pizarra_dir = FRAMES_DIR / f"{video_id}_pizarra"
@@ -166,6 +174,8 @@ def run_pipeline(
             select_best_frame(video_id, debug=True)
         except Exception as e:
             console.print(f"[yellow]⚠ Frame selector failed: {e}[/]")
+
+    analysis_path = RAW_DIR / f"{video_id}_vision_analysis.json"
 
     if skip_vision:
         console.print("[yellow]⚠  Skipping vision analysis (--skip-vision)[/]")
@@ -184,21 +194,9 @@ def run_pipeline(
             s.get("text", "").strip() for s in segments
         )
 
-        # Use the best whiteboard frame from second-layer filters if available,
-        # otherwise fallback to the last frame.
-        best_tmpl_path = pizarra_dir / "best_whiteboard_template_transcript.jpg"
-        
-        best_frame = None
-        if best_occl_path.exists():
-            best_frame = best_occl_path
-            console.print(f"[green]✓[/] Using best whiteboard frame (Occlusion): [bold]{best_frame.name}[/]")
-        elif best_tmpl_path.exists():
-            best_frame = best_tmpl_path
-            console.print(f"[green]✓[/] Using best whiteboard frame (Template Matching): [bold]{best_frame.name}[/]")
-        else:
-            best_frame = frames[-1] if frames else None
-            if best_frame:
-                console.print(f"[yellow]⚠[/] No second-layer filtered frame found. Falling back to last frame: [bold]{best_frame.name}[/]")
+        # Use the manually approved whiteboard frame
+        best_frame = good_whiteboard_path
+        console.print(f"[green]✓[/] Using approved whiteboard frame from good_whiteboard: [bold]{best_frame.name}[/]")
 
         if best_frame:
             from scripts.symbol_detector import detect_symbols

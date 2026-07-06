@@ -501,3 +501,28 @@ El usuario dispone de una carpeta independiente llamada `/simplified` para evita
   ```python
   G.add_edge(src, tgt, flow_id=..., notes="", seq=..., type=...) # La nota va vacía
   ```
+
+---
+
+## 5. Directrices de Procesamiento y Control de Calidad de Pizarras
+
+Para mantener una alta calidad en la generación de grafos y evitar llamadas innecesarias o erróneas a la API de Gemini Vision, se han establecido las siguientes reglas estrictas de procesamiento en el pipeline:
+
+### A. Restricción Obligatoria de `good_whiteboard`
+* **Regla:** El pipeline con llamadas a la API de visión (`main.py` y `main_parsimonious.py` ejecutados sin `--skip-vision`) **solo procesará videos que tengan un fotograma de pizarra aprobado y guardado manualmente** en:
+  `data/good_whiteboard/{video_id}.jpg`
+* **Comportamiento:** Si un video no tiene su respectivo archivo en la carpeta `data/good_whiteboard/`, la ejecución del pipeline se abortará inmediatamente para evitar generar grafos con pizarras de mala calidad u ocluidas.
+
+### B. Flujo de Trabajo para Nuevos Videos
+1. **Ejecución Local Inicial (`--skip-vision`):** Ejecuta el pipeline en modo local para descargar el video, generar la transcripción de Whisper y extraer propuestas de keyframes de pizarra:
+   ```bash
+   .venv/bin/python main.py --url "https://www.youtube.com/watch?v=VIDEO_ID" --skip-vision
+   ```
+2. **Revisión y Aprobación:** Abre el fotograma propuesto en `data/frames/{video_id}_pizarra/best_whiteboard.jpg`. 
+   - Si la pizarra se ve completa, clara y sin oclusión grave, **cópiala** a `data/good_whiteboard/{video_id}.jpg`.
+   - Si es incorrecta o defectuosa, muévela a `data/bad_whiteboard/` para re-evaluar la selección del fotograma.
+3. **Ejecución Final con API:** Una vez que la imagen está aprobada en `data/good_whiteboard/`, ejecuta el pipeline normalmente sin `--skip-vision` para que la API de Gemini analice la pizarra aprobada y exporte el grafo definitivo `.graphml`.
+
+### C. Casos Especiales y Exclusiones de Videos
+* **Vídeos en Idiomas Distintos al Inglés:** Varios videos están grabados en español, francés, italiano o japonés (ej. `CsD5bmM6mpY`, `7dtomip_VXc`, `G5tNCpmD2uQ`). Estos deben ser omitidos de procesamiento.
+* **Vídeos Especiales y Recopilaciones:** Los videos que duran más de 12 minutos o que contienen palabras clave como "spotlight", "greatest hits", "bloopers", "reprise" se saltan automáticamente en `main.py` porque recopilan múltiples casos o no presentan un diagrama único analizable.
