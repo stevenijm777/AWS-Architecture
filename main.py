@@ -25,7 +25,7 @@ from config.settings import (
     GRAPHS_DIR,
     RAW_DIR,
 )
-from scripts.downloader import download_video
+from scripts.downloader import download_video, extract_video_id
 from scripts.extractor import extract_audio, extract_keyframes
 from scripts.transcriber import transcribe, get_timestamped_segments
 from scripts.graph_builder import (
@@ -68,9 +68,51 @@ def run_pipeline(
 
     # ── Step 1: Download ─────────────────────────────────────
     console.rule("[bold cyan]Step 1 · Download Video")
+    
+    # Check in videos.csv before downloading to save bandwidth
+    video_id = extract_video_id(url)
+    if video_id:
+        csv_path = Path(__file__).resolve().parent / "videos.csv"
+        if csv_path.exists():
+            try:
+                import pandas as pd
+                df = pd.read_csv(csv_path)
+                matches = df[df["video_id"] == video_id]
+                if not matches.empty:
+                    title = str(matches.iloc[0]["title"])
+                    duration_str = str(matches.iloc[0]["duration"])
+                    is_special = False
+                    if any(k in title.lower() for k in ["spotlight", "greatest hits", "bloopers", "reprise", "(special)", "(special episode)"]):
+                        is_special = True
+                    else:
+                        parts = duration_str.strip().split(":")
+                        if len(parts) == 2 and int(parts[0]) >= 12:
+                            is_special = True
+                        elif len(parts) == 3 and (int(parts[0]) > 0 or int(parts[1]) >= 12):
+                            is_special = True
+                            
+                    if is_special:
+                        console.print(f"[bold red]✗ Pipeline skipped: '{title}' is a special, compilation, or long video.[/]")
+                        return None
+            except Exception:
+                pass
+
     info = download_video(url)
     video_id = info.get("id", "unknown")
     title = info.get("title", "Untitled")
+    duration_sec = info.get("duration", 0)
+    
+    # Verify downloaded metadata
+    is_special = False
+    if any(k in title.lower() for k in ["spotlight", "greatest hits", "bloopers", "reprise", "(special)", "(special episode)"]):
+        is_special = True
+    elif duration_sec > 12 * 60:
+        is_special = True
+        
+    if is_special:
+        console.print(f"[bold red]✗ Pipeline skipped: '{title}' is a special, compilation, or long video.[/]")
+        return None
+        
     video_path = RAW_DIR / f"{video_id}.mp4"
 
     # ── Step 2: Extract Audio ────────────────────────────────

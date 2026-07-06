@@ -39,6 +39,31 @@ def main():
             break
 
         title = row["title"]
+        
+        # Skip special, compilation, or long videos (> 12 minutes)
+        title_lower = title.lower()
+        duration_str = str(row['duration'])
+        is_special = False
+        if any(k in title_lower for k in ["spotlight", "greatest hits", "bloopers", "reprise", "(special)", "(special episode)"]):
+            is_special = True
+        else:
+            try:
+                parts = duration_str.strip().split(":")
+                if len(parts) == 2:
+                    minutes = int(parts[0])
+                elif len(parts) == 3:
+                    minutes = int(parts[0]) * 60 + int(parts[1])
+                else:
+                    minutes = 0
+                if minutes >= 12:
+                    is_special = True
+            except Exception:
+                pass
+                
+        if is_special:
+            console.print(f"[yellow]Skipping special/compilation/long video: '{title}'[/]")
+            continue
+
         console.print(f"\n[bold]Checking video {idx+1}/{len(df)}: '{title}'[/]")
 
         # Get video ID from CSV or fallback to yt-dlp
