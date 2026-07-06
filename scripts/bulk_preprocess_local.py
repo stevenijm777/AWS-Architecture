@@ -41,8 +41,11 @@ def main():
         title = row["title"]
         console.print(f"\n[bold]Checking video {idx+1}/{len(df)}: '{title}'[/]")
 
-        # Get video ID
-        video_id = get_video_id(title)
+        # Get video ID from CSV or fallback to yt-dlp
+        video_id = str(row["video_id"]).strip() if "video_id" in row and pd.notna(row["video_id"]) and str(row["video_id"]).strip() else None
+        if not video_id:
+            video_id = get_video_id(title)
+            
         if not video_id:
             continue
 

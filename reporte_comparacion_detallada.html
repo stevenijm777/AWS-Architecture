@@ -1,0 +1,3341 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Comparación: Arquitecturas de AWS (Manual vs Gemini vs Vision)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: rgba(22, 27, 34, 0.8);
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --text-muted: #8b949e;
+            --primary: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-red: #f85149;
+            --accent-orange: #f0883e;
+            --sidebar-width: 320px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #161b22;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .search-box {
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+        }
+
+        .video-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .video-item {
+            padding: 12px 20px;
+            border-bottom: 1px solid #21262d;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .video-item:hover {
+            background-color: rgba(88, 166, 255, 0.1);
+        }
+
+        .video-item.active {
+            background-color: rgba(88, 166, 255, 0.15);
+            border-left: 4px solid var(--primary);
+        }
+
+        .video-item-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .video-item-title {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 3px;
+        }
+
+        .video-item-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            background-color: var(--border-color);
+            color: var(--text-color);
+            margin-top: 5px;
+        }
+
+        .video-item-badge.perfect {
+            background-color: rgba(63, 185, 80, 0.2);
+            color: #56d364;
+        }
+
+        /* Main Content Panel */
+        .content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            background-color: #0d1117;
+            padding: 30px;
+        }
+
+        .no-selection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+        }
+
+        .no-selection h2 {
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .video-panel {
+            display: none;
+        }
+
+        .video-panel.active {
+            display: block;
+        }
+
+        .panel-header {
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .panel-header h2 {
+            font-size: 1.8rem;
+            color: #fff;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .panel-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .panel-meta span strong {
+            color: #fff;
+        }
+
+        /* Metrics grid */
+        .metrics-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metrics-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .metrics-card h3 {
+            font-size: 1.1rem;
+            color: #fff;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .metrics-table th, .metrics-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .metrics-table th {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .metrics-table tr:last-child th, .metrics-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge-score {
+            font-family: 'JetBrains Mono', monospace;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .badge-score.high {
+            background-color: rgba(63, 185, 80, 0.15);
+            color: #56d364;
+        }
+
+        .badge-score.med {
+            background-color: rgba(240, 136, 62, 0.15);
+            color: #ff9e64;
+        }
+
+        .badge-score.low {
+            background-color: rgba(248, 81, 73, 0.15);
+            color: #ff7b72;
+        }
+
+        /* Graphs Image Stacked */
+        .images-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .image-card {
+            background-color: #161b22;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .image-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .image-card-header {
+            padding: 12px 15px;
+            background-color: rgba(22, 27, 34, 0.8);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-card-header::after {
+            content: '▾';
+            position: absolute;
+            right: 20px;
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .image-card.collapsed .image-card-header::after {
+            transform: rotate(-90deg);
+        }
+
+        .image-card.collapsed .image-container {
+            display: none;
+        }
+
+        .image-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #070a0e;
+            padding: 20px;
+            min-height: 500px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .image-container img {
+            max-width: 100%;
+            max-height: 700px;
+            object-fit: contain;
+            border-radius: 4px;
+            transition: filter 0.2s;
+        }
+
+        .image-container:hover img {
+            filter: brightness(1.15);
+        }
+
+        .image-missing {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .image-missing svg {
+            width: 32px;
+            height: 32px;
+            stroke: var(--text-muted);
+            fill: none;
+        }
+
+        /* Diagnosis panel */
+        .diagnosis-card {
+            background-color: rgba(240, 136, 62, 0.05);
+            border: 1px solid rgba(240, 136, 62, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .diagnosis-card h4 {
+            color: var(--accent-orange);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .diagnosis-card p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .solutions-list {
+            padding-left: 20px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .solutions-list li {
+            margin-bottom: 8px;
+        }
+
+        /* Fullscreen Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .modal-content img {
+            width: 100%;
+            height: auto;
+            max-height: 85vh;
+            object-fit: contain;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-caption {
+            position: absolute;
+            bottom: 20px;
+            color: #fff;
+            font-size: 1.1rem;
+            background: rgba(0,0,0,0.6);
+            padding: 5px 15px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>AWS Arch Comparer</h1>
+            <p>Comparación de pipeline clásico vs simplificado</p>
+        </div>
+        <div class="search-box">
+            <input type="text" id="search" placeholder="Buscar video por ID o título...">
+        </div>
+        <ul class="video-list" id="videoList">
+            <!-- Inject items dynamically -->
+        </ul>
+    </div>
+
+    <div class="content" id="mainContent">
+        <div class="no-selection" id="noSelection">
+            <h2>Selecciona un Video de la Barra Lateral</h2>
+            <p>Compara el Ground Truth manual con las arquitecturas generadas.</p>
+        </div>
+        
+        <!-- Inject video panels dynamically -->
+    </div>
+
+    <!-- The Image Modal -->
+    <div id="imageModal" class="modal" onclick="closeModal()">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImg">
+        <div id="modalCaption" class="modal-caption"></div>
+    </div>
+
+    <script>
+        const videoData = [
+    {
+        "code": "07lfvavMdfU",
+        "title": "Levels Beyond: Digital Content Orchestration",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Levels Beyond: Digital Content Orchestration",
+            "categories": "data_ingestion",
+            "svc_f1": "95.2%",
+            "svc_p": "90.9%",
+            "svc_r": "100.0%",
+            "edge_f1": "71.4%",
+            "edge_p": "71.4%",
+            "edge_r": "71.4%",
+            "gen_nodes": 12,
+            "gt_nodes": 10,
+            "gen_edges": 14,
+            "gt_edges": 14,
+            "missing": "Ninguno",
+            "hallucinated": "Lambda"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "91%",
+            "edge_r": "71%",
+            "edge_f1": "80%",
+            "gen_nodes": "10",
+            "gt_nodes": "10",
+            "gen_edges": "11",
+            "gt_edges": "14",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/07lfvavMdfU_cloud.png",
+            "gem": "Graphs/07lfvavMdfU_gem.png",
+            "vision": "Graphs/07lfvavMdfU_vision.png",
+            "pizarra": "data/frames/07lfvavMdfU_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "6YkguepAQuQ",
+        "title": "Aetion: Deploy Applications  Provision Cloud Resources with AWS Developer Tools",
+        "categories": "control",
+        "std": {
+            "title": "Aetion: Deploy Applications  Provision Cloud Resources with AWS Developer Tools",
+            "categories": "control",
+            "svc_f1": "94.7%",
+            "svc_p": "100.0%",
+            "svc_r": "90.0%",
+            "edge_f1": "33.3%",
+            "edge_p": "37.5%",
+            "edge_r": "30.0%",
+            "gen_nodes": 9,
+            "gt_nodes": 10,
+            "gen_edges": 8,
+            "gt_edges": 10,
+            "missing": "VPC",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "43%",
+            "edge_r": "30%",
+            "edge_f1": "35%",
+            "gen_nodes": "10",
+            "gt_nodes": "10",
+            "gen_edges": "7",
+            "gt_edges": "10",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/6YkguepAQuQ_cloud.png",
+            "gem": "Graphs/6YkguepAQuQ_gem.png",
+            "vision": "Graphs/6YkguepAQuQ_vision.png",
+            "pizarra": "data/frames/6YkguepAQuQ_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "6iK4WNj6QqI",
+        "title": "Ticketmaster: Active-Active Multi-Region Checkout for Ticket Purchases",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "71%",
+            "svc_r": "83%",
+            "svc_f1": "77%",
+            "edge_p": "43%",
+            "edge_r": "30%",
+            "edge_f1": "35%",
+            "gen_nodes": "7",
+            "gt_nodes": "6",
+            "gen_edges": "7",
+            "gt_edges": "10",
+            "missing": "UserConsumerWeb",
+            "hallucinated": "CloudFront, UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": "Graphs/6iK4WNj6QqI_cloud.png",
+            "gem": null,
+            "vision": "Graphs/6iK4WNj6QqI_vision.png",
+            "pizarra": "data/frames/6iK4WNj6QqI_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "8TExnSvZqt0",
+        "title": "AxiomSL's RegCloud\u00ae\ufe0f: Secure & Scalable Risk & Regulatory Reporting on AWS",
+        "categories": "other",
+        "std": {
+            "title": "AxiomSL's RegCloud\u00ae\ufe0f: Secure & Scalable Risk & Regulatory Reporting on AWS",
+            "categories": "other",
+            "svc_f1": "100.0%",
+            "svc_p": "100.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "0.0%",
+            "edge_p": "0.0%",
+            "edge_r": "0.0%",
+            "gen_nodes": 11,
+            "gt_nodes": 11,
+            "gen_edges": 9,
+            "gt_edges": 0,
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "0%",
+            "edge_r": "0%",
+            "edge_f1": "0%",
+            "gen_nodes": "11",
+            "gt_nodes": "11",
+            "gen_edges": "5",
+            "gt_edges": "0",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/8TExnSvZqt0_cloud.png",
+            "gem": "Graphs/8TExnSvZqt0_gem.png",
+            "vision": "Graphs/8TExnSvZqt0_vision.png",
+            "pizarra": "data/frames/8TExnSvZqt0_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "AzM_d7ZvzUE",
+        "title": "Epsagon: Automatically Tracing and Analyzing Billions of AWS Serverless Events",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Epsagon: Automatically Tracing and Analyzing Billions of AWS Serverless Events",
+            "categories": "data_ingestion",
+            "svc_f1": "94.1%",
+            "svc_p": "88.9%",
+            "svc_r": "100.0%",
+            "edge_f1": "70.3%",
+            "edge_p": "76.5%",
+            "edge_r": "65.0%",
+            "gen_nodes": 12,
+            "gt_nodes": 11,
+            "gen_edges": 17,
+            "gt_edges": 20,
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyDeveloper"
+        },
+        "parsimonious": {
+            "svc_p": "88%",
+            "svc_r": "88%",
+            "svc_f1": "88%",
+            "edge_p": "55%",
+            "edge_r": "30%",
+            "edge_f1": "39%",
+            "gen_nodes": "11",
+            "gt_nodes": "11",
+            "gen_edges": "11",
+            "gt_edges": "20",
+            "missing": "Kinesis",
+            "hallucinated": "KinesisDataStream"
+        },
+        "images": {
+            "cloud": "Graphs/AzM_d7ZvzUE_cloud.png",
+            "gem": "Graphs/AzM_d7ZvzUE_gem.png",
+            "vision": "Graphs/AzM_d7ZvzUE_vision.png",
+            "pizarra": "data/frames/AzM_d7ZvzUE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "BlCXEMp_lqY",
+        "title": "Vizio: Smart TV Analytics at Scale",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Vizio: Smart TV Analytics at Scale",
+            "categories": "data_ingestion",
+            "svc_f1": "100.0%",
+            "svc_p": "100.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "71.4%",
+            "edge_p": "100.0%",
+            "edge_r": "55.6%",
+            "gen_nodes": 6,
+            "gt_nodes": 6,
+            "gen_edges": 5,
+            "gt_edges": 9,
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "100%",
+            "edge_r": "56%",
+            "edge_f1": "71%",
+            "gen_nodes": "6",
+            "gt_nodes": "6",
+            "gen_edges": "5",
+            "gt_edges": "9",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/BlCXEMp_lqY_cloud.png",
+            "gem": "Graphs/BlCXEMp_lqY_gem.png",
+            "vision": "Graphs/BlCXEMp_lqY_vision.png",
+            "pizarra": "data/frames/BlCXEMp_lqY_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "Cgv0kfp_6xQ",
+        "title": "Snap: Journey of a Snap on Snapchat Using AWS",
+        "categories": "interactive",
+        "std": {
+            "title": "Snap: Journey of a Snap on Snapchat Using AWS",
+            "categories": "interactive",
+            "svc_f1": "100.0%",
+            "svc_p": "100.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "74.1%",
+            "edge_p": "76.9%",
+            "edge_r": "71.4%",
+            "gen_nodes": 10,
+            "gt_nodes": 10,
+            "gen_edges": 13,
+            "gt_edges": 14,
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "100%",
+            "edge_r": "71%",
+            "edge_f1": "83%",
+            "gen_nodes": "11",
+            "gt_nodes": "10",
+            "gen_edges": "10",
+            "gt_edges": "14",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/Cgv0kfp_6xQ_cloud.png",
+            "gem": "Graphs/Cgv0kfp_6xQ_gem.png",
+            "vision": "Graphs/Cgv0kfp_6xQ_vision.png",
+            "pizarra": "data/frames/Cgv0kfp_6xQ_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "IV3KuMGVNXI",
+        "title": "Deep Instinct: Collecting RT Statistics and Applying RT Decisions with Lambda@Edge",
+        "categories": "interactive",
+        "std": {
+            "title": "Deep Instinct: Collecting RT Statistics and Applying RT Decisions with Lambda@Edge",
+            "categories": "interactive",
+            "svc_f1": "100.0%",
+            "svc_p": "100.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "44.4%",
+            "edge_p": "60.0%",
+            "edge_r": "35.3%",
+            "gen_nodes": 7,
+            "gt_nodes": 7,
+            "gen_edges": 10,
+            "gt_edges": 17,
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {},
+        "images": {
+            "cloud": "Graphs/IV3KuMGVNXI_cloud.png",
+            "gem": "Graphs/IV3KuMGVNXI_gem.png",
+            "vision": null,
+            "pizarra": "data/frames/IV3KuMGVNXI_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "JYeXbUdFOdw",
+        "title": "Noventiq: Harnessing Search and Analytics with Event-Driven Architecture on Amazon OpenSearch",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "75%",
+            "svc_r": "86%",
+            "svc_f1": "80%",
+            "edge_p": "38%",
+            "edge_r": "36%",
+            "edge_f1": "37%",
+            "gen_nodes": "13",
+            "gt_nodes": "8",
+            "gen_edges": "13",
+            "gt_edges": "14",
+            "missing": "UserConsumerWeb",
+            "hallucinated": "EC2, UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": "Graphs/JYeXbUdFOdw_cloud.png",
+            "gem": null,
+            "vision": "Graphs/JYeXbUdFOdw_vision.png",
+            "pizarra": "data/frames/JYeXbUdFOdw_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "Kebb0LOVC28",
+        "title": "Openfit: ChatOps with Slack and AWS Lambda",
+        "categories": "control",
+        "std": {
+            "title": "Openfit: ChatOps with Slack and AWS Lambda",
+            "categories": "control",
+            "svc_f1": "100.0%",
+            "svc_p": "100.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "42.1%",
+            "edge_p": "47.1%",
+            "edge_r": "38.1%",
+            "gen_nodes": 11,
+            "gt_nodes": 9,
+            "gen_edges": 17,
+            "gt_edges": 21,
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {},
+        "images": {
+            "cloud": "Graphs/Kebb0LOVC28_cloud.png",
+            "gem": "Graphs/Kebb0LOVC28_gem.png",
+            "vision": null,
+            "pizarra": "data/frames/Kebb0LOVC28_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "bqZWYmRAka0",
+        "title": "DBS Bank: Architecting Quant Pricing Engine for Performance with Amazon ElastiCache",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "80%",
+            "svc_r": "80%",
+            "svc_f1": "80%",
+            "edge_p": "40%",
+            "edge_r": "80%",
+            "edge_f1": "53%",
+            "gen_nodes": "7",
+            "gt_nodes": "5",
+            "gen_edges": "10",
+            "gt_edges": "5",
+            "missing": "UserConsumerAPI",
+            "hallucinated": "UserCompanyAgent"
+        },
+        "images": {
+            "cloud": "Graphs/bqZWYmRAka0_cloud.png",
+            "gem": null,
+            "vision": "Graphs/bqZWYmRAka0_vision.png",
+            "pizarra": "data/frames/bqZWYmRAka0_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "c-1GXhOOOww",
+        "title": "Anchor Operating System: Building a Serverless Guest Sightseeing Journey Seamlessly",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "78%",
+            "svc_r": "78%",
+            "svc_f1": "78%",
+            "edge_p": "45%",
+            "edge_r": "31%",
+            "edge_f1": "37%",
+            "gen_nodes": "9",
+            "gt_nodes": "9",
+            "gen_edges": "11",
+            "gt_edges": "16",
+            "missing": "ThirdParty, UserConsumerMobile",
+            "hallucinated": "CloudFront, UserConsumerWeb"
+        },
+        "images": {
+            "cloud": "Graphs/c-1GXhOOOww_cloud.png",
+            "gem": null,
+            "vision": "Graphs/c-1GXhOOOww_vision.png",
+            "pizarra": "data/frames/c-1GXhOOOww_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "fppIOuRMI2g",
+        "title": "Instructure: Elevating Digital Education to the Next-Level Event Driven CI/CD Deployments Globally",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "100%",
+            "edge_r": "86%",
+            "edge_f1": "92%",
+            "gen_nodes": "7",
+            "gt_nodes": "7",
+            "gen_edges": "6",
+            "gt_edges": "7",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/fppIOuRMI2g_cloud.png",
+            "gem": null,
+            "vision": "Graphs/fppIOuRMI2g_vision.png",
+            "pizarra": "data/frames/fppIOuRMI2g_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "gu54VVeDD10",
+        "title": "FPL Technologies: Building On-Demand, Secure, and Scalable Serverless ML Workbenches",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "75%",
+            "svc_f1": "80%",
+            "edge_p": "67%",
+            "edge_r": "44%",
+            "edge_f1": "53%",
+            "gen_nodes": "7",
+            "gt_nodes": "8",
+            "gen_edges": "6",
+            "gt_edges": "9",
+            "missing": "ECR, UserCompanyAnalyst",
+            "hallucinated": "UserCompanyDeveloper"
+        },
+        "images": {
+            "cloud": "Graphs/gu54VVeDD10_cloud.png",
+            "gem": null,
+            "vision": "Graphs/gu54VVeDD10_vision.png",
+            "pizarra": "data/frames/gu54VVeDD10_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "jBffL9zUCSE",
+        "title": "The New York Times: Giving Developers the Freedom to Deploy, While Governing Cloud Services at Scale",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "100%",
+            "edge_r": "45%",
+            "edge_f1": "62%",
+            "gen_nodes": "7",
+            "gt_nodes": "7",
+            "gen_edges": "5",
+            "gt_edges": "11",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/jBffL9zUCSE_cloud.png",
+            "gem": null,
+            "vision": "Graphs/jBffL9zUCSE_vision.png",
+            "pizarra": "data/frames/jBffL9zUCSE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "lkDq9g43djw",
+        "title": "FINBOURNE: How Finbourne Assures Resiliency Through Chaos Engineering Events Every 17 min",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "50%",
+            "edge_r": "50%",
+            "edge_f1": "50%",
+            "gen_nodes": "7",
+            "gt_nodes": "5",
+            "gen_edges": "4",
+            "gt_edges": "4",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/lkDq9g43djw_cloud.png",
+            "gem": null,
+            "vision": "Graphs/lkDq9g43djw_vision.png",
+            "pizarra": "data/frames/lkDq9g43djw_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "pk5yddJpC_8",
+        "title": "Benevity: Centralized Logging for Multiple Compute Classes Using OpenSearch",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "83%",
+            "svc_r": "83%",
+            "svc_f1": "83%",
+            "edge_p": "78%",
+            "edge_r": "70%",
+            "edge_f1": "74%",
+            "gen_nodes": "9",
+            "gt_nodes": "9",
+            "gen_edges": "9",
+            "gt_edges": "10",
+            "missing": "UserCompanyDeveloper",
+            "hallucinated": "UserCompanyAnalyst"
+        },
+        "images": {
+            "cloud": "Graphs/pk5yddJpC_8_cloud.png",
+            "gem": null,
+            "vision": "Graphs/pk5yddJpC_8_vision.png",
+            "pizarra": "data/frames/pk5yddJpC_8_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "qi017F1UwvM",
+        "title": "Salesflo: Transforming Field-Force Operations Using Event-Driven Architecture",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "93%",
+            "svc_r": "93%",
+            "svc_f1": "93%",
+            "edge_p": "78%",
+            "edge_r": "58%",
+            "edge_f1": "67%",
+            "gen_nodes": "17",
+            "gt_nodes": "17",
+            "gen_edges": "18",
+            "gt_edges": "24",
+            "missing": "UserConsumerWeb",
+            "hallucinated": "UserCompanyWebsite"
+        },
+        "images": {
+            "cloud": "Graphs/qi017F1UwvM_cloud.png",
+            "gem": null,
+            "vision": "Graphs/qi017F1UwvM_vision.png",
+            "pizarra": "data/frames/qi017F1UwvM_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "rPGLNw1cOGM",
+        "title": "3M: Parallel Serverless Workflows for Materials Science",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "83%",
+            "svc_r": "83%",
+            "svc_f1": "83%",
+            "edge_p": "89%",
+            "edge_r": "40%",
+            "edge_f1": "55%",
+            "gen_nodes": "8",
+            "gt_nodes": "8",
+            "gen_edges": "9",
+            "gt_edges": "20",
+            "missing": "UserConsumerWeb",
+            "hallucinated": "UserCompanyDomainExpert"
+        },
+        "images": {
+            "cloud": "Graphs/rPGLNw1cOGM_cloud.png",
+            "gem": null,
+            "vision": "Graphs/rPGLNw1cOGM_vision.png",
+            "pizarra": "data/frames/rPGLNw1cOGM_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "unFVfqj9cQ8",
+        "title": "Contino: Measuring and Communicating The Business Impact of Landing Zones with Flight Controller",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "88%",
+            "svc_f1": "93%",
+            "edge_p": "100%",
+            "edge_r": "86%",
+            "edge_f1": "92%",
+            "gen_nodes": "7",
+            "gt_nodes": "8",
+            "gen_edges": "6",
+            "gt_edges": "7",
+            "missing": "ControlTower",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/unFVfqj9cQ8_cloud.png",
+            "gem": null,
+            "vision": "Graphs/unFVfqj9cQ8_vision.png",
+            "pizarra": "data/frames/unFVfqj9cQ8_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "-3lnf5lzsH0",
+        "title": "MakeMyTrip: Building Next Generation SOC",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "MakeMyTrip: Building Next Generation SOC",
+            "categories": "data_ingestion",
+            "svc_f1": "95.7%",
+            "svc_p": "100.0%",
+            "svc_r": "91.7%",
+            "edge_f1": "38.7%",
+            "edge_p": "40.0%",
+            "edge_r": "37.5%",
+            "gen_nodes": 14,
+            "gt_nodes": 13,
+            "gen_edges": 15,
+            "gt_edges": 16,
+            "missing": "OnPremDC",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "58%",
+            "svc_f1": "74%",
+            "edge_p": "33%",
+            "edge_r": "19%",
+            "edge_f1": "24%",
+            "gen_nodes": "9",
+            "gt_nodes": "13",
+            "gen_edges": "9",
+            "gt_edges": "16",
+            "missing": "CloudTrail, GuardDuty, SNS (+2)",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": "Graphs/-3lnf5lzsH0_cloud.png",
+            "gem": "Graphs/-3lnf5lzsH0_gem.png",
+            "vision": "Graphs/-3lnf5lzsH0_vision.png",
+            "pizarra": "data/frames/-3lnf5lzsH0_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "4WjXH8Wp0E4",
+        "title": "Kainos: Kainos Advances Patient Care with Next Generation Interoperability Platform",
+        "categories": "data_ingestion, interactive",
+        "std": {
+            "title": "Kainos: Kainos Advances Patient Care with Next Generation Interoperability Platform",
+            "categories": "data_ingestion, interactive",
+            "svc_f1": "94.7%",
+            "svc_p": "100.0%",
+            "svc_r": "90.0%",
+            "edge_f1": "59.1%",
+            "edge_p": "59.1%",
+            "edge_r": "59.1%",
+            "gen_nodes": 11,
+            "gt_nodes": 14,
+            "gen_edges": 22,
+            "gt_edges": 22,
+            "missing": "UserConsumerWeb",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "88%",
+            "svc_r": "70%",
+            "svc_f1": "78%",
+            "edge_p": "82%",
+            "edge_r": "41%",
+            "edge_f1": "55%",
+            "gen_nodes": "12",
+            "gt_nodes": "14",
+            "gen_edges": "11",
+            "gt_edges": "22",
+            "missing": "ThirdParty, UserConsumerHospital, UserConsumerWeb",
+            "hallucinated": "UserCompanyAgent"
+        },
+        "images": {
+            "cloud": "Graphs/4WjXH8Wp0E4_cloud.png",
+            "gem": "Graphs/4WjXH8Wp0E4_gem.png",
+            "vision": "Graphs/4WjXH8Wp0E4_vision.png",
+            "pizarra": "data/frames/4WjXH8Wp0E4_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "7LziNjUTo7w",
+        "title": "IHS Markit: Virtual Instructor-Led Trainings with IHS Markit (now part of S&P Global)",
+        "categories": "interactive",
+        "std": {
+            "title": "IHS Markit: Virtual Instructor-Led Trainings with IHS Markit (now part of S&P Global)",
+            "categories": "interactive",
+            "svc_f1": "94.1%",
+            "svc_p": "88.9%",
+            "svc_r": "100.0%",
+            "edge_f1": "78.6%",
+            "edge_p": "91.7%",
+            "edge_r": "68.8%",
+            "gen_nodes": 9,
+            "gt_nodes": 9,
+            "gen_edges": 12,
+            "gt_edges": 16,
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyAgent"
+        },
+        "parsimonious": {
+            "svc_p": "89%",
+            "svc_r": "100%",
+            "svc_f1": "94%",
+            "edge_p": "91%",
+            "edge_r": "62%",
+            "edge_f1": "74%",
+            "gen_nodes": "9",
+            "gt_nodes": "9",
+            "gen_edges": "11",
+            "gt_edges": "16",
+            "missing": "Ninguno",
+            "hallucinated": "UserConsumerDeveloper"
+        },
+        "images": {
+            "cloud": "Graphs/7LziNjUTo7w_cloud.png",
+            "gem": "Graphs/7LziNjUTo7w_gem.png",
+            "vision": "Graphs/7LziNjUTo7w_vision.png",
+            "pizarra": "data/frames/7LziNjUTo7w_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "-S-R7MWRpaI",
+        "title": "mimik: Hybrid Edge Cloud Leveraging AWS to Support Edge Microservice Mesh",
+        "categories": "data_ingestion, interactive",
+        "std": {
+            "title": "mimik: Hybrid Edge Cloud Leveraging AWS to Support Edge Microservice Mesh",
+            "categories": "data_ingestion, interactive",
+            "svc_f1": "71.4%",
+            "svc_p": "71.4%",
+            "svc_r": "71.4%",
+            "edge_f1": "42.1%",
+            "edge_p": "50.0%",
+            "edge_r": "36.4%",
+            "gen_nodes": 9,
+            "gt_nodes": 8,
+            "gen_edges": 8,
+            "gt_edges": 11,
+            "missing": "Kinesis, UserConsumerMobile",
+            "hallucinated": "KinesisDataStream, UserCompanyEdge"
+        },
+        "parsimonious": {
+            "svc_p": "71%",
+            "svc_r": "71%",
+            "svc_f1": "71%",
+            "edge_p": "50%",
+            "edge_r": "45%",
+            "edge_f1": "48%",
+            "gen_nodes": "10",
+            "gt_nodes": "8",
+            "gen_edges": "10",
+            "gt_edges": "11",
+            "missing": "Kinesis, UserConsumerMobile",
+            "hallucinated": "KinesisDataStream, UserCompanyEdge"
+        },
+        "images": {
+            "cloud": "Graphs/-S-R7MWRpaI_cloud.png",
+            "gem": "Graphs/-S-R7MWRpaI_gem.png",
+            "vision": "Graphs/-S-R7MWRpaI_vision.png",
+            "pizarra": "data/frames/-S-R7MWRpaI_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "-ahWdCysMYw",
+        "title": "Summit Technology Group: Building a Data Consumption Model for Multi-Tenant Applications",
+        "categories": "interactive",
+        "std": {
+            "title": "Summit Technology Group: Building a Data Consumption Model for Multi-Tenant Applications",
+            "categories": "interactive",
+            "svc_f1": "93.3%",
+            "svc_p": "100.0%",
+            "svc_r": "87.5%",
+            "edge_f1": "55.6%",
+            "edge_p": "55.6%",
+            "edge_r": "55.6%",
+            "gen_nodes": 7,
+            "gt_nodes": 8,
+            "gen_edges": 9,
+            "gt_edges": 9,
+            "missing": "VPN",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "75%",
+            "svc_f1": "80%",
+            "edge_p": "83%",
+            "edge_r": "56%",
+            "edge_f1": "67%",
+            "gen_nodes": "7",
+            "gt_nodes": "8",
+            "gen_edges": "6",
+            "gt_edges": "9",
+            "missing": "ThirdParty, UserCompanyAnalyst",
+            "hallucinated": "OnPremDC"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/-ahWdCysMYw_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "-kA0ahrhX3I",
+        "title": "Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie",
+            "categories": "data_ingestion",
+            "svc_f1": "85.7%",
+            "svc_p": "85.7%",
+            "svc_r": "85.7%",
+            "edge_f1": "33.3%",
+            "edge_p": "25.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 11,
+            "gt_nodes": 9,
+            "gen_edges": 16,
+            "gt_edges": 8,
+            "missing": "UserCompanyDeveloper",
+            "hallucinated": "UserConsumerWeb"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "86%",
+            "svc_f1": "86%",
+            "edge_p": "50%",
+            "edge_r": "62%",
+            "edge_f1": "56%",
+            "gen_nodes": "11",
+            "gt_nodes": "9",
+            "gen_edges": "10",
+            "gt_edges": "8",
+            "missing": "UserCompanyDeveloper",
+            "hallucinated": "UserCompanyAnalyst"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/-kA0ahrhX3I_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "-wLEkq21cvA",
+        "title": "Versent: The Migration Factory",
+        "categories": "control",
+        "std": {
+            "title": "Versent: The Migration Factory",
+            "categories": "control",
+            "svc_f1": "72.7%",
+            "svc_p": "66.7%",
+            "svc_r": "80.0%",
+            "edge_f1": "47.6%",
+            "edge_p": "45.5%",
+            "edge_r": "50.0%",
+            "gen_nodes": 9,
+            "gt_nodes": 9,
+            "gen_edges": 11,
+            "gt_edges": 10,
+            "missing": "UserCompanyAgent",
+            "hallucinated": "OnPremDC, UserCompanyDeveloper"
+        },
+        "parsimonious": {
+            "svc_p": "57%",
+            "svc_r": "80%",
+            "svc_f1": "67%",
+            "edge_p": "45%",
+            "edge_r": "50%",
+            "edge_f1": "48%",
+            "gen_nodes": "11",
+            "gt_nodes": "9",
+            "gen_edges": "11",
+            "gt_edges": "10",
+            "missing": "UserCompanyAgent",
+            "hallucinated": "AMI, OnPremDC, UserCompanyDeveloper"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/-wLEkq21cvA_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "-yCol_7qH2U",
+        "title": "Experian: Self-Service MLOps Platform for Financial Services Customers",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {},
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/-yCol_7qH2U_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "0-db3wFRfSc",
+        "title": "MyHeritage: Handling the Deep Nostalgia Virality, Scaling GPU Spot Instances Using Multi-Region",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {},
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/0-db3wFRfSc_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "0F7KDLz-kIQ",
+        "title": "Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK",
+        "categories": "interactive",
+        "std": {
+            "title": "Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK",
+            "categories": "interactive",
+            "svc_f1": "81.8%",
+            "svc_p": "81.8%",
+            "svc_r": "81.8%",
+            "edge_f1": "37.5%",
+            "edge_p": "45.0%",
+            "edge_r": "32.1%",
+            "gen_nodes": 12,
+            "gt_nodes": 13,
+            "gen_edges": 20,
+            "gt_edges": 28,
+            "missing": "Fargate, UserConsumerWeb",
+            "hallucinated": "ECS, UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "83%",
+            "svc_r": "91%",
+            "svc_f1": "87%",
+            "edge_p": "82%",
+            "edge_r": "50%",
+            "edge_f1": "62%",
+            "gen_nodes": "14",
+            "gt_nodes": "13",
+            "gen_edges": "17",
+            "gt_edges": "28",
+            "missing": "UserConsumerWeb",
+            "hallucinated": "CloudFormation, ECS"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/0F7KDLz-kIQ_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "0JxJpNjI9Y0",
+        "title": "The Washington Post: Building a Content Management Platform with Speed at its Core",
+        "categories": "interactive",
+        "std": {
+            "title": "The Washington Post: Building a Content Management Platform with Speed at its Core",
+            "categories": "interactive",
+            "svc_f1": "75.0%",
+            "svc_p": "66.7%",
+            "svc_r": "85.7%",
+            "edge_f1": "64.7%",
+            "edge_p": "64.7%",
+            "edge_r": "64.7%",
+            "gen_nodes": 11,
+            "gt_nodes": 9,
+            "gen_edges": 17,
+            "gt_edges": 17,
+            "missing": "UserConsumerAPI",
+            "hallucinated": "UserCompanyDeveloper, UserCompanyDomainExpert, UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "75%",
+            "svc_r": "86%",
+            "svc_f1": "80%",
+            "edge_p": "64%",
+            "edge_r": "41%",
+            "edge_f1": "50%",
+            "gen_nodes": "10",
+            "gt_nodes": "9",
+            "gen_edges": "11",
+            "gt_edges": "17",
+            "missing": "UserConsumerAPI",
+            "hallucinated": "UserCompanyDeveloper, UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/0JxJpNjI9Y0_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "0gNMEyei-co",
+        "title": "Infor: Ingest and Analyze Millions of Application Events Daily for Compliance Violations",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Infor: Ingest and Analyze Millions of Application Events Daily for Compliance Violations",
+            "categories": "data_ingestion",
+            "svc_f1": "84.2%",
+            "svc_p": "80.0%",
+            "svc_r": "88.9%",
+            "edge_f1": "66.7%",
+            "edge_p": "64.3%",
+            "edge_r": "69.2%",
+            "gen_nodes": 13,
+            "gt_nodes": 9,
+            "gen_edges": 14,
+            "gt_edges": 13,
+            "missing": "UserCompanyDataStream",
+            "hallucinated": "Glue, UserCompanyAPI"
+        },
+        "parsimonious": {
+            "svc_p": "88%",
+            "svc_r": "78%",
+            "svc_f1": "82%",
+            "edge_p": "82%",
+            "edge_r": "69%",
+            "edge_f1": "75%",
+            "gen_nodes": "9",
+            "gt_nodes": "9",
+            "gen_edges": "11",
+            "gt_edges": "13",
+            "missing": "ThirdParty, UserCompanyDataStream",
+            "hallucinated": "UserCompanyAPI"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/0gNMEyei-co_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "0wnNlOg42dc",
+        "title": "Spyne.AI: High-Quality Product Visuals at Scale with AI on AWS",
+        "categories": "compute_intensive",
+        "std": {
+            "title": "Spyne.AI: High-Quality Product Visuals at Scale with AI on AWS",
+            "categories": "compute_intensive",
+            "svc_f1": "77.8%",
+            "svc_p": "70.0%",
+            "svc_r": "87.5%",
+            "edge_f1": "44.4%",
+            "edge_p": "40.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 11,
+            "gt_nodes": 8,
+            "gen_edges": 15,
+            "gt_edges": 12,
+            "missing": "ALB",
+            "hallucinated": "ELB, RDS, UserCompanyAPI"
+        },
+        "parsimonious": {
+            "svc_p": "80%",
+            "svc_r": "100%",
+            "svc_f1": "89%",
+            "edge_p": "80%",
+            "edge_r": "67%",
+            "edge_f1": "73%",
+            "gen_nodes": "10",
+            "gt_nodes": "8",
+            "gen_edges": "10",
+            "gt_edges": "12",
+            "missing": "Ninguno",
+            "hallucinated": "ThirdParty, UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/0wnNlOg42dc_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "1aYoIZvabbk",
+        "title": "OLX Autos: Building Developer Platform for Rapid Global Expansion",
+        "categories": "control",
+        "std": {
+            "title": "OLX Autos: Building Developer Platform for Rapid Global Expansion",
+            "categories": "control",
+            "svc_f1": "92.3%",
+            "svc_p": "85.7%",
+            "svc_r": "100.0%",
+            "edge_f1": "57.1%",
+            "edge_p": "44.4%",
+            "edge_r": "80.0%",
+            "gen_nodes": 7,
+            "gt_nodes": 6,
+            "gen_edges": 9,
+            "gt_edges": 5,
+            "missing": "Ninguno",
+            "hallucinated": "EC2"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "100%",
+            "svc_f1": "92%",
+            "edge_p": "57%",
+            "edge_r": "80%",
+            "edge_f1": "67%",
+            "gen_nodes": "7",
+            "gt_nodes": "6",
+            "gen_edges": "7",
+            "gt_edges": "5",
+            "missing": "Ninguno",
+            "hallucinated": "AutoScaling"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/1aYoIZvabbk_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "1kWxymroGeE",
+        "title": "OutSystems: Decomposing a Data Monolith for Scale and MultiTenancy",
+        "categories": "control",
+        "std": {
+            "title": "OutSystems: Decomposing a Data Monolith for Scale and MultiTenancy",
+            "categories": "control",
+            "svc_f1": "90.9%",
+            "svc_p": "83.3%",
+            "svc_r": "100.0%",
+            "edge_f1": "66.7%",
+            "edge_p": "50.0%",
+            "edge_r": "100.0%",
+            "gen_nodes": 6,
+            "gt_nodes": 5,
+            "gen_edges": 8,
+            "gt_edges": 4,
+            "missing": "Ninguno",
+            "hallucinated": "EC2"
+        },
+        "parsimonious": {
+            "svc_p": "83%",
+            "svc_r": "100%",
+            "svc_f1": "91%",
+            "edge_p": "33%",
+            "edge_r": "50%",
+            "edge_f1": "40%",
+            "gen_nodes": "6",
+            "gt_nodes": "5",
+            "gen_edges": "6",
+            "gt_edges": "4",
+            "missing": "Ninguno",
+            "hallucinated": "ThirdParty"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/1kWxymroGeE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "1xLjtJnfZes",
+        "title": "MATTR: Building Digital Trust at Scale",
+        "categories": "interactive",
+        "std": {
+            "title": "MATTR: Building Digital Trust at Scale",
+            "categories": "interactive",
+            "svc_f1": "80.0%",
+            "svc_p": "85.7%",
+            "svc_r": "75.0%",
+            "edge_f1": "54.5%",
+            "edge_p": "60.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 7,
+            "gt_nodes": 8,
+            "gen_edges": 5,
+            "gt_edges": 6,
+            "missing": "UserCompanyDataStream, UserConsumerAPI",
+            "hallucinated": "UserConsumerMobile"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "75%",
+            "svc_f1": "80%",
+            "edge_p": "67%",
+            "edge_r": "67%",
+            "edge_f1": "67%",
+            "gen_nodes": "8",
+            "gt_nodes": "8",
+            "gen_edges": "6",
+            "gt_edges": "6",
+            "missing": "UserCompanyDataStream, UserConsumerAPI",
+            "hallucinated": "UserConsumerMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/1xLjtJnfZes_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "2L0m28ZLmtE",
+        "title": "Sanofi with TeamWork: OnDemand Data Science Environment",
+        "categories": "compute_intensive",
+        "std": {
+            "title": "Sanofi with TeamWork: OnDemand Data Science Environment",
+            "categories": "compute_intensive",
+            "svc_f1": "88.0%",
+            "svc_p": "84.6%",
+            "svc_r": "91.7%",
+            "edge_f1": "21.1%",
+            "edge_p": "14.8%",
+            "edge_r": "36.4%",
+            "gen_nodes": 15,
+            "gt_nodes": 13,
+            "gen_edges": 27,
+            "gt_edges": 11,
+            "missing": "ThirdParty",
+            "hallucinated": "CloudFormation, UserCompanyAnalyst"
+        },
+        "parsimonious": {
+            "svc_p": "92%",
+            "svc_r": "100%",
+            "svc_f1": "96%",
+            "edge_p": "83%",
+            "edge_r": "91%",
+            "edge_f1": "87%",
+            "gen_nodes": "14",
+            "gt_nodes": "13",
+            "gen_edges": "12",
+            "gt_edges": "11",
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyAnalyst"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/2L0m28ZLmtE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "2XVgpMwY5iE",
+        "title": "Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis",
+            "categories": "data_ingestion",
+            "svc_f1": "71.4%",
+            "svc_p": "71.4%",
+            "svc_r": "71.4%",
+            "edge_f1": "38.5%",
+            "edge_p": "35.7%",
+            "edge_r": "41.7%",
+            "gen_nodes": 8,
+            "gt_nodes": 7,
+            "gen_edges": 14,
+            "gt_edges": 12,
+            "missing": "UserCompanyAgent, UserCompanyDataStream",
+            "hallucinated": "UserCompanyDomainExpert, UserConsumerHospital"
+        },
+        "parsimonious": {
+            "svc_p": "71%",
+            "svc_r": "71%",
+            "svc_f1": "71%",
+            "edge_p": "56%",
+            "edge_r": "42%",
+            "edge_f1": "48%",
+            "gen_nodes": "8",
+            "gt_nodes": "7",
+            "gen_edges": "9",
+            "gt_edges": "12",
+            "missing": "UserCompanyAgent, UserCompanyDataStream",
+            "hallucinated": "ThirdParty, UserConsumerHospital"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/2XVgpMwY5iE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "2e3vOxsHekE",
+        "title": "Mueller Water Products: A Water Intelligent Platform",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Mueller Water Products: A Water Intelligent Platform",
+            "categories": "data_ingestion",
+            "svc_f1": "83.3%",
+            "svc_p": "83.3%",
+            "svc_r": "83.3%",
+            "edge_f1": "66.7%",
+            "edge_p": "66.7%",
+            "edge_r": "66.7%",
+            "gen_nodes": 6,
+            "gt_nodes": 6,
+            "gen_edges": 6,
+            "gt_edges": 6,
+            "missing": "UserConsumerEdge",
+            "hallucinated": "UserConsumerIOT"
+        },
+        "parsimonious": {
+            "svc_p": "83%",
+            "svc_r": "83%",
+            "svc_f1": "83%",
+            "edge_p": "75%",
+            "edge_r": "50%",
+            "edge_f1": "60%",
+            "gen_nodes": "6",
+            "gt_nodes": "6",
+            "gen_edges": "4",
+            "gt_edges": "6",
+            "missing": "UserConsumerEdge",
+            "hallucinated": "UserCompanyEdge"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/2e3vOxsHekE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "2f_NYiPJQt4",
+        "title": "Appway: Securing Sensitive Banking Workflows with Isolated Architecture on AWS",
+        "categories": "control",
+        "std": {
+            "title": "Appway: Securing Sensitive Banking Workflows with Isolated Architecture on AWS",
+            "categories": "control",
+            "svc_f1": "78.3%",
+            "svc_p": "69.2%",
+            "svc_r": "90.0%",
+            "edge_f1": "42.9%",
+            "edge_p": "31.6%",
+            "edge_r": "66.7%",
+            "gen_nodes": 13,
+            "gt_nodes": 10,
+            "gen_edges": 19,
+            "gt_edges": 9,
+            "missing": "S2SVPN",
+            "hallucinated": "ThirdParty, UserCompanyAgent, UserCompanyDeveloper, VPN"
+        },
+        "parsimonious": {
+            "svc_p": "91%",
+            "svc_r": "100%",
+            "svc_f1": "95%",
+            "edge_p": "73%",
+            "edge_r": "89%",
+            "edge_f1": "80%",
+            "gen_nodes": "11",
+            "gt_nodes": "10",
+            "gen_edges": "11",
+            "gt_edges": "9",
+            "missing": "Ninguno",
+            "hallucinated": "ThirdParty"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/2f_NYiPJQt4_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "37T7Nd8pL-c",
+        "title": "Docebo: How to Create Compelling e-Learning Videos from Documents via AI ML Services",
+        "categories": "control",
+        "std": {
+            "title": "Docebo: How to Create Compelling e-Learning Videos from Documents via AI ML Services",
+            "categories": "control",
+            "svc_f1": "85.7%",
+            "svc_p": "85.7%",
+            "svc_r": "85.7%",
+            "edge_f1": "27.3%",
+            "edge_p": "30.0%",
+            "edge_r": "25.0%",
+            "gen_nodes": 8,
+            "gt_nodes": 8,
+            "gen_edges": 10,
+            "gt_edges": 12,
+            "missing": "UserConsumerAPI",
+            "hallucinated": "UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "86%",
+            "svc_f1": "86%",
+            "edge_p": "43%",
+            "edge_r": "25%",
+            "edge_f1": "32%",
+            "gen_nodes": "7",
+            "gt_nodes": "8",
+            "gen_edges": "7",
+            "gt_edges": "12",
+            "missing": "UserConsumerAPI",
+            "hallucinated": "UserConsumerWeb"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/37T7Nd8pL-c_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "3WgTBTDlQN8",
+        "title": "FanFight: Building a Realtime Fantasy League Gaming Platform on AWS",
+        "categories": "data_ingestion, interactive",
+        "std": {
+            "title": "FanFight: Building a Realtime Fantasy League Gaming Platform on AWS",
+            "categories": "data_ingestion, interactive",
+            "svc_f1": "70.6%",
+            "svc_p": "75.0%",
+            "svc_r": "66.7%",
+            "edge_f1": "42.9%",
+            "edge_p": "42.9%",
+            "edge_r": "42.9%",
+            "gen_nodes": 11,
+            "gt_nodes": 9,
+            "gen_edges": 14,
+            "gt_edges": 14,
+            "missing": "EC2, UserCompanyAPI, UserConsumerMobile",
+            "hallucinated": "ThirdParty, UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "75%",
+            "svc_r": "67%",
+            "svc_f1": "71%",
+            "edge_p": "50%",
+            "edge_r": "36%",
+            "edge_f1": "42%",
+            "gen_nodes": "9",
+            "gt_nodes": "9",
+            "gen_edges": "10",
+            "gt_edges": "14",
+            "missing": "EC2, UserCompanyAPI, UserConsumerMobile",
+            "hallucinated": "ThirdParty, UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/3WgTBTDlQN8_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "3yJZ6rPoZfg",
+        "title": "Hexagon HxDR: Cloud-Based Visualization of Spatial Data",
+        "categories": "compute_intensive",
+        "std": {
+            "title": "Hexagon HxDR: Cloud-Based Visualization of Spatial Data",
+            "categories": "compute_intensive",
+            "svc_f1": "50.0%",
+            "svc_p": "50.0%",
+            "svc_r": "50.0%",
+            "edge_f1": "33.3%",
+            "edge_p": "33.3%",
+            "edge_r": "33.3%",
+            "gen_nodes": 8,
+            "gt_nodes": 7,
+            "gen_edges": 9,
+            "gt_edges": 9,
+            "missing": "EC2, UserConsumerEdge, VPC",
+            "hallucinated": "AutoScaling, UserConsumerWebMobile, VPCPeering"
+        },
+        "parsimonious": {
+            "svc_p": "50%",
+            "svc_r": "50%",
+            "svc_f1": "50%",
+            "edge_p": "25%",
+            "edge_r": "22%",
+            "edge_f1": "24%",
+            "gen_nodes": "8",
+            "gt_nodes": "7",
+            "gen_edges": "8",
+            "gt_edges": "9",
+            "missing": "EC2, UserConsumerEdge, VPC",
+            "hallucinated": "AutoScaling, UserConsumerWebMobile, VPCPeering"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/3yJZ6rPoZfg_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "4-teOQ_dJvY",
+        "title": "SBB Cargo: Data Collection and Processing with Serverless Analytics Services",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "SBB Cargo: Data Collection and Processing with Serverless Analytics Services",
+            "categories": "data_ingestion",
+            "svc_f1": "57.1%",
+            "svc_p": "57.1%",
+            "svc_r": "57.1%",
+            "edge_f1": "40.0%",
+            "edge_p": "41.7%",
+            "edge_r": "38.5%",
+            "gen_nodes": 9,
+            "gt_nodes": 9,
+            "gen_edges": 12,
+            "gt_edges": 13,
+            "missing": "Kinesis, UserCompanyAPI, UserCompanyEdge",
+            "hallucinated": "KinesisDataStream, ThirdParty, UserCompanyInternalPlatform"
+        },
+        "parsimonious": {
+            "svc_p": "71%",
+            "svc_r": "71%",
+            "svc_f1": "71%",
+            "edge_p": "67%",
+            "edge_r": "62%",
+            "edge_f1": "64%",
+            "gen_nodes": "10",
+            "gt_nodes": "9",
+            "gen_edges": "12",
+            "gt_edges": "13",
+            "missing": "UserCompanyAPI, UserCompanyEdge",
+            "hallucinated": "ThirdParty, UserCompanyInternalPlatform"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/4-teOQ_dJvY_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "53sUjFv9ByI",
+        "title": "Neumora Therapeutics: Enabling DNA and RNA Data Insight for Rapid Genomics Sequencing Drug Discovery",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Neumora Therapeutics: Enabling DNA and RNA Data Insight for Rapid Genomics Sequencing Drug Discovery",
+            "categories": "data_ingestion",
+            "svc_f1": "61.5%",
+            "svc_p": "57.1%",
+            "svc_r": "66.7%",
+            "edge_f1": "50.0%",
+            "edge_p": "50.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 7,
+            "gt_nodes": 6,
+            "gen_edges": 6,
+            "gt_edges": 6,
+            "missing": "ThirdParty, UserCompanyDataStream",
+            "hallucinated": "S3, UserCompanyAnalyst, UserCompanyDeveloper"
+        },
+        "parsimonious": {
+            "svc_p": "67%",
+            "svc_r": "67%",
+            "svc_f1": "67%",
+            "edge_p": "60%",
+            "edge_r": "50%",
+            "edge_f1": "55%",
+            "gen_nodes": "6",
+            "gt_nodes": "6",
+            "gen_edges": "5",
+            "gt_edges": "6",
+            "missing": "ThirdParty, UserCompanyDataStream",
+            "hallucinated": "S3, UserCompanyAnalyst"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/53sUjFv9ByI_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "5CwIt-Alqhg",
+        "title": "Accenture: Building a Blockchain Circular Supply Chain",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Accenture: Building a Blockchain Circular Supply Chain",
+            "categories": "data_ingestion",
+            "svc_f1": "72.7%",
+            "svc_p": "72.7%",
+            "svc_r": "72.7%",
+            "edge_f1": "44.4%",
+            "edge_p": "40.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 11,
+            "gt_nodes": 11,
+            "gen_edges": 15,
+            "gt_edges": 12,
+            "missing": "ALB, S3, SageMaker",
+            "hallucinated": "ELB, UserCompanyAnalyst, UserConsumerIOT"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "100%",
+            "edge_r": "83%",
+            "edge_f1": "91%",
+            "gen_nodes": "11",
+            "gt_nodes": "11",
+            "gen_edges": "10",
+            "gt_edges": "12",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/5CwIt-Alqhg_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "5EmA67lSJEs",
+        "title": "Extreme Reach: The AdBridge Platform on AWS Handles 80%+ of all Commercials in the US",
+        "categories": "compute_intensive, interactive",
+        "std": {
+            "title": "Extreme Reach: The AdBridge Platform on AWS Handles 80%+ of all Commercials in the US",
+            "categories": "compute_intensive, interactive",
+            "svc_f1": "80.0%",
+            "svc_p": "85.7%",
+            "svc_r": "75.0%",
+            "edge_f1": "43.8%",
+            "edge_p": "58.3%",
+            "edge_r": "35.0%",
+            "gen_nodes": 10,
+            "gt_nodes": 11,
+            "gen_edges": 12,
+            "gt_edges": 20,
+            "missing": "UserConsumerAPI, UserConsumerWeb",
+            "hallucinated": "UserCompanyAgent"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "75%",
+            "svc_f1": "80%",
+            "edge_p": "58%",
+            "edge_r": "35%",
+            "edge_f1": "44%",
+            "gen_nodes": "10",
+            "gt_nodes": "11",
+            "gen_edges": "12",
+            "gt_edges": "20",
+            "missing": "UserConsumerAPI, UserConsumerWeb",
+            "hallucinated": "UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/5EmA67lSJEs_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "5RsZJ-1_sn4",
+        "title": "Glidewell Dental: Precision Manufacturing in Dental Restorations using a Tailored Scalable Solution",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {},
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/5RsZJ-1_sn4_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "5f3z1Z_9BJA",
+        "title": "Capgemini: Refactoring a Data Warehouse to Amazon Redshift",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Capgemini: Refactoring a Data Warehouse to Amazon Redshift",
+            "categories": "data_ingestion",
+            "svc_f1": "80.0%",
+            "svc_p": "75.0%",
+            "svc_r": "85.7%",
+            "edge_f1": "37.5%",
+            "edge_p": "40.0%",
+            "edge_r": "35.3%",
+            "gen_nodes": 12,
+            "gt_nodes": 11,
+            "gen_edges": 15,
+            "gt_edges": 17,
+            "missing": "UserCompanyDataStream",
+            "hallucinated": "ThirdParty, UserCompanyAnalyst"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "86%",
+            "svc_f1": "86%",
+            "edge_p": "91%",
+            "edge_r": "59%",
+            "edge_f1": "71%",
+            "gen_nodes": "11",
+            "gt_nodes": "11",
+            "gen_edges": "11",
+            "gt_edges": "17",
+            "missing": "UserCompanyDataStream",
+            "hallucinated": "ThirdParty"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/5f3z1Z_9BJA_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "5vR5aN_xdI0",
+        "title": "Splunk: Data at Scale by Decoupling Compute and Storage LIVE",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Splunk: Data at Scale by Decoupling Compute and Storage LIVE",
+            "categories": "data_ingestion",
+            "svc_f1": "76.9%",
+            "svc_p": "83.3%",
+            "svc_r": "71.4%",
+            "edge_f1": "50.0%",
+            "edge_p": "50.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 9,
+            "gt_nodes": 9,
+            "gen_edges": 10,
+            "gt_edges": 10,
+            "missing": "ThirdParty, UserConsumerAPI",
+            "hallucinated": "UserCompanyDataStream"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "86%",
+            "svc_f1": "92%",
+            "edge_p": "62%",
+            "edge_r": "50%",
+            "edge_f1": "56%",
+            "gen_nodes": "9",
+            "gt_nodes": "9",
+            "gen_edges": "8",
+            "gt_edges": "10",
+            "missing": "UserConsumerAPI",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/5vR5aN_xdI0_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "62E9ggjGS8I",
+        "title": "DISH Network: Building a Self-Service Portal to Create Multiple Accounts at Scale",
+        "categories": "other",
+        "std": {
+            "title": "DISH Network: Building a Self-Service Portal to Create Multiple Accounts at Scale",
+            "categories": "other",
+            "svc_f1": "66.7%",
+            "svc_p": "55.6%",
+            "svc_r": "83.3%",
+            "edge_f1": "19.0%",
+            "edge_p": "16.7%",
+            "edge_r": "22.2%",
+            "gen_nodes": 9,
+            "gt_nodes": 7,
+            "gen_edges": 12,
+            "gt_edges": 9,
+            "missing": "VPC",
+            "hallucinated": "EC2, EKS, Lambda, RDS"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "100%",
+            "edge_r": "44%",
+            "edge_f1": "62%",
+            "gen_nodes": "7",
+            "gt_nodes": "7",
+            "gen_edges": "4",
+            "gt_edges": "9",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/62E9ggjGS8I_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "6EUknQqaV1w",
+        "title": "CloudHealth by VMware: Secure State. Manages Over 50M Assets from Billions of Events on AWS",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "CloudHealth by VMware: Secure State. Manages Over 50M Assets from Billions of Events on AWS",
+            "categories": "data_ingestion",
+            "svc_f1": "93.3%",
+            "svc_p": "87.5%",
+            "svc_r": "100.0%",
+            "edge_f1": "83.3%",
+            "edge_p": "76.9%",
+            "edge_r": "90.9%",
+            "gen_nodes": 11,
+            "gt_nodes": 9,
+            "gen_edges": 13,
+            "gt_edges": 11,
+            "missing": "Ninguno",
+            "hallucinated": "SES"
+        },
+        "parsimonious": {
+            "svc_p": "86%",
+            "svc_r": "86%",
+            "svc_f1": "86%",
+            "edge_p": "73%",
+            "edge_r": "73%",
+            "edge_f1": "73%",
+            "gen_nodes": "8",
+            "gt_nodes": "9",
+            "gen_edges": "11",
+            "gt_edges": "11",
+            "missing": "UserCompanyDataStream",
+            "hallucinated": "EC2"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/6EUknQqaV1w_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "6E_Dg3YRil4",
+        "title": "Avnet: Accelerating OEM's with IoT and AI",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {},
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/6E_Dg3YRil4_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "6LcSv9XocTY",
+        "title": "Intuit: Serving 7 Million Customers Using Amazon Connect",
+        "categories": "data_ingestion, interactive",
+        "std": {
+            "title": "Intuit: Serving 7 Million Customers Using Amazon Connect",
+            "categories": "data_ingestion, interactive",
+            "svc_f1": "76.2%",
+            "svc_p": "66.7%",
+            "svc_r": "88.9%",
+            "edge_f1": "52.9%",
+            "edge_p": "56.2%",
+            "edge_r": "50.0%",
+            "gen_nodes": 13,
+            "gt_nodes": 11,
+            "gen_edges": 16,
+            "gt_edges": 18,
+            "missing": "UserConsumerWeb",
+            "hallucinated": "Kinesis, Lex, UserCompanyAgent, UserConsumerMobile"
+        },
+        "parsimonious": {
+            "svc_p": "88%",
+            "svc_r": "78%",
+            "svc_f1": "82%",
+            "edge_p": "67%",
+            "edge_r": "33%",
+            "edge_f1": "44%",
+            "gen_nodes": "10",
+            "gt_nodes": "11",
+            "gen_edges": "9",
+            "gt_edges": "18",
+            "missing": "Firehose, UserConsumerWeb",
+            "hallucinated": "UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/6LcSv9XocTY_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "6sY0AunanlM",
+        "title": "NGINX: Deploy and Scale Applications with Ease Using AWS EKS, ECS and the NGINX Ingress Controller",
+        "categories": "control",
+        "std": {
+            "title": "NGINX: Deploy and Scale Applications with Ease Using AWS EKS, ECS and the NGINX Ingress Controller",
+            "categories": "control",
+            "svc_f1": "66.7%",
+            "svc_p": "60.0%",
+            "svc_r": "75.0%",
+            "edge_f1": "0.0%",
+            "edge_p": "0.0%",
+            "edge_r": "0.0%",
+            "gen_nodes": 8,
+            "gt_nodes": 4,
+            "gen_edges": 8,
+            "gt_edges": 0,
+            "missing": "UserConsumerWeb",
+            "hallucinated": "UserCompanyDeveloper, UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "80%",
+            "svc_r": "100%",
+            "svc_f1": "89%",
+            "edge_p": "0%",
+            "edge_r": "0%",
+            "edge_f1": "0%",
+            "gen_nodes": "6",
+            "gt_nodes": "4",
+            "gen_edges": "6",
+            "gt_edges": "0",
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyDeveloper"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/6sY0AunanlM_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "6uEX5RKd0Bk",
+        "title": "Grindr: Leveraging Dynamo and Aurora to Build an Enhanced Chat System",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {},
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/6uEX5RKd0Bk_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "7KqYdneuJjo",
+        "title": "Health eCareers: Using Generative AI to reinvent the Job Search Experience",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {},
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/7KqYdneuJjo_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "7V8wTCkjOqo",
+        "title": "NAB: Automating Cloud Governance at the National Australia Bank",
+        "categories": "other",
+        "std": {
+            "title": "NAB: Automating Cloud Governance at the National Australia Bank",
+            "categories": "other",
+            "svc_f1": "76.9%",
+            "svc_p": "71.4%",
+            "svc_r": "83.3%",
+            "edge_f1": "33.3%",
+            "edge_p": "23.5%",
+            "edge_r": "57.1%",
+            "gen_nodes": 9,
+            "gt_nodes": 7,
+            "gen_edges": 17,
+            "gt_edges": 7,
+            "missing": "ThirdParty",
+            "hallucinated": "SQS, UserCompanyDeveloper"
+        },
+        "parsimonious": {
+            "svc_p": "83%",
+            "svc_r": "83%",
+            "svc_f1": "83%",
+            "edge_p": "25%",
+            "edge_r": "29%",
+            "edge_f1": "27%",
+            "gen_nodes": "6",
+            "gt_nodes": "7",
+            "gen_edges": "8",
+            "gt_edges": "7",
+            "missing": "ThirdParty",
+            "hallucinated": "UserCompanyDeveloper"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/7V8wTCkjOqo_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "7wBOFcP1HwA",
+        "title": "Seera Group: Transforming Online Travel Booking with Microservices (Arabic)",
+        "categories": "interactive",
+        "std": {
+            "title": "Seera Group: Transforming Online Travel Booking with Microservices (Arabic)",
+            "categories": "interactive",
+            "svc_f1": "77.8%",
+            "svc_p": "77.8%",
+            "svc_r": "77.8%",
+            "edge_f1": "44.4%",
+            "edge_p": "35.3%",
+            "edge_r": "60.0%",
+            "gen_nodes": 11,
+            "gt_nodes": 10,
+            "gen_edges": 17,
+            "gt_edges": 10,
+            "missing": "ThirdParty, UserConsumerWeb",
+            "hallucinated": "EC2, UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "70%",
+            "svc_r": "78%",
+            "svc_f1": "74%",
+            "edge_p": "50%",
+            "edge_r": "40%",
+            "edge_f1": "44%",
+            "gen_nodes": "11",
+            "gt_nodes": "10",
+            "gen_edges": "8",
+            "gt_edges": "10",
+            "missing": "ELB, UserConsumerWeb",
+            "hallucinated": "ALB, EC2, UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/7wBOFcP1HwA_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "8ZRWzn0G39g",
+        "title": "Replicon: Multi-Tenant SaaS Solution with Bring Your Own Key (BYOK) Encryption for Enterprises",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "75%",
+            "svc_r": "67%",
+            "svc_f1": "71%",
+            "edge_p": "78%",
+            "edge_r": "18%",
+            "edge_f1": "30%",
+            "gen_nodes": "10",
+            "gt_nodes": "12",
+            "gen_edges": "9",
+            "gt_edges": "38",
+            "missing": "EC2, ECS, UserConsumerAPI",
+            "hallucinated": "UserCompanyAPI, UserConsumerWeb"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/8ZRWzn0G39g_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "8s0wGRkiDrw",
+        "title": "Mobilewalla: S3 Access Monitoring Using ML",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "Mobilewalla: S3 Access Monitoring Using ML",
+            "categories": "data_ingestion",
+            "svc_f1": "80.0%",
+            "svc_p": "66.7%",
+            "svc_r": "100.0%",
+            "edge_f1": "80.0%",
+            "edge_p": "66.7%",
+            "edge_r": "100.0%",
+            "gen_nodes": 7,
+            "gt_nodes": 5,
+            "gen_edges": 6,
+            "gt_edges": 4,
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyAnalyst, UserConsumerWeb"
+        },
+        "parsimonious": {
+            "svc_p": "80%",
+            "svc_r": "100%",
+            "svc_f1": "89%",
+            "edge_p": "80%",
+            "edge_r": "100%",
+            "edge_f1": "89%",
+            "gen_nodes": "6",
+            "gt_nodes": "5",
+            "gen_edges": "5",
+            "gt_edges": "4",
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyAgent"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/8s0wGRkiDrw_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "9-a9Y5THTYo",
+        "title": "Vitesco Technologies Cloud Foundation: A Scalable and Automated Cloud Landing Zone",
+        "categories": "control",
+        "std": {
+            "title": "Vitesco Technologies Cloud Foundation: A Scalable and Automated Cloud Landing Zone",
+            "categories": "control",
+            "svc_f1": "71.4%",
+            "svc_p": "62.5%",
+            "svc_r": "83.3%",
+            "edge_f1": "66.7%",
+            "edge_p": "55.6%",
+            "edge_r": "83.3%",
+            "gen_nodes": 9,
+            "gt_nodes": 7,
+            "gen_edges": 9,
+            "gt_edges": 6,
+            "missing": "UserConsumerWeb",
+            "hallucinated": "CodePipeline, Organizations, UserCompanyDeveloper"
+        },
+        "parsimonious": {
+            "svc_p": "71%",
+            "svc_r": "83%",
+            "svc_f1": "77%",
+            "edge_p": "62%",
+            "edge_r": "83%",
+            "edge_f1": "71%",
+            "gen_nodes": "8",
+            "gt_nodes": "7",
+            "gen_edges": "8",
+            "gt_edges": "6",
+            "missing": "UserConsumerWeb",
+            "hallucinated": "Organizations, UserCompanyDeveloper"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/9-a9Y5THTYo_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "90rWUjKjnAE",
+        "title": "amazee.io: Kubernetes Deployments Made Easy",
+        "categories": "control",
+        "std": {
+            "title": "amazee.io: Kubernetes Deployments Made Easy",
+            "categories": "control",
+            "svc_f1": "85.7%",
+            "svc_p": "85.7%",
+            "svc_r": "85.7%",
+            "edge_f1": "28.6%",
+            "edge_p": "27.3%",
+            "edge_r": "30.0%",
+            "gen_nodes": 9,
+            "gt_nodes": 8,
+            "gen_edges": 11,
+            "gt_edges": 10,
+            "missing": "UserConsumerDeveloper",
+            "hallucinated": "UserCompanyDeveloper"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "88%",
+            "edge_r": "70%",
+            "edge_f1": "78%",
+            "gen_nodes": "9",
+            "gt_nodes": "8",
+            "gen_edges": "8",
+            "gt_edges": "10",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/90rWUjKjnAE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "99nNHsbwBpg",
+        "title": "SkyScanner: Building HighlyAvailable MultiRegion Kubernetes Clusters on 100 Amazon EC2 Spot",
+        "categories": "interactive",
+        "std": {
+            "title": "SkyScanner: Building HighlyAvailable MultiRegion Kubernetes Clusters on 100 Amazon EC2 Spot",
+            "categories": "interactive",
+            "svc_f1": "57.1%",
+            "svc_p": "40.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "0.0%",
+            "edge_p": "0.0%",
+            "edge_r": "0.0%",
+            "gen_nodes": 7,
+            "gt_nodes": 2,
+            "gen_edges": 9,
+            "gt_edges": 0,
+            "missing": "Ninguno",
+            "hallucinated": "ELB, ThirdParty, UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "0%",
+            "edge_r": "0%",
+            "edge_f1": "0%",
+            "gen_nodes": "5",
+            "gt_nodes": "2",
+            "gen_edges": "4",
+            "gt_edges": "0",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/99nNHsbwBpg_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "9qTEHITVeLE",
+        "title": "Majid Al Futtaim: Building a Custom Data Management Solution on AWS",
+        "categories": "data_ingestion, interactive",
+        "std": {
+            "title": "Majid Al Futtaim: Building a Custom Data Management Solution on AWS",
+            "categories": "data_ingestion, interactive",
+            "svc_f1": "70.6%",
+            "svc_p": "60.0%",
+            "svc_r": "85.7%",
+            "edge_f1": "35.3%",
+            "edge_p": "30.0%",
+            "edge_r": "42.9%",
+            "gen_nodes": 11,
+            "gt_nodes": 9,
+            "gen_edges": 20,
+            "gt_edges": 14,
+            "missing": "UserConsumerWeb",
+            "hallucinated": "EC2, OpenSearch, UserCompanyAnalyst, UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "60%",
+            "svc_r": "86%",
+            "svc_f1": "71%",
+            "edge_p": "38%",
+            "edge_r": "36%",
+            "edge_f1": "37%",
+            "gen_nodes": "10",
+            "gt_nodes": "9",
+            "gen_edges": "13",
+            "gt_edges": "14",
+            "missing": "UserConsumerWeb",
+            "hallucinated": "EC2, OnPremDC, OpenSearch (+1)"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/9qTEHITVeLE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "9yziTe6lBwk",
+        "title": "\u00c2nima Educa\u00e7\u00e3o: Digitizing Student Experience for Colleges in Brazil",
+        "categories": "interactive",
+        "std": {
+            "title": "\u00c2nima Educa\u00e7\u00e3o: Digitizing Student Experience for Colleges in Brazil",
+            "categories": "interactive",
+            "svc_f1": "90.0%",
+            "svc_p": "90.0%",
+            "svc_r": "90.0%",
+            "edge_f1": "61.5%",
+            "edge_p": "80.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 10,
+            "gt_nodes": 10,
+            "gen_edges": 10,
+            "gt_edges": 16,
+            "missing": "UserConsumerMobile",
+            "hallucinated": "UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "90%",
+            "svc_r": "90%",
+            "svc_f1": "90%",
+            "edge_p": "89%",
+            "edge_r": "50%",
+            "edge_f1": "64%",
+            "gen_nodes": "10",
+            "gt_nodes": "10",
+            "gen_edges": "9",
+            "gt_edges": "16",
+            "missing": "UserConsumerMobile",
+            "hallucinated": "UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": "Graphs/9yziTe6lBwk_cloud.png",
+            "gem": "Graphs/9yziTe6lBwk_gem.png",
+            "vision": "Graphs/9yziTe6lBwk_vision.png",
+            "pizarra": "data/frames/9yziTe6lBwk_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "GoziWpmFCS0",
+        "title": "iRobot: Serverless Data Cataloging for Data Scientists",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "iRobot: Serverless Data Cataloging for Data Scientists",
+            "categories": "data_ingestion",
+            "svc_f1": "85.7%",
+            "svc_p": "75.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "16.7%",
+            "edge_p": "10.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 8,
+            "gt_nodes": 4,
+            "gen_edges": 10,
+            "gt_edges": 2,
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyDataStream"
+        },
+        "parsimonious": {
+            "svc_p": "60%",
+            "svc_r": "100%",
+            "svc_f1": "75%",
+            "edge_p": "18%",
+            "edge_r": "100%",
+            "edge_f1": "31%",
+            "gen_nodes": "9",
+            "gt_nodes": "4",
+            "gen_edges": "11",
+            "gt_edges": "2",
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyDataStream, UserCompanyDomainExpert"
+        },
+        "images": {
+            "cloud": "Graphs/GoziWpmFCS0_cloud.png",
+            "gem": "Graphs/GoziWpmFCS0_gem.png",
+            "vision": "Graphs/GoziWpmFCS0_vision.png",
+            "pizarra": "data/frames/GoziWpmFCS0_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "Q6r_QbYXFpg",
+        "title": "SynchroNet: Extending User Automation and Amazon WorkSpaces Provisioning with AWS Step Functions",
+        "categories": "other",
+        "std": {
+            "title": "SynchroNet: Extending User Automation and Amazon WorkSpaces Provisioning with AWS Step Functions",
+            "categories": "other",
+            "svc_f1": "94.7%",
+            "svc_p": "90.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "84.2%",
+            "edge_p": "80.0%",
+            "edge_r": "88.9%",
+            "gen_nodes": 12,
+            "gt_nodes": 11,
+            "gen_edges": 10,
+            "gt_edges": 9,
+            "missing": "Ninguno",
+            "hallucinated": "UserCompanyDeveloper"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "100%",
+            "edge_r": "89%",
+            "edge_f1": "94%",
+            "gen_nodes": "11",
+            "gt_nodes": "11",
+            "gen_edges": "8",
+            "gt_edges": "9",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/Q6r_QbYXFpg_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "QM96Fv_NAnw",
+        "title": "INT: Seismic Data Visualization Platform Designed for Cloud",
+        "categories": "interactive",
+        "std": {
+            "title": "INT: Seismic Data Visualization Platform Designed for Cloud",
+            "categories": "interactive",
+            "svc_f1": "92.3%",
+            "svc_p": "100.0%",
+            "svc_r": "85.7%",
+            "edge_f1": "37.5%",
+            "edge_p": "30.0%",
+            "edge_r": "50.0%",
+            "gen_nodes": 6,
+            "gt_nodes": 7,
+            "gen_edges": 10,
+            "gt_edges": 6,
+            "missing": "ThirdParty",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "86%",
+            "svc_f1": "92%",
+            "edge_p": "38%",
+            "edge_r": "50%",
+            "edge_f1": "43%",
+            "gen_nodes": "7",
+            "gt_nodes": "7",
+            "gen_edges": "8",
+            "gt_edges": "6",
+            "missing": "ThirdParty",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/QM96Fv_NAnw_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "QOtCpD23118",
+        "title": "LeasePlan: Leverages Serverless to Increase Driver Safety Reduce Fleet Costs and Lower Risk",
+        "categories": "data_ingestion",
+        "std": {
+            "title": "LeasePlan: Leverages Serverless to Increase Driver Safety Reduce Fleet Costs and Lower Risk",
+            "categories": "data_ingestion",
+            "svc_f1": "75.0%",
+            "svc_p": "75.0%",
+            "svc_r": "75.0%",
+            "edge_f1": "76.2%",
+            "edge_p": "72.7%",
+            "edge_r": "80.0%",
+            "gen_nodes": 11,
+            "gt_nodes": 11,
+            "gen_edges": 11,
+            "gt_edges": 10,
+            "missing": "ThirdParty, UserCompanyEdge",
+            "hallucinated": "OnPremDC, UserConsumerIOT"
+        },
+        "parsimonious": {
+            "svc_p": "75%",
+            "svc_r": "75%",
+            "svc_f1": "75%",
+            "edge_p": "73%",
+            "edge_r": "80%",
+            "edge_f1": "76%",
+            "gen_nodes": "11",
+            "gt_nodes": "11",
+            "gen_edges": "11",
+            "gt_edges": "10",
+            "missing": "ThirdParty, UserCompanyEdge",
+            "hallucinated": "OnPremDC, UserConsumerIOT"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/QOtCpD23118_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "QnmmTIYZxNI",
+        "title": "Adobe: Simplifying Networking Across Thousands of AWS Accounts with AWS Transit Gateway LIVE",
+        "categories": "other",
+        "std": {
+            "title": "Adobe: Simplifying Networking Across Thousands of AWS Accounts with AWS Transit Gateway LIVE",
+            "categories": "other",
+            "svc_f1": "100.0%",
+            "svc_p": "100.0%",
+            "svc_r": "100.0%",
+            "edge_f1": "72.7%",
+            "edge_p": "80.0%",
+            "edge_r": "66.7%",
+            "gen_nodes": 8,
+            "gt_nodes": 8,
+            "gen_edges": 5,
+            "gt_edges": 6,
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "parsimonious": {
+            "svc_p": "100%",
+            "svc_r": "100%",
+            "svc_f1": "100%",
+            "edge_p": "40%",
+            "edge_r": "33%",
+            "edge_f1": "36%",
+            "gen_nodes": "8",
+            "gt_nodes": "8",
+            "gen_edges": "5",
+            "gt_edges": "6",
+            "missing": "Ninguno",
+            "hallucinated": "Ninguno"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/QnmmTIYZxNI_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "QnwfcDZkwh8",
+        "title": "Mediaset: Achieving an Omni-Channel Broadcasting Voting System Near Realtime at Scale",
+        "categories": "interactive",
+        "std": {
+            "title": "Mediaset: Achieving an Omni-Channel Broadcasting Voting System Near Realtime at Scale",
+            "categories": "interactive",
+            "svc_f1": "78.3%",
+            "svc_p": "90.0%",
+            "svc_r": "69.2%",
+            "edge_f1": "58.8%",
+            "edge_p": "62.5%",
+            "edge_r": "55.6%",
+            "gen_nodes": 11,
+            "gt_nodes": 13,
+            "gen_edges": 16,
+            "gt_edges": 18,
+            "missing": "UserCompanyDeveloper, UserConsumerMobile, UserConsumerTV, UserConsumerWeb",
+            "hallucinated": "UserConsumerWebMobile"
+        },
+        "parsimonious": {
+            "svc_p": "90%",
+            "svc_r": "69%",
+            "svc_f1": "78%",
+            "edge_p": "67%",
+            "edge_r": "56%",
+            "edge_f1": "61%",
+            "gen_nodes": "10",
+            "gt_nodes": "13",
+            "gen_edges": "15",
+            "gt_edges": "18",
+            "missing": "UserCompanyDeveloper, UserConsumerMobile, UserConsumerTV (+1)",
+            "hallucinated": "UserConsumerWebMobile"
+        },
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/QnwfcDZkwh8_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "UPV6ggX4eSE",
+        "title": "Mission Cloud: Building a Generative AI Content Translation Pipeline Using Amazon Bedrock",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {},
+        "images": {
+            "cloud": null,
+            "gem": null,
+            "vision": null,
+            "pizarra": "data/frames/UPV6ggX4eSE_pizarra/best_whiteboard.jpg"
+        }
+    },
+    {
+        "code": "bikXzsVihF4",
+        "title": "United Airlines: How to Use AWS Backup to Protect Data from Ransomware Events",
+        "categories": "N/A",
+        "std": {},
+        "parsimonious": {
+            "svc_p": "88%",
+            "svc_r": "100%",
+            "svc_f1": "93%",
+            "edge_p": "57%",
+            "edge_r": "40%",
+            "edge_f1": "47%",
+            "gen_nodes": "8",
+            "gt_nodes": "7",
+            "gen_edges": "7",
+            "gt_edges": "10",
+            "missing": "Ninguno",
+            "hallucinated": "ServiceNow"
+        },
+        "images": {
+            "cloud": "Graphs/bikXzsVihF4_cloud.png",
+            "gem": null,
+            "vision": "Graphs/bikXzsVihF4_vision.png",
+            "pizarra": "data/frames/bikXzsVihF4_pizarra/best_whiteboard.jpg"
+        }
+    }
+];
+
+        function getScoreClass(scoreStr) {
+            if (!scoreStr) return 'low';
+            const num = parseFloat(scoreStr.replace('%', ''));
+            if (num >= 95) return 'high';
+            if (num >= 80) return 'med';
+            return 'low';
+        }
+
+        function createSidebar() {
+            const list = document.getElementById('videoList');
+            videoData.forEach((video, index) => {
+                const li = document.createElement('li');
+                li.className = 'video-item';
+                li.setAttribute('data-id', video.code);
+                li.setAttribute('data-title', video.title.toLowerCase());
+                
+                const score = video.parsimonious.svc_f1 || video.std.svc_f1 || 'N/A';
+                const isPerfect = score === '100.0%';
+                const badgeClass = isPerfect ? 'video-item-badge perfect' : 'video-item-badge';
+                
+                li.innerHTML = `
+                    <div class="video-item-id">${video.code}</div>
+                    <div class="video-item-title">${video.title}</div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="${badgeClass}">${isPerfect ? '100% Perfecto' : 'F1: ' + score}</span>
+                        <span class="video-item-badge" style="font-size:0.65rem">${video.categories.split(',')[0]}</span>
+                    </div>
+                `;
+                li.addEventListener('click', () => selectVideo(video.code));
+                list.appendChild(li);
+            });
+        }
+
+        function buildDiagnosis(video) {
+            const code = video.code;
+            const p = video.parsimonious;
+            const s = video.std;
+            
+            // Heuristic analysis based on metrics
+            let diagnosis = "";
+            let solutions = [];
+            
+            const pF1 = p.svc_f1 ? parseFloat(p.svc_f1) : 0;
+            const sF1 = s.svc_f1 ? parseFloat(s.svc_f1) : 0;
+            const pEdgeF1 = p.edge_f1 ? parseFloat(p.edge_f1) : 0;
+            const sEdgeF1 = s.edge_f1 ? parseFloat(s.edge_f1) : 0;
+            
+            if (pF1 === 100 && sF1 === 100) {
+                diagnosis = "Ambos modelos identificaron correctamente todos los servicios (nodos) del diagrama. El rendimiento en identificación es perfecto.";
+                if (pEdgeF1 < 100 || sEdgeF1 < 100) {
+                    diagnosis += " Sin embargo, existen diferencias o fallos en las conexiones (arcos) o en su secuencia temporal.";
+                    solutions.push("<strong>Revisar marcas de secuencia (sequence labels)</strong>: La API de Gemini a veces interpreta mal el orden numérico (ej. '1' vs '1.0' o saltándose números) o no sigue correctamente las conexiones visuales de las flechas.");
+                    solutions.push("<strong>Filtro de simplificación de etiquetas de yEd</strong>: La versión clásica incluye comentarios largos en las flechas que causan solapamiento visual y dificultan la validación manual.");
+                } else {
+                    diagnosis += " La coincidencia de flujos (edges) también es excelente.";
+                    solutions.push("<strong>Sin acción requerida</strong>: Este caso demuestra un éxito total en ambos pipelines.");
+                }
+            } else if (pF1 > sF1) {
+                diagnosis = `El pipeline Parsimonioso mejoró la precisión/recall del servicio en un <strong>${(pF1 - sF1).toFixed(1)}%</strong> en comparación con el Clásico. Esto se debe a que la simplificación del prompt y la reducción de descripciones ad-hoc evitaron alucinaciones comunes de servicios.`;
+                if (s.hallucinated && s.hallucinated !== "Ninguno") {
+                    solutions.push(`<strong>Controlar Alucinaciones en Clásico</strong>: El clásico alucinó servicios como: <code>${s.hallucinated}</code>. Esto ocurre porque el prompt clásico de Gemini da demasiado peso a la transcripción de audio, asumiendo componentes que se mencionaron pero que no están dibujados en la pizarra.`);
+                }
+                solutions.push("<strong>Filtro de Oclusión y Contorno</strong>: Usar la mejor pizarra con menor oclusión para asegurar que los logos de AWS sean nítidamente detectados en lugar de ser bloqueados por el presentador.");
+            } else {
+                diagnosis = "Ambos modelos tienen un rendimiento similar o el pipeline clásico capturó detalles que el parsimonioso omitió.";
+                if (p.missing && p.missing !== "Ninguno") {
+                    solutions.push(`<strong>Servicios Faltantes en Parsimonious</strong>: El modelo omitió <code>${p.missing}</code>. Esto se soluciona ajustando las plantillas de template matching de logos o reforzando el prompt para prestar atención a subgrafos pequeños.`);
+                }
+                if (pEdgeF1 < 50) {
+                    solutions.push("<strong>Mejorar las reglas de inferencia de flujos</strong>: El modelo detecta los servicios pero no conecta la secuencia lógica del flujo de datos.");
+                }
+            }
+            
+            if (solutions.length === 0) {
+                solutions.push("Revisión visual de los gráficos manuales para verificar si hay etiquetas de flujo faltantes o mal alineadas.");
+            }
+
+            return `
+                <div class="diagnosis-card">
+                    <h4>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Análisis de Fallas & Diagnóstico
+                    </h4>
+                    <p>${diagnosis}</p>
+                    <ul class="solutions-list">
+                        ${solutions.map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+
+        function selectVideo(code) {
+            // Update sidebar state
+            const items = document.querySelectorAll('.video-item');
+            items.forEach(item => {
+                if (item.getAttribute('data-id') === code) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
+            // Get video details
+            const video = videoData.find(v => v.code === code);
+            const mainContent = document.getElementById('mainContent');
+            
+            // Clean previous selection
+            document.getElementById('noSelection').style.display = 'none';
+            
+            // Build panel content
+            const p = video.parsimonious;
+            const s = video.std;
+            
+            const metricsHtml = `
+                <div class="panel-header">
+                    <h2>${video.title}</h2>
+                    <div class="panel-meta">
+                        <span>Video ID: <strong>${video.code}</strong></span>
+                        <span>Categorías: <strong>${video.categories}</strong></span>
+                        <span>URL: <a href="https://www.youtube.com/watch?v=${video.code}" target="_blank" style="color:var(--primary)">YouTube</a></span>
+                    </div>
+                </div>
+
+                <div class="metrics-container">
+                    <div class="metrics-card">
+                        <h3>Gemini Parsimonious (data/graphs_parsimonious)</h3>
+                        <table class="metrics-table">
+                            <tr><th>Métrica</th><th>Valor</th></tr>
+                            <tr><td>Service F1 (Unique)</td><td><span class="badge-score ${getScoreClass(p.svc_f1)}">${p.svc_f1 || 'N/A'}</span></td></tr>
+                            <tr><td>Service Precision / Recall</td><td>${p.svc_p || 'N/A'} / ${p.svc_r || 'N/A'}</td></tr>
+                            <tr><td>Edge F1 (Connections)</td><td><span class="badge-score ${getScoreClass(p.edge_f1)}">${p.edge_f1 || 'N/A'}</span></td></tr>
+                            <tr><td>Edge Precision / Recall</td><td>${p.edge_p || 'N/A'} / ${p.edge_r || 'N/A'}</td></tr>
+                            <tr><td>Nodos (Gen / GT)</td><td>${p.gen_nodes || 0} / ${p.gt_nodes || 0}</td></tr>
+                            <tr><td>Conexiones (Gen / GT)</td><td>${p.gen_edges || 0} / ${p.gt_edges || 0}</td></tr>
+                            <tr style="color:var(--accent-red)"><td>Servicios Faltantes</td><td style="font-size:0.8rem; max-width:200px; word-break:break-all;">${p.missing || '—'}</td></tr>
+                            <tr style="color:var(--accent-orange)"><td>Servicios Alucinados</td><td style="font-size:0.8rem; max-width:200px; word-break:break-all;">${p.hallucinated || '—'}</td></tr>
+                        </table>
+                    </div>
+
+                    <div class="metrics-card">
+                        <h3>Standard Pipeline (data/graphs)</h3>
+                        <table class="metrics-table">
+                            <tr><th>Métrica</th><th>Valor</th></tr>
+                            <tr><td>Service F1 (Unique)</td><td><span class="badge-score ${getScoreClass(s.svc_f1)}">${s.svc_f1 || 'N/A'}</span></td></tr>
+                            <tr><td>Service Precision / Recall</td><td>${s.svc_p || 'N/A'} / ${s.svc_r || 'N/A'}</td></tr>
+                            <tr><td>Edge F1 (Connections)</td><td><span class="badge-score ${getScoreClass(s.edge_f1)}">${s.edge_f1 || 'N/A'}</span></td></tr>
+                            <tr><td>Edge Precision / Recall</td><td>${s.edge_p || 'N/A'} / ${s.edge_r || 'N/A'}</td></tr>
+                            <tr><td>Nodos (Gen / GT)</td><td>${s.gen_nodes || 0} / ${s.gt_nodes || 0}</td></tr>
+                            <tr><td>Conexiones (Gen / GT)</td><td>${s.gen_edges || 0} / ${s.gt_edges || 0}</td></tr>
+                            <tr style="color:var(--accent-red)"><td>Servicios Faltantes</td><td style="font-size:0.8rem; max-width:200px; word-break:break-all;">${s.missing || '—'}</td></tr>
+                            <tr style="color:var(--accent-orange)"><td>Servicios Alucinados</td><td style="font-size:0.8rem; max-width:200px; word-break:break-all;">${s.hallucinated || '—'}</td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                ${buildDiagnosis(video)}
+
+                <div class="images-grid">
+                    <div class="image-card">
+                        <div class="image-card-header" onclick="toggleCard(this)" style="background-color: rgba(240, 136, 62, 0.2); border-color: rgba(240, 136, 62, 0.4);">Pizarra de Entrada (best_whiteboard.jpg)</div>
+                        <div class="image-container" onclick="openModal('${video.images.pizarra}', 'Pizarra Analizada - ${video.title}')">
+                            ${video.images.pizarra ? `<img src="${video.images.pizarra}" alt="Pizarra Analizada">` : `
+                                <div class="image-missing">
+                                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                    <span>Imagen no disponible (no se encontró best_whiteboard.jpg)</span>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <div class="image-card">
+                        <div class="image-card-header" onclick="toggleCard(this)">Ground Truth Manual (_cloud.png)</div>
+                        <div class="image-container" onclick="openModal('${video.images.cloud}', 'Ground Truth - ${video.title}')">
+                            ${video.images.cloud ? `<img src="${video.images.cloud}" alt="Ground Truth">` : `
+                                <div class="image-missing">
+                                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                    <span>Imagen no disponible</span>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <div class="image-card">
+                        <div class="image-card-header" onclick="toggleCard(this)">Gemini Parsimonious (_vision.png)</div>
+                        <div class="image-container" onclick="openModal('${video.images.vision}', 'Gemini Parsimonious - ${video.title}')">
+                            ${video.images.vision ? `<img src="${video.images.vision}" alt="Gemini Parsimonious">` : `
+                                <div class="image-missing">
+                                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                    <span>Imagen no disponible</span>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <div class="image-card">
+                        <div class="image-card-header" onclick="toggleCard(this)">Standard Gemini (da más importancia al texto) (_gem.png)</div>
+                        <div class="image-container" onclick="openModal('${video.images.gem}', 'Standard Gemini - ${video.title}')">
+                            ${video.images.gem ? `<img src="${video.images.gem}" alt="Standard Gemini">` : `
+                                <div class="image-missing">
+                                    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                    <span>Imagen no disponible</span>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Replace main content with current metrics/images
+            const existingPanel = document.getElementById('activeVideoPanel');
+            if (existingPanel) {
+                existingPanel.innerHTML = metricsHtml;
+            } else {
+                const div = document.createElement('div');
+                div.id = 'activeVideoPanel';
+                div.innerHTML = metricsHtml;
+                mainContent.appendChild(div);
+            }
+            
+            // Scroll back to top
+            mainContent.scrollTop = 0;
+        }
+
+        function toggleCard(headerElement) {
+            const card = headerElement.parentElement;
+            card.classList.toggle('collapsed');
+        }
+
+        // Search functionality
+        document.getElementById('search').addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const items = document.querySelectorAll('.video-item');
+            items.forEach(item => {
+                const id = item.getAttribute('data-id').toLowerCase();
+                const title = item.getAttribute('data-title');
+                if (id.includes(query) || title.includes(query)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Image Modal Actions
+        function openModal(imgSrc, caption) {
+            if (!imgSrc || imgSrc === 'null') return;
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImg');
+            const modalCaption = document.getElementById('modalCaption');
+            modal.style.display = "flex";
+            modalImg.src = imgSrc;
+            modalCaption.innerText = caption;
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = "none";
+        }
+
+        // Initialize Page
+        createSidebar();
+        // Select first video by default
+        if (videoData.length > 0) {
+            selectVideo(videoData[0].code);
+        }
+    </script>
+</body>
+</html>

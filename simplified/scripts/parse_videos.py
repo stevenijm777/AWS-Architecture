@@ -10,6 +10,18 @@ def parse_videos():
         print(f"Error: {input_path} not found.")
         return
 
+    # Build a title -> video_id map from existing videos.csv if available
+    video_id_map = {}
+    if output_path.exists():
+        try:
+            with open(output_path, mode="r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if "title" in row and "video_id" in row:
+                        video_id_map[row["title"].strip()] = row["video_id"].strip()
+        except Exception as e:
+            print(f"Warning: Could not read existing videos.csv: {e}")
+
     content = input_path.read_text(encoding="utf-8")
     lines = [line.strip() for line in content.splitlines()]
     
@@ -45,12 +57,16 @@ def parse_videos():
                 else:
                     views = views_age_line.strip()
                 
+                # Retrieve existing video_id if available
+                youtube_id = video_id_map.get(title.strip(), "")
+                
                 videos.append({
                     "id": vid_id,
                     "title": title,
                     "duration": duration,
                     "views": views,
-                    "age": age
+                    "age": age,
+                    "video_id": youtube_id
                 })
                 i += 8
             except IndexError:
@@ -61,7 +77,7 @@ def parse_videos():
             
     # Write to CSV
     with open(output_path, mode="w", encoding="utf-8", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "title", "duration", "views", "age"])
+        writer = csv.DictWriter(f, fieldnames=["id", "title", "duration", "views", "age", "video_id"])
         writer.writeheader()
         writer.writerows(videos)
         

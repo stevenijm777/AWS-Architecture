@@ -47,14 +47,20 @@ def search_video(query=None):
     table.add_column("Duración", justify="center", style="white")
     table.add_column("Visualizaciones", justify="right", style="dim")
     table.add_column("Tiempo Publicado (Año)", justify="center", style="yellow")
+    table.add_column("YouTube ID", justify="center", style="blue")
+    table.add_column("Enlace", style="underline cyan")
 
     for _, row in results.iterrows():
+        video_id = str(row['video_id']) if 'video_id' in row and pd.notna(row['video_id']) else "N/A"
+        link_str = f"[link=https://youtu.be/{video_id}]https://youtu.be/{video_id}[/link]" if video_id != "N/A" else "N/A"
         table.add_row(
             str(row['id']),
             str(row['title']),
             str(row['duration']),
             str(row['views']),
-            str(row['age'])
+            str(row['age']),
+            video_id,
+            link_str
         )
         
     console.print(table)

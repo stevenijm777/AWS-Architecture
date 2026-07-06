@@ -31,13 +31,19 @@ def main():
         print(f"\n[{index+1}/{len(df)}] Buscando: {title}")
         
         try:
-            # Buscar el ID del video
-            query = f"AWS Architecture {title}"
-            result = subprocess.run(
-                ["yt-dlp", "--get-id", f"ytsearch1:{query}"], 
-                capture_output=True, text=True, check=True
-            )
-            video_id = result.stdout.strip().split('\n')[0]
+            # Check if video_id is already in the CSV
+            video_id = None
+            if "video_id" in row and pd.notna(row["video_id"]) and str(row["video_id"]).strip():
+                video_id = str(row["video_id"]).strip()
+                print(f"Video ID (desde CSV): {video_id}")
+            else:
+                # Buscar el ID del video
+                query = f"AWS Architecture {title}"
+                result = subprocess.run(
+                    ["yt-dlp", "--get-id", f"ytsearch1:{query}"], 
+                    capture_output=True, text=True, check=True
+                )
+                video_id = result.stdout.strip().split('\n')[0]
             
             if not video_id:
                 print("No se encontró el ID.")

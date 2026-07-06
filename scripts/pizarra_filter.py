@@ -19,26 +19,34 @@ from rich.console import Console
 console = Console()
 
 def get_video_age_from_csv(video_id: str) -> str:
-    """Find the video age by matching the title in videos.csv with info.json."""
+    """Find the video age by matching the title or video_id in videos.csv."""
     import json
     import pandas as pd
     info_path = Path(__file__).resolve().parent.parent / "data" / "raw" / f"{video_id}.info.json"
     csv_path = Path(__file__).resolve().parent.parent / "videos.csv"
-    if not info_path.exists() or not csv_path.exists():
+    if not csv_path.exists():
         return "unknown"
     try:
-        with open(info_path, "r", encoding="utf-8") as f:
-            info = json.load(f)
-        title = info.get("title", "").strip().lower()
-        if not title:
-            return "unknown"
         df = pd.read_csv(csv_path)
-        title_clean = "".join(title.split()).replace(":", "").replace("-", "")
-        for _, row in df.iterrows():
-            row_title = str(row["title"]).strip().lower()
-            row_title_clean = "".join(row_title.split()).replace(":", "").replace("-", "")
-            if title_clean in row_title_clean or row_title_clean in title_clean:
-                return str(row["age"]).strip()
+        
+        # 1. Match directly by video_id column if present
+        if "video_id" in df.columns:
+            matches = df[df["video_id"] == video_id]
+            if not matches.empty:
+                return str(matches.iloc[0]["age"]).strip()
+                
+        # 2. Fallback to fuzzy title matching using info.json if present
+        if info_path.exists():
+            with open(info_path, "r", encoding="utf-8") as f:
+                info = json.load(f)
+            title = info.get("title", "").strip().lower()
+            if title:
+                title_clean = "".join(title.split()).replace(":", "").replace("-", "")
+                for _, row in df.iterrows():
+                    row_title = str(row["title"]).strip().lower()
+                    row_title_clean = "".join(row_title.split()).replace(":", "").replace("-", "")
+                    if title_clean in row_title_clean or row_title_clean in title_clean:
+                        return str(row["age"]).strip()
     except Exception:
         pass
     return "unknown"
