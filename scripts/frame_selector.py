@@ -397,7 +397,13 @@ def select_best_frame(
         except ValueError:
             continue
 
-        tiempo_frame_segundos = (frame_num / fps) + 1
+        # Calculate frame time. If frame_num is a raw index (> 1000), divide by fps.
+        # If frame_num is sequential, multiply by the frame extraction interval.
+        if frame_num > 1000:
+            tiempo_frame_segundos = (frame_num / fps) + 1
+        else:
+            tiempo_frame_segundos = frame_num * FRAME_INTERVAL_SEC
+
         if tiempo_frame_segundos > ultimo_segundo_hablado:
             discarded.append({"name": fp.name, "reason": f"Whisper outro ({tiempo_frame_segundos:.1f}s > {ultimo_segundo_hablado:.1f}s)"})
             continue # ¡ELIMINADO POR WHISPER! (Es el outro)
