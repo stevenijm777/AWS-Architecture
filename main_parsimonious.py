@@ -138,6 +138,26 @@ def run_pipeline(
     if skip_vision:
         console.print("[yellow]⚠  Skipping vision analysis (--skip-vision)[/]")
         analysis_result = {"graph": {}, "nodes": [], "edges": []}
+        
+        # Determine the selected best frame
+        best_tmpl_path = pizarra_dir / "best_whiteboard_template_transcript.jpg"
+        best_frame = None
+        if best_occl_path.exists():
+            best_frame = best_occl_path
+        elif best_tmpl_path.exists():
+            best_frame = best_tmpl_path
+        else:
+            best_frame = frames[-1] if frames else None
+            
+        if best_frame:
+            import shutil
+            dst_bad = Path(__file__).resolve().parent / "data" / "bad_whiteboard" / f"{video_id}.jpg"
+            dst_bad.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                shutil.copy2(best_frame, dst_bad)
+                console.print(f"[green]✓[/] Copied selected frame to bad_whiteboard/{video_id}.jpg for manual review.")
+            except Exception as e:
+                console.print(f"[yellow]⚠ Failed to copy selected frame to bad_whiteboard: {e}[/]")
     elif analysis_path.exists() and not force and not force_vision:
         console.print(
             f"[yellow]⚠[/] Vision analysis cache found at [bold]{analysis_path}[/]. Skipping Gemini API call."
