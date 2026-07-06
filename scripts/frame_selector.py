@@ -317,11 +317,12 @@ def select_best_frame(
     debug: bool = False,
 ) -> dict:
     """
-    Select the best whiteboard frame for a video using the updated layout algorithm:
-    1. Focus on the last 40% of frames (start_idx = 60%).
-    2. Filter 1: Eliminate clear screens (dark_px_pct < 20%).
-    3. Filter 2: Eliminate outros/logos (skin_pct < 1.5%).
-    4. Score based on edge density (masked AWS icons) and skin occlusion.
+    Select the best whiteboard frame for a video following the user's algorithm literally:
+    - 60% start index (last 40% candidates)
+    - Dark pixel threshold < 20%
+    - Skin pixel threshold < 1.5%
+    - Masking saturated icons in img_masked (but edges calculated on original gray)
+    - score = (edge_density * 50) - (occlusion * 5)
     """
     frames_dir = frames_dir or FRAMES_DIR
     video_frames_dir = frames_dir / video_id
@@ -343,16 +344,15 @@ def select_best_frame(
 
     # 1. Carga (Solo el último 40% del video, como solicitó el usuario)
     start_idx = int(total * 0.6)
-    candidate_frames = all_frames[start_idx:]
-    console.print(f"  [dim]Analyzing {len(candidate_frames)} frames (last 40% of video)...[/]")
+    candidates = all_frames[start_idx:]
+    console.print(f"  [dim]Analyzing {len(candidates)} frames (last 40% of video)...[/]")
 
     scored_frames = []
     discarded = []
 
-    for fp in candidate_frames:
+    for fp in candidates:
         img = cv2.imread(str(fp))
         if img is None:
-            discarded.append({"name": fp.name, "reason": "unreadable"})
             continue
 
         h, w = img.shape[:2]
@@ -372,6 +372,8 @@ def select_best_frame(
         # ---------------------------------------------------------
         skin_mask = cv2.inRange(hsv, (0, 30, 60), (25, 170, 255))
         skin_pct = np.sum(skin_mask > 0) / skin_mask.size
+
+        # Si no hay ni un 1.5% de piel humana, es un logo o texto 100% seguro.
         if skin_pct < 0.015:
             discarded.append({"name": fp.name, "reason": f"no presenter skin (skin={skin_pct:.2%})"})
             continue
@@ -388,11 +390,8 @@ def select_best_frame(
             if 0.05 * min(h, w) < cw < 0.15 * min(h, w) and 0.85 < (cw / ch) < 1.15:
                 cv2.rectangle(img_masked, (x, y), (x + cw, y + ch), (0, 0, 0), -1)
 
-        # Convert back to grayscale to do edge detection on the masked image
-        gray_masked = cv2.cvtColor(img_masked, cv2.COLOR_BGR2GRAY)
-
-        # 2. Densidad de Tiza (Centro)
-        roi_gray = gray_masked[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
+        # 2. Densidad de Tiza (Centro) - uses gray directly as in Jupyter script
+        roi_gray = gray[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
         edges = cv2.Canny(cv2.medianBlur(roi_gray, 7), 80, 200)
         edge_density = np.sum(edges > 0) / edges.size
 
@@ -412,42 +411,9 @@ def select_best_frame(
             "skin_pct": skin_pct
         })
 
-    # Robust Fallback: If ALL frames are discarded, try relaxing skin filter, then fall back to last non-blank
+    # Robust Fallback in case strict filters discard all frames
     if not scored_frames:
-        console.print("[yellow]⚠ All frames discarded by filters. Running fallback...[/]")
-        for fp in candidate_frames:
-            img = cv2.imread(str(fp))
-            if img is None:
-                continue
-            h, w = img.shape[:2]
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            
-            # Relaxed filters: just check that it's not a pure white/empty slide
-            dark_px_pct = np.sum(gray < 45) / (h * w)
-            if dark_px_pct < 0.10:
-                continue
-                
-            skin_mask = cv2.inRange(hsv, (0, 30, 60), (25, 170, 255))
-            roi_gray = gray[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
-            edges = cv2.Canny(cv2.medianBlur(roi_gray, 7), 80, 200)
-            edge_density = np.sum(edges > 0) / edges.size
-            roi_skin = skin_mask[int(h * 0.15):int(h * 0.95), int(w * 0.28):int(w * 0.72)]
-            occlusion = np.sum(roi_skin > 0) / roi_skin.size
-            
-            score = (edge_density * 50) - (occlusion * 5)
-            scored_frames.append({
-                "path": fp,
-                "score": score,
-                "edge_density": edge_density,
-                "occlusion": occlusion,
-                "dark_px_pct": dark_px_pct,
-                "skin_pct": 0.0
-            })
-            
-    # Absolute Fallback if still empty: use last frame
-    if not scored_frames:
-        console.print("[yellow]⚠ Fallback still empty. Using absolute last frame.[/]")
+        console.print("[yellow]⚠ Todos los frames fueron eliminados. Usando fallback de último frame.[/]")
         fp = all_frames[-1]
         scored_frames.append({
             "path": fp,
