@@ -513,10 +513,10 @@ def generate_markdown_report(
     console.print(f"[green]✓[/] Report saved → [bold]{output_path}[/]")
 
 
-def generate_csv(results: list[dict], output_path: Path) -> None:
-    """Generate a CSV with one row per video."""
+def generate_csv(all_evals: dict[str, dict[str, Any]], output_path: Path) -> None:
+    """Generate a combined CSV from all evaluated runs."""
     fieldnames = [
-        "video_id", "gt_name", "categories",
+        "run_type", "video_id", "gt_name", "categories",
         "gen_nodes", "gt_nodes", "node_count_ratio",
         "svc_precision", "svc_recall", "svc_f1",
         "ms_precision", "ms_recall", "ms_f1",
@@ -530,17 +530,21 @@ def generate_csv(results: list[dict], output_path: Path) -> None:
     with open(output_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
-        for r in sorted(results, key=lambda x: x["svc_f1"], reverse=True):
-            row = {k: r.get(k, "") for k in fieldnames}
-            row["categories"] = ",".join(r.get("categories", []))
-            row["services_missing"] = ",".join(r.get("services_missing", []))
-            row["services_hallucinated"] = ",".join(r.get("services_hallucinated", []))
-            # Format floats
-            for k in ["svc_precision", "svc_recall", "svc_f1", "ms_precision", "ms_recall", "ms_f1",
-                       "edge_precision", "edge_recall", "edge_f1", "edge_type_accuracy", "node_count_ratio"]:
-                if k in row and isinstance(row[k], float):
-                    row[k] = f"{row[k]:.4f}"
-            writer.writerow(row)
+        
+        for label, eval_data in all_evals.items():
+            results = eval_data["results"]
+            for r in sorted(results, key=lambda x: x["svc_f1"], reverse=True):
+                row = {k: r.get(k, "") for k in fieldnames}
+                row["run_type"] = label
+                row["categories"] = ",".join(r.get("categories", []))
+                row["services_missing"] = ",".join(r.get("services_missing", []))
+                row["services_hallucinated"] = ",".join(r.get("services_hallucinated", []))
+                # Format floats
+                for k in ["svc_precision", "svc_recall", "svc_f1", "ms_precision", "ms_recall", "ms_f1",
+                           "edge_precision", "edge_recall", "edge_f1", "edge_type_accuracy", "node_count_ratio"]:
+                    if k in row and isinstance(row[k], float):
+                        row[k] = f"{row[k]:.4f}"
+                writer.writerow(row)
 
     console.print(f"[green]✓[/] CSV saved → [bold]{output_path}[/]")
 
@@ -730,7 +734,9 @@ def main(gen_dir: Path | None, gt_dir: Path, output_dir: Path) -> None:
 
         output_dir.mkdir(parents=True, exist_ok=True)
         generate_markdown_report(results, agg, output_dir / "evaluation_report.md", catalog)
-        generate_csv(results, output_dir / "evaluation_per_video.csv")
+        
+        single_eval = {gen_dir.name: {"results": results, "agg": agg}}
+        generate_csv(single_eval, output_dir / "evaluation_per_video.csv")
         save_json_results(results, agg, output_dir / "evaluation_results.json")
     else:
         # Multi-directory evaluation (Default)
@@ -760,9 +766,9 @@ def main(gen_dir: Path | None, gt_dir: Path, output_dir: Path) -> None:
 
         output_dir.mkdir(parents=True, exist_ok=True)
         generate_combined_markdown_report(all_evals, output_dir / "evaluation_report.md", catalog, copied_ids)
+        generate_csv(all_evals, output_dir / "evaluation_per_video.csv")
 
         if "Standard (data/graphs)" in all_evals:
-            generate_csv(all_evals["Standard (data/graphs)"]["results"], output_dir / "evaluation_per_video.csv")
             save_json_results(
                 all_evals["Standard (data/graphs)"]["results"],
                 all_evals["Standard (data/graphs)"]["agg"],
