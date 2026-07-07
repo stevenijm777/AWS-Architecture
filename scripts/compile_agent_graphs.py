@@ -14,7 +14,7 @@ from rich.table import Table
 import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from scripts.graph_builder import create_graph_from_cloudscape_json, export_graphml, export_yed_graphml
+from scripts.graph_builder import create_graph_from_cloudscape_json, export_graphml
 
 console = Console()
 
@@ -35,7 +35,7 @@ def main():
     # Create target directories for the agent-generated graphs
     agent_dir = Path("data/graphs_agent_parsimonious")
     agent_dir.mkdir(parents=True, exist_ok=True)
-    (agent_dir / "visual").mkdir(parents=True, exist_ok=True)
+
 
     # Table for reporting comparison results
     table = Table(title="Comparison: API Parsimonious (v3) vs Agent Parsimonious")
@@ -66,7 +66,7 @@ def main():
 
         # 4. Export standard and visual GraphML to agent directory
         export_graphml(agent_graph, video_id, output_dir=agent_dir)
-        export_yed_graphml(agent_graph, video_id, output_dir=agent_dir)
+
 
         # 5. Load original API graph for comparison
         api_graph_path = Path(f"data/graphs_parsimonious/{video_id}.graphml")

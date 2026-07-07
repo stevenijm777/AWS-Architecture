@@ -57,18 +57,14 @@ def main():
     deleted_files_count = 0
     dirs_to_clean = [
         Path("data/graphs_parsimonious"),
-        Path("data/graphs_parsimonious/visual"),
         Path("data/graphs_agent_parsimonious"),
-        Path("data/graphs_agent_parsimonious/visual"),
         Path("data/raw")
     ]
 
     for vid in sorted(copied_ids):
         files_to_delete = [
             Path(f"data/graphs_parsimonious/{vid}.graphml"),
-            Path(f"data/graphs_parsimonious/visual/{vid}_visual.graphml"),
             Path(f"data/graphs_agent_parsimonious/{vid}.graphml"),
-            Path(f"data/graphs_agent_parsimonious/visual/{vid}_visual.graphml"),
             Path(f"data/raw/{vid}_vision_analysis_parsimonious.json"),
             Path(f"data/raw/{vid}_agent_parsimonious.json")
         ]

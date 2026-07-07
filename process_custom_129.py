@@ -24,7 +24,6 @@ from scripts.transcriber import get_timestamped_segments
 from scripts.graph_builder import (
     create_graph_from_cloudscape_json,
     export_graphml,
-    export_yed_graphml,
     print_graph_summary,
 )
 from scripts.vision_analyzer import analyze_frame
@@ -361,19 +360,13 @@ def main():
 
     # Export to standard graphs folder
     graphml_path = export_graphml(G, video_id)
-    visual_graphml_path = export_yed_graphml(G, video_id)
     print_graph_summary(G)
 
     # Copy GraphML files to cloudscape_gt folder
     gt_dir = Path("data/cloudscape_gt")
     gt_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy(graphml_path, gt_dir / f"{video_id}.graphml")
-    
-    visual_gt_dir = gt_dir / "visual"
-    visual_gt_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy(visual_graphml_path, visual_gt_dir / f"{video_id}_visual.graphml")
     console.print(f"[green]Success:[/] GraphML copied to local: {gt_dir / f'{video_id}.graphml'}")
-    console.print(f"[green]Success:[/] Visual GraphML copied to local: {visual_gt_dir / f'{video_id}_visual.graphml'}")
 
     # 10. Copy best whiteboard to best_whiteboard/iKYvG5aiIn8/best_whiteboard.png
     best_wb_out_dir = Path("best_whiteboard") / video_id
@@ -386,32 +379,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-    )
 
-    # Export to standard graphs folder
-    graphml_path = export_graphml(G, video_id)
-    visual_graphml_path = export_yed_graphml(G, video_id)
-    print_graph_summary(G)
-
-    # Copy GraphML files to cloudscape_gt folder
-    gt_dir = Path("data/cloudscape_gt")
-    gt_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy(graphml_path, gt_dir / f"{video_id}.graphml")
-    
-    visual_gt_dir = gt_dir / "visual"
-    visual_gt_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy(visual_graphml_path, visual_gt_dir / f"{video_id}_visual.graphml")
-    console.print(f"[green]Success:[/] GraphML copied to local: {gt_dir / f'{video_id}.graphml'}")
-    console.print(f"[green]Success:[/] Visual GraphML copied to local: {visual_gt_dir / f'{video_id}_visual.graphml'}")
-
-    # 10. Copy best whiteboard to best_whiteboard/iKYvG5aiIn8/best_whiteboard.png
-    best_wb_out_dir = Path("best_whiteboard") / video_id
-    best_wb_out_dir.mkdir(parents=True, exist_ok=True)
-    best_wb_out_path = best_wb_out_dir / "best_whiteboard.png"
-    shutil.copy(best_whiteboard_path, best_wb_out_path)
-    console.print(f"[green]Success:[/] Best whiteboard image saved locally to: {best_wb_out_path}")
-    
-    console.print("\n[bold green]Finished successfully! (All files saved locally)[/]\n")
-
-if __name__ == "__main__":
-    main()

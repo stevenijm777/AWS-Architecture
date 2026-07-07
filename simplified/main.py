@@ -31,7 +31,6 @@ from scripts.transcriber import transcribe, get_timestamped_segments
 from scripts.graph_builder import (
     create_graph_from_cloudscape_json,
     export_graphml,
-    export_yed_graphml,
     print_graph_summary,
 )
 
@@ -215,10 +214,7 @@ def run_pipeline(
     )
 
     graphml_path = export_graphml(G, video_id)
-    try:
-        export_yed_graphml(G, video_id)
-    except Exception as e:
-        console.print(f"[yellow]⚠ Failed to export visual GraphML:[/] {e}")
+
     print_graph_summary(G)
 
     # ── Step 7: Compare with Ground Truth (if available) ─────
