@@ -1,6 +1,6 @@
 # Combined Evaluation Report: Generated Graphs vs Cloudscape Ground Truth
 
-*Generated: 2026-07-07 15:59:15*
+*Generated: 2026-07-07 17:03:33*
 
 ## 1. Executive Summary (Side-by-Side Comparison)
 
@@ -8,7 +8,7 @@ This table compares performance metrics across all generated graph directories.
 
 | Run Directory | Videos | Service F1 (unique) | Service F1 (multiset) | Edge F1 | Edge Type Acc | Node Ratio |
 |---|---|---|---|---|---|---|
-| **Standard (data/graphs)** | 58 | 76.7% | 73.6% | 43.3% | 78.2% | 1.30x |
+| **Standard (data/graphs)** | 57 | 78.0% | 74.9% | 44.1% | 79.6% | 1.33x |
 | **Parsimonious API (data/graphs_parsimonious)** | 45 | 83.5% | 81.5% | 51.8% | 83.0% | 1.19x |
 
 ### Fleiss's Kappa Inter-Rater Reliability
@@ -86,7 +86,6 @@ across all 33 shared videos and 169 services:
 | 55 | `LYP98nPBj2A` | 36% | 100% | 53% | 11% | 50% | 18% | 16 | 5 | 36 | 8 | — | CloudWatch, Macie, SecurityHub (+4) |
 | 56 | `3yJZ6rPoZfg` | 50% | 50% | 50% | 33% | 33% | 33% | 8 | 7 | 9 | 9 | EC2, UserConsumerEdge, VPC | AutoScaling, UserConsumerWebMobile, VPCPeering |
 | 57 | `BgT_bDAejSQ` | 11% | 100% | 20% | 0% | 0% | 0% | 12 | 2 | 9 | 1 | — | ALB, DirectConnect, NAT (+5) |
-| 58 | `HcmEFZukA-Y` | 0% | 0% | 0% | 0% | 0% | 0% | 0 | 9 | 0 | 15 | ApiGateway, EventBridge, Lambda (+6) | — |
 
 ---
 
