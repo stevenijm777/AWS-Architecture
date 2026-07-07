@@ -1,6 +1,6 @@
 # Combined Evaluation Report: Generated Graphs vs Cloudscape Ground Truth
 
-*Generated: 2026-07-06 19:28:41*
+*Generated: 2026-07-07 15:59:15*
 
 ## 1. Executive Summary (Side-by-Side Comparison)
 
@@ -10,6 +10,16 @@ This table compares performance metrics across all generated graph directories.
 |---|---|---|---|---|---|---|
 | **Standard (data/graphs)** | 58 | 76.7% | 73.6% | 43.3% | 78.2% | 1.30x |
 | **Parsimonious API (data/graphs_parsimonious)** | 45 | 83.5% | 81.5% | 51.8% | 83.0% | 1.19x |
+
+### Fleiss's Kappa Inter-Rater Reliability
+
+Fleiss's Kappa measures agreement among 3 raters (Ground Truth, Standard, and Parsimonious) 
+across all 33 shared videos and 169 services:
+
+- **Fleiss's Kappa (K):** `0.8235`
+
+- **Interpretation:** Acuerdo casi perfecto (Altamente confiable)
+
 
 ---
 

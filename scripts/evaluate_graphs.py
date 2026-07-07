@@ -616,6 +616,78 @@ def save_json_results(results: list[dict], agg: dict[str, Any], json_path: Path)
     console.print(f"[green]✓[/] JSON saved → [bold]{json_path}[/]")
 
 
+def compute_fleiss_kappa_score(
+    gt_dir: Path,
+    std_dir: Path,
+    pars_dir: Path,
+    catalog: dict[str, dict]
+) -> tuple[float, int] | None:
+    """Calculate Fleiss's Kappa over the triple intersection of videos."""
+    if not gt_dir.exists() or not std_dir.exists() or not pars_dir.exists():
+        return None
+        
+    vids = sorted(
+        set(f.stem for f in gt_dir.glob("*.graphml")) &
+        set(f.stem for f in std_dir.glob("*.graphml")) &
+        set(f.stem for f in pars_dir.glob("*.graphml"))
+    )
+    
+    if not vids:
+        return None
+        
+    def get_services(folder: Path, video_id: str) -> set[str]:
+        path = folder / f"{video_id}.graphml"
+        if not path.exists():
+            return set()
+        try:
+            g = nx.read_graphml(str(path))
+            return {g.nodes[n].get("service") for n in g.nodes() if g.nodes[n].get("service")}
+        except Exception:
+            return set()
+            
+    matrix = []
+    service_names = sorted(list(catalog.keys()))
+    
+    for vid in vids:
+        gt = get_services(gt_dir, vid)
+        std = get_services(std_dir, vid)
+        pars = get_services(pars_dir, vid)
+        
+        for s in service_names:
+            ratings = [0, 0]  # [Absent, Present]
+            for annotator in [gt, std, pars]:
+                if s in annotator:
+                    ratings[1] += 1
+                else:
+                    ratings[0] += 1
+            matrix.append(ratings)
+            
+    N = len(matrix)
+    if N == 0:
+        return 0.0, 0
+    m = sum(matrix[0])
+    k = len(matrix[0])
+    
+    p = [0.0] * k
+    for j in range(k):
+        p[j] = sum(row[j] for row in matrix) / (N * m)
+        
+    P = [0.0] * N
+    for i in range(N):
+        numerator = sum(matrix[i][j]**2 for j in range(k)) - m
+        P[i] = numerator / (m * (m - 1))
+        
+    P_mean = sum(P) / N
+    Pe = sum(pj**2 for pj in p)
+    
+    if Pe >= 1.0:
+        kappa = 1.0
+    else:
+        kappa = (P_mean - Pe) / (1.0 - Pe)
+        
+    return kappa, len(vids)
+
+
 def generate_combined_markdown_report(
     all_evals: dict[str, dict[str, Any]],
     output_path: Path,
@@ -638,6 +710,30 @@ def generate_combined_markdown_report(
             f"| **{label}** | {agg['total_evaluated']} | {agg['avg_svc_f1']:.1%} | {agg['avg_ms_f1']:.1%} | "
             f"{agg['avg_edge_f1']:.1%} | {agg['avg_edge_type_accuracy']:.1%} | {agg['avg_node_count_ratio']:.2f}x |"
         )
+    lines.append("")
+
+    # Calculate and insert Fleiss's Kappa
+    gt_dir = Path("data/cloudscape_gt")
+    std_dir = Path("data/graphs")
+    pars_dir = Path("data/graphs_parsimonious")
+    kappa_res = compute_fleiss_kappa_score(gt_dir, std_dir, pars_dir, catalog)
+    if kappa_res:
+        kappa, num_vids = kappa_res
+        if kappa > 0.80:
+            interpretation = "Acuerdo casi perfecto (Altamente confiable)"
+        elif kappa > 0.60:
+            interpretation = "Acuerdo sustancial"
+        elif kappa > 0.40:
+            interpretation = "Acuerdo moderado"
+        else:
+            interpretation = "Acuerdo débil o pobre"
+            
+        lines.append("### Fleiss's Kappa Inter-Rater Reliability\n")
+        lines.append(f"Fleiss's Kappa measures agreement among 3 raters (Ground Truth, Standard, and Parsimonious) ")
+        lines.append(f"across all {num_vids} shared videos and {len(catalog)} services:\n")
+        lines.append(f"- **Fleiss's Kappa (K):** `{kappa:.4f}`\n")
+        lines.append(f"- **Interpretation:** {interpretation}\n")
+
     lines.append("\n---\n")
 
     # ── 2. Detailed Performance by Directory ──
@@ -767,6 +863,23 @@ def main(gen_dir: Path | None, gt_dir: Path, output_dir: Path) -> None:
         output_dir.mkdir(parents=True, exist_ok=True)
         generate_combined_markdown_report(all_evals, output_dir / "evaluation_report.md", catalog, copied_ids)
         generate_csv(all_evals, output_dir / "evaluation_per_video.csv")
+
+        # Console print for Fleiss's Kappa
+        gt_dir = Path("data/cloudscape_gt")
+        std_dir = Path("data/graphs")
+        pars_dir = Path("data/graphs_parsimonious")
+        kappa_res = compute_fleiss_kappa_score(gt_dir, std_dir, pars_dir, catalog)
+        if kappa_res:
+            kappa, num_vids = kappa_res
+            if kappa > 0.80:
+                interpretation = "Acuerdo casi perfecto (Altamente confiable)"
+            elif kappa > 0.60:
+                interpretation = "Acuerdo sustancial"
+            elif kappa > 0.40:
+                interpretation = "Acuerdo moderado"
+            else:
+                interpretation = "Acuerdo débil o pobre"
+            console.print(f"\n[bold green]✓[/] [bold]Fleiss's Kappa (K):[/] {kappa:.4f} ({interpretation}) calculated over {num_vids} shared videos\n")
 
         if "Standard (data/graphs)" in all_evals:
             save_json_results(
