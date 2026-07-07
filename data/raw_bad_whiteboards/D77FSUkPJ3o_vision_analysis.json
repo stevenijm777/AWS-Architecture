@@ -1,0 +1,186 @@
+{
+  "step_by_step_reasoning": "The transcript describes GE Avio's expense management architecture. Users are corporate employees (UserCompanyInternalPlatform). First, users authenticate via OpenID corporate system and ELB/ECS/Lambda authorizer. Once authorized, the user downloads the single-page application (SPA) from an ECS container. Next, SPA API calls flow through an ELB to an ECS container acting as an API Gateway. This API Gateway routes traffic to a set of ~20 Business Logic Lambdas. These Lambdas write ticket metadata to DynamoDB and upload encrypted financial attachments to S3 using KMS keys. Distinct ECS container functions (SPA Server vs API Gateway) and Lambda functions (Auth vs Business Logic) are modeled separately.",
+  "graph": {
+    "name": "GE Avio Special Expense Management System",
+    "link": "https://www.youtube.com/watch?v=D77FSUkPJ3o",
+    "categories": "interactive",
+    "graph_usable": true,
+    "notes": "Serverless application built to replace a legacy app, dealing with end-of-quarter spikes. Scalable, cost-efficient, and highly reliable."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "GE Avio Employee",
+      "notes": "Accesses system at quarter end to manage special expenses."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Corporate OpenID",
+      "notes": "Handles identity management and corporate authentication."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "Application Load Balancer",
+      "notes": "Ingress point for application and API traffic."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "SPA Web Server",
+      "notes": "Hosts and serves Dockerized Single Page Application."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Authorizer Lambda",
+      "notes": "Executes logic to authorize and authenticate users."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "API Gateway Proxy",
+      "notes": "Containerized proxy acting as API Gateway for the application."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Business Logic Lambdas",
+      "notes": "DATA_PEEK: ~20 Lambdas doing ticket creation, state transitions, and file uploads."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Metadata Store",
+      "notes": "DATA_PEEK: Stores metadata of expense tickets."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Attachment Bucket",
+      "notes": "DATA_PEEK: Stores financial documents and attachments."
+    },
+    {
+      "id": "9",
+      "service": "KMS",
+      "name": "KMS Keys",
+      "notes": "Used for encrypting attachments in S3 at rest."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User initiates authentication flow."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forward to OpenID for corporate login."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns auth response token."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Invokes authorizer Lambda to validate user."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Authorization status returned."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Access request for SPA asset."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Download SPA static bundle to client browser."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User makes API calls via SPA application."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forward request to API Gateway ECS container."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes request to specific business logic Lambda."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves or queries ticket metadata."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves financial attachments."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Encrypts documents at rest using KMS key."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns business response back to user SPA."
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "The transcript and whiteboard layout describe an employee expense management application. First, we identify a User node representing the employees (using UserCompanyAgent). For auth, the user interacts with an OpenID identity provider (ThirdParty). The request goes through ELB to ECS (hosting the Single Page App and API Gateway containers). Authorization is performed using an ECS-integrated Lambda function. Business logic is handled by a second Lambda cluster (20 Lambdas on the left side of the diagram) which processes API requests, writes metadata to DynamoDB, and uploads document attachments to S3.",
+  "graph": {
+    "name": "GE Avio Special Expense Management System",
+    "link": "https://www.youtube.com/watch?v=D77FSUkPJ3o",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Rebuilt as a cloud-native architecture to handle quarterly spikes reliably. Saves costs and improved reliability significantly."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "GE Avio Employee",
+      "notes": "Employees managing special quarterly expenses."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "OpenID Identity Provider",
+      "notes": "Corporate identity system used for authentication."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Load balancer handling initial web/authorization traffic."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS Clusters",
+      "notes": "Hosts two Docker containers: one for the Single Page Application, and another for the API Gateway."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Auth Lambda",
+      "notes": "Handles authentication/authorization validation."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Business Logic Lambdas",
+      "notes": "WORKLOAD_PEEK: Around 20 Lambdas handling operations like creating/editing tickets and state shifts."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DATA_PEEK: Stores metadata from tickets."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "DATA_PEEK: Stores financial document attachments. Encrypted at rest via KMS."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User authenticates against OpenID."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Auth payload goes to load balancer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Traffic forwarded to ECS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "ECS invokes Lambda to authorize the user."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda verifies credentials with OpenID provider."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Authorized user downloads the single page application from ECS."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "App communicates back to API Gateway container on ECS."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes requests to business logic Lambdas."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambdas store and retrieve ticket metadata."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambdas store financial document attachments in S3."
+    }
+  ]
+}

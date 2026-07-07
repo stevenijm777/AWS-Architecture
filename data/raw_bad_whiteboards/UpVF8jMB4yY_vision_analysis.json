@@ -1,0 +1,254 @@
+{
+  "step_by_step_reasoning": "First, analyze the push ingestion: IT systems upload files to S3, triggering an S3 event Lambda that writes to Redshift. Second, analyze the pull ingestion: a distinct Lambda pulls data from API endpoints into Redshift. Third, analyze the scheduled batch workflow: EventBridge Scheduler triggers a batch Lambda that extracts data from Redshift and delivers it to SES or Transfer Family. Fourth, analyze the interactive web portal: Users access an Angular app via CloudFront and secure API Gateway. API Gateway routes requests to a reporting Lambda that retrieves data from Redshift, secured via Keycloak and WAF.",
+  "graph": {
+    "name": "Xylem Utility Data Lake",
+    "link": "https://www.youtube.com/watch?v=UpVF8jMB4yY",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Serverless analytics and batch delivery platform serving water utility data. Uses 11 distinct regional Redshift clusters to fulfill strict customer data isolation requirements."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "IT Systems",
+      "notes": "Internal IT systems producing telemetry and meter files."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyAPI",
+      "name": "Data-Producing REST APIs",
+      "notes": "External REST APIs exposing metrics data."
+    },
+    {
+      "id": "2",
+      "service": "UserConsumerWeb",
+      "name": "Utility Customers",
+      "notes": "End-users viewing reports and metrics."
+    },
+    {
+      "id": "3",
+      "service": "CloudFront",
+      "name": "Web Hosting",
+      "notes": "Serves the Angular web application."
+    },
+    {
+      "id": "4",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Secures both CloudFront and API Gateway."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API Gateway Wrapper",
+      "notes": "Secures backend access for web app queries."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Keycloak",
+      "notes": "Handles customer authentication."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Ingestion Bucket",
+      "notes": "Raw landing zone for pushed files."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "S3 Ingestion Loader",
+      "notes": "Triggered by S3 events; loads data to Redshift."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "API Pull Ingester",
+      "notes": "Pulls data from partner REST APIs."
+    },
+    {
+      "id": "10",
+      "service": "Redshift",
+      "name": "Xylem Data Lake",
+      "notes": "WORKLOAD_PEEK: 11 clusters globally segregated to ensure customer data governance."
+    },
+    {
+      "id": "11",
+      "service": "EventBridge",
+      "name": "EventBridge Scheduler",
+      "notes": "Triggers recurring serverless batch pipelines."
+    },
+    {
+      "id": "12",
+      "service": "Lambda",
+      "name": "Batch Job Handler",
+      "notes": "Extracts report datasets from Redshift."
+    },
+    {
+      "id": "13",
+      "service": "SES",
+      "name": "Simple Email Service",
+      "notes": "Sends generated reports to customers."
+    },
+    {
+      "id": "14",
+      "service": "TransferFamily",
+      "name": "AWS SFTP Transfer",
+      "notes": "Exposes files securely to SFTP clients using SSH/CyberArk."
+    },
+    {
+      "id": "15",
+      "service": "Lambda",
+      "name": "Reporting Query API",
+      "notes": "Queries Redshift to retrieve reports for portal users."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "IT systems push files."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "S3 event notification triggers loader."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Loader inserts data into Redshift."
+    },
+    {
+      "source": "9",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda pulls from REST APIs."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Inserts pulled metrics into Redshift."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers batch jobs."
+    },
+    {
+      "source": "12",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries data for reporting."
+    },
+    {
+      "source": "10",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns dataset."
+    },
+    {
+      "source": "12",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Emails report files."
+    },
+    {
+      "source": "12",
+      "target": "14",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Publishes to SFTP server."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Accesses frontend web application via WAF."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Authenticates customer session."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "API requests sent through API Gateway."
+    },
+    {
+      "source": "5",
+      "target": "15",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Invokes reporting Query API."
+    },
+    {
+      "source": "15",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "Queries metrics."
+    },
+    {
+      "source": "10",
+      "target": "15",
+      "flow_id": 3,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns metrics payload."
+    },
+    {
+      "source": "15",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns response payload."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "7",
+      "type": "data",
+      "notes": "Renders report data in the browser."
+    }
+  ]
+}

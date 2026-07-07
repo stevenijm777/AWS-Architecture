@@ -1,0 +1,240 @@
+{
+  "step_by_step_reasoning": "The transcript describes a serverless AI-driven meeting summarization architecture from Granicus. 1. The flow starts with Meeting Applications sending requests to API Gateway, which forwards them to an Ingest Lambda. 2. The Ingest Lambda saves meeting metadata in DynamoDB and transcript files in S3. 3. S3 transcript creation triggers a Step Functions workflow. 4. Within Step Functions, a Map parallel state runs a Summarization Lambda across agenda items in parallel, utilizing Bedrock (Claude 3) to summarize segments. 5. Once done, an Aggregation Lambda runs to combine the segments into a final document stored in a separate S3 Summaries bucket, and updates status in DynamoDB. 6. Users fetch results through API Gateway via a Retrieval Lambda, which reads from DynamoDB and S3.",
+  "graph": {
+    "name": "Granicus GovMeetings AI Summarization Platform",
+    "link": "https://www.youtube.com/watch?v=sZ71VEVb9RU",
+    "categories": "data_ingestion, compute_intensive, other",
+    "graph_usable": true,
+    "notes": "Serverless summarization pipeline handling 500+ page transcripts using Step Functions, Lambda parallelization, and Bedrock Claude 3 models."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Meeting Applications",
+      "notes": "Agnostic meeting platforms requesting summarization"
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Manages ingest and retrieval REST endpoints"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Ingest Lambda",
+      "notes": "Processes payload and saves initial data"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB Table",
+      "notes": "Stores customer metadata, meeting metadata, and status"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Transcripts Bucket",
+      "notes": "Stores incoming raw transcripts"
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "Step Functions Workflow",
+      "notes": "Orchestrates Map parallel state and aggregate phases"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Summarization Lambda",
+      "notes": "Runs in parallel to split and summarize agendas"
+    },
+    {
+      "id": "7",
+      "service": "Bedrock",
+      "name": "Amazon Bedrock",
+      "notes": "Utilizes Claude 3 foundation model"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Aggregation Lambda",
+      "notes": "Compiles individual agenda summaries"
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 Summaries Bucket",
+      "notes": "Stores completed summary reports"
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Retrieval Lambda",
+      "notes": "Retrieves execution status and summaries"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Submit summarization request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers ingestion"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves metadata"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves raw transcript"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Acknowledge creation"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Respond to client"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "S3 ObjectCreated triggers step function"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Map state triggers concurrent runs"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Request segment summary"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Return summary text"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Return summarized segment"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Triggers final aggregator"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Saves final PDF summary"
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Updates status to processed"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Query job status"
+    },
+    {
+      "source": "1",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route request"
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Check status in DynamoDB"
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Download file if status completed"
+    },
+    {
+      "source": "10",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Return file data"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Render PDF results"
+    }
+  ]
+}

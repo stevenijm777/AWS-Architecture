@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "The Tailwind architecture features two primary flows: an indexing pipeline and an interactive query pipeline. First, data of any format is uploaded to S3. This triggers an ETL Lambda (or AWS Glue) which processes the files and writes vector embeddings to Amazon OpenSearch Service. Second, an end user or chatbot interacts with the API Gateway. This triggers a query orchestrator Lambda that manages session history in DynamoDB, performs a semantic search retrieve-step against OpenSearch, and coordinates with Amazon Bedrock to generate LLM responses before returning them to the client.",
+  "graph": {
+    "name": "Tailwinds GenAI RAG Architecture",
+    "link": "https://www.youtube.com/watch?v=S3G4pb-x8tQ",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Tailwinds is a customizable, portable RAG solution deployed using IAC (SAM/Terraform). It supports flexible ingestion, pluggable vector/graph databases, and multi-model support via Bedrock."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Data Provider",
+      "notes": "Source of multi-format unstructured raw data."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Raw Data Store",
+      "notes": "Landing bucket for documents of any data format."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "ETL Processor",
+      "notes": "WORKLOAD_PEEK: Processes documents and generates embeddings. Highly customizable, interchangeable with AWS Glue."
+    },
+    {
+      "id": "3",
+      "service": "OpenSearch",
+      "name": "Vector Database",
+      "notes": "Stores indexed document embeddings for downstream semantic search."
+    },
+    {
+      "id": "4",
+      "service": "UserConsumerWebMobile",
+      "name": "Chatbot / App Client",
+      "notes": "User-facing application interface, e.g., Lex or custom web app."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "Client API Gateway",
+      "notes": "Gatekeeper for consumer-facing chat sessions."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Orchestrator Lambda",
+      "notes": "WORKLOAD_PEEK: The brains of the operation. Orchestrates session history, semantic retrieval, and LLM prompting."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Session Store",
+      "notes": "Maintains user chat state and history."
+    },
+    {
+      "id": "8",
+      "service": "Bedrock",
+      "name": "Amazon Bedrock",
+      "notes": "Provides foundation models (LLMs) evaluated and configured for the specific business case."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingest raw documents."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Trigger ETL processing."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Store computed vector embeddings."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Send user query prompt."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Invoke orchestrator function."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetch/Update user chat session state."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Perform semantic search query."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Return relevant document chunks."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Send augmented context prompt to Bedrock LLM."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Return model response generation."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Send final response back."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Deliver final response payload."
+    }
+  ]
+}

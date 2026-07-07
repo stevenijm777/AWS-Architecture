@@ -1,0 +1,184 @@
+{
+  "step_by_step_reasoning": "Drone flights captured by licensed pilots upload images to a third-party processing system. The automated AWS workflow starts with a scheduled CloudWatch Event triggering Step Functions. The Step Functions orchestrate three separate Lambda functions sequentially: Lambda 1 checks the third-party API for new images; Lambda 2 transfers those images from the third-party system to Amazon S3; Lambda 3 creates a raster proxy URL for the images and stores it in the on-premises database. Maintenance and operation teams use on-premises mapping software, which reads the proxy database and retrieves the actual high-resolution images from S3 via AWS Storage Gateway.",
+  "graph": {
+    "name": "Marathon Oil Serverless Drone Imagery Pipeline",
+    "link": "https://www.youtube.com/watch?v=ww5fiygF6eg",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Automated pipeline transferring drone aerial photos to local GIS systems without modifying legacy on-prem software, leveraging AWS Storage Gateway and Step Functions orchestration."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Drone Image Host",
+      "notes": "Third-party platform hosting processed ortho mosaics and elevation models."
+    },
+    {
+      "id": "1",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Cron-style trigger to initiate the workflow scheduler."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Orchestrator",
+      "notes": "Coordinates the multi-phase execution of the Lambda functions."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Check Flights Lambda",
+      "notes": "Queries the third-party software API to identify new imagery flights."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "Pulls identified drone images from the third party and writes them to S3."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Raster Proxy Lambda",
+      "notes": "Generates proxy links mapping the on-premises server to S3."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Drone Imagery Bucket",
+      "notes": "Stores high-resolution images, digital terrain, and digital elevation models."
+    },
+    {
+      "id": "7",
+      "service": "OnPremDC",
+      "name": "Mapping Server",
+      "notes": "On-premises mapping software that queries local DB and displays images."
+    },
+    {
+      "id": "8",
+      "service": "OnPremDC",
+      "name": "On-Premises Database",
+      "notes": "Stores index metadata and raster proxy URL links."
+    },
+    {
+      "id": "9",
+      "service": "StorageGateway",
+      "name": "File Gateway",
+      "notes": "Exposes S3 buckets to the local mapping server as a network file share."
+    },
+    {
+      "id": "10",
+      "service": "UserCompanyAgent",
+      "name": "Maintenance & Ops Teams",
+      "notes": "Internal users examining imagery for well pad equipment monitoring."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers step function on schedule"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Starts checking step"
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Checks API for new drone flights"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Starts ingestion step"
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Retrieves high-resolution image files"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Saves original raw images"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Starts indexing proxy step"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Inspects uploaded S3 image properties"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Inserts raster proxy URL mapping details"
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Views well pad imagery via map client"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches raster proxy database reference"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Requests file paths through mounted gateway"
+    },
+    {
+      "source": "9",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Translates file system request to S3 GET"
+    }
+  ]
+}

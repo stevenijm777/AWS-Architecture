@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture shows a suggestive search pipeline. First, user actions on the mobile app are ingested into Kinesis Data Streams. Next, Kinesis Data Analytics filters search queries using SQL and publishes them to a second Kinesis stream. A Lambda transformer enriches these queries via the Search API and saves them to DocumentDB. On a schedule, a producer Lambda reads from DocumentDB, checks item availability via the Inventory API, and writes active search suggestions to Redis (ElastiCache). Finally, the Search API reads from Redis to serve recommendations back to the user.",
+  "graph": {
+    "name": "Zulily Suggestive Search Architecture",
+    "link": "https://www.youtube.com/watch?v=Ccutfm_Srzw",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Suggestive search experience driven by real-time clickstream data, processing ~1000 TPS on DocumentDB with a 7-day TTL and primary/replica configuration."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App User",
+      "notes": "Generates clickstream data and queries the Search API."
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "Clickstream Kinesis Stream",
+      "notes": "Ingests raw clickstream events in real time."
+    },
+    {
+      "id": "2",
+      "service": "KinesisAnalytics",
+      "name": "Kinesis Data Analytics",
+      "notes": "Filters out search keywords using simple SQL queries."
+    },
+    {
+      "id": "3",
+      "service": "KinesisDataStream",
+      "name": "Filtered Keywords Stream",
+      "notes": "Holds filtered search keyword events."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Transformer Lambda",
+      "notes": "Enriches keywords with brand/category data and writes to DocumentDB."
+    },
+    {
+      "id": "5",
+      "service": "DocumentDB",
+      "name": "DocumentDB",
+      "notes": "DATA_PEEK: 650M documents, 3 AZs (1 primary, 2 replicas), 7-day TTL."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Producer Lambda",
+      "notes": "Runs on a schedule to validate search data against stock inventory."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Inventory API",
+      "notes": "Checks current product stock levels (products rotate every 72 hours)."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "Redis",
+      "notes": "Caches validated search suggestions for low-latency retrieval."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Search API",
+      "notes": "Serves the suggestions to the customer's mobile app."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams real-time clickstream actions."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Passes clickstream to Analytics."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sends filtered search keywords."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers transformer Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes enriched search documents."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda pulls search keywords on schedule."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Validates inventory availability."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes active suggestions to cache."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "API retrieves suggestion results."
+    },
+    {
+      "source": "9",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Delivers suggestive search results back to user."
+    }
+  ]
+}
