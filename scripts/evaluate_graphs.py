@@ -268,18 +268,25 @@ def evaluate_pair(
 
 def aggregate_results(results: list[dict], catalog: dict[str, dict]) -> dict[str, Any]:
     """Compute aggregate statistics across all evaluated videos."""
-    n = len(results)
-    if n == 0:
+    if not results:
         return {}
 
+    # Only aggregate usable graphs for core metrics!
+    usable_results = [r for r in results if r.get("graph_usable", True)]
+    n = len(usable_results)
+    if n == 0:
+        # Fallback to all if somehow none are marked usable to avoid division by zero
+        usable_results = results
+        n = len(usable_results)
+
     # --- Averages ---
-    avg = lambda key: sum(r[key] for r in results) / n
+    avg = lambda key: sum(r[key] for r in usable_results) / n
 
     # --- Most missed/hallucinated services ---
     all_missing = Counter()
     all_hallucinated = Counter()
     all_correct = Counter()
-    for r in results:
+    for r in usable_results:
         all_missing.update(r["services_missing"])
         all_hallucinated.update(r["services_hallucinated"])
         all_correct.update(r["services_correct"])
@@ -287,7 +294,7 @@ def aggregate_results(results: list[dict], catalog: dict[str, dict]) -> dict[str
     # --- Missed/hallucinated edges ---
     all_edges_missing = Counter()
     all_edges_hallucinated = Counter()
-    for r in results:
+    for r in usable_results:
         for edge_str, count in r["edges_only_gt"].items():
             all_edges_missing[edge_str] += count
         for edge_str, count in r["edges_only_gen"].items():
@@ -295,7 +302,7 @@ def aggregate_results(results: list[dict], catalog: dict[str, dict]) -> dict[str
 
     # --- Capability aggregation ---
     cap_agg = defaultdict(lambda: {"gt": 0, "correct": 0, "missed": 0, "hallucinated": 0})
-    for r in results:
+    for r in usable_results:
         for cap, vals in r["capability_breakdown"].items():
             cap_agg[cap]["gt"] += vals.get("gt", 0)
             cap_agg[cap]["correct"] += vals.get("correct", 0)
@@ -304,7 +311,7 @@ def aggregate_results(results: list[dict], catalog: dict[str, dict]) -> dict[str
 
     # --- Category aggregation ---
     cat_metrics = defaultdict(lambda: {"count": 0, "svc_f1_sum": 0, "edge_f1_sum": 0})
-    for r in results:
+    for r in usable_results:
         for cat in r["categories"]:
             cat_metrics[cat]["count"] += 1
             cat_metrics[cat]["svc_f1_sum"] += r["svc_f1"]
@@ -321,7 +328,7 @@ def aggregate_results(results: list[dict], catalog: dict[str, dict]) -> dict[str
 
     # --- Score distribution buckets ---
     f1_buckets = {"excellent_90+": 0, "good_70_90": 0, "fair_50_70": 0, "poor_<50": 0}
-    for r in results:
+    for r in usable_results:
         f1 = r["svc_f1"] * 100
         if f1 >= 90:
             f1_buckets["excellent_90+"] += 1
@@ -333,7 +340,9 @@ def aggregate_results(results: list[dict], catalog: dict[str, dict]) -> dict[str
             f1_buckets["poor_<50"] += 1
 
     return {
-        "total_evaluated": n,
+        "total_evaluated": len(results),
+        "total_usable": n,
+        "total_excluded": len(results) - n,
         # Service averages
         "avg_svc_precision": avg("svc_precision"),
         "avg_svc_recall": avg("svc_recall"),
@@ -410,10 +419,14 @@ def generate_markdown_report(
 
     # ── 3. Per-video detail table ──
     lines.append("## 3. Per-Video Results (sorted by Service F1)\n")
-    sorted_results = sorted(results, key=lambda r: r["svc_f1"], reverse=True)
+    
+    usable_results = [r for r in results if r.get("graph_usable", True)]
+    unusable_results = [r for r in results if not r.get("graph_usable", True)]
+
+    lines.append("### Core Evaluation (Valid Ground Truths)\n")
     lines.append("| # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |")
     lines.append("|---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|")
-    for i, r in enumerate(sorted_results, 1):
+    for idx, r in enumerate(sorted(usable_results, key=lambda x: x["svc_f1"], reverse=True), 1):
         missing_str = ", ".join(r["services_missing"][:3])
         if len(r["services_missing"]) > 3:
             missing_str += f" (+{len(r['services_missing'])-3})"
@@ -422,12 +435,34 @@ def generate_markdown_report(
             halluc_str += f" (+{len(r['services_hallucinated'])-3})"
 
         lines.append(
-            f"| {i} | `{r['video_id']}` | {r['svc_precision']:.0%} | {r['svc_recall']:.0%} | {r['svc_f1']:.0%} "
+            f"| {idx} | `{r['video_id']}` | {r['svc_precision']:.0%} | {r['svc_recall']:.0%} | {r['svc_f1']:.0%} "
             f"| {r['edge_precision']:.0%} | {r['edge_recall']:.0%} | {r['edge_f1']:.0%} "
             f"| {r['gen_nodes']} | {r['gt_nodes']} | {r['gen_edges']} | {r['gt_edges']} "
             f"| {missing_str or '—'} | {halluc_str or '—'} |"
         )
     lines.append("")
+
+    if unusable_results:
+        lines.append("### Excluded Validation (Invalid/Placeholder Ground Truths)\n")
+        lines.append("> [!NOTE]\n")
+        lines.append("> These graphs are excluded from the main average F1 calculations above.\n")
+        lines.append("| # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |")
+        lines.append("|---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|")
+        for idx, r in enumerate(sorted(unusable_results, key=lambda x: x["svc_f1"], reverse=True), 1):
+            missing_str = ", ".join(r["services_missing"][:3])
+            if len(r["services_missing"]) > 3:
+                missing_str += f" (+{len(r['services_missing'])-3})"
+            halluc_str = ", ".join(r["services_hallucinated"][:3])
+            if len(r["services_hallucinated"]) > 3:
+                halluc_str += f" (+{len(r['services_hallucinated'])-3})"
+
+            lines.append(
+                f"| {idx} | `{r['video_id']}` | {r['svc_precision']:.0%} | {r['svc_recall']:.0%} | {r['svc_f1']:.0%} "
+                f"| {r['edge_precision']:.0%} | {r['edge_recall']:.0%} | {r['edge_f1']:.0%} "
+                f"| {r['gen_nodes']} | {r['gt_nodes']} | {r['gen_edges']} | {r['gt_edges']} "
+                f"| {missing_str or '—'} | {halluc_str or '—'} |"
+            )
+        lines.append("")
 
     # ── 4. Most missed services ──
     lines.append("## 4. Most Frequently Missing Services (False Negatives)\n")
@@ -580,6 +615,14 @@ def evaluate_dir_helper(gen_dir: Path, gt_dir: Path, catalog: dict) -> list[dict
             gen_g = nx.read_graphml(str(gen_files[vid]))
             gt_g = nx.read_graphml(str(gt_files[vid]))
             result = evaluate_pair(gen_g, gt_g, vid, catalog)
+            
+            # Extract and inject usability status from GT
+            usable = gt_g.graph.get("graph_usable", True)
+            if usable is False or str(usable).lower() == "false":
+                result["graph_usable"] = False
+            else:
+                result["graph_usable"] = True
+                
             results.append(result)
         except Exception as e:
             console.print(f"  [red]✗[/] Error evaluating {vid} in {gen_dir.name}: {e}")
@@ -591,7 +634,7 @@ def print_summary_table(agg: dict[str, Any], title: str) -> None:
     summary_table = Table(title=title, border_style="cyan", show_lines=True)
     summary_table.add_column("Metric", style="bold")
     summary_table.add_column("Value", style="green")
-    summary_table.add_row("Videos Evaluated", str(agg["total_evaluated"]))
+    summary_table.add_row("Videos Evaluated", f"{agg['total_evaluated']} (Core: {agg.get('total_usable', 0)}, Excluded: {agg.get('total_excluded', 0)})")
     summary_table.add_row("Avg Service F1 (unique)", f"{agg['avg_svc_f1']:.1%}")
     summary_table.add_row("Avg Service F1 (multiset)", f"{agg['avg_ms_f1']:.1%}")
     summary_table.add_row("Avg Edge F1", f"{agg['avg_edge_f1']:.1%}")
@@ -631,6 +674,19 @@ def compute_fleiss_kappa_score(
         set(f.stem for f in std_dir.glob("*.graphml")) &
         set(f.stem for f in pars_dir.glob("*.graphml"))
     )
+    
+    # Filter out unusable graphs
+    filtered_vids = []
+    for vid in vids:
+        try:
+            g_path = gt_dir / f"{vid}.graphml"
+            g = nx.read_graphml(str(g_path))
+            usable = g.graph.get("graph_usable", True)
+            if usable is not False and str(usable).lower() != "false":
+                filtered_vids.append(vid)
+        except Exception:
+            pass
+    vids = filtered_vids
     
     if not vids:
         return None
@@ -781,10 +837,13 @@ def generate_combined_markdown_report(
             table_results = results
             lines.append("### Detailed Results Table (Sorted by Service F1)\n")
 
+        usable_results = [r for r in table_results if r.get("graph_usable", True)]
+        unusable_results = [r for r in table_results if not r.get("graph_usable", True)]
+
+        lines.append("### Detailed Results Table: Core Evaluation (Valid Ground Truths)\n")
         lines.append("| # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |")
         lines.append("|---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|")
-        sorted_results = sorted(table_results, key=lambda r: r["svc_f1"], reverse=True)
-        for idx, r in enumerate(sorted_results, 1):
+        for idx, r in enumerate(sorted(usable_results, key=lambda x: x["svc_f1"], reverse=True), 1):
             missing_str = ", ".join(r["services_missing"][:3])
             if len(r["services_missing"]) > 3:
                 missing_str += f" (+{len(r['services_missing'])-3})"
@@ -798,6 +857,29 @@ def generate_combined_markdown_report(
                 f"| {r['gen_nodes']} | {r['gt_nodes']} | {r['gen_edges']} | {r['gt_edges']} "
                 f"| {missing_str or '—'} | {halluc_str or '—'} |"
             )
+        lines.append("\n")
+
+        if unusable_results:
+            lines.append("### Detailed Results Table: Excluded Validation (Invalid/Placeholder Ground Truths)\n")
+            lines.append("> [!NOTE]\n")
+            lines.append("> These graphs are excluded from the main average F1 calculations above.\n")
+            lines.append("| # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |")
+            lines.append("|---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|")
+            for idx, r in enumerate(sorted(unusable_results, key=lambda x: x["svc_f1"], reverse=True), 1):
+                missing_str = ", ".join(r["services_missing"][:3])
+                if len(r["services_missing"]) > 3:
+                    missing_str += f" (+{len(r['services_missing'])-3})"
+                halluc_str = ", ".join(r["services_hallucinated"][:3])
+                if len(r["services_hallucinated"]) > 3:
+                    halluc_str += f" (+{len(r['services_hallucinated'])-3})"
+
+                lines.append(
+                    f"| {idx} | `{r['video_id']}` | {r['svc_precision']:.0%} | {r['svc_recall']:.0%} | {r['svc_f1']:.0%} "
+                    f"| {r['edge_precision']:.0%} | {r['edge_recall']:.0%} | {r['edge_f1']:.0%} "
+                    f"| {r['gen_nodes']} | {r['gt_nodes']} | {r['gen_edges']} | {r['gt_edges']} "
+                    f"| {missing_str or '—'} | {halluc_str or '—'} |"
+                )
+            lines.append("\n")
         lines.append("\n---\n")
 
     output_path.write_text("\n".join(lines), encoding="utf-8")
