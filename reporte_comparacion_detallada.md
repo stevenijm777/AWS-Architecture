@@ -8,7 +8,7 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 |---|---|---|---|---|
 | `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | **74%** | 95.7% | Standard supera a Parsimonious por 21.7%. El simplificado omitió detalles menores. |
 | `-kA0ahrhX3I` | Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie | **86%** | 85.7% | Parsimonious supera a Standard por 0.3%. El clásico alucina nodos por ruidos de la transcripción. |
-| `-wLEkq21cvA` | Versent: The Migration Factory | **100%** | 100.0% | Rendimiento equivalente en detección de servicios. |
+| `-wLEkq21cvA` | Versent: The Migration Factory | **100%** | 90.9% | Parsimonious supera a Standard por 9.1%. El clásico alucina nodos por ruidos de la transcripción. |
 | `07lfvavMdfU` | Levels Beyond: Digital Content Orchestration | **100%** | 95.2% | Parsimonious supera a Standard por 4.8%. El clásico alucina nodos por ruidos de la transcripción. |
 | `0F7KDLz-kIQ` | Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK | **87%** | 81.8% | Parsimonious supera a Standard por 5.2%. El clásico alucina nodos por ruidos de la transcripción. |
 | `1aYoIZvabbk` | OLX Autos: Building Developer Platform for Rapid Global Expansion | **92%** | 92.3% | Standard supera a Parsimonious por 0.3%. El simplificado omitió detalles menores. |
