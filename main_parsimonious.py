@@ -176,33 +176,10 @@ def run_pipeline(
         console.print(f"[green]✓[/] Using approved whiteboard frame from good_whiteboard: [bold]{best_frame.name}[/]")
 
         if best_frame:
-            from scripts.symbol_detector import detect_symbols
-            templates_dir = Path(__file__).resolve().parent / "data" / "templates"
-            
-            console.print(f"[dim]Running symbol detection on {best_frame.name}...[/]")
-            try:
-                # Use a threshold of 0.70 to be robust yet accurate
-                detected_symbols = detect_symbols(
-                    best_frame,
-                    templates_dir,
-                    transcript_text=transcript_text,
-                    threshold=0.70
-                )
-                if detected_symbols:
-                    console.print("[green]✓[/] Detected AWS symbols:")
-                    for service, occurrences in sorted(detected_symbols.items()):
-                        console.print(f"  • [bold cyan]{service}[/]: {len(occurrences)} occurrence(s)")
-                else:
-                    console.print("[dim]  No AWS symbols detected via template matching.[/]")
-            except Exception as e:
-                console.print(f"[yellow]⚠ Symbol detection failed: {e}[/]")
-                detected_symbols = None
-
             analysis_result = analyze_frame(
                 best_frame,
                 transcript=transcript_text,
                 video_url=url,
-                detected_symbols=detected_symbols,
             )
         else:
             analysis_result = {"graph": {}, "nodes": [], "edges": []}

@@ -27,7 +27,6 @@ from scripts.graph_builder import (
     print_graph_summary,
 )
 from scripts.vision_analyzer import analyze_frame
-from scripts.symbol_detector import detect_symbols
 
 console = Console(force_terminal=True, legacy_windows=False)
 
@@ -281,25 +280,7 @@ def main():
     transcript_text = " ".join(s.get("text", "").strip() for s in segments)
     console.print(f"\n[bold cyan]Transcript loaded:[/] {len(segments)} segments, {len(transcript_text)} characters")
 
-    # 7. Symbol detection
-    templates_dir = Path(__file__).resolve().parent / "data" / "templates"
-    console.print(f"\n[bold cyan]Running symbol detection on best whiteboard...[/]")
-    try:
-        detected_symbols = detect_symbols(
-            best_whiteboard_path,
-            templates_dir,
-            transcript_text=transcript_text,
-            threshold=0.70
-        )
-        if detected_symbols:
-            console.print("[green]Success:[/] Detected AWS symbols:")
-            for service, occurrences in sorted(detected_symbols.items()):
-                console.print(f"  * [bold cyan]{service}[/]: {len(occurrences)} occurrence(s)")
-        else:
-            console.print("  No AWS symbols detected.")
-    except Exception as e:
-        console.print(f"[yellow]Warning: Symbol detection failed: {e}[/]")
-        detected_symbols = None
+
 
     # 8. Gemini Vision Analysis
     console.print(f"\n[bold cyan]Running Gemini Vision Analysis...[/]")
@@ -324,7 +305,6 @@ def main():
                     best_whiteboard_path,
                     transcript=transcript_text,
                     video_url=url,
-                    detected_symbols=detected_symbols,
                 )
                 success = True
                 break
