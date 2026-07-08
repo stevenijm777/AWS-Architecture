@@ -71,50 +71,38 @@ aws_services_str = ", ".join(AWS_SERVICES)
 user_actors_str = ", ".join(USER_ACTORS)
 
 
-CLOUDSCAPE_PROMPT_TEMPLATE = """\
-You are an expert AWS Solutions Architect. You are analyzing a whiteboard \
-screenshot from an AWS "This is My Architecture" YouTube video, along with \
-the full transcript of the video.
+CLOUDSCAPE_PROMPT_TEMPLATE = """You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
 
-Your task is to extract the cloud architecture shown, encoding it using the \
-Cloudscape dataset schema (FAST25 paper by Satija et al.) in a way that matches \
-the style and level of detail of the manual ground truth dataset as closely as possible.
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.) in a way that matches the style and level of detail of the manual ground truth dataset as closely as possible.
 
 ## RULES:
-1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", \
-"EC2", "DynamoDB", "EKS", "CloudFront", "Aurora", "ElastiCache", "MSK", \
-"SQS", "SNS", "ApiGateway", "Pinpoint", "KMS", "CloudWatch", "StepFunctions", etc.
-2. For actors/users: ONLY add User nodes that are EXPLICITLY shown as \
-icons on the whiteboard OR explicitly mentioned as main actors in the \
-transcript. Do NOT invent User nodes to complete a flow. Choose from this list based on the video context: <USER_ACTORS_PLACEHOLDER>.
-3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
-4. Do NOT use "ThirdParty" for internal microservices (e.g., "Friend Graph", "SnapDB", "Messaging Service"). Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda"), putting the microservice name in the `notes` field. Use "ThirdParty" only for external third-party software (e.g. MySQL, Nginx, or on-premises databases).
-5. NODE MULTIPLICITY (MATCH WHITEBOARD ICONS): In general, the number of nodes in your output should match the number of physical icons (boxes) drawn on the whiteboard. Do NOT split a single drawn icon (e.g. a single "Glue" or "Lambda" icon) into multiple nodes representing different steps or phases, unless there are multiple icons physically drawn or they represent clearly distinct physical environments (like separate regions or accounts).
-6. Edges must have: flow_id (integer, grouping related interactions into \
-workflows), seq (string, ordering within flow), type ("data" for data \
-movement, "meta" for request triggers / ack responses). Default to "data" for all edges. Only use "meta" for edges that represent: (a) monitoring/observability signals to CloudWatch, (b) orchestration/triggers from StepFunctions, or (c) acknowledgment responses that don't carry payload data.
-7. Map ONLY the edges that represent actual data movement or control flow \
-shown on the whiteboard or described in the transcript. Do NOT add \
-return/response paths unless they are explicitly drawn on the diagram \
-or explicitly described as a separate step in the transcript.
-8. Minimize the number of flows. Group related sequential interactions into a single flow. A typical architecture should have 2-5 flows, not more.
-9. The `notes` field for nodes should capture context from the transcript: \
-how the service is used, data volumes, configurations mentioned. Use \
-prefixes like "DATA_PEEK:" for data info and "WORKLOAD_PEEK:" for workload.
-10. WHITEBOARD IMAGE IS THE PRIMARY STRUCTURE GUIDE (MATCH HUMAN DESIGN): The physical whiteboard image (icons and drawn arrows) is the primary source of truth for the structure of the graph. The nodes and edges should correspond closely to the physical icons (boxes) and arrows drawn on the whiteboard. The transcript should be used to identify service names, add context (notes), and sequence edges, but do NOT add extra nodes or complex orchestration paths (e.g. intermediate trigger or coordination steps) that are not represented by icons or arrows on the whiteboard. If an arrow is drawn on the board, map it; if a connection is not drawn and only mentioned in passing as internal, do not map it as an edge.
+1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", "EC2", "DynamoDB", "EKS", "CloudFront", etc.
 
-## COMMON CONFUSION PAIRS (be careful):
-- ALB and ELB are DIFFERENT services. ALB = Application Load Balancer. ELB = Classic Elastic Load Balancer. Use whichever the speaker mentions.
-- EC2, ECS, EKS, Fargate are DIFFERENT compute services. Do NOT substitute.
-- Kinesis, KinesisDataStreams, KinesisDataFirehose, KinesisAnalytics are DIFFERENT. Use the exact sub-service mentioned.
-- OpenSearch (formerly Elasticsearch Service) is a specific service.
+2. USER ACTOR NORMALIZATION: Only add User nodes that are EXPLICITLY shown as icons on the whiteboard OR mentioned as main actors. Choose from this list: <USER_ACTORS_PLACEHOLDER>. To match Ground Truth style:
+   - Map end-users accessing via browsers to "UserConsumerWeb", and app users to "UserConsumerMobile". Do NOT combine them into "UserConsumerWebMobile" unless a single physical box on the board is explicitly labeled for both.
+   - Prefer "UserCompanyAgent" for internal operations teams, database administrators, migration teams, or backend system operators.
+   - Use "UserCompanyDeveloper" ONLY when the text or diagram explicitly refers to writing application code, managing CI/CD pipelines, or software development.
+
+3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
+
+4. NON-CLOUD & ON-PREMISE NORMALIZATION: Do NOT use "ThirdParty" for internal microservices. Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda").
+   - However, map on-premises servers, local databases, and legacy infrastructure to "ThirdParty" (representing external resources outside AWS) to maintain consistency with Ground Truth, unless a dedicated data center icon is explicitly drawn (in which case use "OnPremDC").
+
+5. NODE MULTIPLICITY & NO TRANSIENT ARTIFACTS: The number of nodes must match the number of physical icons (boxes) drawn on the whiteboard.
+   - Do NOT create nodes for transient artifacts, machine images, config templates, or zip files (e.g., do NOT create nodes for "AMI", "Container Image", or "CloudFormation Template") even if they are described as being baked, shared, or uploaded. Instead, represent these actions as descriptions or notes on the edges (flows) connecting the permanent compute/storage components that generate or consume them.
+
+6. Edges must have: flow_id (integer), seq (string), type ("data" or "meta"). Default to "data" for all edges.
+
+7. EDGE DIRECTIONALITY (NO RETURN PATHS): Map ONLY active data movement or control triggers. Do NOT add return/response paths or API acknowledgments (e.g., target acknowledging source) unless they carry a distinct new payload or trigger a new asynchronous step. Orient arrows in the direction of request initiation.
+
+8. Minimize the number of flows. Group related sequential interactions into a single flow.
+
+9. The `notes` field for nodes should capture context from the transcript: how the service is used.
+
+10. WHITEBOARD IMAGE IS THE PRIMARY STRUCTURE GUIDE (MATCH HUMAN DESIGN): The physical whiteboard image (icons and drawn arrows) is the primary source of truth for the structure of the graph. Do NOT add extra nodes or complex orchestration paths that are not represented by icons or arrows on the whiteboard.
 
 ## PARSIMONY PRINCIPLE:
-Prefer FEWER nodes and edges over more. If you are unsure whether a service \
-exists in the architecture, DO NOT include it. It is better to miss a real \
-service than to hallucinate a fake one. The ground truth typically has 6-12 \
-nodes and 5-15 edges. If your output has significantly more, you are likely \
-over-generating.
+Prefer FEWER nodes and edges over more. If you are unsure whether a service exists in the architecture, DO NOT include it. It is better to miss a real service than to hallucinate a fake one.
 
 ## VALID SERVICE NAMES:
 You MUST only use names from this list of canonical services when defining the `service` field in the nodes list (do not invent names or use raw abbreviations unless listed here):
@@ -123,13 +111,13 @@ You MUST only use names from this list of canonical services when defining the `
 ## OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown fences):
 {
-  "step_by_step_reasoning": "Analyze the transcript chronologically. Identify every single component mentioned. Explicitly state if a visual icon represents multiple distinct functions. (e.g., 'The speaker mentions 3 Lambdas: one to check the API, one to store in S3, one to create proxy URLs. So I will create 3 Lambda nodes.')",
+  "step_by_step_reasoning": "Analyze the transcript chronologically...",
   "graph": {
     "name": "<title of the architecture>",
     "link": "<youtube URL if known, else empty string>",
     "categories": "<comma-separated from: data_ingestion, interactive, compute_intensive, control, other>",
     "graph_usable": true,
-    "notes": "<distilled context: requirements, scale, key design decisions>"
+    "notes": "<distilled context>"
   },
   "nodes": [
     {"id": "0", "service": "...", "name": "", "notes": "..."}
@@ -138,9 +126,6 @@ Return ONLY valid JSON (no markdown fences):
     {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""}
   ]
 }
-
-If the image does NOT contain an AWS architecture diagram, return:
-{"graph": {}, "nodes": [], "edges": []}
 """
 
 CLOUDSCAPE_PROMPT = CLOUDSCAPE_PROMPT_TEMPLATE.replace(

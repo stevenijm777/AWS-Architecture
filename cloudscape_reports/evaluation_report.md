@@ -1,6 +1,6 @@
 # Combined Evaluation Report: Generated Graphs vs Cloudscape Ground Truth
 
-*Generated: 2026-07-07 20:34:25*
+*Generated: 2026-07-07 20:53:45*
 
 ## 1. Executive Summary (Side-by-Side Comparison)
 
@@ -8,7 +8,7 @@ This table compares performance metrics across all generated graph directories.
 
 | Run Directory | Videos | Service F1 (unique) | Service F1 (multiset) | Edge F1 | Edge Type Acc | Node Ratio |
 |---|---|---|---|---|---|---|
-| **Standard (data/graphs)** | 57 | 79.4% | 76.1% | 47.4% | 82.2% | 1.20x |
+| **Standard (data/graphs)** | 57 | 79.6% | 76.3% | 48.1% | 82.2% | 1.20x |
 | **Parsimonious API (data/graphs_parsimonious)** | 45 | 84.3% | 83.1% | 57.3% | 88.7% | 1.05x |
 
 ### Fleiss's Kappa Inter-Rater Reliability
@@ -16,7 +16,7 @@ This table compares performance metrics across all generated graph directories.
 Fleiss's Kappa measures agreement among 3 raters (Ground Truth, Standard, and Parsimonious) 
 across all 27 shared videos and 169 services:
 
-- **Fleiss's Kappa (K):** `0.8253`
+- **Fleiss's Kappa (K):** `0.8267`
 
 - **Interpretation:** Acuerdo casi perfecto (Altamente confiable)
 
@@ -31,15 +31,15 @@ across all 27 shared videos and 169 services:
 
 | # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |
 |---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|
-| 1 | `Cgv0kfp_6xQ` | 100% | 100% | 100% | 77% | 71% | 74% | 10 | 10 | 13 | 14 | — | — |
-| 2 | `Kebb0LOVC28` | 100% | 100% | 100% | 47% | 38% | 42% | 11 | 9 | 17 | 21 | — | — |
-| 3 | `-3lnf5lzsH0` | 100% | 92% | 96% | 40% | 38% | 39% | 14 | 13 | 15 | 16 | OnPremDC | — |
-| 4 | `07lfvavMdfU` | 91% | 100% | 95% | 71% | 71% | 71% | 12 | 10 | 14 | 14 | — | Lambda |
-| 5 | `6YkguepAQuQ` | 100% | 90% | 95% | 38% | 30% | 33% | 9 | 10 | 8 | 10 | VPC | — |
-| 6 | `6EUknQqaV1w` | 88% | 100% | 93% | 77% | 91% | 83% | 11 | 9 | 13 | 11 | — | SES |
-| 7 | `1aYoIZvabbk` | 86% | 100% | 92% | 44% | 80% | 57% | 7 | 6 | 9 | 5 | — | EC2 |
-| 8 | `Felt-hOU6kU` | 86% | 100% | 92% | 50% | 100% | 67% | 8 | 7 | 8 | 4 | — | VPC |
-| 9 | `-wLEkq21cvA` | 83% | 100% | 91% | 60% | 60% | 60% | 9 | 9 | 10 | 10 | — | OnPremDC |
+| 1 | `-wLEkq21cvA` | 100% | 100% | 100% | 100% | 90% | 95% | 9 | 9 | 9 | 10 | — | — |
+| 2 | `Cgv0kfp_6xQ` | 100% | 100% | 100% | 77% | 71% | 74% | 10 | 10 | 13 | 14 | — | — |
+| 3 | `Kebb0LOVC28` | 100% | 100% | 100% | 47% | 38% | 42% | 11 | 9 | 17 | 21 | — | — |
+| 4 | `-3lnf5lzsH0` | 100% | 92% | 96% | 40% | 38% | 39% | 14 | 13 | 15 | 16 | OnPremDC | — |
+| 5 | `07lfvavMdfU` | 91% | 100% | 95% | 71% | 71% | 71% | 12 | 10 | 14 | 14 | — | Lambda |
+| 6 | `6YkguepAQuQ` | 100% | 90% | 95% | 38% | 30% | 33% | 9 | 10 | 8 | 10 | VPC | — |
+| 7 | `6EUknQqaV1w` | 88% | 100% | 93% | 77% | 91% | 83% | 11 | 9 | 13 | 11 | — | SES |
+| 8 | `1aYoIZvabbk` | 86% | 100% | 92% | 44% | 80% | 57% | 7 | 6 | 9 | 5 | — | EC2 |
+| 9 | `Felt-hOU6kU` | 86% | 100% | 92% | 50% | 100% | 67% | 8 | 7 | 8 | 4 | — | VPC |
 | 10 | `Ly_UhX3LCCs` | 80% | 100% | 89% | 20% | 29% | 24% | 7 | 7 | 10 | 7 | — | UserCompanyAPI |
 | 11 | `2L0m28ZLmtE` | 85% | 92% | 88% | 15% | 36% | 21% | 15 | 13 | 27 | 11 | ThirdParty | CloudFormation, UserCompanyAnalyst |
 | 12 | `Pc7_uOdlGKo` | 88% | 88% | 88% | 45% | 56% | 50% | 9 | 9 | 11 | 9 | UserConsumerMobile | UserCompanyAnalyst |
