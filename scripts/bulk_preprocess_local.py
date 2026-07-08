@@ -86,7 +86,7 @@ def main():
         console.print(f"[cyan]→ Preprocessing {video_id} locally...[/]")
         url = f"https://www.youtube.com/watch?v={video_id}"
         cmd = [
-            ".venv/bin/python",
+            sys.executable,
             "main.py",
             "--url", url,
             "--skip-vision"

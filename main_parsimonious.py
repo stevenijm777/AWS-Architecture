@@ -65,49 +65,71 @@ def run_pipeline(
         border_style="cyan",
     ))
 
-    # ── Step 1: Download ─────────────────────────────────────
-    console.rule("[bold cyan]Step 1 · Download Video")
-    info = download_video(url)
-    video_id = info.get("id", "unknown")
-    title = info.get("title", "Untitled")
-    video_path = RAW_DIR / f"{video_id}.mp4"
-
-    # ── Step 2: Extract Audio ────────────────────────────────
-    console.rule("[bold cyan]Step 2 · Extract Audio")
-    audio_path = extract_audio(video_path)
-
-    # ── Step 3: Extract Keyframes ────────────────────────────
-    console.rule("[bold cyan]Step 3 · Extract Keyframes")
-    frames_subdir = FRAMES_DIR / video_path.stem
-    if frames_subdir.exists() and any(frames_subdir.glob("*.jpg")):
-        frames = sorted(frames_subdir.glob("*.jpg"))
-        console.print(
-            f"[yellow]⚠[/] Keyframes already exist ({len(frames)} frames) in [bold]{frames_subdir}/[/]. Skipping extraction."
-        )
-    else:
-        frames = extract_keyframes(video_path, interval_sec=interval)
-
-    # ── Step 4: Transcribe ───────────────────────────────────
-    console.rule("[bold cyan]Step 4 · Transcribe Audio (Whisper + GPU)")
+    from scripts.downloader import extract_video_id
+    video_id = extract_video_id(url)
     transcript_path = RAW_DIR / f"{video_id}_transcript.json"
-    if transcript_path.exists() and not force:
-        console.print(
-            f"[yellow]⚠[/] Transcript already exists at [bold]{transcript_path}[/]. Skipping transcription."
-        )
+    good_whiteboard_path = Path(__file__).resolve().parent / "data" / "good_whiteboard" / f"{video_id}.jpg"
+
+    fast_path = False
+    if not skip_vision and transcript_path.exists() and good_whiteboard_path.exists():
+        console.print(f"[green]✓[/] Fast-path compilation enabled: transcript and approved whiteboard already exist for {video_id}.")
+        info_path = RAW_DIR / f"{video_id}.info.json"
+        if info_path.exists():
+            with open(info_path, "r", encoding="utf-8") as f:
+                info = json.load(f)
+        else:
+            info = {"id": video_id, "title": f"Video {video_id}", "duration": 0}
+        title = info.get("title", "Untitled")
+        
         with open(transcript_path, "r", encoding="utf-8") as f:
             segments = json.load(f)
-    else:
-        transcript_result = transcribe(audio_path, language=language)
-        segments = get_timestamped_segments(transcript_result)
+        frames = []
+        fast_path = True
 
-        # Save transcript to file
-        transcript_path.write_text(
-            json.dumps(segments, indent=2, ensure_ascii=False),
-            encoding="utf-8",
-        )
-        console.print(
-            f"[green]✓[/] Transcript saved → [bold]{transcript_path}[/]"
-        )
+    if not fast_path:
+        # ── Step 1: Download ─────────────────────────────────────
+        console.rule("[bold cyan]Step 1 · Download Video")
+        info = download_video(url)
+        video_id = info.get("id", "unknown")
+        title = info.get("title", "Untitled")
+        video_path = RAW_DIR / f"{video_id}.mp4"
+
+        # ── Step 2: Extract Audio ────────────────────────────────
+        console.rule("[bold cyan]Step 2 · Extract Audio")
+        audio_path = extract_audio(video_path)
+
+        # ── Step 3: Extract Keyframes ────────────────────────────
+        console.rule("[bold cyan]Step 3 · Extract Keyframes")
+        frames_subdir = FRAMES_DIR / video_path.stem
+        if frames_subdir.exists() and any(frames_subdir.glob("*.jpg")):
+            frames = sorted(frames_subdir.glob("*.jpg"))
+            console.print(
+                f"[yellow]⚠[/] Keyframes already exist ({len(frames)} frames) in [bold]{frames_subdir}/[/]. Skipping extraction."
+            )
+        else:
+            frames = extract_keyframes(video_path, interval_sec=interval)
+
+        # ── Step 4: Transcribe ───────────────────────────────────
+        console.rule("[bold cyan]Step 4 · Transcribe Audio (Whisper + GPU)")
+        transcript_path = RAW_DIR / f"{video_id}_transcript.json"
+        if transcript_path.exists() and not force:
+            console.print(
+                f"[yellow]⚠[/] Transcript already exists at [bold]{transcript_path}[/]. Skipping transcription."
+            )
+            with open(transcript_path, "r", encoding="utf-8") as f:
+                segments = json.load(f)
+        else:
+            transcript_result = transcribe(audio_path, language=language)
+            segments = get_timestamped_segments(transcript_result)
+
+            # Save transcript to file
+            transcript_path.write_text(
+                json.dumps(segments, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            console.print(
+                f"[green]✓[/] Transcript saved → [bold]{transcript_path}[/]"
+            )
 
     # ── Step 5: Vision Analysis (Cloudscape schema) ─────────
     console.rule("[bold cyan]Step 5 · Analyze Keyframes (Gemini Vision - Parsimonious)")
