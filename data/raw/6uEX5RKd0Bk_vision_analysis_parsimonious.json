@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "Based on the whiteboard and the transcript, the architecture represents Grindr's next-generation chat system which handles 121 billion chats annually. I will define: 1. A User node representing the mobile app interface. 2. Two distinct EKS clusters/nodes as drawn: 'Amazon EKS REST and WebSocket' handling connection layer, and 'Amazon EKS Chat and Notifications' as the core logic brain. 3. DynamoDB for storing scale-heavy chat bodies. 4. Aurora Postgres for relational metadata/inbox headers. 5. ElastiCache for Redis caching inboxes. 6. Amazon Pinpoint for push notifications when offline. 7. Amazon MSK for streaming metadata events to decoupled consumer microservices (like spam filters).",
+  "graph": {
+    "name": "Grindr Next-Gen Chat Architecture",
+    "link": "https://www.youtube.com/watch?v=6uEX5RKd0Bk",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Handles 121 billion annual chats. Bifurcates write-heavy chat bodies to DynamoDB (encrypted via KMS) and read-heavy inbox metadata to Aurora/Redis cache. Utilizes MSK for decoupled async operations."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Grindr Mobile App",
+      "notes": "WORKLOAD_PEEK: Handles WebSocket (chats) and REST (inbox queries) requests."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "EKS REST & WebSocket",
+      "notes": "WORKLOAD_PEEK: Manages active WebSocket connections (W1, W2) and basic validation."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS Chat & Notifications",
+      "notes": "WORKLOAD_PEEK: Central microservice brain orchestrating logic, security, and persistence."
+    },
+    {
+      "id": "3",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "DATA_PEEK: Caches active user inboxes to prevent direct Aurora DB reads."
+    },
+    {
+      "id": "4",
+      "service": "Aurora",
+      "name": "Amazon Aurora Postgres",
+      "notes": "DATA_PEEK: Stores read-heavy inbox metadata, timestamps, and message headers."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "DATA_PEEK: Scalable key-value store for encrypted application chat bodies."
+    },
+    {
+      "id": "6",
+      "service": "Pinpoint",
+      "name": "Amazon Pinpoint",
+      "notes": "WORKLOAD_PEEK: Triggers mobile push alerts over telephony network when user is offline."
+    },
+    {
+      "id": "7",
+      "service": "MSK",
+      "name": "Amazon MSK",
+      "notes": "WORKLOAD_PEEK: Managed Kafka cluster decoupling async flows like spam protection."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends chat via WebSocket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "notes": "Forwards message to chat processing services."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2a",
+      "notes": "Persists encrypted message body."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2b",
+      "notes": "Saves relational envelope/metadata."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2c",
+      "notes": "Publishes event to Kafka for offline processing."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "notes": "Checks if recipient user is online."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "1a",
+      "notes": "If online, pushes chat directly over recipient socket."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1b",
+      "notes": "If offline, routes push request to Pinpoint."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "2b",
+      "notes": "Sends push notification alert to device."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "notes": "User requests inbox retrieval over REST."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "notes": "Proxies inbox request to brain."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "notes": "Queries Redis cache for user's inbox."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
+      "notes": "On cache miss, loads from Aurora database and backfills Redis."
+    }
+  ]
+}

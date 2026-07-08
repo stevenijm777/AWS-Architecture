@@ -1,0 +1,206 @@
+{
+  "step_by_step_reasoning": "The transcript describes a migration from IBM Netezza on-premises to Amazon Redshift. The architecture involves an initial bulk seeding phase using AWS Snowball and daily incremental ingestion of 100 GB via AWS Storage Gateway and Direct Connect. Data lands in an S3 Landing Zone. Processing is managed by an ELT pipeline driven by Postgres RDS (storing metadata and scripts) and executed on EC2 instances. The cleansed data goes to S3 Transformation Zone, then loaded to Redshift. Redshift Spectrum publishes processed data to an S3 Publish Zone, which archives to S3 Glacier. Analysts access dashboards and run ad-hoc queries directly via Redshift or the Publish bucket.",
+  "graph": {
+    "name": "Netezza to Redshift Migration for Life Sciences",
+    "link": "https://www.youtube.com/watch?v=5f3z1Z_9BJA",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "HIPAA-compliant data platform migrating legacy Netezza to Redshift. Processes 100GB/day with automated S3 lifecycle transitions to Glacier."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "IBM Netezza",
+      "notes": "On-premises source database."
+    },
+    {
+      "id": "1",
+      "service": "Snowball",
+      "name": "AWS Snowball",
+      "notes": "Used for initial 20 TB database seeding."
+    },
+    {
+      "id": "2",
+      "service": "StorageGateway",
+      "name": "AWS Storage Gateway",
+      "notes": "NFS volumes for daily 100 GB delta increments."
+    },
+    {
+      "id": "3",
+      "service": "DirectConnect",
+      "name": "AWS Direct Connect",
+      "notes": "2x 10G link with SSL encryption."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Landing Zone",
+      "notes": "Landing zone bucket with 2-day retention."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "Amazon RDS PostgreSQL",
+      "notes": "Stores ELT metadata and transformation scripts."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 Processing Nodes",
+      "notes": "Executes quality cleansing and ELT transformations."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Transformation Zone",
+      "notes": "Stores processed data. 1-day retention."
+    },
+    {
+      "id": "8",
+      "service": "Redshift",
+      "name": "Amazon Redshift",
+      "notes": "Core data warehouse supporting Redshift Spectrum."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 Publish Zone",
+      "notes": "Stores finalized dashboard data. Retention: 1 year, 1 month."
+    },
+    {
+      "id": "10",
+      "service": "Glacier",
+      "name": "S3 Glacier",
+      "notes": "Long-term archive for compliance."
+    },
+    {
+      "id": "11",
+      "service": "UserCompanyAnalyst",
+      "name": "Business Analysts",
+      "notes": "Accesses reports and dashboards."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Initial seeding extract."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Seeded data loaded into landing bucket."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Daily delta extracted."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Data sent via NFS over Direct Connect."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Data written to S3 landing bucket."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EC2 pulls transformation scripts."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EC2 reads raw landing data."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "EC2 writes cleansed data to transformation zone."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Redshift loads facts and dimensions."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Redshift Spectrum publishes data to publish bucket."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "S3 Lifecycle policy archives data."
+    },
+    {
+      "source": "11",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ad-hoc query request."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Query results returned."
+    },
+    {
+      "source": "11",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Dashboard queries data."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Dashboard loads published data."
+    }
+  ]
+}

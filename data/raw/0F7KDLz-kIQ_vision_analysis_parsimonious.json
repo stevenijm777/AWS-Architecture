@@ -1,0 +1,234 @@
+{
+  "step_by_step_reasoning": "We first identify the external DNS and CDN layers with Route 53 and CloudFront, followed by an internal Route 53 that performs weighted routing. The architecture has two primary compute paths in a hybrid setup: ECS on AWS Fargate, and API Gateway with Lambda. These handle traffic cooperatively to absorb surges. Both paths connect to four backend database types: ElastiCache, DocumentDB, RDS, and OpenSearch. CloudWatch monitors ECS/Fargate performance, informing an AWS SDK-based Lambda that dynamically alters weights in the internal Route 53. The entire setup is deployed using AWS CDK.",
+  "graph": {
+    "name": "Zigbang Hybrid Auto-Scaling and Dynamic Weighted Architecture",
+    "link": "https://www.youtube.com/watch?v=0F7KDLz-kIQ",
+    "categories": "compute_intensive,interactive,control",
+    "graph_usable": true,
+    "notes": "Hybrid architecture combining ECS/Fargate for steady-state workloads and API Gateway/Lambda to handle sudden traffic spikes. Implements dynamic DNS weighted routing via an AWS SDK monitoring loop."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Route53",
+      "name": "Route 53 (External)",
+      "notes": "Handles initial client requests and maps to CloudFront."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Global CDN caching content and routing requests to internal DNS."
+    },
+    {
+      "id": "2",
+      "service": "Route53",
+      "name": "Route 53 (Internal)",
+      "notes": "Performs dynamic weight-based traffic division between ECS and Lambda."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Orchestrates microservices for stable core traffic."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Serverless container compute engine running the main applications."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Ingests burst traffic during major events."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Execution)",
+      "notes": "Serverless backend compute protecting ECS from scaling bottlenecks."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "AWS SDK Lambda",
+      "notes": "Calculates and dynamically updates Route 53 weights based on server load."
+    },
+    {
+      "id": "8",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Monitors ECS Fargate CPU and memory utilization."
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Caches volatile data for rapid response times."
+    },
+    {
+      "id": "10",
+      "service": "DocumentDB",
+      "name": "DocumentDB",
+      "notes": "Stores high-read semi-structured and unstructured data."
+    },
+    {
+      "id": "11",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Houses relational structural data for core transaction processes."
+    },
+    {
+      "id": "12",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Performs address indexing/searches and centralizes application logs."
+    },
+    {
+      "id": "13",
+      "service": "CloudFormation",
+      "name": "AWS CDK",
+      "notes": "Enforces Infrastructure as Code for environment deployments."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "DNS routing to CDN."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forwards traffic to weight-calculating internal load balancer layer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sends a dynamic percentage of stable traffic to the container cluster."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Routes burst overflow traffic to serverless endpoint."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Launches and assigns work to containers."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches cached query items."
+    },
+    {
+      "source": "4",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Reads document database."
+    },
+    {
+      "source": "4",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries transaction data."
+    },
+    {
+      "source": "4",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Submits log data and searches address indexing."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers functions."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Accesses ElastiCache."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Accesses DocumentDB."
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Executes relational database operations."
+    },
+    {
+      "source": "6",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Performs address lookups and records logs."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Reports container metrics."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Feeds metrics into SDK decision process."
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Rewrites Route 53 weights based on active container capacity."
+    }
+  ]
+}

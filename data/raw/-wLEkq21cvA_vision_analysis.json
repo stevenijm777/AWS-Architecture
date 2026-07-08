@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture automates migrations from on-premises to AWS using a Migration Factory. 1. App Discovery Service gathers metadata from On-Prem. 2. CloudEndure continuously replicates block data to an EC2 hot replica. 3. The migration team inputs target metadata (tags, VPC, subnets) into DynamoDB. 4. The migration is triggered via Slack, calling the EC2 Migration Factory instance. 5. This controller pulls discovery metadata and target configs, stops replication, bakes an AMI from the replica, shares it to the target account, and launches the target EC2 instance.",
+  "graph": {
+    "name": "Automated Migration Factory with CloudEndure and AWS ADS",
+    "link": "https://www.youtube.com/watch?v=-wLEkq21cvA",
+    "categories": "control, data_ingestion",
+    "graph_usable": true,
+    "notes": "Reduces server migration time from 4 hours to 10 minutes by automating metadata aggregation, live block replication, and final target-instance orchestration."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Migration Team",
+      "notes": "Orchestrates migrations and manages metadata config."
+    },
+    {
+      "id": "1",
+      "service": "OnPremDC",
+      "name": "On-Premises Server",
+      "notes": "Source servers undergoing migration."
+    },
+    {
+      "id": "2",
+      "service": "AppDiscovery",
+      "name": "AWS Application Discovery Service",
+      "notes": "DATA_PEEK: Collects inbound/outbound TCP connections and utilization data."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "CloudEndure Live Agent",
+      "notes": "Performs continuous block-level data replication."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "Metadata Store",
+      "notes": "DATA_PEEK: Stores RPOs, RTOs, IPs, and tags for target environments."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": "Chat interface used by migration team to trigger automation."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Migration Factory Controller",
+      "notes": "WORKLOAD_PEEK: Orchestrator EC2 instance driving APIs to coordinate migration phases."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Hot Replica Instance",
+      "notes": "Staging server in replication area receiving continuous blocks."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "Target EC2 Instance",
+      "notes": "Final production server launched inside target account."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends TCP metadata and resource usage."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Continuous block-level replication payload."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes replicated blocks to replication EC2 storage."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Migration metadata seeding."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Command to initiate migration."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers migration workflow script API."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Reads target specs (tags, IPs, target account)."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Gathers port metadata for firewall configurations."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "API call to stop replication."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Commands to bake replication volume into AMI."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Shares encrypted AMI and provisions EC2 in target account with sizing and tags."
+    }
+  ]
+}

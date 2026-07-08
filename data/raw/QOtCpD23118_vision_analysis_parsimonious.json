@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "We identify 11 nodes from the whiteboard image and transcript. Ingest starts with IoT devices sending data to a Lambda function, which writes raw telemetry data into an S3 data lake. The raw data is then batched into an SQS queue. A second Lambda function processes messages from SQS, combining them with pre-chunked OpenStreetMaps (OSM) data stored in a separate S3 bucket. This enriched stream is sent to Kinesis for sliding window calculations of safety events (e.g., speeding). Detected events are stored in a middle S3 bucket. For analytics and reporting, AWS Glue aggregates data from both the raw S3 bucket (via Athena) and the enriched S3 bucket, transferring it down to on-premises data centers.",
+  "graph": {
+    "name": "LeasePlan OneConnect Telematics Platform",
+    "link": "https://www.youtube.com/watch?v=QOtCpD23118",
+    "categories": "data_ingestion,interactive",
+    "graph_usable": true,
+    "notes": "OneConnect ingests vehicle telematics data, batches it using SQS, enriches it with OpenStreetMap data via Lambda and Kinesis, and uses Glue to sync telemetry analytics to on-premises reporting systems."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "IoT Devices",
+      "notes": "On-vehicle sensors capturing GPS, speed, and g-forces."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "DATA_PEEK: Raw telematics streams."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Raw S3 Data Lake",
+      "notes": "Stores raw telemetry logs."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "WORKLOAD_PEEK: Batches raw records to ensure processing durability and scale."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Enrichment Lambda",
+      "notes": "Performs rapid lookup against pre-chunked map data."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "OpenStreetMap S3 Bucket",
+      "notes": "Contains OSM data pre-divided into 1-degree coordinate chunks via Athena."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Kinesis Stream",
+      "notes": "Performs sliding window analytics to identify safety violations (speeding, harsh braking)."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Enriched Events S3",
+      "notes": "Stores detected safety event records."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Runs ad-hoc queries over raw data for summary reports."
+    },
+    {
+      "id": "9",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Orchestrates extraction of events and raw summary data."
+    },
+    {
+      "id": "10",
+      "service": "OnPremDC",
+      "name": "On-Premises Data Center",
+      "notes": "Receives processed telemetry to drive customer dashboards."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests raw vehicle data."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves raw payload."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Batches events."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers enrichment function."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Loads map chunk."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Streams events for window calculations."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Persists detected safety incidents."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries raw telemetry logs."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Supplies query results."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Extracts enriched data."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Syncs reporting data to on-prem databases."
+    }
+  ]
+}

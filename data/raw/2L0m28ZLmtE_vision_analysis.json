@@ -1,0 +1,320 @@
+{
+  "step_by_step_reasoning": "Based on the transcript, Sanofi's Darwin data science environment enables 30-40 analyst users to securely analyze health data. The architecture starts with a static frontend (S3 website, CloudFront CDN, Cognito with SSO authentication). The dynamic backend leverages API Gateway and DynamoDB for actions and tracing. To provision isolated analytical environments, API Gateway communicates with Service Catalog, which uses CloudFormation to launch SageMaker notebooks and custom RStudio instances (mapped to EC2). For AI capabilities, API Gateway invokes distinct Lambda functions: one utilizing the Amazon Translate SDK for batch document translations, and another leveraging Comprehend Medical to identify and de-identify critical medical metadata. All processed and source datasets are stored securely within isolated S3 buckets and a central Data Lake.",
+  "graph": {
+    "name": "Sanofi - Secure Real-World Evidence Data Science Platform",
+    "link": "https://www.youtube.com/watch?v=2L0m28ZLmtE",
+    "categories": "compute_intensive, interactive, data_ingestion",
+    "graph_usable": true,
+    "notes": "Secure environment designed for data scientists to run smart data analytics. Designed around strong auditing, data segregation, and restricted data downloads."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAnalyst",
+      "name": "Sanofi Data Scientists",
+      "notes": "Analyst team conducting medical analytics using RStudio and SageMaker."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront Distribution",
+      "notes": "Serves static content and manages HTTPS certificates."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Portal Static Hosting",
+      "notes": "S3 bucket configured for static portal hosting."
+    },
+    {
+      "id": "3",
+      "service": "Cognito",
+      "name": "Cognito Federated Identity",
+      "notes": "Authenticates users via federation with Sanofi's internal SSO."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Directs dynamic API calls and handles portal operations."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "User Trace DynamoDB",
+      "notes": "WORKLOAD_PEEK: Tracks metadata and audit logs for all user activities."
+    },
+    {
+      "id": "6",
+      "service": "ServiceCatalog",
+      "name": "Service Catalog Portfolio",
+      "notes": "Allows users to self-provision pre-configured templates."
+    },
+    {
+      "id": "7",
+      "service": "CloudFormation",
+      "name": "CloudFormation Engine",
+      "notes": "Deploys repeatable, isolated analytics environments."
+    },
+    {
+      "id": "8",
+      "service": "SageMaker",
+      "name": "SageMaker Notebooks",
+      "notes": "WORKLOAD_PEEK: Provisioned with 100GB encrypted disks for secure workspaces."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "RStudio Workspace",
+      "notes": "Custom EC2 instances running RStudio for analytical modeling."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Data Lake & User S3 Buckets",
+      "notes": "DATA_PEEK: Real World Evidence datasets kept secure within the cloud perimeter."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Translation Worker",
+      "notes": "Batch translates files via AWS SDK integration."
+    },
+    {
+      "id": "12",
+      "service": "Translate",
+      "name": "Amazon Translate",
+      "notes": "Performs bulk machine translation of raw medical records."
+    },
+    {
+      "id": "13",
+      "service": "Lambda",
+      "name": "NLP Extraction Worker",
+      "notes": "Executes medical entity detection workflows."
+    },
+    {
+      "id": "14",
+      "service": "Comprehend",
+      "name": "Comprehend Medical",
+      "notes": "Identifies sensitive medical entities to allow data curation."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Accesses portal UI"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Retrieves portal assets"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns static site assets"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Delivers client page"
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Requests auth token via SSO federated SSO"
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns verified auth token"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends portal API requests"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Records action and telemetry logs"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers workspace provisioning"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Passes CloudFormation stack configuration"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Spins up secure SageMaker Instance"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Spins up custom RStudio EC2 instance"
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Confirms environment creation status"
+    },
+    {
+      "source": "0",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Connects to SageMaker Notebook interface"
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads & writes active model datasets"
+    },
+    {
+      "source": "0",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Connects to RStudio IDE"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Performs reads/writes on analytical data"
+    },
+    {
+      "source": "4",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Invokes language translation job"
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fetches raw file to translate"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Sends file text via SDK"
+    },
+    {
+      "source": "12",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "7",
+      "type": "data",
+      "notes": "Returns translated data output"
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "8",
+      "type": "data",
+      "notes": "Saves translated file to sandbox bucket"
+    },
+    {
+      "source": "4",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "9",
+      "type": "data",
+      "notes": "Invokes entity extraction job"
+    },
+    {
+      "source": "13",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "10",
+      "type": "data",
+      "notes": "Loads medical document content"
+    },
+    {
+      "source": "13",
+      "target": "14",
+      "flow_id": 2,
+      "seq": "11",
+      "type": "data",
+      "notes": "Requests entity and syntax analysis"
+    },
+    {
+      "source": "14",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "12",
+      "type": "data",
+      "notes": "Returns parsed patient & clinical metadata"
+    },
+    {
+      "source": "13",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "13",
+      "type": "data",
+      "notes": "Persists structured findings to user storage"
+    }
+  ]
+}

@@ -1,0 +1,637 @@
+[
+  {
+    "start": 0.0,
+    "end": 16.0,
+    "text": "Hello and welcome to another episode of This is My Architecture. I'm Todd and today I'm joined by Lucas from ThreatStack. Lucas, thanks for joining us."
+  },
+  {
+    "start": 16.0,
+    "end": 17.0,
+    "text": "Yeah, thanks for having me."
+  },
+  {
+    "start": 17.0,
+    "end": 19.0,
+    "text": "Can you tell us a little bit about what ThreatStack does?"
+  },
+  {
+    "start": 19.0,
+    "end": 27.0,
+    "text": "Sure. ThreatStack is a cybersecurity company at both the infrastructure and application layer that helps you with your security and your compliance."
+  },
+  {
+    "start": 27.0,
+    "end": 30.0,
+    "text": "Perfect. So what will we be talking about today?"
+  },
+  {
+    "start": 30.0,
+    "end": 40.0,
+    "text": "Today we're going to talk about a little bit about how and what ThreatStack ingests and then also where that data lands up so that we can use it to provide our customers insights and analytics."
+  },
+  {
+    "start": 40.0,
+    "end": 47.0,
+    "text": "Okay, so full visibility, insight to your environment, and the opportunity to run analytics on top of that data."
+  },
+  {
+    "start": 47.0,
+    "end": 54.0,
+    "text": "Yeah, absolutely. So we do about 60 billion events a day and we do so by starting with our customers VPC."
+  },
+  {
+    "start": 54.0,
+    "end": 63.0,
+    "text": "We actually allow them to install our agent, which is a proprietary piece of software that they install via their Chef scripts, Ansible, anything, Terraform like that."
+  },
+  {
+    "start": 63.0,
+    "end": 66.0,
+    "text": "They can also hook us up to their CloudTrail environments."
+  },
+  {
+    "start": 66.0,
+    "end": 79.0,
+    "text": "And in doing so, they can actually send us tons of data, which we can correlate into sort of a single stream of data that we can then, you know, pipe into our infrastructure to create greater pieces of, like, intelligence."
+  },
+  {
+    "start": 79.0,
+    "end": 84.0,
+    "text": "So, as you can see here, like, the agent would kind of live over here on each of these boxes."
+  },
+  {
+    "start": 84.0,
+    "end": 96.0,
+    "text": "So for every UC2 instance you have, you would have an agent, and that data basically crosses through their VPC over the internet and eventually lands onto Kafka after a little bit of massaging and normalization and validation."
+  },
+  {
+    "start": 96.0,
+    "end": 110.0,
+    "text": "Okay, great. So being able to leverage any of the configuration management tools of choice that the developers and the teams already have and are familiar with in order to deploy those agents within the AWS environment inside their VPC."
+  },
+  {
+    "start": 110.0,
+    "end": 113.0,
+    "text": "And then the ingestion part through Kafka happens."
+  },
+  {
+    "start": 113.0,
+    "end": 119.0,
+    "text": "And it looks like we have two different types of traffic patterns or workflows, if you will, both real time and then another one."
+  },
+  {
+    "start": 119.0,
+    "end": 120.0,
+    "text": "Can you talk us through what that looks like?"
+  },
+  {
+    "start": 120.0,
+    "end": 121.0,
+    "text": "Yeah, absolutely."
+  },
+  {
+    "start": 121.0,
+    "end": 131.0,
+    "text": "So when you're working with ThreatSack and maybe you get an alert from us, what will end up happening is you're going to log into our platform or our APIs, and you're going to need to understand what happened."
+  },
+  {
+    "start": 131.0,
+    "end": 136.0,
+    "text": "And so generally speaking, when you're looking at what happened, you kind of want that information as quickly as possible."
+  },
+  {
+    "start": 136.0,
+    "end": 143.0,
+    "text": "So data flows into here into our Apache Flink cluster, which can route to, in one option, S3."
+  },
+  {
+    "start": 143.0,
+    "end": 148.0,
+    "text": "And in this case, this is actually GZIPed."
+  },
+  {
+    "start": 148.0,
+    "end": 154.0,
+    "text": "And at this point, customers can actually have this even further forwarded to one of their S3 buckets."
+  },
+  {
+    "start": 154.0,
+    "end": 161.0,
+    "text": "We also have other pieces of, like databases that we'll throw this into, such as Elasticsearch."
+  },
+  {
+    "start": 161.0,
+    "end": 170.0,
+    "text": "What this does is this allows us to very quickly put a smaller subset of data, just important fields that will help you understand what happened very quickly."
+  },
+  {
+    "start": 170.0,
+    "end": 179.0,
+    "text": "But then when you're ready to kind of understand what happened, you want to understand the why and the how, you might go to our more longer term data warehousing."
+  },
+  {
+    "start": 179.0,
+    "end": 184.0,
+    "text": "So this data lasts for about 30 days."
+  },
+  {
+    "start": 184.0,
+    "end": 187.0,
+    "text": "And basically it runs through an EMR cluster directly."
+  },
+  {
+    "start": 187.0,
+    "end": 199.0,
+    "text": "And then we'll put this into another S3 bucket, which is formatted with Apache Parquet, which is a great kind of file format for us to be able to allow customers to do really advanced but quick searches in like a map region."
+  },
+  {
+    "start": 199.0,
+    "end": 201.0,
+    "text": "And then we'll put it in a map reduced type setting."
+  },
+  {
+    "start": 201.0,
+    "end": 202.0,
+    "text": "Very cool. So a few questions here."
+  },
+  {
+    "start": 202.0,
+    "end": 208.0,
+    "text": "First off, the GZIP is this, what type of format are you storing all of the data in the S3 bucket in?"
+  },
+  {
+    "start": 208.0,
+    "end": 213.0,
+    "text": "Yeah, absolutely. So initially when this data comes in from us, it's in JSON."
+  },
+  {
+    "start": 213.0,
+    "end": 219.0,
+    "text": "When we actually process it and put it on Kafka, we do an internal serialization into Avro."
+  },
+  {
+    "start": 219.0,
+    "end": 223.0,
+    "text": "This is great because it allows us to do a lot of like high performance serialization."
+  },
+  {
+    "start": 223.0,
+    "end": 232.0,
+    "text": "However, when we actually export this to this bucket, this GZIP file is actually in JSON again because that's a much easier format for our customers to work with."
+  },
+  {
+    "start": 232.0,
+    "end": 235.0,
+    "text": "Okay, great. And then you also talked a little bit about the option they have."
+  },
+  {
+    "start": 235.0,
+    "end": 241.0,
+    "text": "So is there a trigger within ThreatStacks environment where they can then copy that over to their S3 bucket?"
+  },
+  {
+    "start": 241.0,
+    "end": 252.0,
+    "text": "Yeah, absolutely. So similar to how you would set up your CloudTrail integration where you give us the ability to kind of have credentials via STS to assume a role and, you know, look at your CloudTrail information,"
+  },
+  {
+    "start": 252.0,
+    "end": 259.0,
+    "text": "we can also use that same kind of configuration or a similar one that allows customers to say, hey, every five minutes or ten minutes,"
+  },
+  {
+    "start": 259.0,
+    "end": 265.0,
+    "text": "I would actually like you to sync all of the data you have from us into our bucket so that we can put it into our scene."
+  },
+  {
+    "start": 265.0,
+    "end": 274.0,
+    "text": "So they're actually giving ThreatStack permissions via a bucket policy or you're giving them, you're giving, putting their account into the bucket policy as an example,"
+  },
+  {
+    "start": 274.0,
+    "end": 277.0,
+    "text": "so the flow can go back and forth between their environment and your bucket."
+  },
+  {
+    "start": 277.0,
+    "end": 280.0,
+    "text": "Yeah, in this case, it's mostly us giving them that information."
+  },
+  {
+    "start": 280.0,
+    "end": 287.0,
+    "text": "It's basically you're saying I have my own security tooling in which I can derive my analytics, but I love ThreatStacks telemetry."
+  },
+  {
+    "start": 287.0,
+    "end": 294.0,
+    "text": "Sure, and a lot of teams, it's exactly that, right? They have their own security teams, maybe even their own security account that they would like for it to flow into."
+  },
+  {
+    "start": 294.0,
+    "end": 302.0,
+    "text": "So great, and talk a little bit more about the long-lived data, if you will, so this cluster of EMR and what exactly is happening here,"
+  },
+  {
+    "start": 302.0,
+    "end": 308.0,
+    "text": "because I also see some EC2 instances which may be some type of compute power backing another service."
+  },
+  {
+    "start": 308.0,
+    "end": 315.0,
+    "text": "Right, so one trick with our EMR clusters is that we may want to run many of them for various different reasons."
+  },
+  {
+    "start": 315.0,
+    "end": 323.0,
+    "text": "We might want to put analytics for particular customers into their own EMR cluster for either security or performance,"
+  },
+  {
+    "start": 323.0,
+    "end": 326.0,
+    "text": "and we may just want to actually resize the cluster."
+  },
+  {
+    "start": 326.0,
+    "end": 330.0,
+    "text": "And to have somebody do that normally, you'd have to go through the console or the API,"
+  },
+  {
+    "start": 330.0,
+    "end": 336.0,
+    "text": "and that would lead to potentially various types of configurations that may not be security approved."
+  },
+  {
+    "start": 336.0,
+    "end": 345.0,
+    "text": "So what we actually did was we built a service that can both orchestrate jobs, so this is like an orchestration piece,"
+  },
+  {
+    "start": 345.0,
+    "end": 354.0,
+    "text": "but what that will do is spin up our EMR clusters in well-known configurations that are blessed by security"
+  },
+  {
+    "start": 354.0,
+    "end": 357.0,
+    "text": "and have been peer-reviewed by our operations team."
+  },
+  {
+    "start": 357.0,
+    "end": 362.0,
+    "text": "In addition, it can also submit jobs, so we have various jars that live on this box,"
+  },
+  {
+    "start": 362.0,
+    "end": 371.0,
+    "text": "and so one of these jars might be, in this case, like a Spark job that will take data from Kafka"
+  },
+  {
+    "start": 371.0,
+    "end": 374.0,
+    "text": "and put it into S3 bucket in this parquet format."
+  },
+  {
+    "start": 374.0,
+    "end": 378.0,
+    "text": "Another one might be to run a nightly report for a different customer,"
+  },
+  {
+    "start": 378.0,
+    "end": 387.0,
+    "text": "or potentially actually take a subset of data that was in our S3 bucket and process it to glean some sort of more intelligent part,"
+  },
+  {
+    "start": 387.0,
+    "end": 393.0,
+    "text": "which is actually something more that this EMR cluster would do as it's on the consumption side of our data platform."
+  },
+  {
+    "start": 393.0,
+    "end": 398.0,
+    "text": "Okay. Security team loves that aspect, right, because they know there won't be any bad configurations"
+  },
+  {
+    "start": 398.0,
+    "end": 402.0,
+    "text": "or unapproved types of configs that are going out there."
+  },
+  {
+    "start": 402.0,
+    "end": 407.0,
+    "text": "Yeah, absolutely. I mean, another great thing, too, is ThreatSack is really big into monitoring"
+  },
+  {
+    "start": 407.0,
+    "end": 414.0,
+    "text": "and logging, so when we actually deploy these EMR clusters, they're set and configured to already publish that data"
+  },
+  {
+    "start": 414.0,
+    "end": 417.0,
+    "text": "into our infrastructure and our known logging."
+  },
+  {
+    "start": 417.0,
+    "end": 421.0,
+    "text": "So we have a great visibility into these clusters almost immediately."
+  },
+  {
+    "start": 421.0,
+    "end": 423.0,
+    "text": "Perfect. So let's talk a little bit on the right-hand side here."
+  },
+  {
+    "start": 423.0,
+    "end": 429.0,
+    "text": "It looks like when I think of Athena, I'm thinking SQL queries within unstructured data in an S3 bucket,"
+  },
+  {
+    "start": 429.0,
+    "end": 432.0,
+    "text": "SageMaker has a completely different type of user, potentially."
+  },
+  {
+    "start": 432.0,
+    "end": 433.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 433.0,
+    "end": 436.0,
+    "text": "So what type of consumers would be using these services,"
+  },
+  {
+    "start": 436.0,
+    "end": 437.0,
+    "text": "and where would they be making their queries?"
+  },
+  {
+    "start": 437.0,
+    "end": 438.0,
+    "text": "Yeah, absolutely."
+  },
+  {
+    "start": 438.0,
+    "end": 443.0,
+    "text": "So in this S3 bucket where we have the Parquet data, we actually, Parquet kind of plays well"
+  },
+  {
+    "start": 443.0,
+    "end": 449.0,
+    "text": "with all of these different, like, services that we have in addition to any EMR,"
+  },
+  {
+    "start": 449.0,
+    "end": 451.0,
+    "text": "like MapReduce job that you may want to run."
+  },
+  {
+    "start": 451.0,
+    "end": 457.0,
+    "text": "So as ThreatSack, when we decide that we want to apply some sort of machine learning to do trend analysis"
+  },
+  {
+    "start": 457.0,
+    "end": 464.0,
+    "text": "or anomaly detection, anything like that, we can use something like SageMaker to go on top of that Parquet data"
+  },
+  {
+    "start": 464.0,
+    "end": 469.0,
+    "text": "and actually try to glean some data off of our long-lived 30-day data warehouse."
+  },
+  {
+    "start": 469.0,
+    "end": 473.0,
+    "text": "Something like Athena in this case could also read off of this guy, where we can say,"
+  },
+  {
+    "start": 473.0,
+    "end": 478.0,
+    "text": "hey, I'm going to give somebody access who's maybe in the security team, the services team,"
+  },
+  {
+    "start": 478.0,
+    "end": 483.0,
+    "text": "who is actually looking at real threats, and maybe they're familiar with that SQL type interface,"
+  },
+  {
+    "start": 483.0,
+    "end": 489.0,
+    "text": "and they want to glean what happened over a longer period of time, or let's say, hey, this user pseudoed."
+  },
+  {
+    "start": 489.0,
+    "end": 492.0,
+    "text": "Is that usual for them on this box while they're running this command?"
+  },
+  {
+    "start": 492.0,
+    "end": 494.0,
+    "text": "Is that within a normal behavior for them?"
+  },
+  {
+    "start": 494.0,
+    "end": 496.0,
+    "text": "So that's something they might want to do here."
+  },
+  {
+    "start": 496.0,
+    "end": 501.0,
+    "text": "And then for EMR, again, this is kind of like, hey, I want to run a nightly report,"
+  },
+  {
+    "start": 501.0,
+    "end": 505.0,
+    "text": "or I'm a developer and I'm trying to understand our data a little bit better,"
+  },
+  {
+    "start": 505.0,
+    "end": 508.0,
+    "text": "and so that data also can be processed via EMR."
+  },
+  {
+    "start": 508.0,
+    "end": 511.0,
+    "text": "So is there any way, because I'm looking at this EC2 instance,"
+  },
+  {
+    "start": 511.0,
+    "end": 515.0,
+    "text": "is there any way where they can just use that as a pane of glass themselves"
+  },
+  {
+    "start": 515.0,
+    "end": 517.0,
+    "text": "without having to go through EMR directly?"
+  },
+  {
+    "start": 517.0,
+    "end": 521.0,
+    "text": "Yeah, so at the end of the day, when we're exporting our data,"
+  },
+  {
+    "start": 521.0,
+    "end": 525.0,
+    "text": "we can give our customers that data, and they can actually use their own EMR,"
+  },
+  {
+    "start": 525.0,
+    "end": 530.0,
+    "text": "their own SageMaker, their own Athena services, as well as schemas that we have prepared,"
+  },
+  {
+    "start": 530.0,
+    "end": 535.0,
+    "text": "that they can provide their own analytics and do their own kind of intelligence"
+  },
+  {
+    "start": 535.0,
+    "end": 537.0,
+    "text": "without having to involve ThreatStack."
+  },
+  {
+    "start": 537.0,
+    "end": 541.0,
+    "text": "So you don't always have to use the canned reports that maybe ThreatStack has provided"
+  },
+  {
+    "start": 541.0,
+    "end": 543.0,
+    "text": "or rely solely on our intelligence."
+  },
+  {
+    "start": 543.0,
+    "end": 546.0,
+    "text": "So many different options, so many different types of users."
+  },
+  {
+    "start": 546.0,
+    "end": 549.0,
+    "text": "They can pull that data in, build their own models out."
+  },
+  {
+    "start": 549.0,
+    "end": 551.0,
+    "text": "It's in a nice parquet format already."
+  },
+  {
+    "start": 551.0,
+    "end": 552.0,
+    "text": "Absolutely."
+  },
+  {
+    "start": 552.0,
+    "end": 558.0,
+    "text": "So ThreatStack as a whole, as a company, how are they using their own type of service internally"
+  },
+  {
+    "start": 558.0,
+    "end": 560.0,
+    "text": "in order to create new features in the future?"
+  },
+  {
+    "start": 560.0,
+    "end": 561.0,
+    "text": "Yeah, absolutely."
+  },
+  {
+    "start": 561.0,
+    "end": 564.0,
+    "text": "So ThreatStack is actually used to monitor ThreatStack."
+  },
+  {
+    "start": 564.0,
+    "end": 568.0,
+    "text": "So we have a mini version of ThreatStack, which we run,"
+  },
+  {
+    "start": 568.0,
+    "end": 572.0,
+    "text": "that basically all of our agents in our VPC report to."
+  },
+  {
+    "start": 572.0,
+    "end": 575.0,
+    "text": "And that ThreatStack is actually what we use to monitor."
+  },
+  {
+    "start": 575.0,
+    "end": 580.0,
+    "text": "And so internally, we're actually getting our security team will provide feedback to us."
+  },
+  {
+    "start": 580.0,
+    "end": 586.0,
+    "text": "Hey, I saw somebody logged in, and I actually had a really hard time trying to use this feature."
+  },
+  {
+    "start": 586.0,
+    "end": 588.0,
+    "text": "Here are some, you know, suggestions I could make."
+  },
+  {
+    "start": 588.0,
+    "end": 593.0,
+    "text": "The other side of that is we have a services team who actually uses ThreatStack on the customers"
+  },
+  {
+    "start": 593.0,
+    "end": 598.0,
+    "text": "who don't have a security team, and they'll, like, ask us to monitor their infrastructure for them."
+  },
+  {
+    "start": 598.0,
+    "end": 605.0,
+    "text": "And so we can use those teams to also glean that feedback or create new features that we can then first publish to them."
+  },
+  {
+    "start": 605.0,
+    "end": 607.0,
+    "text": "So, hey guys, like, we have this cool new feature."
+  },
+  {
+    "start": 607.0,
+    "end": 609.0,
+    "text": "Does this provide you value?"
+  },
+  {
+    "start": 609.0,
+    "end": 611.0,
+    "text": "And if not, what can we do to make it better?"
+  },
+  {
+    "start": 611.0,
+    "end": 615.0,
+    "text": "Great. It's always a good thing when you're using your own technology to better your own technology."
+  },
+  {
+    "start": 615.0,
+    "end": 617.0,
+    "text": "Absolutely. That's what we believe."
+  },
+  {
+    "start": 617.0,
+    "end": 619.0,
+    "text": "So thanks so much, Lucas, for joining us today."
+  },
+  {
+    "start": 619.0,
+    "end": 620.0,
+    "text": "Yeah, thank you for having me."
+  },
+  {
+    "start": 620.0,
+    "end": 624.0,
+    "text": "And thank you for watching another episode of This Is My Architecture."
+  },
+  {
+    "start": 624.0,
+    "end": 625.0,
+    "text": "This is my architecture."
+  }
+]

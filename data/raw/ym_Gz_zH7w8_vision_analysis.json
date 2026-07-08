@@ -1,0 +1,224 @@
+{
+  "step_by_step_reasoning": "The transcript outlines two primary flows: a real-time recommendation request and an offline training/ingestion loop. 1) The real-time loop starts at the Peloton Bike (UserConsumerIOT), passing to Hydration Service, then Recommendation Service. Recommendation Service retrieves user data from DynamoDB, candidates from Neptune (Graph DB), and models from S3 (Model Registry). It calls Inference Service to score the candidates, registers events with MSK, and sends recommendations back to the user. 2) The offline loop uses MWAA to orchestrate EMR (for pre-processing, updating DynamoDB and Neptune, and staging historical S3 data) and EKS GPU clusters to train machine learning models and register artifacts to S3.",
+  "graph": {
+    "name": "Peloton Personalized Recommendation System",
+    "link": "https://www.youtube.com/watch?v=ym_Gz_zH7w8",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Powers recommendations for over 6.5M members. Combines real-time microservices on EKS with an offline EMR and EKS GPU-based training pipeline orchestrated by MWAA."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Peloton Bike Client",
+      "notes": "Triggers workout recommendations."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "Hydration Service",
+      "notes": "WORKLOAD_PEEK: Backend microservice that initiates recommendation orchestration."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Recommendation Service",
+      "notes": "WORKLOAD_PEEK: Core orchestrator microservice."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Feature Store",
+      "notes": "DATA_PEEK: Low-latency store holding user preferences and historical behavior."
+    },
+    {
+      "id": "4",
+      "service": "Neptune",
+      "name": "Graph Database",
+      "notes": "DATA_PEEK: Stores relational graph of members, classes, and taken rides."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "Inference Service",
+      "notes": "WORKLOAD_PEEK: Scores candidate workouts using machine learning models."
+    },
+    {
+      "id": "6",
+      "service": "MSK",
+      "name": "Event Logging Stream",
+      "notes": "Streams real-time metadata and telemetry back to S3."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Data Lake & Model Registry",
+      "notes": "DATA_PEEK: Houses historical datasets, logged events, and model artifacts."
+    },
+    {
+      "id": "8",
+      "service": "EMR",
+      "name": "EMR Spark Clusters",
+      "notes": "WORKLOAD_PEEK: Performs offline batch preprocessing and low-latency store sync."
+    },
+    {
+      "id": "9",
+      "service": "EKS",
+      "name": "EKS GPU Model Training Cluster",
+      "notes": "WORKLOAD_PEEK: Runs GPU-accelerated training workloads."
+    },
+    {
+      "id": "10",
+      "service": "MWAA",
+      "name": "MWAA (Airflow)",
+      "notes": "Orchestrates batch pre-processing and model training pipelines."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Requests recommendations."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Dispatches request to recommendation orchestrator."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches user features."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fetches class candidate list."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Retrieves target model."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Pushes candidates, features, and model for scoring."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns scored candidate list."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Asynchronously streams logging telemetry."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Persists streamed data for future training loop."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Sends hydration-ready recommendations."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "Returns recommendations to rider screen."
+    },
+    {
+      "source": "10",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers EMR preprocessing."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers GPU model training."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Reads raw logged events."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Hydrates Feature Store with batch metrics."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Hydrates Graph Database with updated relationships."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Pulls historical dataset for training."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Registers trained model artifacts."
+    }
+  ]
+}

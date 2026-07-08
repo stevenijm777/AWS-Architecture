@@ -1,0 +1,507 @@
+[
+  {
+    "start": 0.0,
+    "end": 2.0,
+    "text": "Hi, I'm Gerardo from AWS."
+  },
+  {
+    "start": 2.0,
+    "end": 5.0,
+    "text": "And I'm Luke from Monzo, and this is my architecture."
+  },
+  {
+    "start": 14.0,
+    "end": 17.0,
+    "text": "Today we're going to talk about Monzo's core banking platform."
+  },
+  {
+    "start": 17.0,
+    "end": 19.0,
+    "text": "What can you tell me about this platform?"
+  },
+  {
+    "start": 19.0,
+    "end": 21.0,
+    "text": "So to just give you an introduction to Monzo,"
+  },
+  {
+    "start": 21.0,
+    "end": 26.0,
+    "text": "so we're a bank that's a fully regulated bank operating in the UK currently."
+  },
+  {
+    "start": 26.0,
+    "end": 31.0,
+    "text": "We've got around 8 million customers, and that's a mix of current account customers and business customers."
+  },
+  {
+    "start": 31.0,
+    "end": 35.0,
+    "text": "And we were founded in 2015 with a mission to make money work for everyone."
+  },
+  {
+    "start": 35.0,
+    "end": 41.0,
+    "text": "So one of the key architectural principles we've taken to building our platform is that we've got global ambitions as a bank,"
+  },
+  {
+    "start": 41.0,
+    "end": 44.0,
+    "text": "so we've got to build a global platform to take us there."
+  },
+  {
+    "start": 44.0,
+    "end": 46.0,
+    "text": "Great. So let's dive in."
+  },
+  {
+    "start": 46.0,
+    "end": 50.0,
+    "text": "So if this is a banking platform, presumably you have payments flowing through this?"
+  },
+  {
+    "start": 50.0,
+    "end": 51.0,
+    "text": "Yes."
+  },
+  {
+    "start": 51.0,
+    "end": 53.0,
+    "text": "How about you take me through the journey of a payment?"
+  },
+  {
+    "start": 53.0,
+    "end": 61.0,
+    "text": "Yeah, good. So for an easy example, maybe you're a Monzo customer and you're picking up your morning coffee from the coffee shop on the way into work in the morning."
+  },
+  {
+    "start": 61.0,
+    "end": 69.0,
+    "text": "And you've just got to the till and ordered from the barista, and you've just been charged $3, and you tap your card on the payment terminal in the shop."
+  },
+  {
+    "start": 69.0,
+    "end": 77.0,
+    "text": "So that payment gets routed through one of our payment schemes, through our physical data centers, into our AWS Direct Connects,"
+  },
+  {
+    "start": 77.0,
+    "end": 79.0,
+    "text": "and then that ends up in our core banking platform."
+  },
+  {
+    "start": 79.0,
+    "end": 85.0,
+    "text": "Okay, so this is how you're getting transaction information and presumably credit card information?"
+  },
+  {
+    "start": 85.0,
+    "end": 86.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 86.0,
+    "end": 87.0,
+    "text": "Okay, what happens next?"
+  },
+  {
+    "start": 87.0,
+    "end": 94.0,
+    "text": "Yeah, so at this point, we don't want to be passing any sensitive card details for our platform, so that hits our tokenization service."
+  },
+  {
+    "start": 94.0,
+    "end": 96.0,
+    "text": "And then this just removes all sensitive information."
+  },
+  {
+    "start": 96.0,
+    "end": 99.0,
+    "text": "So you just need to remove a token rather than an actual card number."
+  },
+  {
+    "start": 99.0,
+    "end": 100.0,
+    "text": "Okay."
+  },
+  {
+    "start": 100.0,
+    "end": 106.0,
+    "text": "Presumably these are microservices, because I see that you're pairing some of these services with databases."
+  },
+  {
+    "start": 106.0,
+    "end": 107.0,
+    "text": "Yes."
+  },
+  {
+    "start": 107.0,
+    "end": 108.0,
+    "text": "Yeah, that's right."
+  },
+  {
+    "start": 108.0,
+    "end": 117.0,
+    "text": "So we've got about 2,600 microservices on our platform at the moment, which are all within Kubernetes, so EKS."
+  },
+  {
+    "start": 117.0,
+    "end": 125.0,
+    "text": "And the basic flow here is that every microservice that needs to store state will have a database associated with it, which we're storing key spaces."
+  },
+  {
+    "start": 125.0,
+    "end": 126.0,
+    "text": "Okay."
+  },
+  {
+    "start": 126.0,
+    "end": 132.0,
+    "text": "So to sort you through the basic flow once you've made sure that there's no sensitive information being passed around the platform,"
+  },
+  {
+    "start": 132.0,
+    "end": 137.0,
+    "text": "is that we will make sure that that card is like a valid card, that it's not blocked, it's not frozen for any reason."
+  },
+  {
+    "start": 137.0,
+    "end": 144.0,
+    "text": "And we do that by making a call over to our account data store and key spaces to make sure that that card exists."
+  },
+  {
+    "start": 144.0,
+    "end": 145.0,
+    "text": "Okay."
+  },
+  {
+    "start": 145.0,
+    "end": 151.0,
+    "text": "Once we know that that's fine, we make sure that card is associated with an account, which again, we do in a check,"
+  },
+  {
+    "start": 151.0,
+    "end": 154.0,
+    "text": "which is basically a read against that data store."
+  },
+  {
+    "start": 154.0,
+    "end": 160.0,
+    "text": "And then the final thing is to make sure that as a customer, you actually have enough money to make the purchase for your coffee in the morning."
+  },
+  {
+    "start": 160.0,
+    "end": 163.0,
+    "text": "And then we do some basic calculations on your ledger there."
+  },
+  {
+    "start": 163.0,
+    "end": 164.0,
+    "text": "Okay."
+  },
+  {
+    "start": 164.0,
+    "end": 167.0,
+    "text": "And if everything's good, I'm guessing that you confirm the payment?"
+  },
+  {
+    "start": 167.0,
+    "end": 168.0,
+    "text": "That's it."
+  },
+  {
+    "start": 168.0,
+    "end": 169.0,
+    "text": "Okay."
+  },
+  {
+    "start": 169.0,
+    "end": 177.0,
+    "text": "So we, this flow is all synchronous, so we've got like a very few, a small number of seconds to be able to return a response to the payment terminal."
+  },
+  {
+    "start": 177.0,
+    "end": 182.0,
+    "text": "And so that just goes straight back out with a like yes or no decision about whether we can process the transaction or not."
+  },
+  {
+    "start": 182.0,
+    "end": 186.0,
+    "text": "So presumably this whole architecture is, architecture around speed."
+  },
+  {
+    "start": 186.0,
+    "end": 190.0,
+    "text": "How does, how does Cassandra play a part in that speed?"
+  },
+  {
+    "start": 190.0,
+    "end": 191.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 191.0,
+    "end": 194.0,
+    "text": "So the, so the synchronous flow, um, late, like low latency is super important for us."
+  },
+  {
+    "start": 194.0,
+    "end": 197.0,
+    "text": "Um, and like the overall performance of the platform is super important."
+  },
+  {
+    "start": 197.0,
+    "end": 204.0,
+    "text": "When we decided to use Cassandra as our like data store, when we were building the button, um, there were two key things that we were looking for."
+  },
+  {
+    "start": 204.0,
+    "end": 210.0,
+    "text": "One of them is that we could, um, horizontally scale the service in future as we like build the business and take on more customers."
+  },
+  {
+    "start": 210.0,
+    "end": 212.0,
+    "text": "Um, and that could also get multi-region."
+  },
+  {
+    "start": 212.0,
+    "end": 214.0,
+    "text": "And then secondly is that it needed to be fast."
+  },
+  {
+    "start": 214.0,
+    "end": 215.0,
+    "text": "Yes."
+  },
+  {
+    "start": 215.0,
+    "end": 216.0,
+    "text": "Okay."
+  },
+  {
+    "start": 216.0,
+    "end": 221.0,
+    "text": "And you've been operating on a Cassandra platform for a while, even before keyspaces was available."
+  },
+  {
+    "start": 221.0,
+    "end": 222.0,
+    "text": "Yes."
+  },
+  {
+    "start": 222.0,
+    "end": 223.0,
+    "text": "So tell me about it."
+  },
+  {
+    "start": 223.0,
+    "end": 227.0,
+    "text": "What were some of the challenges you had and tell me about your decision to move to keyspaces?"
+  },
+  {
+    "start": 227.0,
+    "end": 228.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 228.0,
+    "end": 235.0,
+    "text": "So when we looked at like the total cost of ownership of, um, running our own Cassandra environments, we used to manage Cassandra directly on top of EC2."
+  },
+  {
+    "start": 235.0,
+    "end": 236.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 236.0,
+    "end": 241.0,
+    "text": "And we found that as the business was scaling, we were just spending more and more time doing like routine operations, like scaling our clusters out."
+  },
+  {
+    "start": 241.0,
+    "end": 248.0,
+    "text": "Um, the blast radius of incidents when they happened was actually quite large where you could have like, you run into problems around noisy neighbors."
+  },
+  {
+    "start": 248.0,
+    "end": 257.0,
+    "text": "Um, and when we looked at the keyspaces product that gave us really, really good, like performance guarantees around like a super low single seconds and single millisecond latencies."
+  },
+  {
+    "start": 257.0,
+    "end": 258.0,
+    "text": "Okay."
+  },
+  {
+    "start": 258.0,
+    "end": 260.0,
+    "text": "Um, and it took the boxes with like scaling."
+  },
+  {
+    "start": 260.0,
+    "end": 261.0,
+    "text": "Okay."
+  },
+  {
+    "start": 261.0,
+    "end": 263.0,
+    "text": "What sort of scale are you running in keyspaces?"
+  },
+  {
+    "start": 263.0,
+    "end": 270.0,
+    "text": "Uh, at peak at the moment, we are running about 2 million reads per second against, um, keyspaces and about a hundred thousand."
+  },
+  {
+    "start": 270.0,
+    "end": 271.0,
+    "text": "Right."
+  },
+  {
+    "start": 271.0,
+    "end": 272.0,
+    "text": "That's it."
+  },
+  {
+    "start": 272.0,
+    "end": 274.0,
+    "text": "So how about any limitations around Cassandra?"
+  },
+  {
+    "start": 274.0,
+    "end": 283.0,
+    "text": "Cause obviously, um, with this sort of NoSQL databases that scale really well horizontally, uh, you can bump into challenges with consistency."
+  },
+  {
+    "start": 283.0,
+    "end": 285.0,
+    "text": "Uh, are you having any issues around that?"
+  },
+  {
+    "start": 285.0,
+    "end": 287.0,
+    "text": "Um, we, we've solved the problems largely."
+  },
+  {
+    "start": 287.0,
+    "end": 293.0,
+    "text": "Like we're running our ledger on, on keyspaces and like some of the guarantees that you need to provide over a ledger is like super important if you're a bank."
+  },
+  {
+    "start": 293.0,
+    "end": 299.0,
+    "text": "Um, so we've had to solve like the problem around double entry bookkeeping ourselves by building like our own transaction services."
+  },
+  {
+    "start": 299.0,
+    "end": 301.0,
+    "text": "And like a number of other microservices."
+  },
+  {
+    "start": 301.0,
+    "end": 304.0,
+    "text": "Um, just so we get the guarantees that we need."
+  },
+  {
+    "start": 304.0,
+    "end": 305.0,
+    "text": "Right."
+  },
+  {
+    "start": 305.0,
+    "end": 306.0,
+    "text": "That's good to hear."
+  },
+  {
+    "start": 306.0,
+    "end": 307.0,
+    "text": "Okay."
+  },
+  {
+    "start": 307.0,
+    "end": 312.0,
+    "text": "So, um, um, this being a core backing platform and you mentioned that you're highly regulated in the UK."
+  },
+  {
+    "start": 312.0,
+    "end": 317.0,
+    "text": "So, um, how do you, how do you, how do, how does security play a part in the architecture?"
+  },
+  {
+    "start": 317.0,
+    "end": 318.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 318.0,
+    "end": 323.0,
+    "text": "So security, you, you can't run a bank successfully without having like strong security guarantees."
+  },
+  {
+    "start": 323.0,
+    "end": 327.0,
+    "text": "Um, so we use a couple of different AWS services to help like secure our platform."
+  },
+  {
+    "start": 327.0,
+    "end": 333.0,
+    "text": "We've got things like the web, um, externally, but then within the platform as well, we make use of things like AWS Claytrail."
+  },
+  {
+    "start": 333.0,
+    "end": 339.0,
+    "text": "And then we've also got some fairly novel use cases with the, um, AWS Nitro enclaves."
+  },
+  {
+    "start": 339.0,
+    "end": 340.0,
+    "text": "Great."
+  },
+  {
+    "start": 340.0,
+    "end": 342.0,
+    "text": "Presumably to create some isolated environments."
+  },
+  {
+    "start": 342.0,
+    "end": 343.0,
+    "text": "It's like isolating workloads."
+  },
+  {
+    "start": 343.0,
+    "end": 344.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 344.0,
+    "end": 345.0,
+    "text": "That's good to hear."
+  },
+  {
+    "start": 345.0,
+    "end": 347.0,
+    "text": "So Luke, thank you so much for sharing this architecture with us."
+  },
+  {
+    "start": 347.0,
+    "end": 348.0,
+    "text": "Thank you for having me."
+  },
+  {
+    "start": 348.0,
+    "end": 349.0,
+    "text": "Thank you for watching."
+  },
+  {
+    "start": 349.0,
+    "end": 350.0,
+    "text": "This is my architecture."
+  },
+  {
+    "start": 350.0,
+    "end": 351.0,
+    "text": "See you next time."
+  }
+]

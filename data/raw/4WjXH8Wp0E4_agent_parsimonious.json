@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "The architecture shows a patient record access and document storage pipeline. Clinicians access the platform via NHS N3/HSCN network through Direct Connect. This routes to the microservices-based Integration Service (EC2) with its own RDS database. The Integration Service coordinates with the FHIR Service (EC2 with RDS) to normalize structured data. Unstructured letters/documents are uploaded via Storage Gateway into S3, which triggers SQS to invoke Lambda. Lambda hits the Document Service (EC2 with RDS) to index the metadata in PostgreSQL RDS and store document content back to S3.",
+  "graph": {
+    "name": "Kainos Multi-Tenant Healthcare Interoperability Platform",
+    "link": "https://www.youtube.com/watch?v=4WjXH8Wp0E4",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Microservices platform handling FHIR structured patient data and unstructured documents for 650,000 patients with 2,000 concurrent active care workers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "Clinicians / Care Workers",
+      "notes": "Access the platform through secure N3/HSCN NHS network."
+    },
+    {
+      "id": "1",
+      "service": "DirectConnect",
+      "name": "AWS Direct Connect",
+      "notes": "Secures data flows into AWS environment from the NHS network."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Integration Service",
+      "notes": "WORKLOAD_PEEK: Microservice handling initial requests and third-party data retrieval."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "Integration RDS",
+      "notes": "PostgreSQL instance for integration metadata."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "FHIR Service",
+      "notes": "WORKLOAD_PEEK: Standardizes healthcare data into the FHIR format."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "FHIR RDS",
+      "notes": "DATA_PEEK: Postgres RDS storing standardized FHIR records."
+    },
+    {
+      "id": "6",
+      "service": "StorageGateway",
+      "name": "AWS Storage Gateway",
+      "notes": "Bridges local healthcare systems to mirror unstructured documents."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "DATA_PEEK: Stores raw and processed clinical documents."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Orchestrates event-driven document processing."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Lambda Function",
+      "notes": "WORKLOAD_PEEK: Processes queue messages to trigger metadata ingestion."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "Document Service",
+      "notes": "WORKLOAD_PEEK: Microservice managing document metadata and content locations."
+    },
+    {
+      "id": "11",
+      "service": "RDS",
+      "name": "Document RDS",
+      "notes": "PostgreSQL instance storing document metadata."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Clinicians log in and request patient records."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forwards requests to Integration Service."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Stores temporary integration state."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Forwards retrieved data for standardization."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Stores standardized structured FHIR records."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mirrors local documents (discharge letters) into S3."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers processing event on object creation."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers Lambda processor."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Calls Document Service to process ingested file."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Persists document metadata."
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Saves processed clinical document to production S3 bucket."
+    }
+  ]
+}

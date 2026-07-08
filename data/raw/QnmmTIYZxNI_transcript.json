@@ -1,0 +1,237 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.0,
+    "text": "Welcome to This is My Architecture. We're live from reInvent. My name is Gerardo and I'm joined"
+  },
+  {
+    "start": 11.0,
+    "end": 15.92,
+    "text": "today by Alex from Adobe. Welcome Alex. Thank you for having me. This is Alex from Network"
+  },
+  {
+    "start": 15.92,
+    "end": 21.6,
+    "text": "Engineering at Adobe. Happy to be here. Thank you for joining us. So Alex, tell us what sort"
+  },
+  {
+    "start": 21.6,
+    "end": 26.400000000000002,
+    "text": "of networking challenges did you deal with at Adobe? Well, the biggest networking challenges"
+  },
+  {
+    "start": 26.4,
+    "end": 34.599999999999994,
+    "text": "that we're dealing with is that we are like a huge company and we use a lot of infrastructure"
+  },
+  {
+    "start": 34.599999999999994,
+    "end": 40.78,
+    "text": "and with the coming of Kubernetes clusters and EKS and containers, we try to do that at"
+  },
+  {
+    "start": 40.78,
+    "end": 45.32,
+    "text": "scale, which is pretty hard with thousands of accounts and VPCs. You have thousands of"
+  },
+  {
+    "start": 45.32,
+    "end": 50.58,
+    "text": "AWS accounts? Yes. That's massive. Okay. And they're owned by our product teams. So we don't"
+  },
+  {
+    "start": 50.58,
+    "end": 55.7,
+    "text": "own them as the infrastructure team. They own everything. So before implementing this solution,"
+  },
+  {
+    "start": 55.7,
+    "end": 60.1,
+    "text": "what sort of challenges you had with giving access to these product teams? Before Transit"
+  },
+  {
+    "start": 60.1,
+    "end": 66.46000000000001,
+    "text": "Gateway being a service that AWS provided, we had the Transit VPC implementation and we"
+  },
+  {
+    "start": 66.46000000000001,
+    "end": 71.58,
+    "text": "kind of hit the limits of that implementation with the scale that we were using it at."
+  },
+  {
+    "start": 71.58,
+    "end": 76.78,
+    "text": "Awesome. So you've solved that with our friend AWS Transit Gateway. So tell us, can you walk"
+  },
+  {
+    "start": 76.78,
+    "end": 81.9,
+    "text": "us through how the architecture works? Yes. So what we did is we use Transit Gateway as a"
+  },
+  {
+    "start": 81.9,
+    "end": 90.7,
+    "text": "regional hub to connect the VPCs that our customers have inside that region. And we've went to a place"
+  },
+  {
+    "start": 90.7,
+    "end": 96.30000000000001,
+    "text": "where we could actually optimize IP address allocation because that was one of our biggest challenges."
+  },
+  {
+    "start": 96.30000000000001,
+    "end": 110.30000000000001,
+    "text": "Yeah. And we actually, we are using two CIDR blocks. One is reused and one is routed. And let me explain a bit what that is. So the reuse IP space is an IP space."
+  },
+  {
+    "start": 110.3,
+    "end": 125.1,
+    "text": "The reuse IP space is an IP space that's local to the VPC. It's reused by all other VPCs as well because it remains in the VPC. And in that CIDR block, we deploy EKS cluster, EC2 instances and everything else that the customer needs."
+  },
+  {
+    "start": 125.1,
+    "end": 139.1,
+    "text": "Okay. In the routed CIDR block, we deploy NAT gateways and NLBs to enable the EKS clusters and EC2 instances to reach everything else in the internal network. Okay. And where does Transit Gateway come into the picture?"
+  },
+  {
+    "start": 139.1,
+    "end": 149.1,
+    "text": "So what we're doing is having all our VPCs connected to Transit Gateway and also having Direct Connect and VPN in some sites."
+  },
+  {
+    "start": 149.1,
+    "end": 167.1,
+    "text": "Okay. And the Transit Gateway as a routing hub in the region throughout multiple routing domains. And the traffic flow actually looks like this. So from the clusters, we're going to the NAT gateway. And the NAT gateway, something that not many of you maybe know, actually does NAT between the private IP of the EKS."
+  },
+  {
+    "start": 167.1,
+    "end": 179.1,
+    "text": "Yeah. And its private IP. And sends the traffic to the Transit Gateway, thus enabling the VPC to access both shared services in the region, other clouds and other regions."
+  },
+  {
+    "start": 179.1,
+    "end": 189.1,
+    "text": "Yeah. So I'm guessing the Transit Gateway is working as a hub for your communication across on-prem and also multiple VPCs? Yes. Within a region. Is that right? Exactly. Exactly."
+  },
+  {
+    "start": 189.1,
+    "end": 193.1,
+    "text": "How about this other side? What's happening on your shared services?"
+  },
+  {
+    "start": 193.1,
+    "end": 201.1,
+    "text": "So what we're doing there is we needed to provide a level of abstraction to the service providers, the shared service providers."
+  },
+  {
+    "start": 201.1,
+    "end": 205.1,
+    "text": "Yeah. They actually have their VPCs way there in the back."
+  },
+  {
+    "start": 205.1,
+    "end": 217.1,
+    "text": "Yeah. And we don't have access to those. They come and publish the private links in our shared services VPC, thus making the service available to everyone else in the region who wants to use it."
+  },
+  {
+    "start": 217.1,
+    "end": 226.1,
+    "text": "So basically a private link is giving these endpoints or giving the users a way to connect to you in a simplified and centralized manner."
+  },
+  {
+    "start": 226.1,
+    "end": 240.1,
+    "text": "Is that right? Exactly. Exactly. And we're actually providing the service provider a much higher level of freedom with their infrastructure to build, destroy whenever they want because they have the private link there and they're not impacting their service."
+  },
+  {
+    "start": 240.1,
+    "end": 245.1,
+    "text": "This is really good. What sort of benefits are Adobe and your customers getting off this implementation?"
+  },
+  {
+    "start": 245.1,
+    "end": 251.1,
+    "text": "I think that the biggest benefit that we're getting from this implementation is a better management of IPv4 space."
+  },
+  {
+    "start": 251.1,
+    "end": 252.1,
+    "text": "Okay."
+  },
+  {
+    "start": 252.1,
+    "end": 259.1,
+    "text": "Which comes with a super fast go to market for our products because the infrastructure is super easy to deploy."
+  },
+  {
+    "start": 259.1,
+    "end": 266.1,
+    "text": "It's a cookie cutter pattern that everyone can use. And so it's way easier for them to deploy it."
+  },
+  {
+    "start": 266.1,
+    "end": 270.1,
+    "text": "Awesome. So you've simplified operations and you become faster to respond faster to your customers."
+  },
+  {
+    "start": 270.1,
+    "end": 271.1,
+    "text": "Exactly."
+  },
+  {
+    "start": 271.1,
+    "end": 272.1,
+    "text": "Brilliant. Yeah."
+  },
+  {
+    "start": 272.1,
+    "end": 275.1,
+    "text": "How about the future of this? What's in the future for this architecture?"
+  },
+  {
+    "start": 275.1,
+    "end": 287.1,
+    "text": "Well, we're working with AWS service teams to actually have a better and like more resilient and super high scalable way of interconnecting cross regions."
+  },
+  {
+    "start": 287.1,
+    "end": 289.1,
+    "text": "And we hope you guys are going to help us."
+  },
+  {
+    "start": 290.1,
+    "end": 293.1,
+    "text": "So I'm looking forward to that. Yeah. It's going to be awesome."
+  },
+  {
+    "start": 293.1,
+    "end": 296.1,
+    "text": "Sounds good. Alex, thank you so much for sharing this with us."
+  },
+  {
+    "start": 296.1,
+    "end": 302.1,
+    "text": "I love how the networking team at Adobe is pushing the limits of this because of the scale of which you're running at AWS."
+  },
+  {
+    "start": 302.1,
+    "end": 303.1,
+    "text": "Yeah."
+  },
+  {
+    "start": 303.1,
+    "end": 304.1,
+    "text": "Thank you for sharing this."
+  },
+  {
+    "start": 304.1,
+    "end": 305.1,
+    "text": "Thank you for having me here."
+  },
+  {
+    "start": 305.1,
+    "end": 307.1,
+    "text": "And thank you for watching. This is my architecture."
+  }
+]

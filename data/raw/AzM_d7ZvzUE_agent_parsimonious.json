@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "We first parse the client's architecture starting from the source client lambda. Logs from client lambdas are streamed into Kinesis. From Kinesis, a transform Lambda function processes the logs into invocation records, reading and writing metadata state from DynamoDB. These processed invocation records go into a second Kinesis stream. This second Kinesis stream feeds two downstream paths: (1) a fast-query path using Lambda writing to Serverless Aurora, and (2) an analytical path where Firehose uses Glue schemas to convert records to Parquet format before storing them in S3, which is queried via Athena.",
+  "graph": {
+    "name": "Epsagon: Serverless Metrics and Log Observability Pipeline",
+    "link": "https://www.youtube.com/watch?v=AzM_d7ZvzUE",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Epsagon processes billions of client Lambda invocations monthly by ingesting and parsing logs into structured metrics. It uses a serverless architecture to automatically scale and control costs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Lambda",
+      "name": "Client Lambda",
+      "notes": "WORKLOAD_PEEK: Monitored user lambdas generating logs."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Log Stream Kinesis",
+      "notes": "Ingests streamed CloudWatch log groups from customer accounts."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Transform Lambda",
+      "notes": "WORKLOAD_PEEK: Transforms raw log lines into clean invocation records."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Metadata DB",
+      "notes": "DATA_PEEK: Keeps track of customer functions, configs, and partial state."
+    },
+    {
+      "id": "4",
+      "service": "Kinesis",
+      "name": "Invocation Stream Kinesis",
+      "notes": "Streams processed invocation records."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Aurora Writer Lambda",
+      "notes": "Writes invocation records to Aurora DB. Concurrency controlled by Kinesis integration to prevent Aurora overload."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Serverless Aurora",
+      "notes": "DATA_PEEK: High-speed storage optimized for single point-in-time trace queries."
+    },
+    {
+      "id": "7",
+      "service": "Firehose",
+      "name": "Firehose",
+      "notes": "Batches incoming invocation records and converts JSON to Parquet."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue Data Catalog",
+      "notes": "Provides table schema for Parquet conversion within Firehose."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Data Lake S3",
+      "notes": "DATA_PEEK: Long-term storage of optimized Parquet records."
+    },
+    {
+      "id": "10",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Performs ad-hoc queries and builds aggregated metrics from S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams logs from client account"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Feeds log streams in batches"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queries metadata and manages state"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns config and partial execution state"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Emits parsed invocation records"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers batch writer"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Performs high-speed database writes"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams records for archiving"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Retrieves Parquet schema definition"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves structured Parquet objects"
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Runs analytical and aggregative queries"
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "step_by_step_reasoning": "We trace the architecture flow chronologically: ingest starts with a user upload to S3, which triggers orchestration. The workflow splits into media transcoding via MediaConvert and metadata extraction using Lambda. A second analysis pipeline orchestrates AI services (Rekognition, Transcribe, Comprehend) to enrich metadata stored in DynamoDB. Finally, the consolidated data is ingested into Reach Engine running on EC2 and EKS.",
+  "graph": {
+    "name": "Media to Cloud Orchestration with Reach Engine",
+    "link": "https://www.youtube.com/watch?v=07lfvavMdfU",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Serverless media ingest and enrichment pipeline that extracts metadata, transcodes video, runs AI/ML sentiment and content analysis, and stores temporary metadata in DynamoDB before feeding a Reach Engine platform hosted on EC2 and EKS."
+  },
+  "nodes": [
+    {
+      "id": "user",
+      "service": "UserConsumerWeb",
+      "name": "Web User",
+      "notes": "Users uploading content and viewing media/metadata in the browser."
+    },
+    {
+      "id": "s3",
+      "service": "S3",
+      "name": "Input S3 Bucket",
+      "notes": "Receives the uploaded raw video and stores processed proxies."
+    },
+    {
+      "id": "step_functions_ingest",
+      "service": "StepFunctions",
+      "name": "Ingest Orchestrator",
+      "notes": "Orchestrates transcoding and basic metadata extraction."
+    },
+    {
+      "id": "mediaconvert",
+      "service": "MediaConvert",
+      "name": "AWS Elemental MediaConvert",
+      "notes": "Generates low-res browser-compatible proxies from source videos."
+    },
+    {
+      "id": "lambda_meta",
+      "service": "Lambda",
+      "name": "Metadata Extractor",
+      "notes": "Extracts technical checksums and media information."
+    },
+    {
+      "id": "step_functions_analysis",
+      "service": "StepFunctions",
+      "name": "Analysis Orchestrator",
+      "notes": "Orchestrates AI services for content enrichment."
+    },
+    {
+      "id": "rekognition",
+      "service": "Rekognition",
+      "name": "Amazon Rekognition",
+      "notes": "Identifies celebrities, violence, and tags contents with timestamps."
+    },
+    {
+      "id": "transcribe",
+      "service": "Transcribe",
+      "name": "Amazon Transcribe",
+      "notes": "Converts audio from content to text."
+    },
+    {
+      "id": "comprehend",
+      "service": "Comprehend",
+      "name": "Amazon Comprehend",
+      "notes": "Analyzes transcribed text for entities and profanity."
+    },
+    {
+      "id": "dynamodb",
+      "service": "DynamoDB",
+      "name": "Temporary Metadata Store",
+      "notes": "Stores intermediate metadata temporarily before final ingest."
+    },
+    {
+      "id": "reach_ec2",
+      "service": "EC2",
+      "name": "Reach Engine Portal",
+      "notes": "Host environment for Reach Engine front-end and web interfaces."
+    },
+    {
+      "id": "reach_eks",
+      "service": "EKS",
+      "name": "Reach Engine Orchestration",
+      "notes": "Kubernetes cluster executing core processing, search, and orchestration logic."
+    }
+  ],
+  "edges": [
+    {
+      "source": "user",
+      "target": "s3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User uploads raw video file to input bucket"
+    },
+    {
+      "source": "s3",
+      "target": "step_functions_ingest",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "S3 upload triggers the ingest Step Functions workflow"
+    },
+    {
+      "source": "step_functions_ingest",
+      "target": "mediaconvert",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kicks off proxy transcoding job"
+    },
+    {
+      "source": "mediaconvert",
+      "target": "s3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Outputs the web-playable proxy back to S3"
+    },
+    {
+      "source": "step_functions_ingest",
+      "target": "lambda_meta",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Triggers lambda functions to extract technical metadata"
+    },
+    {
+      "source": "lambda_meta",
+      "target": "dynamodb",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Saves extracted checksums and basic technical metadata"
+    },
+    {
+      "source": "step_functions_ingest",
+      "target": "step_functions_analysis",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers the second analysis step function after basic ingest finishes"
+    },
+    {
+      "source": "step_functions_analysis",
+      "target": "rekognition",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers computer vision analysis on video content"
+    },
+    {
+      "source": "rekognition",
+      "target": "dynamodb",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves timestamped tags and metadata"
+    },
+    {
+      "source": "step_functions_analysis",
+      "target": "transcribe",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers speech-to-text audio processing"
+    },
+    {
+      "source": "transcribe",
+      "target": "comprehend",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends extracted transcript text to Comprehend for NLP analysis"
+    },
+    {
+      "source": "comprehend",
+      "target": "dynamodb",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Saves NLP extracted entity and sentiment data"
+    },
+    {
+      "source": "dynamodb",
+      "target": "reach_eks",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers bulk ingest of compiled metadata into Reach Engine"
+    },
+    {
+      "source": "dynamodb",
+      "target": "reach_ec2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Imports metadata to frontend search portal"
+    }
+  ]
+}

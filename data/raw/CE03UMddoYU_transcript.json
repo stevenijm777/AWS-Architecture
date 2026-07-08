@@ -1,0 +1,362 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.4,
+    "text": "Hello and welcome to another episode of This is My Architecture. I'm Sonika and today I have"
+  },
+  {
+    "start": 12.4,
+    "end": 17.12,
+    "text": "Vijay with me from Vigod. Hello Vijay. Hi Sonika. Thank you for sharing your time here. Thanks for"
+  },
+  {
+    "start": 17.12,
+    "end": 22.54,
+    "text": "having us here. Can you tell us a bit about Vigod? Vigod stands for water, electricity and gas of"
+  },
+  {
+    "start": 22.54,
+    "end": 28.76,
+    "text": "things. It's an IoT platform built to measure and monitor utilities. Oh that's great. Looks to be"
+  },
+  {
+    "start": 28.76,
+    "end": 33.4,
+    "text": "something with sustainability right? Right. Okay so can you tell us about what are we talking today?"
+  },
+  {
+    "start": 33.92,
+    "end": 38.96,
+    "text": "So today I would like to walk through the Vigod Aqua which is the water management platform of Vigod."
+  },
+  {
+    "start": 39.56,
+    "end": 45.06,
+    "text": "Oh so let's straight dive into the architecture. Sure so before we start I would just let you know"
+  },
+  {
+    "start": 45.06,
+    "end": 49.480000000000004,
+    "text": "that the architecture is split into three phases. So we have the ingestion layer which takes care of"
+  },
+  {
+    "start": 49.480000000000004,
+    "end": 54.620000000000005,
+    "text": "the data coming in. We've got the pre-processing layer which manages the data and the post-processing"
+  },
+  {
+    "start": 54.62,
+    "end": 61.98,
+    "text": "layer that saves the data. So today what we're talking about is close to 100k sensors. These are"
+  },
+  {
+    "start": 61.98,
+    "end": 67.74,
+    "text": "water meters out in the field transmitting data to the AWS cloud. So the first point of contact is the"
+  },
+  {
+    "start": 67.74,
+    "end": 73.86,
+    "text": "AWS API gateway which then forwards the information to a bunch of transformers. These are nothing but"
+  },
+  {
+    "start": 73.86,
+    "end": 80.06,
+    "text": "lambdas that take the ingestion data and then process them. Why are they called transformers? We've got"
+  },
+  {
+    "start": 80.06,
+    "end": 84.86,
+    "text": "three generations of sensors running out of the field and each talking its own protocol. So we need to"
+  },
+  {
+    "start": 84.86,
+    "end": 89.58,
+    "text": "streamline them into a single protocol which is what the transformer does. So what the transformer"
+  },
+  {
+    "start": 90.22,
+    "end": 97.74000000000001,
+    "text": "finally ends up doing is splitting every data into two segments. A flow data and an alarm data because"
+  },
+  {
+    "start": 98.46000000000001,
+    "end": 102.78,
+    "text": "each data from the sensor essentially consists of these two components. How much of water is actually"
+  },
+  {
+    "start": 102.78,
+    "end": 109.42,
+    "text": "flowing through the sensor and does the sensor have any alarm? Oh so 100k sensors right? I'm assuming it would be a lot of"
+  },
+  {
+    "start": 109.42,
+    "end": 115.42,
+    "text": "events. How many events are we talking about? So we're talking about 27 million data points per day"
+  },
+  {
+    "start": 116.22,
+    "end": 123.42,
+    "text": "which is what we ingest and process. Okay so 27 million events right? So once these many events of"
+  },
+  {
+    "start": 123.42,
+    "end": 129.02,
+    "text": "data come I'm sure scalability is a big requirement here. Absolutely. So we've already taken care of the"
+  },
+  {
+    "start": 129.02,
+    "end": 133.82,
+    "text": "scale with respect to the ingestion part because these lambdas scale based on the amount of data coming in."
+  },
+  {
+    "start": 133.82,
+    "end": 138.46,
+    "text": "We're really not worried about how many sensors the business adds. The second part of the scale is"
+  },
+  {
+    "start": 138.46,
+    "end": 142.86,
+    "text": "managing that once the data has reached the cloud how do we manage it so that we don't slow down the"
+  },
+  {
+    "start": 142.86,
+    "end": 148.3,
+    "text": "ingestion which is where the pre-processor comes in. So what the pre-processor does is it reads data"
+  },
+  {
+    "start": 148.3,
+    "end": 154.70000000000002,
+    "text": "from these queues. These are the SQS VFO queues and makes an important decision as to what amount of data"
+  },
+  {
+    "start": 154.70000000000002,
+    "end": 161.74,
+    "text": "needs to be really processed. The reason why I say this is a utility like water is not something we use 24 by 7."
+  },
+  {
+    "start": 161.74,
+    "end": 167.5,
+    "text": "So not all data points are warranted to be executed. So the pre-processor takes this decision in real time"
+  },
+  {
+    "start": 167.5,
+    "end": 172.62,
+    "text": "looking into the data and decides what to process and what not to process. Now how does that do?"
+  },
+  {
+    "start": 173.26000000000002,
+    "end": 178.14000000000001,
+    "text": "It works in conjunction with the elastic cache which is a high speed in-memory"
+  },
+  {
+    "start": 178.14000000000001,
+    "end": 183.98000000000002,
+    "text": "Redis database that we use. And once it determines that hey this is the amount of water that or rather the"
+  },
+  {
+    "start": 183.98000000000002,
+    "end": 188.70000000000002,
+    "text": "amount of data points that we need to process those are the only data points that get forwarded to the"
+  },
+  {
+    "start": 188.7,
+    "end": 194.45999999999998,
+    "text": "post-process of processing. So by making intelligent decisions as to how much we need to process and"
+  },
+  {
+    "start": 194.45999999999998,
+    "end": 199.98,
+    "text": "by allowing you know any amount of data to come in we essentially have built the architecture to"
+  },
+  {
+    "start": 199.98,
+    "end": 204.7,
+    "text": "scale for any amount of sensors and any amount of data. This is like a real example of scalability"
+  },
+  {
+    "start": 204.7,
+    "end": 211.01999999999998,
+    "text": "right and looks to be heart of your system. So what percentage of events are really worth you know to"
+  },
+  {
+    "start": 211.01999999999998,
+    "end": 217.89999999999998,
+    "text": "share to the end users? In our experience I would say you know about 40 percent of the time series data that"
+  },
+  {
+    "start": 217.9,
+    "end": 224.14000000000001,
+    "text": "we get is what goes into the final stage of processing. And how does the end user get the final view of how"
+  },
+  {
+    "start": 224.14000000000001,
+    "end": 229.82,
+    "text": "efficiently are they using water? Yeah so once this 40 percent of data is allowed out they are further"
+  },
+  {
+    "start": 229.82,
+    "end": 235.5,
+    "text": "processed and pushed into a post-processor. There are a bunch of jobs that run on an EC2 instance and they"
+  },
+  {
+    "start": 235.5,
+    "end": 241.82,
+    "text": "end up getting saved in two data stores. So we've got two purpose-built data stores. One is the Aurora"
+  },
+  {
+    "start": 241.82,
+    "end": 247.82,
+    "text": "serverless version of MySQL and the other is DynamoDB. The Aurora serverless version stores"
+  },
+  {
+    "start": 248.54,
+    "end": 253.74,
+    "text": "a day data like how much of water was consumed in a particular sensor in a day. What are the alarms?"
+  },
+  {
+    "start": 253.74,
+    "end": 259.18,
+    "text": "So these are basically daily statistics that get stored. DynamoDB on the other hand you know is"
+  },
+  {
+    "start": 259.18,
+    "end": 266.7,
+    "text": "something that stores events. So why events and why daily data? We cater to both sources as well as"
+  },
+  {
+    "start": 266.7,
+    "end": 271.9,
+    "text": "inlets in a society. Sources could be your tank lorries coming in, sources could be your borewells. So"
+  },
+  {
+    "start": 271.9,
+    "end": 277.26,
+    "text": "there instead of the amount of water it's about when did the lorry dump water into the sump right? When did the"
+  },
+  {
+    "start": 277.26,
+    "end": 283.9,
+    "text": "borewells start? Right? And in conjunction with the Aurora daily data both of this can be provided"
+  },
+  {
+    "start": 283.9,
+    "end": 290.62,
+    "text": "via web APIs to our client web portals as well as the mobile apps. So essentially we have a web layer"
+  },
+  {
+    "start": 290.62,
+    "end": 296.14,
+    "text": "that interacts between both of this and pushes the data to the end users consumption points which is"
+  },
+  {
+    "start": 296.14,
+    "end": 301.18,
+    "text": "the app and the website. Okay so this is the architecture via which the end users really"
+  },
+  {
+    "start": 301.18,
+    "end": 305.98,
+    "text": "understand how efficiently are they using water is it? Correct. So we have visualizations and reports that tell them"
+  },
+  {
+    "start": 305.98,
+    "end": 309.90000000000003,
+    "text": "how they're performing and we also nudge them to perform better because the whole platform is"
+  },
+  {
+    "start": 309.90000000000003,
+    "end": 315.18,
+    "text": "about rationalizing use of water and bringing in sustainability. That's a real good cause. So we"
+  },
+  {
+    "start": 315.18,
+    "end": 321.26,
+    "text": "talked about 100k, you know 100k of sensors, 27 million events per day right? So how about cost?"
+  },
+  {
+    "start": 321.26,
+    "end": 326.3,
+    "text": "How are you managing cost with this architecture? Yeah so with scale cost is also bound to increase"
+  },
+  {
+    "start": 326.3,
+    "end": 330.70000000000005,
+    "text": "which is at least what we thought. Just to give you a perspective when we started this architecture we"
+  },
+  {
+    "start": 330.7,
+    "end": 337.65999999999997,
+    "text": "were at about 15k sensors and today we're at about 100k. The revelation was that the cost actually went"
+  },
+  {
+    "start": 337.65999999999997,
+    "end": 345.18,
+    "text": "down by 25 percent. So the cost of a sensor, the cloud cost per sensor is down 25 percent because our"
+  },
+  {
+    "start": 345.18,
+    "end": 349.98,
+    "text": "lambdas are still not even hit 10 percent of concurrency and you know we have another 10x to grow"
+  },
+  {
+    "start": 349.98,
+    "end": 355.26,
+    "text": "and because it is able to scale without a single change in the architecture or code we've been actually"
+  },
+  {
+    "start": 355.26,
+    "end": 360.86,
+    "text": "able to realize so much of savings. That's really great and I hope that with your scalability you"
+  },
+  {
+    "start": 360.86,
+    "end": 365.74,
+    "text": "further reduce this cost and the architecture looks great. Can you tell us about the other two product"
+  },
+  {
+    "start": 365.74,
+    "end": 369.74,
+    "text": "lines right? So will this architecture also scale for the other two product lines of yours like electricity"
+  },
+  {
+    "start": 369.74,
+    "end": 375.65999999999997,
+    "text": "and gas? Absolutely. So if you look at this to me this is a blueprint of an IoT system. Today it's water,"
+  },
+  {
+    "start": 375.65999999999997,
+    "end": 380.86,
+    "text": "tomorrow it could be carrying data for electricity. The other product is basically about gas so that's"
+  },
+  {
+    "start": 380.86,
+    "end": 387.66,
+    "text": "another data point. So I'm convinced that the entire architecture can be leveraged for both electricity"
+  },
+  {
+    "start": 387.66,
+    "end": 393.66,
+    "text": "and gas and we hope to roll those product lines soon in the future. I hope too and Vijay this is a great"
+  },
+  {
+    "start": 393.66,
+    "end": 398.54,
+    "text": "architecture with respect to what you're doing right? Sustainability for key resources like water, gas and"
+  },
+  {
+    "start": 398.54,
+    "end": 403.5,
+    "text": "electricity. I hope the other two products come soon. Thank you so much for sharing your time and"
+  },
+  {
+    "start": 403.5,
+    "end": 409.18,
+    "text": "explaining this architecture with us. Thank you for having us here. Thank you for watching. This is my architecture."
+  },
+  {
+    "start": 410.86,
+    "end": 413.90000000000003,
+    "text": "page 10GHT on camera."
+  }
+]

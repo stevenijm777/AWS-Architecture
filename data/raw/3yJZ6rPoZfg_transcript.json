@@ -1,0 +1,182 @@
+[
+  {
+    "start": 0.0,
+    "end": 14.0,
+    "text": "Welcome to This is My Architecture. Today we are in Zurich, Switzerland and I'm joined by Alkis from Hexagon."
+  },
+  {
+    "start": 14.0,
+    "end": 17.0,
+    "text": "Welcome Alkis. Thank you very much Christian, it's nice to be here."
+  },
+  {
+    "start": 17.0,
+    "end": 20.0,
+    "text": "Alkis, tell us a little bit about Hexagon and the project you've been working on."
+  },
+  {
+    "start": 20.0,
+    "end": 26.0,
+    "text": "Absolutely. Hexagon is a global leader in providing geospatial data solutions and services in a range of industries."
+  },
+  {
+    "start": 26.0,
+    "end": 35.0,
+    "text": "Part of the company is focusing on building lighter hardware solutions that can be either handheld devices or devices that can be mounted on a car or on a plane."
+  },
+  {
+    "start": 35.0,
+    "end": 41.0,
+    "text": "These devices are primarily used by professionals, such as architects, city servers or government agencies."
+  },
+  {
+    "start": 41.0,
+    "end": 49.0,
+    "text": "Our project, which is called Hexagon Digital Reality, is Hexagon's cloud-based data store that stores the data licensed by Hexagon or its partners."
+  },
+  {
+    "start": 49.0,
+    "end": 55.0,
+    "text": "It also provides a platform on which you can integrate with or push data from our hardware devices."
+  },
+  {
+    "start": 55.0,
+    "end": 61.0,
+    "text": "Great. So, that sounds very interesting. Let's dive into the architecture and explain what we are seeing here."
+  },
+  {
+    "start": 61.0,
+    "end": 72.0,
+    "text": "Absolutely. On our left hand side we have our AWS data and streaming and on our right hand side we have our AWS user experience and processing."
+  },
+  {
+    "start": 72.0,
+    "end": 84.0,
+    "text": "Both the logic of streaming data back to the user, but also the user experience and the process assets is hosted on EKS, as you can see."
+  },
+  {
+    "start": 84.0,
+    "end": 96.0,
+    "text": "We went with the approach after migrating from COPS to EKS because we want to focus on the managed services and take into consideration the benefits of scalability, auto-scaling and the self-healing mechanisms of EKS."
+  },
+  {
+    "start": 96.0,
+    "end": 104.0,
+    "text": "Perfect. So, you mentioned that you are generating a lot of high precision data from the devices itself."
+  },
+  {
+    "start": 104.0,
+    "end": 108.0,
+    "text": "So, I guess that's a lot of data you are dealing with. How do you handle that?"
+  },
+  {
+    "start": 108.0,
+    "end": 126.0,
+    "text": "So, we created only one data account where we store all of our data on S3 and this becomes available through our EKS and through VPC peering with our multiple EKS and AWS accounts, which is Dev, UA, QAT."
+  },
+  {
+    "start": 126.0,
+    "end": 135.0,
+    "text": "And in that case, we actually make the data available both to our development and the users using the AWS backbone network securely and privately."
+  },
+  {
+    "start": 135.0,
+    "end": 148.0,
+    "text": "And I guess that's where you profit from low latency and high bandwidth since you are using the AWS backbone and also avoid the duplication of these big data sets multiple times to the different environments you are running."
+  },
+  {
+    "start": 148.0,
+    "end": 157.0,
+    "text": "You mentioned previously that customers have also the possibility to upload data from their devices and from other sources. Please walk me through how this works."
+  },
+  {
+    "start": 158.0,
+    "end": 166.0,
+    "text": "That's correct. Both of these use cases trigger the same processing pipeline. Either a user drags and drops or directly on the device."
+  },
+  {
+    "start": 166.0,
+    "end": 174.0,
+    "text": "What happens is our system provides a pre-signed URL back to the user. When that happens, the user actually uploads the item directly to S3."
+  },
+  {
+    "start": 174.0,
+    "end": 183.0,
+    "text": "When that becomes available on S3, when the upload is finished, it sends an S3 event is triggered and sends a message into a queue on our SQS."
+  },
+  {
+    "start": 183.0,
+    "end": 194.0,
+    "text": "Okay. So, you're having a mechanism to upload the files to S3 and have that event sitting in SQS. So, I guess there's some sort of microservice or service picking that up in order to be processed."
+  },
+  {
+    "start": 194.0,
+    "end": 203.0,
+    "text": "Yes. We have a component running a container on EKS and that is listening to that queue. So, when the message becomes available there, then the logic of that is going to be processed."
+  },
+  {
+    "start": 203.0,
+    "end": 205.0,
+    "text": "And then the logic of that begins."
+  },
+  {
+    "start": 206.0,
+    "end": 214.0,
+    "text": "Okay. So, what happens next? I guess that's not the processing itself. So, I guess you need them to process the data and store it somewhere again."
+  },
+  {
+    "start": 215.0,
+    "end": 221.0,
+    "text": "The next steps is what I mentioned in the processing pipeline. So, we have different output based on the uploaded file."
+  },
+  {
+    "start": 221.0,
+    "end": 233.0,
+    "text": "And in that case, we need different CPU or different memory. So, we created a group of auto scaling groups based on that logic. And within that, we're using EC2 instances."
+  },
+  {
+    "start": 233.0,
+    "end": 248.0,
+    "text": "Those EC2 instances are having templates that are spinning up specific containers with these instances that are pulling the images from ECR. So, when the message becomes available and a component picks it up, it sends the information back to those EC2 instances."
+  },
+  {
+    "start": 248.0,
+    "end": 258.0,
+    "text": "Again, using a messaging system. When that happens, each specific EC2 instance creates its own pipeline step to that processing pipeline."
+  },
+  {
+    "start": 258.0,
+    "end": 271.0,
+    "text": "So, I guess here you're profiting from the variety of different instance families and instance types because, like you mentioned, you have, depending on the output type, different recommendations or requirements regarding the CPU and the memory."
+  },
+  {
+    "start": 271.0,
+    "end": 276.0,
+    "text": "So, what happens next and where do you store the data and how do you make it available to the customer again?"
+  },
+  {
+    "start": 276.0,
+    "end": 284.0,
+    "text": "So, when the process is finished, the EC2 instances are sending back to the S3 and that, through the same, becomes available back to the user."
+  },
+  {
+    "start": 284.0,
+    "end": 290.0,
+    "text": "And that processed item can either be placed on the map in our platform or be available for download."
+  },
+  {
+    "start": 290.0,
+    "end": 295.0,
+    "text": "Okay, that's very interesting. So, thanks for sharing this architecture with us today, Alkis."
+  },
+  {
+    "start": 295.0,
+    "end": 298.0,
+    "text": "Thank you very much. It was really nice to be here."
+  },
+  {
+    "start": 298.0,
+    "end": 301.0,
+    "text": "And thank you for watching. This is my architecture."
+  }
+]

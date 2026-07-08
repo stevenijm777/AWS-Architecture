@@ -1,0 +1,186 @@
+{
+  "step_by_step_reasoning": "We identify nodes chronologically from the whiteboard and transcript: User (UserConsumerWebMobile) initiates the process; API server (EC2) handles initial requests and generates S3 pre-signed URLs; S3 stores source and target images; Main SQS queues incoming requests; a Lambda router dynamically distributes tasks to GPU instances (EC2) across regions; a second SQS queue manages completion notifications; State Manager (EC2) processes these status notifications to update MySQL (ThirdParty); and CloudFront serves final video files to the user.",
+  "graph": {
+    "name": "MyHeritage - Scaling Deep Nostalgia with Multi-Region Spot Instances",
+    "link": "https://www.youtube.com/watch?v=0-db3wFRfSc",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Handles over 50M animations in two weeks. Implements multi-region GPU auto-scaling with G5 spot instances, managed via an intelligent Lambda router to optimize cost and avoid cross-region data transfer fees."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User",
+      "notes": "Uploads photos and views animated results."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "API Server",
+      "notes": "WORKLOAD_PEEK: Handles initial request, generates pre-signed S3 URLs, and handles status polling."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "DATA_PEEK: Stores raw source images and completed video artifacts."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Main Queue",
+      "notes": "Queues incoming animation tasks."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Routing Lambda",
+      "notes": "Dynamically routes animation tasks to different regions based on Spot capacity."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "GPU Fleet",
+      "notes": "WORKLOAD_PEEK: Spot/On-Demand ASG running G5/P3 GPU instances processing deep-learning model."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "Notification Queue",
+      "notes": "Queues completions and status messages."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "State Manager",
+      "notes": "Consumes completed events to update database."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "MySQL Database",
+      "notes": "Stores metadata and status details."
+    },
+    {
+      "id": "9",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Serves results globally using signed URLs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Requests animation job."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Generates pre-signed URL."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Uploads source image directly to S3."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enqueues job message."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers routing function."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes task to GPU instance."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Uploads finished animation."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enqueues completion message."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Consumes task outcome."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves state update."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Polls status."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads status state."
+    },
+    {
+      "source": "0",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Downloads video via signed CloudFront URL."
+    },
+    {
+      "source": "9",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fetches asset from bucket cache."
+    }
+  ]
+}

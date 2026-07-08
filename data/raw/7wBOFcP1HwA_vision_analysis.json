@@ -1,0 +1,216 @@
+{
+  "step_by_step_reasoning": "We trace the architecture starting from the Almosafer web/mobile users. They access the application through CloudFront, which uses Lambda@Edge for geo-routing decisions. Static assets are served from S3. Dynamic requests go through a pool of 60+ Elastic Load Balancers that split traffic: 20% to a legacy monolith running on EC2, and 80% to over 250 microservices running on EKS. The microservices store and retrieve data from a self-managed Mongo/Kafka cluster on EC2, and managed relational databases on RDS. Performance monitoring is managed through EC2 collectors reporting to CloudWatch.",
+  "graph": {
+    "name": "Seera Group: Scaling Almosafer to 300k Requests Per Minute with EKS",
+    "link": "https://www.youtube.com/watch?v=7wBOFcP1HwA",
+    "categories": "interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Seera Group migrated 80% of their legacy travel booking monolith to over 250 microservices (1400 pods) on Amazon EKS, handling peak traffic of 300,000 requests per minute during major travel events."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Almosafer Users",
+      "notes": "DATA_PEEK: Handles ~300k requests per minute at peak."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Serves static content and acts as the entry point for API traffic."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Static Assets S3 Bucket",
+      "notes": "Stores images, 3D images, and videos."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Edge Routing Lambda",
+      "notes": "Determines user region and injects geolocation headers for backend APIs."
+    },
+    {
+      "id": "4",
+      "service": "ELB",
+      "name": "Application Load Balancer",
+      "notes": "WORKLOAD_PEEK: Over 60 LBs deployed to separate backend API and web traffic."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Legacy Monolith",
+      "notes": "Receives remaining 20% of legacy application traffic."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "Microservices EKS Cluster",
+      "notes": "WORKLOAD_PEEK: Runs 250+ microservices across 1400+ pods in production."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "Relational Databases",
+      "notes": "Managed SQL databases for relational application storage."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "MongoDB & Kafka Cluster",
+      "notes": "Self-managed NoSQL data store and stream broker for microservices messaging."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "Monitoring Agent",
+      "notes": "Collects logs and operational metrics from the compute fleets."
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Centralized dashboard for tracking performance and operational metrics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests static assets."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetch images and videos."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Return cached static assets."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Serve assets to user."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends dynamic API / web request."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Trigger edge validation / header injection."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Return modified request metadata."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Route request to Load Balancing tier."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Route 20% of traffic to legacy monolith."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Route 80% of traffic to microservices."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fetch/Publish data to MongoDB or Kafka."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Relational queries."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Return response payload."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Forward response."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "data",
+      "notes": "Render content to user."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Export operational metrics."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Aggregate and monitor via CloudWatch dashboards."
+    }
+  ]
+}

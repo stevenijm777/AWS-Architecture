@@ -1,0 +1,192 @@
+{
+  "step_by_step_reasoning": "The transcript describes a multi-account CI/CD and security architecture for SwiftX. I will create a Developer node pushing code to GitHub. Next, I will add a CI/CD account containing an EKS cluster running Tekton pipelines and ECR for image registry. Multiple target environments exist: Playground EKS (ephemeral feature environments), Development EKS, and Production EKS. I will represent these as separate EKS nodes. AWS Control Tower is used to manage all 14+ accounts. Finally, GuardDuty, VPC Flow Logs, and EKS send logs to a centralized Security Lake. Flows will cover Playground promotion, Prod promotion, and centralized security monitoring.",
+  "graph": {
+    "name": "SwiftX Secure Multi-Account CI/CD Pipeline with EKS and AWS Security Lake",
+    "link": "https://www.youtube.com/watch?v=npQWtmnuM6s",
+    "categories": "compute_intensive, control",
+    "graph_usable": true,
+    "notes": "SwiftX manages billions in customer funds. They use AWS Control Tower to manage 14+ segregated accounts. Code pipelines run inside EKS using Tekton, promoting signed container images via IAM roles across Playground, Dev, and Prod. Security Lake consolidates audit logs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "SwiftX Engineers",
+      "notes": "Developer working on local machine, initiating pull requests and code reviews."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "GitHub",
+      "notes": "Source control and pull request platform triggering CI/CD pipelines."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "CI/CD Account - Tekton EKS Cluster",
+      "notes": "Kubernetes cluster running Tekton to build images, run tests, and perform security checks."
+    },
+    {
+      "id": "3",
+      "service": "ECR",
+      "name": "Elastic Container Registry (ECR)",
+      "notes": "Centralized registry in CI/CD account storing secure, signed container images."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Playground EKS Clusters",
+      "notes": "Hosts ephemeral feature-branch environments for product manager and stakeholder review."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "Development EKS Cluster",
+      "notes": "Initial promotion environment to validate built images before production."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "Production EKS Cluster",
+      "notes": "Highly secure production workspace running live exchange workloads."
+    },
+    {
+      "id": "7",
+      "service": "ControlTower",
+      "name": "AWS Control Tower",
+      "notes": "Manages 14+ AWS accounts to ensure consistent security baselines and configuration."
+    },
+    {
+      "id": "8",
+      "service": "SecurityLake",
+      "name": "Amazon Security Lake",
+      "notes": "Aggregates security logs globally in a centralized security account."
+    },
+    {
+      "id": "9",
+      "service": "GuardDuty",
+      "name": "Amazon GuardDuty",
+      "notes": "Monitors threat behavior and forwards events to Security Lake."
+    },
+    {
+      "id": "10",
+      "service": "VPC",
+      "name": "VPC Flow Logs",
+      "notes": "Collects network traffic details, feeding them to Security Lake."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer pushes code to feature branch and opens a PR."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "PR triggers Tekton pipeline within EKS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Tekton builds, tests, and pushes the signed image to ECR."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Promoted via IAM roles to ephemeral Playground environments."
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Stakeholders and developers review running feature environments."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Two reviewers approve the PR, prompting a merge to main."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Merge triggers final production pipeline on Tekton."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Builds and stores highly vetted image in ECR."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "IAM role-based push to Development environment EKS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Promoted to Production EKS after passing automated development tests."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Successful production deployment notification."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "GuardDuty logs sent to centralized Security Lake."
+    },
+    {
+      "source": "10",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "VPC Flow Logs forwarded to Security Lake."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Application and audit logs from EKS forwarded to Security Lake."
+    }
+  ]
+}

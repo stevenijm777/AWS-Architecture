@@ -1,0 +1,189 @@
+{
+  "graph": {
+    "name": "Modernizing Legacy Applications with Serverless on AWS",
+    "link": "https://www.youtube.com/watch?v=wjtSHyENv0I",
+    "categories": "interactive, control",
+    "graph_usable": true,
+    "notes": "WORKLOAD_PEEK: Strangling a legacy Tomcat Java application by migrating features incrementally to serverless Python Lambdas. Shut down 25 on-prem servers and improved user satisfaction by 25%."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "Independent Agents",
+      "notes": "Agents access the modern single-page application (SPA) to sell insurance policies."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Caches and serves the static assets of the modernized SPA."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Hosts the SPA single-page application static files."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Acts as the unified entry point for all modern back-end API requests."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda Authorizer",
+      "notes": "Validates user permissions and access rights before hitting back-end services."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Serverless Python Lambda",
+      "notes": "Executes backend logic. Scales up and down dynamically. Integrates with DynamoDB and legacy EC2 backend."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Legacy Tomcat Servers",
+      "notes": "Legacy Tomcat application hosting non-migrated features like user management."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB Cache",
+      "notes": "Regional DynamoDB instance used to cache user session state across multiple AZs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Agent requests single-page application"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves SPA assets from S3"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns static assets"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Serves SPA to agent browser"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API call from SPA"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes API call to backend API Gateway"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Invokes custom Lambda Authorizer"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Returns validation success token"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Routes validated request to business logic Lambda"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Caches/Retrieves user state from DynamoDB"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Returns cached session data"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Calls legacy Tomcat for non-modernized services"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "data",
+      "notes": "Returns legacy execution result to Python Lambda"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "data",
+      "notes": "Returns final API response payload"
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "11",
+      "type": "data",
+      "notes": "Passes response back to CDN"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "12",
+      "type": "data",
+      "notes": "Delivers dynamic update back to the agent UI"
+    }
+  ]
+}

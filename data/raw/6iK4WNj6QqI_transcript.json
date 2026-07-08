@@ -1,0 +1,227 @@
+[
+  {
+    "start": 0.0,
+    "end": 9.0,
+    "text": "Welcome to This is My Architecture. I am Gerardo and I'm joined today by Shane from Ticketmaster. Welcome, Shane."
+  },
+  {
+    "start": 9.0,
+    "end": 10.0,
+    "text": "Thank you for having me."
+  },
+  {
+    "start": 10.0,
+    "end": 12.0,
+    "text": "So Shane, what does Ticketmaster do?"
+  },
+  {
+    "start": 12.0,
+    "end": 17.0,
+    "text": "Ticketmaster is a ticketing services company that provides an online marketplace where fans can purchase tickets to live events."
+  },
+  {
+    "start": 17.0,
+    "end": 21.0,
+    "text": "Awesome. So what architecture from Ticketmaster are you telling us about?"
+  },
+  {
+    "start": 21.0,
+    "end": 26.0,
+    "text": "So my team is the checkout team. So we manage the page where folks actually purchase the tickets,"
+  },
+  {
+    "start": 26.0,
+    "end": 31.0,
+    "text": "put in their payment information, choose their options, and get their order in their tickets."
+  },
+  {
+    "start": 31.0,
+    "end": 35.0,
+    "text": "So every time tickets go on sale, I'm guessing the system is put under a lot of stress."
+  },
+  {
+    "start": 35.0,
+    "end": 36.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 36.0,
+    "end": 39.0,
+    "text": "So can you walk me through what are the components of the architecture?"
+  },
+  {
+    "start": 39.0,
+    "end": 49.0,
+    "text": "Yeah. So when a request comes in to render a web page, that goes to a web app that we have built in Next.js that's running on EKS."
+  },
+  {
+    "start": 49.0,
+    "end": 55.0,
+    "text": "That's what does all the page rendering. When any API endpoint happens, that goes to our app Sinclair."
+  },
+  {
+    "start": 55.0,
+    "end": 57.0,
+    "text": "Okay. So your API is centralized on AppSync."
+  },
+  {
+    "start": 57.0,
+    "end": 58.0,
+    "text": "Yep."
+  },
+  {
+    "start": 58.0,
+    "end": 60.0,
+    "text": "Are you using the GraphQL component of it?"
+  },
+  {
+    "start": 60.0,
+    "end": 65.0,
+    "text": "Yeah. Yeah. So we use GraphQL and AppSync to basically expose those queries and mutations."
+  },
+  {
+    "start": 65.0,
+    "end": 74.0,
+    "text": "And those queries and mutations then hit the other layers. For stuff that maybe is a quick load, query retrieve data, it might hit an AppSync."
+  },
+  {
+    "start": 74.0,
+    "end": 79.0,
+    "text": "And then that might go down to DynamoDB to load the data and retrieve it, return it back."
+  },
+  {
+    "start": 79.0,
+    "end": 88.0,
+    "text": "For something that takes longer, like the purchase mutation, that might go down to hit the step function, execute that purchase, and then return the result."
+  },
+  {
+    "start": 88.0,
+    "end": 93.0,
+    "text": "Okay. So can you give us a couple of examples of the type of information that's moving around here?"
+  },
+  {
+    "start": 93.0,
+    "end": 95.0,
+    "text": "So is this event information maybe?"
+  },
+  {
+    "start": 95.0,
+    "end": 101.0,
+    "text": "Yeah. There's a lot of different types of information, but yeah, event information as well as information about the session."
+  },
+  {
+    "start": 101.0,
+    "end": 111.0,
+    "text": "Okay. So what sort of, how do you make the differentiation between what goes to single Lambda being executed, or when do you need it to be processed by step functions?"
+  },
+  {
+    "start": 111.0,
+    "end": 124.0,
+    "text": "Yeah. So step functions are better for larger, more complex operations, things that require a lot of steps. Lambdas are better for single step operations, things that might retrieve data and transform or call an external service."
+  },
+  {
+    "start": 124.0,
+    "end": 139.0,
+    "text": "So those things go through our Lambdas. Multiple step processes go through the step function. In the case of the purchase, it might be something like, for example, collecting the payment, processing the order, all of those things would go through the step function."
+  },
+  {
+    "start": 139.0,
+    "end": 146.0,
+    "text": "That makes sense. Now how do you handle waiting at the API level? Because supposedly this could take a second or two."
+  },
+  {
+    "start": 146.0,
+    "end": 155.0,
+    "text": "Yeah. So we use the WebSockets within AppSync. So the WebSockets basically allow the client browser to handle this asynchronously."
+  },
+  {
+    "start": 155.0,
+    "end": 165.0,
+    "text": "So the client submits the mutation, and then when anything takes longer than a second, using that subscription, it'll send the response back, and that WebSocket will send that back to the client."
+  },
+  {
+    "start": 165.0,
+    "end": 169.0,
+    "text": "Brilliant. So WebSockets for calls that take more than one second?"
+  },
+  {
+    "start": 169.0,
+    "end": 171.0,
+    "text": "Yep. And GraphQL for the rest?"
+  },
+  {
+    "start": 171.0,
+    "end": 176.0,
+    "text": "Yeah. Well, yeah. GraphQL for everything. WebSocket subscriptions for those responses."
+  },
+  {
+    "start": 176.0,
+    "end": 182.0,
+    "text": "Brilliant. Okay. So I can see you have this concept of regions here in the architecture. What is this about?"
+  },
+  {
+    "start": 182.0,
+    "end": 195.0,
+    "text": "Yeah. So we've got a copy of this whole architecture running in multiple regions, including using DynamoDB global tables to basically replicate the data between those regions to keep it all in sync."
+  },
+  {
+    "start": 195.0,
+    "end": 198.0,
+    "text": "Great. So it's an active-active multi-region approach."
+  },
+  {
+    "start": 198.0,
+    "end": 199.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 199.0,
+    "end": 201.0,
+    "text": "How do you route traffic among the regions?"
+  },
+  {
+    "start": 201.0,
+    "end": 219.0,
+    "text": "Yeah. So at the CDN layer, we have logic to basically use first latency or geo-routing to basically send fans to the closest region for them to give them the best performance, but also recognizing the health of a given region so that if we need to route traffic away from a region, we can and still keep everything up and running."
+  },
+  {
+    "start": 219.0,
+    "end": 225.0,
+    "text": "Great. So you could, in theory, have one customer reserving a ticket in one region and then checking out another?"
+  },
+  {
+    "start": 225.0,
+    "end": 226.0,
+    "text": "Yeah. Yeah. How would that work?"
+  },
+  {
+    "start": 226.0,
+    "end": 237.0,
+    "text": "So as they go through the steps in the process, they reserve, they fill out the data, and then they submit the purchase. If there is an issue, the DynamoDB is basically keeping the data in sync between the regions."
+  },
+  {
+    "start": 237.0,
+    "end": 245.0,
+    "text": "And that CDN routing will basically, on a subsequent request, send the request over to the other regions that are able to handle it."
+  },
+  {
+    "start": 245.0,
+    "end": 255.0,
+    "text": "Shane, this is a great architecture. Thank you for sharing it with us. I love how you're improving our experience when we're buying tickets by using serverless architecture instead of multi-region approach."
+  },
+  {
+    "start": 255.0,
+    "end": 256.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 256.0,
+    "end": 260.0,
+    "text": "And thank you for watching. This is my architecture. We'll see you next time."
+  },
+  {
+    "start": 260.0,
+    "end": 261.0,
+    "text": "Bye."
+  }
+]

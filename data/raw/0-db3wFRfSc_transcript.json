@@ -1,0 +1,312 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.4,
+    "text": "Hi and welcome to This is My Architecture. I'm Ziv and I'm here with Ophir for MyHeritage."
+  },
+  {
+    "start": 12.4,
+    "end": 14.120000000000001,
+    "text": "Hi Ophir, thank you for joining."
+  },
+  {
+    "start": 14.120000000000001,
+    "end": 15.56,
+    "text": "Hi Ziv, thanks for inviting."
+  },
+  {
+    "start": 15.56,
+    "end": 17.76,
+    "text": "So Ophir, tell me about MyHeritage."
+  },
+  {
+    "start": 17.76,
+    "end": 25.240000000000002,
+    "text": "Sure. At MyHeritage, we have the unique vision of connecting you to the most important people in the world, your family members."
+  },
+  {
+    "start": 25.24,
+    "end": 33.48,
+    "text": "You start by creating a simple family tree or taking a DNA test and we'll do the hard work of matching your data with our huge database,"
+  },
+  {
+    "start": 33.48,
+    "end": 37.8,
+    "text": "containing billions of family tree profiles and millions of DNA samples."
+  },
+  {
+    "start": 37.8,
+    "end": 41.72,
+    "text": "With it, you can make amazing discoveries about your family history."
+  },
+  {
+    "start": 41.72,
+    "end": 44.12,
+    "text": "Nice. And what are we going to talk about today?"
+  },
+  {
+    "start": 44.12,
+    "end": 51.56,
+    "text": "Today, we're going to talk about Deep Nostalgia, a feature that became an internet sensation immediately after we released it."
+  },
+  {
+    "start": 51.56,
+    "end": 59.800000000000004,
+    "text": "In Deep Nostalgia, you are asked to upload an image of your ancestors and you allow us to bring it back to life."
+  },
+  {
+    "start": 59.800000000000004,
+    "end": 66.8,
+    "text": "We take the static face in a still image and we make it move, blink and smile."
+  },
+  {
+    "start": 66.8,
+    "end": 73.24000000000001,
+    "text": "And this feature was so beautiful that it made millions around the world upload photos of their loved ones"
+  },
+  {
+    "start": 73.24,
+    "end": 79.47999999999999,
+    "text": "and some of them to cry after seeing their beloved family members smile for the first time."
+  },
+  {
+    "start": 79.47999999999999,
+    "end": 83.47999999999999,
+    "text": "This is great. It's an amazing feature. I remember when it went public."
+  },
+  {
+    "start": 83.47999999999999,
+    "end": 86.36,
+    "text": "Let's dive into the architecture. Show us how you build it."
+  },
+  {
+    "start": 86.36,
+    "end": 96.24,
+    "text": "Sure. So when our user wants to animate his photo, he reaches to our API server, which is deployed on EC2 instance."
+  },
+  {
+    "start": 96.24,
+    "end": 106.24,
+    "text": "And at this point, we generate a pre-signed S3 URL, which the user uses directly to upload his image to S3."
+  },
+  {
+    "start": 106.24,
+    "end": 112.56,
+    "text": "From there, the animation process starts. We generate a request to SQSQ."
+  },
+  {
+    "start": 112.56,
+    "end": 122.24,
+    "text": "And our GPU fleet of EC2 instances consume this message from the queue and do the hard work of animating the image using deep learning techniques."
+  },
+  {
+    "start": 122.24,
+    "end": 128.56,
+    "text": "So here all the magic has happened. How do you manage this fleet of EC2 instances?"
+  },
+  {
+    "start": 128.56,
+    "end": 136.24,
+    "text": "This fleet is managed with an auto scaling group that allows us to scale in and out according to the current volume of traffic."
+  },
+  {
+    "start": 136.24,
+    "end": 145.24,
+    "text": "Actually, we have a GPU instances, which has basic on demand capacity and spot instances right on top of it."
+  },
+  {
+    "start": 145.24,
+    "end": 150.24,
+    "text": "The scale is controlled by the number of input messages in the main queue."
+  },
+  {
+    "start": 150.24,
+    "end": 153.24,
+    "text": "So you are using spot instances as well. Great."
+  },
+  {
+    "start": 153.24,
+    "end": 161.24,
+    "text": "And I see that you design an asynchronous architecture here and you have this SQS in the middle. Why did you choose that?"
+  },
+  {
+    "start": 161.24,
+    "end": 168.24,
+    "text": "This feature is asynchronous by nature. It takes several seconds to animate an image and we don't want to keep the user delayed."
+  },
+  {
+    "start": 168.24,
+    "end": 175.24,
+    "text": "Moreover, this async architecture allows us to have a highly available feature with fault tolerance."
+  },
+  {
+    "start": 175.24,
+    "end": 181.24,
+    "text": "Great. So in case of a failure or spot interruption, another server can pick up the message and you never lose a request."
+  },
+  {
+    "start": 181.24,
+    "end": 187.24,
+    "text": "This makes sense. And while the animation completed, what happened next? How do you let the user know about it?"
+  },
+  {
+    "start": 187.24,
+    "end": 197.24,
+    "text": "Yeah. Well, when the animation completes, our GPU instances stores the resulted artifacts in the target S3 balance."
+  },
+  {
+    "start": 197.24,
+    "end": 207.24,
+    "text": "And they send a notification to SQS letting us know that it completed the status of the animation."
+  },
+  {
+    "start": 207.24,
+    "end": 216.24,
+    "text": "Now our state manager consumes this message from the SQS queue and updates our state manager with the result of the animation."
+  },
+  {
+    "start": 216.24,
+    "end": 229.24,
+    "text": "The user continuously pulls the status from the API server. And when he understands the animation completes, he can download the artifact using signed CloudFront URL."
+  },
+  {
+    "start": 229.24,
+    "end": 239.24,
+    "text": "Now, if the user wants to go even further and share this with his family members, most likely they will hit CloudFront cache on subsequent requests."
+  },
+  {
+    "start": 239.24,
+    "end": 245.24,
+    "text": "So you mentioned that the feature went viral really fast and you had a lot of traffic. What scale are you talking about here?"
+  },
+  {
+    "start": 245.24,
+    "end": 252.24,
+    "text": "Yeah. In the first two weeks after the release, over 50 million animations were created by our users."
+  },
+  {
+    "start": 252.24,
+    "end": 261.24,
+    "text": "This is a great scale. And you're using spot instances for the animation servers. How did he handle this demand of spot capacity?"
+  },
+  {
+    "start": 261.24,
+    "end": 271.24,
+    "text": "Right. At this spot, we were actually using a single region. Let's call it our main region, which handled all of our traffic."
+  },
+  {
+    "start": 271.24,
+    "end": 280.24,
+    "text": "We're already using multiple types of GPU instances and we're already spreading it on multiple AZs."
+  },
+  {
+    "start": 280.24,
+    "end": 287.24,
+    "text": "Now, as scale rise, we wanted to even leverage further and take instances from other AWS regions."
+  },
+  {
+    "start": 287.24,
+    "end": 295.24,
+    "text": "So what we did is we took our animation services and deployed them at five more AWS regions."
+  },
+  {
+    "start": 295.24,
+    "end": 302.24,
+    "text": "And then we were able to scale further and use capacity pools on other AWS regions."
+  },
+  {
+    "start": 302.24,
+    "end": 307.24,
+    "text": "Now, from this point, we need something to actually route the traffic to other regions."
+  },
+  {
+    "start": 307.24,
+    "end": 316.24,
+    "text": "So we added the Lambda here, which grabs the message from the input queue and does the work of routing the traffic to AWS regions."
+  },
+  {
+    "start": 316.24,
+    "end": 320.24,
+    "text": "According to the current spot capacity."
+  },
+  {
+    "start": 320.24,
+    "end": 329.24,
+    "text": "So at this phase, we have a local SQS here, allowing our GPU instances in the main region to pull the message from here."
+  },
+  {
+    "start": 329.24,
+    "end": 334.24,
+    "text": "And now we don't even need to pull it from the main region."
+  },
+  {
+    "start": 334.24,
+    "end": 339.24,
+    "text": "I get it. So you could have fetch messages from other regions directly from the main queue."
+  },
+  {
+    "start": 339.24,
+    "end": 343.24,
+    "text": "Why did you choose to add this Lambda function in the middle?"
+  },
+  {
+    "start": 343.24,
+    "end": 352.24,
+    "text": "Right. The thing is that spot instances are dynamic by nature and we wanted to control the portion of traffic that we send every region in this Lambda over here."
+  },
+  {
+    "start": 352.24,
+    "end": 363.24,
+    "text": "Moreover, we wanted to process as much animations as we possibly can in this main region because the source and target buckets reside in the main region."
+  },
+  {
+    "start": 363.24,
+    "end": 367.24,
+    "text": "We reside in the main region and we waited to avoid inter-region traffic costs."
+  },
+  {
+    "start": 367.24,
+    "end": 370.24,
+    "text": "I see. So you could also control the cost here."
+  },
+  {
+    "start": 370.24,
+    "end": 373.24,
+    "text": "Did you consider any other cost optimization here?"
+  },
+  {
+    "start": 373.24,
+    "end": 379.24,
+    "text": "Yes. We focused on our animation services, which is the major cost aspect of this architecture."
+  },
+  {
+    "start": 379.24,
+    "end": 388.24,
+    "text": "We actually wanted to see if we can use the better GPU instances for them as we started back then with P3 instances."
+  },
+  {
+    "start": 388.24,
+    "end": 394.24,
+    "text": "And recently, AWS released G5, which is a newer GPU generation, and we tried it out."
+  },
+  {
+    "start": 394.24,
+    "end": 402.24,
+    "text": "It turns out that while it gives us pretty much the same performance, we were able to improve costs dramatically, leading to a significant cost saving."
+  },
+  {
+    "start": 402.24,
+    "end": 405.24,
+    "text": "Thank you, Ophira, for sharing this architecture with us."
+  },
+  {
+    "start": 405.24,
+    "end": 407.24,
+    "text": "Thank you, Ziv. It was a pleasure."
+  },
+  {
+    "start": 407.24,
+    "end": 411.24,
+    "text": "And thank you for watching. This is my architecture."
+  }
+]

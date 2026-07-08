@@ -1,0 +1,192 @@
+{
+  "step_by_step_reasoning": "Based on the transcript, the architecture is an event-driven MLOps pipeline running on AWS. The process begins with a Data Scientist initiating a campaign through a portal. 1. The request goes to an MSK Kafka topic. 2. An Orchestrator Fargate task (ECS) consumes this to create an execution plan, writing messages to another MSK topic. 3. An Operational Consumer Fargate task (ECS) processes this, launching preprocessing on EMR or batch transformation on SageMaker, and logging status to OpenSearch. 4. EventBridge monitors EMR/SageMaker status changes, triggering an EventBridge Consumer Fargate task (ECS) that writes back to MSK to handle sequential steps. 5. A Notifier Fargate task (ECS) detects the end of execution, logging final state to OpenSearch and notifying the Portal user.",
+  "graph": {
+    "name": "Experian Event-Driven MLOps Batch Transform Pipeline",
+    "link": "https://www.youtube.com/watch?v=OTPyxlTjWp0",
+    "categories": "compute_intensive, data_ingestion",
+    "graph_usable": true,
+    "notes": "An event-driven machine learning platform executing tens of billions of model operations monthly. It leverages Amazon MSK as the backbone, orchestrating workloads across EMR and SageMaker using ECS Fargate tasks."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAnalyst",
+      "name": "Data Scientist / Portal",
+      "notes": "Initiates campaigns and views real-time execution status."
+    },
+    {
+      "id": "1",
+      "service": "MSK",
+      "name": "Orchestration Kafka Topic",
+      "notes": "Ingests initial batch transform execution triggers."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "Orchestrator Consumer",
+      "notes": "Fargate-based task that determines the execution plan for the campaign."
+    },
+    {
+      "id": "3",
+      "service": "MSK",
+      "name": "Execution Kafka Topic",
+      "notes": "Coordinates operational workflow stages and step transitions."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "Operational Consumer",
+      "notes": "Fargate task triggering EMR preprocessing or SageMaker model jobs."
+    },
+    {
+      "id": "5",
+      "service": "EMR",
+      "name": "EMR Cluster",
+      "notes": "Performs data ingestion and pre-processing on multi-format datasets."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Executes testing, training, and production batch transform jobs."
+    },
+    {
+      "id": "7",
+      "service": "OpenSearch",
+      "name": "OpenSearch Service",
+      "notes": "Metadata store tracking current campaign and job statuses."
+    },
+    {
+      "id": "8",
+      "service": "EventBridge",
+      "name": "Amazon EventBridge",
+      "notes": "Captures EMR and SageMaker state-change events."
+    },
+    {
+      "id": "9",
+      "service": "ECS",
+      "name": "EventBridge Consumer",
+      "notes": "Fargate task translating EventBridge triggers into sequential Kafka messages."
+    },
+    {
+      "id": "10",
+      "service": "ECS",
+      "name": "Notifier Consumer",
+      "notes": "Fargate task identifying batch completion and updating final status."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers campaign execution."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Consumes launch message."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Publishes operational execution plan."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Dispatches individual job executions."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Launches data prep."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Triggers model job."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Logs active execution state."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0a",
+      "type": "meta",
+      "notes": "Emits job state changes."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0b",
+      "type": "meta",
+      "notes": "Emits job state changes."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers response logic."
+    },
+    {
+      "source": "9",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Enqueues next pipeline action."
+    },
+    {
+      "source": "3",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Delivers completion events."
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Persists final status metadata."
+    },
+    {
+      "source": "10",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Notifies Portal and user of workflow termination."
+    }
+  ]
+}

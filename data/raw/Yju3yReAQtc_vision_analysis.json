@@ -1,0 +1,196 @@
+{
+  "step_by_step_reasoning": "The transcript and whiteboard layout describe a multi-region architecture (US-WEST-1 and EU-CENTRAL-1) for Fortinet's FortiWeb Cloud WAF as a Service. We observe duplicate regional stacks for local execution and data compliance. In both regions, API Gateway, Lambda, DynamoDB, S3, and a FortiWeb WAF cluster are deployed. Traffic enters globally through CloudFront, which distributes static assets from S3 and config calls to regional API Gateways. The Lambdas write configs to local DynamoDB tables and push them to the WAF clusters. Finally, logging from both regional WAF clusters is centralized into Amazon OpenSearch (Elasticsearch) for analytics.",
+  "graph": {
+    "name": "Fortinet FortiWeb Cloud WAF as a Service Multi-Region Architecture",
+    "link": "https://www.youtube.com/watch?v=Yju3yReAQtc",
+    "categories": "control, data_ingestion",
+    "graph_usable": true,
+    "notes": "Redesigned serverless management plane spanning multiple regions (US-WEST-1 and EU-CEN-1) to address data sovereignty, reduce egress costs, and keep security processing close to user applications."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "End User / Customer Portal",
+      "notes": "Accesses the FortiWeb WAF configuration dashboard or websites secured by WAF."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Acts as the global entry point to cache assets and accelerate API requests."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Static Content S3 (US)",
+      "notes": "WORKLOAD_PEEK: Stores static web content for US region portal."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway (US)",
+      "notes": "API entry point that fronts administrative configuration Lambda functions."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Config Lambda (US)",
+      "notes": "Serverless execution logic to process customer configuration changes."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "Configuration DynamoDB (US)",
+      "notes": "DATA_PEEK: NoSQL store used to maintain WAF rules and schemas flexibly."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "FortiWeb Cloud Cluster (US)",
+      "notes": "WORKLOAD_PEEK: Active WAF security appliance cluster running machine learning rules."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Static Content S3 (EU)",
+      "notes": "WORKLOAD_PEEK: Stores static web content for EU region portal."
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "API Gateway (EU)",
+      "notes": "API entry point that fronts administrative configuration Lambda functions in EU."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Config Lambda (EU)",
+      "notes": "Serverless execution logic to process customer configuration changes in EU."
+    },
+    {
+      "id": "10",
+      "service": "DynamoDB",
+      "name": "Configuration DynamoDB (EU)",
+      "notes": "DATA_PEEK: NoSQL store used to maintain local WAF rules in EU."
+    },
+    {
+      "id": "11",
+      "service": "EC2",
+      "name": "FortiWeb Cloud Cluster (EU)",
+      "notes": "WORKLOAD_PEEK: Active WAF security appliance cluster in the EU region."
+    },
+    {
+      "id": "12",
+      "service": "OpenSearch",
+      "name": "Elasticsearch Logging Cluster",
+      "notes": "Centralized engine to offload log lookup and filtering for both regional WAF clusters."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "End users access portal or APIs"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Deliver static web pages from US-WEST-1 S3 bucket"
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Deliver static web pages from EU-CEN-1 S3 bucket"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route administration calls to US regional API Gateway"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers serverless processing"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves state and configuration schema to US database"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pushes new rules and policy definitions to FortiWeb Cloud Cluster"
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route administration calls to EU regional API Gateway"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers serverless processing in EU region"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves state and configuration schema to EU database"
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pushes new rules and policy definitions to EU WAF Cluster"
+    },
+    {
+      "source": "6",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "1a",
+      "type": "data",
+      "notes": "Offloads runtime security logs for quick search lookup"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "1b",
+      "type": "data",
+      "notes": "Offloads runtime security logs from EU WAF cluster"
+    }
+  ]
+}

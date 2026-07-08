@@ -1,0 +1,206 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows 12 main elements: data scientists as UserCompanyDeveloper, a UI Portal (ThirdParty), two separate AWS Fargate nodes (Platform API and Status Consumer), Amazon OpenSearch Service, Amazon S3, Amazon MSK, Amazon EC2, Amazon ECR, Amazon SageMaker, Amazon EventBridge, and AWS Lambda. The workflow is divided into 3 main stages: 1. Registration & Ingestion (User uploads artifacts via Portal to Fargate, which registers metadata in OpenSearch, stores files in S3, and publishes to MSK), 2. Build & Deploy (EC2 build engine fetches from S3, builds container image, pushes to ECR, and provisions SageMaker), and 3. Asynchronous Status Monitoring (SageMaker events go via EventBridge to Lambda, write back to MSK, consumed by bottom Fargate, which updates OpenSearch and UI Portal).",
+  "graph": {
+    "name": "Experian: Automated Machine Learning Model Deployment",
+    "link": "https://www.youtube.com/watch?v=-yCol_7qH2U",
+    "categories": "data_ingestion, compute_intensive, control",
+    "graph_usable": true,
+    "notes": "Automates onboarding of client ML models. Reduces time to market from months to days by using SageMaker for hosted endpoints, EC2 for automated container builds, and MSK for event-driven coordination."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Data Scientists",
+      "notes": "Upload model artifacts, python files, and library dependencies."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "UI Portal",
+      "notes": "Custom UI interface for data scientist interaction."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "AWS Fargate (Platform API)",
+      "notes": "API layer processing model metadata and artifact uploads."
+    },
+    {
+      "id": "3",
+      "service": "OpenSearch",
+      "name": "Amazon OpenSearch Service",
+      "notes": "Serves as the model registry data store."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores uploaded raw model artifacts and Python serialized files."
+    },
+    {
+      "id": "5",
+      "service": "MSK",
+      "name": "Amazon MSK",
+      "notes": "Event-driven backbone coordinating build and status messaging."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Amazon EC2 (Build Machine)",
+      "notes": "Runs Docker-based build processes to containerize ML models."
+    },
+    {
+      "id": "7",
+      "service": "ECR",
+      "name": "Amazon ECR",
+      "notes": "Stores SageMaker-compatible container images."
+    },
+    {
+      "id": "8",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "Hosts deployed models as autoscaling endpoints."
+    },
+    {
+      "id": "9",
+      "service": "EventBridge",
+      "name": "Amazon EventBridge",
+      "notes": "Monitors SageMaker endpoint changes and forwards events."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Processes endpoint update events and writes notifications to MSK."
+    },
+    {
+      "id": "11",
+      "service": "Fargate",
+      "name": "AWS Fargate (Status Consumer)",
+      "notes": "Consumes build/deployment status events and updates registries."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Initiate model upload"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forward upload request"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Write model metadata"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Upload artifacts to S3"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Write build event"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Trigger build process"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetch artifacts"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Push built Docker image"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Create SageMaker endpoint"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Emit endpoint change event"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Trigger Lambda handler"
+    },
+    {
+      "source": "10",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Publish status notification"
+    },
+    {
+      "source": "5",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Consume status message"
+    },
+    {
+      "source": "11",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Update registry status"
+    },
+    {
+      "source": "11",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Push status back to UI Portal"
+    }
+  ]
+}

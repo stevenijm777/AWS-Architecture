@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "We analyze the architecture based on the transcript and whiteboard. 1. The customer (UserCompanyDataStream) sends data. 2. Ingestion paths: directly to Splunk (via standard HEC ELB), serverless via Lambda (to HEC ELB), or via Kinesis Data Firehose (to a dedicated sticky ELB). 3. The ELBs route data to Splunk Indexers running on EC2 instances with Auto Scaling. 4. Storage tiering: EC2 instances cache data locally and evict cold data to Splunk's S3 bucket, or archive to S3 (Glacier tier). 5. Dynamic Data Self Storage: customers can export data directly from Splunk's S3 bucket to their own S3 bucket.",
+  "graph": {
+    "name": "Splunk Cloud SmartStore and Tiered Storage Architecture",
+    "link": "https://www.youtube.com/watch?v=5vR5aN_xdI0",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Separates compute and storage to optimize performance and cost using EC2 caching, S3, and Glacier, while enabling direct data export to customer-owned S3 buckets."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDataStream",
+      "name": "Customer Data",
+      "notes": "Source data from customer applications and services."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "Serverless ingestion mechanism sending data directly to Splunk."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Streams data from AWS sources to Splunk with sticky load balancing requirements."
+    },
+    {
+      "id": "3",
+      "service": "ELB",
+      "name": "HEC Load Balancer",
+      "notes": "Handles standard HTTP Event Collector (HEC) traffic and Lambda ingestion."
+    },
+    {
+      "id": "4",
+      "service": "ELB",
+      "name": "Sticky Load Balancer",
+      "notes": "Handles Firehose traffic which requires sticky sessions."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Splunk Indexers (ASG)",
+      "notes": "Compute layer with fast caching tiers for quick dashboard and search performance."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Splunk S3 Bucket",
+      "notes": "SmartStore cold storage tier for data replication and durability."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Splunk Glacier Bucket",
+      "notes": "Archival storage tier, allows self-service rehydration via UI."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Customer S3 Bucket",
+      "notes": "Destination for dynamic data self-storage exports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Direct HEC data path."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Serverless ingestion trigger."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda forwards data to HEC load balancer."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streaming data ingestion."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Firehose routes through dedicated sticky load balancer."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes standard traffic to indexers."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Routes sticky stream traffic to indexers."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Evicts cold data from EC2 cache to S3."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Archives compliance and long-term data to Glacier."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Dynamic data self-storage export to customer's account."
+    }
+  ]
+}

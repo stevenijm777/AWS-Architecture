@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "The architecture has two main workflows: an interactive job search flow and an offline job ingestion flow. 1. Interactive Flow: A practitioner (User) connects to the .NET App on ECS. ECS sanitizes the prompt and does geolocation using Bedrock Claude 2, then vectorizes using Bedrock Titan. It fetches past chat history from MS SQL on EC2, queries the Elasticsearch cluster on EC2 for matching jobs, and uses Bedrock Claude 2 to stream the formatted response back to the user. 2. Offline Ingestion: RSS/API feeds are collected every 6 hours into S3, vectorized via Bedrock Titan, and stored in Elasticsearch on EC2.",
+  "graph": {
+    "name": "Healthy Careers GenAI Job Search Engine",
+    "link": "https://www.youtube.com/watch?v=7KqYdneuJjo",
+    "categories": "interactive, compute_intensive, data_ingestion",
+    "graph_usable": true,
+    "notes": "Generative AI search engine utilizing Amazon Bedrock (Claude 2 and Titan) and Elasticsearch to provide NLP-based job searches for healthcare workers with >80% interaction rates."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Practitioner",
+      "notes": "Healthcare professional seeking job listings."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": ".NET Application",
+      "notes": "Orchestrates user queries and controls GenAI workflows."
+    },
+    {
+      "id": "2",
+      "service": "AmazonML",
+      "name": "Bedrock Claude 2 (Sanitizer)",
+      "notes": "Sanitizes prompts, handles prompt injection, and converts locations to coordinates."
+    },
+    {
+      "id": "3",
+      "service": "AmazonML",
+      "name": "Bedrock Titan (Embed)",
+      "notes": "Converts user search prompts into vector embeddings."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "MS SQL on EC2",
+      "notes": "Retrieves historical search history for the user."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Elasticsearch on EC2",
+      "notes": "Full-text and vector content knowledge base of job descriptions."
+    },
+    {
+      "id": "6",
+      "service": "AmazonML",
+      "name": "Bedrock Claude 2 (Generator)",
+      "notes": "Generates a structured NLP response streaming back to the user."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Document Store",
+      "notes": "Stores RSS and API feeds from external partners."
+    },
+    {
+      "id": "8",
+      "service": "AmazonML",
+      "name": "Bedrock Titan (Vectorize)",
+      "notes": "Vectorizes job descriptions from S3 before storage."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "User submits a natural language search query."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Passes query for sanitization and geolocation conversion."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns enriched and sanitized prompt."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Requests vector embedding of the sanitized prompt."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Passes vectorized query to retrieve chat history."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Queries vector database using search query and historical context."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Extracts 6 relevant job descriptions and sends to Bedrock."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Streams AI-generated response back to the user."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Feeds new jobs from S3 to Titan every 6 hours for vectorization."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Stores vectorized job descriptions in the search database."
+    }
+  ]
+}

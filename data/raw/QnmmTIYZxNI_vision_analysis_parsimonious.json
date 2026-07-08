@@ -1,0 +1,102 @@
+{
+  "step_by_step_reasoning": "We identify the nodes on the whiteboard: an EKS cluster and EC2 instances inside a VPC utilizing a 'reused' CIDR space. In the same VPC, NAT Gateway (NGW) and Network Load Balancer (NLB) are deployed in a 'routed' CIDR space. Transit Gateway serves as the regional hub, connecting the VPC to Direct Connect, VPN, and a Shared Services VPC via Private Link. We map these exact components to standard AWS nodes, preserving the flow from EKS -> NGW -> Transit Gateway, and Transit Gateway -> Direct Connect / VPN / Private Link.",
+  "graph": {
+    "name": "Adobe Scalable Regional VPC Architecture",
+    "link": "https://www.youtube.com/watch?v=QnmmTIYZxNI",
+    "categories": "control, other",
+    "graph_usable": true,
+    "notes": "Adobe leverages Transit Gateway to handle networking at scale across thousands of AWS accounts, using a dual CIDR block strategy (reused and routed space) to optimize IPv4 addresses."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EKS",
+      "name": "EKS Cluster",
+      "notes": "WORKLOAD_PEEK: Hosts product workloads inside the reused CIDR block."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Instances",
+      "notes": "WORKLOAD_PEEK: Runs customer applications alongside EKS in the reused CIDR block."
+    },
+    {
+      "id": "2",
+      "service": "NAT",
+      "name": "NGW",
+      "notes": "DATA_PEEK: Translates local EKS/EC2 IPs to enable external and cross-VPC communication."
+    },
+    {
+      "id": "3",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "DATA_PEEK: Handles inbound traffic to the customer VPC application endpoints."
+    },
+    {
+      "id": "4",
+      "service": "TransitGateway",
+      "name": "TRANSIT GW",
+      "notes": "WORKLOAD_PEEK: Acts as regional hub routing traffic between VPCs and on-premise networks."
+    },
+    {
+      "id": "5",
+      "service": "DirectConnect",
+      "name": "DIRECT CONNECT",
+      "notes": "DATA_PEEK: Hybrid cloud link to on-premise infrastructure."
+    },
+    {
+      "id": "6",
+      "service": "VPN",
+      "name": "VPN",
+      "notes": "DATA_PEEK: Secured backup hybrid connectivity."
+    },
+    {
+      "id": "7",
+      "service": "PrivateLink",
+      "name": "VPC PRIVATE LINK",
+      "notes": "WORKLOAD_PEEK: Centralizes access to shared services securely across the network."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Outbound traffic from reused subnet routes to NAT Gateway."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "NAT Gateway forwards traffic out to Transit Gateway."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Transit Gateway routes data to on-premise via Direct Connect."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transit Gateway routes backup traffic via VPN."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transit Gateway connects regional VPCs to shared services through Private Link."
+    }
+  ]
+}

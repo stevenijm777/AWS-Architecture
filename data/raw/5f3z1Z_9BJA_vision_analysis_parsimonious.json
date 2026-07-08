@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "Based on the whiteboard diagram and transcript: On-premises IBM Netezza database data is synchronized via AWS Storage Gateway and 2x10G Direct Connect into an S3 Landing Zone. Metadata and transformation pipelines are managed in RDS Postgres. Two stages of EC2 instances perform quality cleansing and transformations using the metadata scripts, moving data through a Transformation S3 bucket and then into Amazon Redshift. Redshift Spectrum processes data and exports it to a Publish S3 bucket, which finally transitions older data to S3 Glacier based on lifecycle policies.",
+  "graph": {
+    "name": "Netezza Migration to AWS Redshift",
+    "link": "https://www.youtube.com/watch?v=5f3z1Z_9BJA",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "HIPAA-compliant ELT architecture migrating 20TB of historical data and 100GB daily increments from on-premises Netezza to AWS Redshift."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Netezza DB",
+      "notes": "WORKLOAD_PEEK: On-premises database holding 20TB historical data."
+    },
+    {
+      "id": "1",
+      "service": "StorageGateway",
+      "name": "Storage Gateway",
+      "notes": "Handles daily incremental transfers (100GB/day) via NFS."
+    },
+    {
+      "id": "2",
+      "service": "DirectConnect",
+      "name": "Direct Connect",
+      "notes": "2x10G aggregated links for high-speed transfer."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Landing S3",
+      "notes": "DATA_PEEK: Real-time landing zone with 2-day retention policy."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Quality Cleansing",
+      "notes": "Runs quality check and cleansing scripts driven by RDS metadata."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS Postgres",
+      "notes": "Stores ELT pipeline metadata and transformation scripts."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Transformation S3",
+      "notes": "DATA_PEEK: Stores cleansed intermediate data. 1-day retention."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Transformation",
+      "notes": "Executes final data structuring and dimensions transformation."
+    },
+    {
+      "id": "8",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Target data warehouse for analytics and ad-hoc Spectrum queries."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Publish S3",
+      "notes": "DATA_PEEK: Stores daily dashboards data. Retained for 1 year & 1 month."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Glacier",
+      "notes": "Long-term archive storage for compliance and history."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Incremental updates extracted"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "NFS traffic sent over Direct Connect"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Data lands in S3 bucket"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Cleansing nodes pull raw data"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Retrieves cleansing scripts"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Writes cleansed staging data"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Transformation nodes pull cleansed data"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "meta",
+      "notes": "Retrieves transformation scripts"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Loads final tables into Redshift"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Publishes reporting data via Redshift Spectrum"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "Lifecycle policy archives old files"
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "step_by_step_reasoning": "First, we identify the ingestion layer consisting of the first Kinesis Data Streams ('Collect') receiving real-time events. Next, the data is persisted to Amazon Neptune, with replica data synced to Elasticsearch (OpenSearch) for analytics and Amazon DynamoDB for history. To manage write-scaling, CloudWatch gathers metrics from Elasticsearch and Neptune, feeding them to the custom Sharder Service (modeled as EC2), which dynamically routes traffic back to Neptune. For security checks, a second Kinesis Data Streams receives incoming events from the collector, queries Neptune to perform graph evaluations, writes any detected violations to DynamoDB, and sends alerts to Slack/Email (ThirdParty).",
+  "graph": {
+    "name": "Cloud Health by VMware: Real-time Cloud Security Monitoring at Scale",
+    "link": "https://www.youtube.com/watch?v=6EUknQqaV1w",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Real-time security platform processing billions of events daily and monitoring over 50 million resources across multiple clouds using graph database exploration."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Collect)",
+      "notes": "WORKLOAD_PEEK: Real-time ingestion of native cloud security event streams handling billions of events daily."
+    },
+    {
+      "id": "1",
+      "service": "Neptune",
+      "name": "Amazon Neptune",
+      "notes": "DATA_PEEK: Handles 50M+ highly interconnected cloud resources. Agnostic graph database supporting read scale-out and schema-less data representation."
+    },
+    {
+      "id": "2",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Used for reporting, analytical capabilities, search, and aggregations."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Used for historical resource configuration visualization and storing security violations."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Monitors CPU, memory, and performance metrics from Neptune and Elasticsearch."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Sharder Service",
+      "notes": "Microservice that uses CloudWatch metrics to determine shard capacity and balance data loads."
+    },
+    {
+      "id": "6",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Rule Engine)",
+      "notes": "Fronts the rule execution pipeline, running thousands of rules over Neptune graph database."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Slack & Email",
+      "notes": "Real-time notifications sent to customers when security violations are detected."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Publishes evaluated cloud resources into Neptune."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Syncs data for analytics and search capabilities."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Syncs resource configuration changes over time."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Sends database performance metrics to CloudWatch."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Sends cluster search performance metrics to CloudWatch."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Sharder service reads metrics to determine capacity."
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Determines routing and logical grouping of data to balance writes across clusters."
+    },
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Propagates event changes to the rule execution pipeline."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries Neptune graph database to perform security rule checks."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Persists detected security violations."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers alerts to external notification channels."
+    }
+  ]
+}

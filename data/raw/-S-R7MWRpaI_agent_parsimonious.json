@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture shows an edge computing system integrated with AWS. On the left, we have a Standard Node (N) communicating with a Supernode (SN), and two Supernodes (SN) interacting with EKS. EKS manages discovery and routes metadata/profile storage to MongoDB (ThirdParty) and DynamoDB. The telemetry pipeline runs from the Supernode (SN) to Kinesis Data Streams, which feeds into Kinesis Firehose, and then stores the archive in S3. Snowflake queries the archived data from S3.",
+  "graph": {
+    "name": "Mimic Edge Engine Architecture",
+    "link": "https://www.youtube.com/watch?v=-S-R7MWRpaI",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Edge Engine allows developers to deploy edge microservices. Uses EKS for coordination and discovery, MongoDB for cluster proximity, and Snowflake over S3 for analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "Supernode 1 (SN)",
+      "notes": "First node that registers on the network, becoming a supernode."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyEdge",
+      "name": "Supernode 2 (SN)",
+      "notes": "Manages proximal node discovery and reports telemetry."
+    },
+    {
+      "id": "2",
+      "service": "UserCompanyEdge",
+      "name": "Standard Node (N)",
+      "notes": "New node entering the network and listening to the supernode."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS (MDS)",
+      "notes": "WORKLOAD_PEEK: Runs the discovery service and handles supernode registration."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "MongoDB",
+      "notes": "DATA_PEEK: Document database used to define clusters by proximity."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores user profiles and hierarchical peer associations."
+    },
+    {
+      "id": "6",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams",
+      "notes": "DATA_PEEK: Handles real-time telemetry stream up to 1,000 msgs/sec."
+    },
+    {
+      "id": "7",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Buffers and flushes incoming telemetry streams to S3."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "DATA_PEEK: Long-term archival storage for all edge telemetry logs."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Snowflake",
+      "notes": "Performs SQL queries on data stored in S3 for real-time and long-term analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Standard node joins and listens to the supernode."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Supernode registers metadata with MDS."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Supernode registers the new standard node."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EKS registers proximity and clustering data in MongoDB."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "EKS manages peer profiles and associations."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Supernode streams telemetry and log data."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams data to Firehose."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Archives telemetry data into S3."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries telemetry archive data."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns query result payload."
+    }
+  ]
+}

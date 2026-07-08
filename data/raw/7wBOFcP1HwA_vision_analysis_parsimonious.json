@@ -1,0 +1,144 @@
+{
+  "step_by_step_reasoning": "The user starts at the left, sending traffic (300k requests/min) to CloudFront. S3 stores static content served via CloudFront. A Lambda function helps CloudFront with regional routing decisions. From CloudFront, requests go to the Load Balancers (ALB). The ALB routes 20% of traffic to the Legacy Monolith system (running on EC2) and 80% to EKS (running microservices). EKS connects to the data layer, which consists of Mongo/Kafka (running on self-managed EC2) and RDS. CloudWatch is used for monitoring across the architecture.",
+  "graph": {
+    "name": "Seera Group (Almosafer) Hybrid Microservices Architecture",
+    "link": "https://www.youtube.com/watch?v=7wBOFcP1HwA",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Migration from legacy monolith to EKS microservices handling 300k requests/minute. Utilizes a hybrid data layer of managed RDS and self-managed Mongo/Kafka on EC2."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User",
+      "notes": "DATA_PEEK: 300k requests per minute."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Caches and serves static content globally."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores images, 3D assets, and video content."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Routing Lambda",
+      "notes": "Determines viewer region and guides backend routing."
+    },
+    {
+      "id": "4",
+      "service": "ALB",
+      "name": "60+ Load Balancers",
+      "notes": "WORKLOAD_PEEK: Separated for Web and APIs."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Legacy Monolith",
+      "notes": "Handles ~20% of legacy traffic."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "EKS Clusters",
+      "notes": "WORKLOAD_PEEK: Hosts 250+ microservices across 1400+ pods."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Mongo / Kafka",
+      "notes": "Self-managed message streaming and NoSQL database layers."
+    },
+    {
+      "id": "8",
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "Managed relational database layer."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "EC2 Instances",
+      "notes": "Hosts self-managed tooling and databases."
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Provides infrastructure monitoring and observability."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User initiates booking request."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Serves static media from S3."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Decides regional origin/routing."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Forwards dynamic API/Web requests."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Routes legacy system calls (20%)."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Routes modernized microservice calls (80%)."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Writes/reads event streams and NoSQL data."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries relational data store."
+    }
+  ]
+}

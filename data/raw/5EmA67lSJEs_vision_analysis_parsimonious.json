@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "We identify two User icons: Content Originators and Media Outlets, both mapped to UserConsumerWebMobile. Traffic hits ELB, filtered by a WAF Firewall. The web application tier runs on EC2 (APP). S3 stores master files and delivery copies. SQS handles asynchronous work priority queues. QC, transcoding, and batch jobs run on dedicated EC2 clusters. Deliveries are either direct from S3 or via CloudFront.",
+  "graph": {
+    "name": "Extreme Reach Adbridge Video Distribution Architecture",
+    "link": "https://www.youtube.com/watch?v=5EmA67lSJEs",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "System processes and transcodes major US advertising traffic, using SQS queues for asynchronous task prioritization and S3 for direct-to-destination delivery."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Content Originators",
+      "notes": "Advertisers and brand publishers uploading original video assets."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerWebMobile",
+      "name": "Media Outlets",
+      "notes": "Broadcasters and destination endpoints retrieving finished ads."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "Elastic Load Balancer",
+      "notes": "Balances entry traffic from UI and API uploads."
+    },
+    {
+      "id": "3",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "Web Application Firewall monitoring ELB traffic."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Application Servers",
+      "notes": "Front-end web tier for API/UI interactions."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "QC / Transcoding",
+      "notes": "Custom EC2 fleet for quality control and transcoding."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Batch Servers",
+      "notes": "Custom EC2 batch applications orchestrating work."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "Simple Queue Service",
+      "notes": "Asynchronous high/low priority queues for workloads."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 Cloud Storage",
+      "notes": "Direct source of truth and distribution storage."
+    },
+    {
+      "id": "9",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Delivers digital video ads to consumers/destinations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Originators send metadata / api requests through ELB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Traffic filtered and verified by WAF."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Traffic routed to Application EC2 instances."
+    },
+    {
+      "source": "0",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Direct file upload from Java Media Uploader to S3."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "App tier queues transcoding work in SQS."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Transcoding fleet polls SQS for tasks."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Batch servers poll SQS for work items."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Processed/QC transcoded files saved back to S3."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Media Outlets query system for available deliveries."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Direct download of TV files from S3."
+    },
+    {
+      "source": "1",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Digital ad distribution via CDN."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "CloudFront origins assets from S3 bucket."
+    }
+  ]
+}

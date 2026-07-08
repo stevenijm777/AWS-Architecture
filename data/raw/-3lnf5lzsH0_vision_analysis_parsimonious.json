@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "We identify nodes chronologically from the whiteboard and transcript. Ingestion starts with AWS Sources (mapped to S3 as representational log storage) and On-Premise sources (OnPremDC), sending logs to Apache Metron (running on EC2). Inside the Security Data Lake, EMR transforms the data, storing it in S3, which is then queried by Athena. A feedback loop connects Athena/Data Lake back to Metron. For threat response, Metron alerts the SOAR platform (Blitz, on EC2), which presents warnings to the SOC Analyst (UserCompanyAnalyst), who can take action via AWS WAF.",
+  "graph": {
+    "name": "Next-Gen Security Operations Center (SOC) on AWS",
+    "link": "https://www.youtube.com/watch?v=-3lnf5lzsH0",
+    "categories": "data_ingestion, compute_intensive, control",
+    "graph_usable": true,
+    "notes": "MakeMyTrip built a next-generation SOC system processing 5,000 events per second from 20+ sources, indexing 250 million events per day in an AWS security data lake. Transitioned from an on-premise HDFS environment to serverless S3/Athena querying."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "AWS Log Sources",
+      "notes": "DATA_PEEK: Pulls telemetry from S3, SNS, SQS, CloudTrail, and GuardDuty."
+    },
+    {
+      "id": "1",
+      "service": "OnPremDC",
+      "name": "On-Prem Sources",
+      "notes": "DATA_PEEK: Real-time on-premises telemetry ingested using syslog or Kafka."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Apache Metron",
+      "notes": "WORKLOAD_PEEK: Converts diverse log formats to standardized JSON. Performs stream profiling and enrichment."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "Amazon EMR",
+      "notes": "WORKLOAD_PEEK: EMR jobs migrate and transform persistent HDFS data from Apache Metron into S3."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Security Data Lake",
+      "notes": "DATA_PEEK: Horizontally scalable telemetry storage holding months of history."
+    },
+    {
+      "id": "5",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "WORKLOAD_PEEK: Used for log mining, analytics, forensics, and building long-term behavioral models."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "SOAR (Blitz)",
+      "notes": "WORKLOAD_PEEK: Open-source orchestration tool for threat enrichment and single-pane alert visualization."
+    },
+    {
+      "id": "7",
+      "service": "UserCompanyAnalyst",
+      "name": "SOC Analyst",
+      "notes": "WORKLOAD_PEEK: Reviews triage data and executes automated block actions."
+    },
+    {
+      "id": "8",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "WORKLOAD_PEEK: Blocks source IPs or threats at the perimeter."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Telemetry ingestion."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Syslog/Kafka telemetry ingestion."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transfers logs to persistent stream layer."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Transforms and writes to S3."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Athena queries S3 data."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Feedback loop to enrich real-time stream engine with historical profiles."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Security alerts sent to SOAR system."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Presents context-rich alert on mobile or Jira."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Analyst triggers manual/semi-automated block rule."
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The transcript and whiteboard layout describe a contact center solution called ContactSuite. I'll represent the flows as: 1) Voice/Chat Ingestion via Connect, processed by a routing Lambda, integrated with ECS microservices to CRMs, and popped onto ContactSuite's agent screen; 2) Email Ingestion via SES and a dedicated processing Lambda; 3) Data persistence to DynamoDB and RDS for state and reporting. We represent the ContactSuite core hosted on ELB/EC2/ASG as an EC2 node.",
+  "graph": {
+    "name": "ContactSuite Contact Center Scale Architecture",
+    "link": "https://www.youtube.com/watch?v=BPvr0qWpJlA",
+    "categories": "data_ingestion, compute_intensive, other",
+    "graph_usable": true,
+    "notes": "Integrates AWS Connect, SES, and local custom microservices to empower support agents with smart screen pops and automated CRM data retrieval."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Caller Carrie",
+      "notes": "Initiates voice calls, chats, or emails."
+    },
+    {
+      "id": "1",
+      "service": "Connect",
+      "name": "Amazon Connect",
+      "notes": "Handles contact flows, IVR, and chat/voice channels."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Contact Flow Lambda",
+      "notes": "Determines call routing logic and automation triggers."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "CRM Integration Microservices",
+      "notes": "WORKLOAD_PEEK: Handles CRM backend queries during active sessions."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "External CRMs",
+      "notes": "CRM platforms such as Salesforce or Siebel."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "ContactSuite Engine",
+      "notes": "Hosted on ELB, EC2, and ASG. Embeds SenseIQ KB and serves agent screens."
+    },
+    {
+      "id": "6",
+      "service": "UserCompanyAgent",
+      "name": "Agent Andy",
+      "notes": "Receives real-time browser screen pops and calls."
+    },
+    {
+      "id": "7",
+      "service": "SES",
+      "name": "Amazon SES",
+      "notes": "Receives customer inbound support emails."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Email Handler Lambda",
+      "notes": "Processes and normalizes incoming emails for queue injection."
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DATA_PEEK: Stores fast transactional, session, and state records."
+    },
+    {
+      "id": "10",
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "DATA_PEEK: Relational store used for reporting and analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Caller initiates voice or chat session"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Connect queries contact flow state"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers backend microservices"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Retrieves user records from Siebel/Salesforce"
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Connect triggers agent state match"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Pops customized data form and SenseIQ KB to agent screen"
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends email to contact center support"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards inbound email to parser"
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Presents processed email as standard chat/voice work unit"
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves operational metrics and session data"
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves historical configuration and reporting metrics"
+    }
+  ]
+}

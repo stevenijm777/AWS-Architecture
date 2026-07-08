@@ -1,0 +1,687 @@
+[
+  {
+    "start": 0.0,
+    "end": 10.72,
+    "text": "Hi, I'm Matt from AWS and on today's episode of This is My Architecture,"
+  },
+  {
+    "start": 10.72,
+    "end": 12.76,
+    "text": "I'm joined by Keith from Pinterest. Thanks for joining."
+  },
+  {
+    "start": 12.76,
+    "end": 13.56,
+    "text": "Thanks for having me."
+  },
+  {
+    "start": 13.56,
+    "end": 14.52,
+    "text": "So tell us about Pinterest."
+  },
+  {
+    "start": 14.52,
+    "end": 17.56,
+    "text": "Pinterest's mission is to bring everyone the inspiration to create the life they love."
+  },
+  {
+    "start": 17.56,
+    "end": 19.96,
+    "text": "And that requires processing a lot of data."
+  },
+  {
+    "start": 19.96,
+    "end": 23.64,
+    "text": "The data engineering team at Pinterest hosts a variety of data engineering services like"
+  },
+  {
+    "start": 23.64,
+    "end": 27.36,
+    "text": "Hadoop and Spark and Presto, all on AWS EC2 instances."
+  },
+  {
+    "start": 27.36,
+    "end": 30.8,
+    "text": "That's great. I mean, earlier in my AWS career, I did a ton of big data analytics work,"
+  },
+  {
+    "start": 30.8,
+    "end": 32.64,
+    "text": "so I'm really excited about this talk today."
+  },
+  {
+    "start": 32.64,
+    "end": 37.6,
+    "text": "So I know that we were talking before the shoot, and there's sort of a before and after story here"
+  },
+  {
+    "start": 37.6,
+    "end": 43.36,
+    "text": "in terms of how you give your users internally access and services access to data and associated"
+  },
+  {
+    "start": 43.36,
+    "end": 45.6,
+    "text": "clusters to sort of process and analyze that data. Is that right?"
+  },
+  {
+    "start": 45.6,
+    "end": 49.879999999999995,
+    "text": "Yeah, yeah. So we have, over time, teams at Pinterest have come to us and said,"
+  },
+  {
+    "start": 49.879999999999995,
+    "end": 54.56,
+    "text": "hey, I've got this data set and I want to restrict access to this data set to make sure that I know how it's being used."
+  },
+  {
+    "start": 54.56,
+    "end": 58.52,
+    "text": "But I also still want to have access to all the services like Hadoop and Flink,"
+  },
+  {
+    "start": 58.52,
+    "end": 61.2,
+    "text": "and I need to be able to build and train models off of this stuff."
+  },
+  {
+    "start": 61.2,
+    "end": 63.800000000000004,
+    "text": "So how can you go and give me access to that?"
+  },
+  {
+    "start": 63.800000000000004,
+    "end": 65.72,
+    "text": "Okay. So what did you do sort of before?"
+  },
+  {
+    "start": 65.72,
+    "end": 69.76,
+    "text": "So before, what we would typically do is, like, each of these teams, for the sake of illustration,"
+  },
+  {
+    "start": 69.76,
+    "end": 74.12,
+    "text": "we'll just say that each of these teams has, like, a single AWS bucket, an S3 bucket here."
+  },
+  {
+    "start": 74.12,
+    "end": 75.12,
+    "text": "So we'll have bucket."
+  },
+  {
+    "start": 75.12,
+    "end": 76.12,
+    "text": "That's an S3 bucket."
+  },
+  {
+    "start": 76.12,
+    "end": 78.24000000000001,
+    "text": "Yeah, bucket one, and we'll create bucket two."
+  },
+  {
+    "start": 78.24000000000001,
+    "end": 79.44,
+    "text": "Okay."
+  },
+  {
+    "start": 79.44,
+    "end": 84.28,
+    "text": "And what we would normally do is create an IAM role for each of these."
+  },
+  {
+    "start": 84.28,
+    "end": 85.8,
+    "text": "That grants access to the data in that bucket."
+  },
+  {
+    "start": 85.8,
+    "end": 90.0,
+    "text": "Exactly. So each of these IAM roles pairs with a bucket in this particular example."
+  },
+  {
+    "start": 90.0,
+    "end": 95.08,
+    "text": "So if we go with this traditional model, what we end up doing is including this IAM role"
+  },
+  {
+    "start": 95.08,
+    "end": 96.88,
+    "text": "into a variety of different services."
+  },
+  {
+    "start": 96.88,
+    "end": 100.64,
+    "text": "So we build out a Hadoop service, a Presto service, Airflow,"
+  },
+  {
+    "start": 100.64,
+    "end": 103.56,
+    "text": "all of the different systems that we count on inside of Pinterest."
+  },
+  {
+    "start": 103.56,
+    "end": 107.44,
+    "text": "And so what you can see is in this model, I've basically built out two different copies of Hadoop."
+  },
+  {
+    "start": 107.44,
+    "end": 109.12,
+    "text": "I have to configure them."
+  },
+  {
+    "start": 109.12,
+    "end": 110.56,
+    "text": "I have to maintain them."
+  },
+  {
+    "start": 110.56,
+    "end": 112.28,
+    "text": "The scale there is kind of difficult."
+  },
+  {
+    "start": 112.28,
+    "end": 115.96000000000001,
+    "text": "So that's because the instances in the Hadoop cluster, for example,"
+  },
+  {
+    "start": 115.96000000000001,
+    "end": 117.28,
+    "text": "have to assume the role."
+  },
+  {
+    "start": 117.28,
+    "end": 117.88,
+    "text": "Exactly."
+  },
+  {
+    "start": 117.88,
+    "end": 119.12,
+    "text": "And then to get access to the data."
+  },
+  {
+    "start": 119.12,
+    "end": 121.44,
+    "text": "So if you need to have a different role, you need a different cluster."
+  },
+  {
+    "start": 121.44,
+    "end": 121.88,
+    "text": "Exactly."
+  },
+  {
+    "start": 121.88,
+    "end": 126.24000000000001,
+    "text": "We've used sort of the traditional model of assigning the EC2 instances to the IAM role."
+  },
+  {
+    "start": 126.24000000000001,
+    "end": 128.12,
+    "text": "And as a result, they're paired."
+  },
+  {
+    "start": 128.12,
+    "end": 132.16,
+    "text": "And every time I create a new IAM role in this model, I end up having to create a new set of services."
+  },
+  {
+    "start": 132.16,
+    "end": 134.88,
+    "text": "Which also means that if, for example, some customer comes along tomorrow"
+  },
+  {
+    "start": 134.88,
+    "end": 138.68,
+    "text": "and needs to pull data from both bucket one and bucket two,"
+  },
+  {
+    "start": 138.68,
+    "end": 143.24,
+    "text": "I actually now need to create a third IAM role and a third set of my services just to maintain that."
+  },
+  {
+    "start": 143.24,
+    "end": 145.48,
+    "text": "So here I've only got two different groups of data,"
+  },
+  {
+    "start": 145.48,
+    "end": 149.24,
+    "text": "but I've already got three different sets of services just to maintain access to them."
+  },
+  {
+    "start": 149.24,
+    "end": 150.56,
+    "text": "Yeah, I can see how that could get untenable."
+  },
+  {
+    "start": 150.56,
+    "end": 154.2,
+    "text": "And a dynamic company like Pinterest, as needs change over time,"
+  },
+  {
+    "start": 154.2,
+    "end": 156.56,
+    "text": "that's going to mean more clusters, more cost, right?"
+  },
+  {
+    "start": 156.56,
+    "end": 158.56,
+    "text": "And really more roles you're going to have to maintain."
+  },
+  {
+    "start": 158.56,
+    "end": 161.32,
+    "text": "Yeah, so we were really looking for a solution that we could scale"
+  },
+  {
+    "start": 161.32,
+    "end": 164.35999999999999,
+    "text": "and start adding more and more of these data access groups."
+  },
+  {
+    "start": 164.35999999999999,
+    "end": 168.04,
+    "text": "So every team could come up with whatever they wanted to do to maintain their own data."
+  },
+  {
+    "start": 168.04,
+    "end": 169.04,
+    "text": "Okay."
+  },
+  {
+    "start": 169.04,
+    "end": 172.95999999999998,
+    "text": "So we sat down with the Pinterest security team and with AWS folks,"
+  },
+  {
+    "start": 172.95999999999998,
+    "end": 176.16,
+    "text": "and we started talking about the Assume Role API call."
+  },
+  {
+    "start": 176.16,
+    "end": 179.76,
+    "text": "We were already using the Assume Role API call with a specific IAM role,"
+  },
+  {
+    "start": 179.76,
+    "end": 184.35999999999999,
+    "text": "and that would give us back an STS token, which we could then use for a variety of different services"
+  },
+  {
+    "start": 184.35999999999999,
+    "end": 188.07999999999998,
+    "text": "that could then communicate directly with, for example, S3 buckets."
+  },
+  {
+    "start": 188.08,
+    "end": 190.8,
+    "text": "But what we didn't really know about and then we started learning about was"
+  },
+  {
+    "start": 190.8,
+    "end": 194.8,
+    "text": "that you could actually pass in a list of managed policies that would become session policies"
+  },
+  {
+    "start": 194.8,
+    "end": 200.32000000000002,
+    "text": "for that STS token, and those managed policies get ended or intersected with the base IAM role."
+  },
+  {
+    "start": 200.32000000000002,
+    "end": 204.96,
+    "text": "Okay, so fast forward to today, I guess what's over here, you have STS and you're calling Assume Role, right?"
+  },
+  {
+    "start": 204.96,
+    "end": 208.24,
+    "text": "Yeah, we're calling Assume Role, and so we're passing in this base IAM role."
+  },
+  {
+    "start": 208.24,
+    "end": 208.60000000000002,
+    "text": "Yeah."
+  },
+  {
+    "start": 208.6,
+    "end": 213.32,
+    "text": "And right now, this base IAM role, we're giving permission to access both of these two buckets."
+  },
+  {
+    "start": 213.32,
+    "end": 213.72,
+    "text": "Okay."
+  },
+  {
+    "start": 213.72,
+    "end": 216.76,
+    "text": "And then we're going to create two other managed policies."
+  },
+  {
+    "start": 216.76,
+    "end": 223.56,
+    "text": "We'll just call the managed policy one, and we'll have managed policy two down here."
+  },
+  {
+    "start": 224.12,
+    "end": 231.32,
+    "text": "So when we call Assume Role, if we were to pass in the base IAM role and just managed policy one,"
+  },
+  {
+    "start": 231.32,
+    "end": 237.23999999999998,
+    "text": "even though the base IAM role has access to both of these buckets, the actual STS token produced will only have access,"
+  },
+  {
+    "start": 237.23999999999998,
+    "end": 241.88,
+    "text": "in this case, to managed policy one and thus the first bucket."
+  },
+  {
+    "start": 241.88,
+    "end": 248.04,
+    "text": "But if I pass in both of these managed policies, that resulting STS token will have access to both of those buckets."
+  },
+  {
+    "start": 248.04,
+    "end": 251.64,
+    "text": "So I can build out all the permutations with just two managed policies here."
+  },
+  {
+    "start": 251.64,
+    "end": 252.04,
+    "text": "Okay."
+  },
+  {
+    "start": 252.04,
+    "end": 255.64,
+    "text": "Well then, how does this actually, like how does it know what managed policies, how does it connect to,"
+  },
+  {
+    "start": 255.64,
+    "end": 258.44,
+    "text": "you know, internally what the user should have access to?"
+  },
+  {
+    "start": 258.44,
+    "end": 261.71999999999997,
+    "text": "Yeah, so that's where we built a token vending service on the Pinterest side."
+  },
+  {
+    "start": 261.71999999999997,
+    "end": 267.08,
+    "text": "And the token vending services job is to sort of bridge our own internal concept of users and authentication"
+  },
+  {
+    "start": 267.08,
+    "end": 268.6,
+    "text": "with these managed policies."
+  },
+  {
+    "start": 268.6,
+    "end": 274.04,
+    "text": "So the token vending service is going to get a call in from customers or from EC2 instances"
+  },
+  {
+    "start": 274.04,
+    "end": 278.84,
+    "text": "that are running services down here and make a call up to our LDAP service."
+  },
+  {
+    "start": 279.4,
+    "end": 284.2,
+    "text": "And it gets back from that LDAP service a list of LDAP groups that that user is in."
+  },
+  {
+    "start": 284.2,
+    "end": 286.84,
+    "text": "So at Pinterest you use LDAP internally for all of your users?"
+  },
+  {
+    "start": 286.84,
+    "end": 287.32,
+    "text": "Exactly."
+  },
+  {
+    "start": 287.32,
+    "end": 292.2,
+    "text": "So each user might have one or more LDAP groups that are related to this."
+  },
+  {
+    "start": 292.2,
+    "end": 297.48,
+    "text": "So we can map those LDAP groups each individually to sets of managed policies."
+  },
+  {
+    "start": 297.48,
+    "end": 302.92,
+    "text": "In this particular example, if a user makes a call into the vending service and is in the LDAP group"
+  },
+  {
+    "start": 302.92,
+    "end": 306.76,
+    "text": "associated with managed policy one, they get a token that only contains managed policy one."
+  },
+  {
+    "start": 306.76,
+    "end": 308.68,
+    "text": "They only have access to the first bucket."
+  },
+  {
+    "start": 308.68,
+    "end": 314.36,
+    "text": "If they make a call in with both LDAP groups, they get both managed policies, they get both buckets."
+  },
+  {
+    "start": 314.36,
+    "end": 315.72,
+    "text": "Or they could get just bucket two."
+  },
+  {
+    "start": 315.72,
+    "end": 319.24,
+    "text": "And then if the group therein changes, that change immediately takes effect."
+  },
+  {
+    "start": 319.24,
+    "end": 319.72,
+    "text": "Yeah."
+  },
+  {
+    "start": 319.72,
+    "end": 324.52000000000004,
+    "text": "So one of the cool things for us is that all of our tools that we use to internally administrate LDAP groups"
+  },
+  {
+    "start": 324.52000000000004,
+    "end": 325.56,
+    "text": "all apply here."
+  },
+  {
+    "start": 325.56,
+    "end": 329.40000000000003,
+    "text": "So I can actually make the team that owns each of these S3 buckets own their LDAP group."
+  },
+  {
+    "start": 329.40000000000003,
+    "end": 332.04,
+    "text": "And they get to choose who has access to their data and not."
+  },
+  {
+    "start": 332.04,
+    "end": 335.96000000000004,
+    "text": "That's great because it's pushing ownership down to the service team owners really."
+  },
+  {
+    "start": 335.96000000000004,
+    "end": 337.72,
+    "text": "Right. It makes it really easy to maintain."
+  },
+  {
+    "start": 337.72,
+    "end": 341.8,
+    "text": "And so the way this works from here is the token vending service."
+  },
+  {
+    "start": 341.8,
+    "end": 345.64000000000004,
+    "text": "If we consider for example Hadoop here that we're hosting on our EC2 instances,"
+  },
+  {
+    "start": 345.64000000000004,
+    "end": 348.28000000000003,
+    "text": "Hadoop has a credentials provider that we've plugged in there."
+  },
+  {
+    "start": 348.28000000000003,
+    "end": 348.6,
+    "text": "Okay."
+  },
+  {
+    "start": 348.6,
+    "end": 353.96000000000004,
+    "text": "The credentials provider is going to take a Kerberized Hadoop call."
+  },
+  {
+    "start": 353.96,
+    "end": 356.28,
+    "text": "So the user authenticates."
+  },
+  {
+    "start": 356.28,
+    "end": 361.15999999999997,
+    "text": "Yeah. So the user authenticates, provides a strong authentication token through Kerberos."
+  },
+  {
+    "start": 361.15999999999997,
+    "end": 364.12,
+    "text": "That authentication token gets sent to the token vending service."
+  },
+  {
+    "start": 364.12,
+    "end": 367.88,
+    "text": "The token vending service takes the identity out of that after authenticating it,"
+  },
+  {
+    "start": 367.88,
+    "end": 371.4,
+    "text": "passes it up through LDAP to get back to managed policy, group mappings,"
+  },
+  {
+    "start": 371.4,
+    "end": 373.08,
+    "text": "and then produces an STS token."
+  },
+  {
+    "start": 373.08,
+    "end": 378.35999999999996,
+    "text": "And from there, the EC2 instances now have a token that they can use to directly read from S3."
+  },
+  {
+    "start": 378.35999999999996,
+    "end": 382.28,
+    "text": "Now is this only for humans or can you use it with software with other services as well?"
+  },
+  {
+    "start": 382.28,
+    "end": 384.76,
+    "text": "So while we do use this for user accounts,"
+  },
+  {
+    "start": 384.76,
+    "end": 387.88,
+    "text": "we often use this for workflows and services that are offline."
+  },
+  {
+    "start": 387.88,
+    "end": 390.35999999999996,
+    "text": "Those services run as LDAP service accounts."
+  },
+  {
+    "start": 390.35999999999996,
+    "end": 391.88,
+    "text": "It still goes through all the same systems."
+  },
+  {
+    "start": 391.88,
+    "end": 395.0,
+    "text": "They're still using the exact same managed policies and LDAP groups."
+  },
+  {
+    "start": 395.0,
+    "end": 397.71999999999997,
+    "text": "So they're actually getting the same provision configuration mechanisms."
+  },
+  {
+    "start": 397.71999999999997,
+    "end": 402.28,
+    "text": "That also means that when I'm granting access to a service account or say a given workflow,"
+  },
+  {
+    "start": 402.28,
+    "end": 406.84,
+    "text": "it's now explicitly getting access to the data in the LDAP groups that it's being paired with."
+  },
+  {
+    "start": 406.84,
+    "end": 410.35999999999996,
+    "text": "I love it. So you've really created a general purpose token vending service that can be used by"
+  },
+  {
+    "start": 410.36,
+    "end": 413.08000000000004,
+    "text": "humans for Hadoop clusters or for any number of use cases really."
+  },
+  {
+    "start": 413.08000000000004,
+    "end": 416.68,
+    "text": "Yeah, yeah. It actually accepts in a bunch of different authentication types."
+  },
+  {
+    "start": 416.68,
+    "end": 418.28000000000003,
+    "text": "So we've plugged in OAuth and other things."
+  },
+  {
+    "start": 418.28000000000003,
+    "end": 420.2,
+    "text": "So it plugs into a variety of different services."
+  },
+  {
+    "start": 420.2,
+    "end": 423.32,
+    "text": "So about a dozen different services Pinterest has plugged it into so far."
+  },
+  {
+    "start": 423.32,
+    "end": 427.48,
+    "text": "So ultimately, this is a simple scalable solution that will save you some money because"
+  },
+  {
+    "start": 427.48,
+    "end": 429.64,
+    "text": "fewer clusters to run like in the old model."
+  },
+  {
+    "start": 429.64,
+    "end": 432.2,
+    "text": "There are fewer IAM roles to manage."
+  },
+  {
+    "start": 432.2,
+    "end": 434.2,
+    "text": "It's really a great architecture. Thanks for sharing it with us."
+  },
+  {
+    "start": 434.2,
+    "end": 434.84,
+    "text": "Thank you."
+  },
+  {
+    "start": 434.84,
+    "end": 446.92,
+    "text": "And thanks for watching. This is my architecture."
+  }
+]

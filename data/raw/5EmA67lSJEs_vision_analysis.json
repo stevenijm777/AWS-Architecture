@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The architecture connects video content originators and media outlets. Originators upload files through ELB (secured by WAF) to EC2 App instances, then directly to S3. Video jobs are managed asynchronously using SQS, which schedules EC2 Batch and EC2 Transcoding/QC servers. Media outlets fetch files directly from S3 or via CloudFront for CDN distribution.",
+  "graph": {
+    "name": "Extreme Reach Adbridge Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=5EmA67lSJEs",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles 80% of US ad traffic. Uses SQS to queue and prioritize time-sensitive media transcoding and quality control jobs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "Content Originators",
+      "notes": "Advertisers and brands uploading video content."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyAgent",
+      "name": "Media Outlets",
+      "notes": "Destinations retrieving processed video advertisements."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Balances ingress API, UI, and Java agent traffic."
+    },
+    {
+      "id": "3",
+      "service": "WAF",
+      "name": "WAF Firewall",
+      "notes": "Filters and monitors web traffic for security threat blocking."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 APP",
+      "notes": "Hosts main UI, API services, and upload manager."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Ad Cloud",
+      "notes": "Stores master files and converted broadcast-ready versions."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS Asynch",
+      "notes": "Prioritized job queues for asynchronous transcoding and QC workflows."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 BATCH",
+      "notes": "Executes custom back-end batch tasks and orchestration."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2 QC TRANS",
+      "notes": "Runs quality control and video transcoding processes."
+    },
+    {
+      "id": "9",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Caches and distributes digital video advertising."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends API and UI upload requests"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Traffic filtered by Firewall"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes validated traffic to App Tier"
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Direct file upload via Java app/UI"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Enqueues media processing jobs"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Batch tasks poll the queue"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transcoding tasks poll prioritized queues"
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads masters and saves transcoded versions"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Checks in via API/Java downloader"
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 origins digital assets to CloudFront"
+    },
+    {
+      "source": "9",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers digital video ads to outlets"
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Direct download of TV ads from closest S3 region"
+    }
+  ]
+}

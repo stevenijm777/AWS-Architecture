@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "We analyze the architecture based on the whiteboard and the transcript. The system is a single-tenant isolated risk and reporting application stack deployed per client. We identify the deployment/orchestration block (ECS, AMI with Terraform/Jenkins/Ansible tools), the database and analytics block (RDS for OLTP, Redshift for OLAP, querying S3 via Redshift Spectrum), and the security/monitoring suite (KMS, Security Hub, GuardDuty, Config, CloudWatch, CloudTrail). We map out the deployment flow, the database querying flow, and the security compliance flow.",
+  "graph": {
+    "name": "Axiom SL - Automated Single Tenant SaaS Risk and Reporting Platform",
+    "link": "https://www.youtube.com/watch?v=8TExnSvZqt0",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Automated deployment of single-tenant application stacks using ECS and RDS/Redshift. Uses Redshift Spectrum for warm historical queries on S3, coupled with comprehensive native security services."
+  },
+  "nodes": [
+    {
+      "id": "ecs",
+      "service": "ECS",
+      "name": "ECS Orchestration",
+      "notes": "WORKLOAD_PEEK: Manages the containerized application stack for each tenant environment."
+    },
+    {
+      "id": "ami",
+      "service": "AMI",
+      "name": "CIS Hardened AMIs",
+      "notes": "CIS-hardened images built for every environment and client."
+    },
+    {
+      "id": "rds",
+      "service": "RDS",
+      "name": "RDS (OLTP)",
+      "notes": "Handles transactional database workloads (OLTP) for the risk platform."
+    },
+    {
+      "id": "redshift",
+      "service": "RedShift",
+      "name": "Redshift (OLAP)",
+      "notes": "DATA_PEEK: Processes large volumes of analytical risk data using RA3 nodes for independent scaling of compute and storage."
+    },
+    {
+      "id": "s3",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "DATA_PEEK: Stores historical and warm data, fully encrypted at rest."
+    },
+    {
+      "id": "kms",
+      "service": "KMS",
+      "name": "KMS Key Management",
+      "notes": "Provides end-to-end data encryption keys for transit and rest."
+    },
+    {
+      "id": "security_hub",
+      "service": "SecurityHub",
+      "name": "AWS Security Hub",
+      "notes": "Centralized security posture management."
+    },
+    {
+      "id": "guardduty",
+      "service": "GuardDuty",
+      "name": "Amazon GuardDuty",
+      "notes": "Continuous threat detection monitoring."
+    },
+    {
+      "id": "config",
+      "service": "AWSConfig",
+      "name": "AWS Config",
+      "notes": "Tracks resource configurations and automates incident response."
+    },
+    {
+      "id": "cloudwatch",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Monitors application events and triggers security alerts."
+    },
+    {
+      "id": "cloudtrail",
+      "service": "CloudTrail",
+      "name": "AWS CloudTrail",
+      "notes": "Records user activity and API usage."
+    }
+  ],
+  "edges": [
+    {
+      "source": "ecs",
+      "target": "ami",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Orchestrates build and packaging of hardened virtual images."
+    },
+    {
+      "source": "ami",
+      "target": "rds",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Deploys the transactional database components within the isolated stack."
+    },
+    {
+      "source": "ami",
+      "target": "redshift",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Provisions analytical database capacity for client environments."
+    },
+    {
+      "source": "redshift",
+      "target": "s3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Redshift Spectrum queries historical and warm data stored in S3."
+    },
+    {
+      "source": "rds",
+      "target": "cloudwatch",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Pushes system metrics and logs to CloudWatch."
+    },
+    {
+      "source": "redshift",
+      "target": "cloudwatch",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Monitors performance and analytics workload state."
+    },
+    {
+      "source": "cloudwatch",
+      "target": "config",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers automated configuration remediation."
+    },
+    {
+      "source": "kms",
+      "target": "s3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enforces S3 server-side encryption."
+    },
+    {
+      "source": "cloudtrail",
+      "target": "s3",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Delivers activity logs securely to S3 buckets."
+    }
+  ]
+}

@@ -1,0 +1,216 @@
+{
+  "step_by_step_reasoning": "The transcript describes a 3-phase IoT utility monitoring architecture (Ingestion, Pre-processing, Post-processing) handling 100k water sensors (27M daily events). Ingestion begins with IoT sensors sending data to API Gateway, which forwards to a Lambda (Transformer) node that normalizes protocols and splits the data into SQS FIFO queues. A separate Lambda (Pre-processor) node reads from SQS and interacts with ElastiCache (Redis) to filter events down to 40%. The filtered data goes to EC2 (Post-processor) which writes to Aurora Serverless (daily statistics) and DynamoDB (events). Finally, end users access the data via web/mobile portals through a web API layer that queries Aurora and DynamoDB.",
+  "graph": {
+    "name": "Vigod Aqua Water Management Platform",
+    "link": "https://www.youtube.com/watch?v=CE03UMddoYU",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "IoT platform processing 27M daily events from 100k water meters. Reduces downstream processing load by 60% using an in-memory Redis deduplication/filtering step, leading to a 25% cost reduction during scale-up."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Water Sensors",
+      "notes": "WORKLOAD_PEEK: 100k IoT water meters emitting three generations of protocol variants."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "Ingestion API Gateway",
+      "notes": "First point of contact for utility telemetry data ingestion."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Transformer Lambda",
+      "notes": "DATA_PEEK: Streamlines multiple sensor protocols into a standard format, splitting into flow and alarm segments."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "FIFO Queues",
+      "notes": "Buffers decoupled telemetry data segments to preserve strict chronological ordering."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Pre-processor Lambda",
+      "notes": "DATA_PEEK: Determines in real-time which data points are useful. Drops ~60% of unnecessary idle utility records."
+    },
+    {
+      "id": "5",
+      "service": "ElastiCache",
+      "name": "In-Memory Redis Cache",
+      "notes": "Stores active state of sensors to support instant deduplication and filtering decisions in the pre-processor."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Post-processor Engine",
+      "notes": "Runs a suite of continuous processing jobs to summarize the allowed 40% of telemetry events."
+    },
+    {
+      "id": "7",
+      "service": "Aurora",
+      "name": "Aurora Serverless MySQL",
+      "notes": "DATA_PEEK: Stores summarized daily utility statistics, aggregates, and critical alerts."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "Event Log Store",
+      "notes": "DATA_PEEK: Stores discrete source/inlet event timestamps, such as water lorry deliveries and borewell triggers."
+    },
+    {
+      "id": "9",
+      "service": "ApiGateway",
+      "name": "Web API Portal Gateway",
+      "notes": "Serves end-user consumption metrics and optimization alerts to web and mobile apps."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWebMobile",
+      "name": "Web and Mobile Users",
+      "notes": "Property managers and residents viewing water consumption dashboards and sustainability reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sensors push telemetry payloads."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers transformer to normalize protocols."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes normalized segment payloads into SQS FIFO queues."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Ingestion request synchronous response acknowledgment."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Closes HTTP connection back to sensor."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Pre-processor polls messages sequentially."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Queries sensor states to evaluate data relevance."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Returns current sensor threshold/state metadata."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Forwards 40% of relevant utility events."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Writes daily summarized statistics."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "Writes discrete transactional events."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Requests metrics dashboards or reports."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches daily utility summaries."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches discrete sensor/source event records."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns requested daily stats."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns requested event entries."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Aggregates and delivers the formatted dashboard data to the user."
+    }
+  ]
+}

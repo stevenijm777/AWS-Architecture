@@ -1,0 +1,116 @@
+{
+  "step_by_step_reasoning": "We identify two distinct AWS accounts (Account A and Account B) separated by a boundary line. Account A contains two public subnets with NAT Gateways and two private subnets with EKS clusters. Account B contains a WAF, an ALB in a public subnet, and an EKS cluster in a private subnet. An on-premises data center is represented at the bottom, and a developer user is represented at the top. We will map these nodes and logical flows representing internet outbound traffic, on-prem access, and Account B ingress.",
+  "graph": {
+    "name": "GoDaddy Secure Multi-Account EKS Architecture",
+    "link": "https://www.youtube.com/watch?v=BgT_bDAejSQ",
+    "categories": "compute_intensive, control",
+    "graph_usable": true,
+    "notes": "Focuses on zero-trust multi-account isolation, 24-hour EKS node rotations, and strictly controlled lateral movement with no VPC peering."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer",
+      "notes": "Initiates application creation via the public cloud portal."
+    },
+    {
+      "id": "1",
+      "service": "NAT",
+      "name": "NAT Gateway AZ1",
+      "notes": "Outbound internet gateway for EKS workloads."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS Workload AZ1",
+      "notes": "WORKLOAD_PEEK: Rotates nodes every 24 hours using golden AMIs."
+    },
+    {
+      "id": "3",
+      "service": "NAT",
+      "name": "NAT Gateway AZ2",
+      "notes": "Outbound internet gateway for redundant EKS workloads."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "EKS Workload AZ2",
+      "notes": "WORKLOAD_PEEK: Rotates nodes every 24 hours using golden AMIs."
+    },
+    {
+      "id": "5",
+      "service": "OnPremDC",
+      "name": "On-Premises Services",
+      "notes": "Connected securely via Direct Connect."
+    },
+    {
+      "id": "6",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Protects public endpoints in Account B."
+    },
+    {
+      "id": "7",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Distributes public traffic in Account B."
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "EKS Workload Account B",
+      "notes": "Isolated environment for production/non-production workloads."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Outbound traffic via NAT GW."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Outbound traffic via NAT GW."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Secure connection to on-prem via DX."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Secure connection to on-prem via DX."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Filtered traffic routed to ALB."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Traffic forwarded to isolated EKS pods."
+    }
+  ]
+}

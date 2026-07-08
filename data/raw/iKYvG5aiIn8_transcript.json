@@ -1,0 +1,152 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.48,
+    "text": "Welcome to another episode of This is My Architecture. Today I'm joined by Carlos"
+  },
+  {
+    "start": 11.48,
+    "end": 16.62,
+    "text": "from True Blue. Hey Carlos. Hi Adrian. Thanks for joining me. Happy to be here. Tell me about what"
+  },
+  {
+    "start": 16.62,
+    "end": 23.0,
+    "text": "True Blue does. True Blue is a staffing company that connects people to blue-collar jobs on demand"
+  },
+  {
+    "start": 23.0,
+    "end": 26.54,
+    "text": "across North America. Right, it's a buoyant economy at the moment so I bet you're busy."
+  },
+  {
+    "start": 26.54,
+    "end": 30.86,
+    "text": "Tell us about some of the challenges that you have. Some of the biggest challenges is"
+  },
+  {
+    "start": 30.86,
+    "end": 36.86,
+    "text": "matching the right people to the right jobs and for that we need our data for jobs, job"
+  },
+  {
+    "start": 36.86,
+    "end": 41.48,
+    "text": "requests and for workers to be up to date in the present state so we can make the most accurate"
+  },
+  {
+    "start": 41.48,
+    "end": 45.739999999999995,
+    "text": "match and then be able to send the right people to those jobs. Right, accurate matches are really"
+  },
+  {
+    "start": 45.739999999999995,
+    "end": 50.36,
+    "text": "important for your customers I bet. Let's dive in. Okay, so it all starts here with SQL Server."
+  },
+  {
+    "start": 50.36,
+    "end": 57.98,
+    "text": "So we use DMS to migrate our transactional databases to AWS specifically into S3. So we have a landing"
+  },
+  {
+    "start": 57.98,
+    "end": 64.7,
+    "text": "bucket and we have Parquet files inserts, updates and deletes for our transactional tables being"
+  },
+  {
+    "start": 64.7,
+    "end": 68.68,
+    "text": "accumulated here in this bucket. So the data migration service, native integration with all"
+  },
+  {
+    "start": 68.68,
+    "end": 72.36,
+    "text": "that SQL Server farm that you have there. So once the files land in S3, what happens next? So what happens next is we set up S3 event notifications on this bucket and now this is actually feeding."
+  },
+  {
+    "start": 72.36,
+    "end": 88.36,
+    "text": "To SQS queues that are capturing those events and accumulating here in these queues for downstream consumption."
+  },
+  {
+    "start": 88.36,
+    "end": 98.36,
+    "text": "Awesome, so event driven architecture all kicks off from here. So let's go into Glue here and I see you've got a number of services, serverless services in fact, that support it. How does it work?"
+  },
+  {
+    "start": 98.36,
+    "end": 126.36,
+    "text": "So we have different latency requirements for different tables and not all of them need to be near real time. So what we have here is three SQS queues, one for each category of tables based on latency and then we have here three EventBridge rules as well. So we have a 10 minute rule, 60 minute rule and a three hour rule and what EventBridge is doing is, let's look at the 10 minute one for example. It gets invoked every 10 minutes. It invokes a step function directly, native integration EventBridge to step functions and then this step function is going to be a step function."
+  },
+  {
+    "start": 126.36,
+    "end": 144.36,
+    "text": "orchestrating a workflow of the workflow of Glue jobs where the first Glue job, the extractor is going to read from this SQS queue and basically those are low S3 locations for the landing buckets and then it's going to write tables or update tables for our transactional databases."
+  },
+  {
+    "start": 144.36,
+    "end": 151.36,
+    "text": "So a common pattern that we see for data lakes like this is to use EMR. Now I understand you were using that before, right?"
+  },
+  {
+    "start": 151.36,
+    "end": 172.36,
+    "text": "Yes, EMR is great and it allowed us to achieve this outcome of combining inserts, updates and deletes into consistent views of tables very, very fast. But at TrueBlue we are serverless first and also our developers and our engineers were serverless developers and that's just the preference is a personal preference for us and we were having some challenges just by having some challenges."
+  },
+  {
+    "start": 172.36,
+    "end": 183.36,
+    "text": "and we were having some challenges just like based on skill set and just complexity to manage the EMR clusters and the auto scaling and then debugging when something went wrong because we have a long run, long running clusters."
+  },
+  {
+    "start": 183.36,
+    "end": 193.36,
+    "text": "It was just like just challenging for us and we wondered, hmm, is there a serverless option that we could use? And immediately one of our engineers said, can we do this with Glue? I don't know."
+  },
+  {
+    "start": 193.36,
+    "end": 210.36,
+    "text": "So we actually decided to use Glue and it actually worked perfectly fine for us and it accomplishes the same outcome as EMR for us but in a serverless fashion where we have the, where we read the events from SQS and then we write those to our Delta Lake in S3."
+  },
+  {
+    "start": 210.36,
+    "end": 215.36,
+    "text": "Right, so it's also a familiar environment for your developers to be able to write jobs directly into Glue, right?"
+  },
+  {
+    "start": 215.36,
+    "end": 219.36,
+    "text": "Yes, but both data engineers and data scientists, everyone is using Glue all the time."
+  },
+  {
+    "start": 219.36,
+    "end": 223.36,
+    "text": "Well that's where I wanted to go to next. How do your data scientists now start querying it?"
+  },
+  {
+    "start": 223.36,
+    "end": 235.36,
+    "text": "Yes, so data scientists actually over here and they use PySpark SQL typically to read the tables from this Delta Lake and we have three tiers in our Delta Lake, bronze, silver and gold."
+  },
+  {
+    "start": 235.36,
+    "end": 258.36,
+    "text": "So we have raw and then we have views that we create by joining those those raw tables in our feature store for ML. Now they query from any one of those three stages and it's very nice for them because it's very reliable how Glue is basically performing those upserts and keeping those tables up to date and they're able to perform accurate matches as well because they're able to extract their data sets by querying the Delta Lake."
+  },
+  {
+    "start": 258.36,
+    "end": 267.36,
+    "text": "I love the fact that you're using event driven architecture to keep up with the volume of changes that are going on in this. This is a fantastic thanks for sharing your architecture with me Carlos."
+  },
+  {
+    "start": 267.36,
+    "end": 268.36,
+    "text": "Thank you Adrian."
+  },
+  {
+    "start": 268.36,
+    "end": 271.36,
+    "text": "And thank you for joining us on This Is My Architecture."
+  }
+]

@@ -1,0 +1,194 @@
+{
+  "step_by_step_reasoning": "The transcript describes two main workflows. The first is an interactive search: a web user queries a .NET app on ECS. ECS sanitizes the prompt via Bedrock (Claude 2), vectorizes it via Bedrock (Titan), fetches history from SQL on EC2, queries Elasticsearch on EC2 for 6 jobs, then uses Bedrock (Claude 2) to generate and stream the final response. The second workflow is an offline ingestion process running every 6 hours, grabbing partner jobs into S3, vectorizing them with Bedrock (Titan), and loading them into Elasticsearch on EC2.",
+  "graph": {
+    "name": "Healthy Careers GenAI Job Search Engine",
+    "link": "https://www.youtube.com/watch?v=7KqYdneuJjo",
+    "categories": "interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "GenAI-powered job search engine for healthcare professionals using Claude 2 and Titan embeddings with Elasticsearch on EC2."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Practitioner Client",
+      "notes": "Doctors and nurses searching for job opportunities."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": ".NET App Controller",
+      "notes": "WORKLOAD_PEEK: Handles orchestration of the chat and search experience."
+    },
+    {
+      "id": "2",
+      "service": "Bedrock",
+      "name": "Claude 2 (Sanitization)",
+      "notes": "Checks prompt injection, sanitizes inputs, and converts locations to lat/lon."
+    },
+    {
+      "id": "3",
+      "service": "Bedrock",
+      "name": "Titan (Query Vectorizer)",
+      "notes": "Used for quick and cost-effective text embeddings."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "SQL Database",
+      "notes": "Stores user search and interaction history."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Elasticsearch Knowledge Base",
+      "notes": "Self-hosted Elasticsearch indexing job descriptions."
+    },
+    {
+      "id": "6",
+      "service": "Bedrock",
+      "name": "Claude 2 (Response Generation)",
+      "notes": "Generates and streams final tailored job responses."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Job Feeds & APIs",
+      "notes": "External partner feeds, RSS, and APIs."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Document Store",
+      "notes": "Stores raw ingested job posting documents."
+    },
+    {
+      "id": "9",
+      "service": "Bedrock",
+      "name": "Titan (Job Embedding)",
+      "notes": "Vectorizes job descriptions during ingestion."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends natural language query."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Validates and enriches prompt."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns sanitized prompt with lat/lon."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Generates query embeddings."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns vectorized query."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fetches user search history."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns history data."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Queries matching jobs."
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Returns top 6 job descriptions."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Requests generative job summary response."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "Streams AI-generated response text."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "11",
+      "type": "data",
+      "notes": "Delivers streamed content to UI."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pulls feeds every 6 hours into S3."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Vectorizes new job postings."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Stores vectorized jobs."
+    }
+  ]
+}

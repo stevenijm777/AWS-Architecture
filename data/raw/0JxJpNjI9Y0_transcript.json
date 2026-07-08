@@ -1,0 +1,292 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.32,
+    "text": "Welcome to This is Markitecture. I'm Lana from AWS and today we're talking to Zach from Arc"
+  },
+  {
+    "start": 12.32,
+    "end": 16.92,
+    "text": "Publishing at Washington Post. Welcome. Thank you. Awesome having you here. And would you mind"
+  },
+  {
+    "start": 16.92,
+    "end": 21.36,
+    "text": "telling us a little bit more about this rendering and content management system that you've built"
+  },
+  {
+    "start": 21.36,
+    "end": 28.26,
+    "text": "at Washington Post? Yeah, so I'll be talking about our web rendering platform. Arc Publishing is a"
+  },
+  {
+    "start": 28.26,
+    "end": 32.7,
+    "text": "company at the Washington Post that builds software for the Post and then also builds software and"
+  },
+  {
+    "start": 32.7,
+    "end": 36.0,
+    "text": "provides it to other media companies around the world. So what we're going to be talking about"
+  },
+  {
+    "start": 36.0,
+    "end": 46.980000000000004,
+    "text": "today is the request flow for how public users generate requests to this platform to view HTML"
+  },
+  {
+    "start": 46.980000000000004,
+    "end": 52.38,
+    "text": "web pages like the WashingtonPost.com. So this is somebody who comes to the web page and wants to"
+  },
+  {
+    "start": 52.38,
+    "end": 57.78,
+    "text": "view Washington Post for today's issue, let's say. Exactly. Yep, so when they hit our architecture,"
+  },
+  {
+    "start": 57.78,
+    "end": 62.52,
+    "text": "they're going to hit an origin. This origin runs on ECS. The origin is going to handle the traffic"
+  },
+  {
+    "start": 62.52,
+    "end": 69.06,
+    "text": "routing through the architecture. So there'll be a request flow that will access static resources like"
+  },
+  {
+    "start": 69.06,
+    "end": 76.32,
+    "text": "JavaScript and CSS. And then there'll also be a request flow that makes requests for pre-rendered"
+  },
+  {
+    "start": 76.32,
+    "end": 82.5,
+    "text": "HTML content. And this makes pages load faster, I'm assuming. Exactly. So caching is paramount in the"
+  },
+  {
+    "start": 82.5,
+    "end": 88.56,
+    "text": "architecture. Public users are going to hit a CDN first. If cache is missed there, it's going to hit"
+  },
+  {
+    "start": 88.56,
+    "end": 94.48,
+    "text": "our origin proxy. If origin proxy cache is missed, it's going to ask for S3. And then if S3 is a mess,"
+  },
+  {
+    "start": 94.48,
+    "end": 99.88,
+    "text": "it's going to make a request to the site rendering code that's hosted in Lambda. So we're doing some"
+  },
+  {
+    "start": 99.88,
+    "end": 105.6,
+    "text": "dynamic rendering at this point. Exactly. So about five to ten percent of the time, cache is missed through"
+  },
+  {
+    "start": 105.6,
+    "end": 111.6,
+    "text": "that whole request flow. And at that time, a Lambda is invocated to render a web page for the user."
+  },
+  {
+    "start": 111.6,
+    "end": 116.16,
+    "text": "That sounds great. So I'm seeing here that we're using an ECS cluster again. So what kind of workloads"
+  },
+  {
+    "start": 116.16,
+    "end": 122.84,
+    "text": "are we running here? So the second ECS cluster has to do with gaining access to content. So a request"
+  },
+  {
+    "start": 122.84,
+    "end": 128.88,
+    "text": "is made during the web page rendering process to a proxy. And that proxy is going to make a secondary"
+  },
+  {
+    "start": 128.88,
+    "end": 135.88,
+    "text": "request over the internet to content management or to content. For most cases, it's going to be the"
+  },
+  {
+    "start": 135.88,
+    "end": 141.64,
+    "text": "content management system provided by Arc. In other cases, it might be APIs or other CMS systems that"
+  },
+  {
+    "start": 141.64,
+    "end": 146.92,
+    "text": "the Washington Post or our customers utilize to put content into their web pages for the end users."
+  },
+  {
+    "start": 146.92,
+    "end": 152.32,
+    "text": "What kind of content are you managing here? Most commonly, it's stories, images, galleries,"
+  },
+  {
+    "start": 152.32,
+    "end": 158.04,
+    "text": "and videos. But there's also use cases where there are unique APIs like sports APIs or weather or"
+  },
+  {
+    "start": 158.04,
+    "end": 163.12,
+    "text": "internal APIs as well. Got it. So we have this payload that we just pulled in from the CMS system"
+  },
+  {
+    "start": 163.12,
+    "end": 169.95999999999998,
+    "text": "or content management system. So where does it go from here? So the request for content will go back"
+  },
+  {
+    "start": 169.95999999999998,
+    "end": 175.12,
+    "text": "and render into the Lambda. But before that, we'll do one thing. We'll store it into ElastiCache,"
+  },
+  {
+    "start": 175.12,
+    "end": 183.16,
+    "text": "the raw JSON object, and set a TTL on that object. So time to live? Yep. Okay. Time to live. So the next request"
+  },
+  {
+    "start": 183.16,
+    "end": 188.0,
+    "text": "that comes in accessing that same piece of content, most likely you'll get it from ElastiCache."
+  },
+  {
+    "start": 188.0,
+    "end": 193.08,
+    "text": "And not from the internet, making the request flow faster and more reliable for the end user."
+  },
+  {
+    "start": 193.08,
+    "end": 198.92,
+    "text": "So I'm seeing that now we have two types of rendered content. So how do you make a determination"
+  },
+  {
+    "start": 198.92,
+    "end": 205.08,
+    "text": "of what to store in ElastiCache versus put it in S3 bucket for pre-rendered content?"
+  },
+  {
+    "start": 205.08,
+    "end": 210.08,
+    "text": "Yeah. That decision is really the developer's decision who's doing development on our platform."
+  },
+  {
+    "start": 210.08,
+    "end": 219.16000000000003,
+    "text": "Pre-rendering is an option that we make available for higher availability use cases or periods of time"
+  },
+  {
+    "start": 219.16000000000003,
+    "end": 224.16000000000003,
+    "text": "where you want to guarantee that web content or cache is warm and available to end users."
+  },
+  {
+    "start": 224.16,
+    "end": 227.24,
+    "text": "Okay. And how are you using DynamoDB in this scenario?"
+  },
+  {
+    "start": 227.24,
+    "end": 229.24,
+    "text": "Yep. So we have two additional use cases."
+  },
+  {
+    "start": 229.24,
+    "end": 240.24,
+    "text": "The first is a newsroom user. So we have a product called Page Builder Admin that allows"
+  },
+  {
+    "start": 240.24,
+    "end": 246.24,
+    "text": "a user to create a web template. That web template is going to control what pieces of information are on a page,"
+  },
+  {
+    "start": 246.24,
+    "end": 255.32000000000002,
+    "text": "how that page should look, and is made available during the dynamic rendering process from Lambda."
+  },
+  {
+    "start": 255.32000000000002,
+    "end": 267.32,
+    "text": "And then the second use case is a developer. The developer is going to build their web rendering code inside of JavaScript"
+  },
+  {
+    "start": 267.32,
+    "end": 273.4,
+    "text": "and make a deployment to Lambda. A deployment is essentially creating a new version of Lambda,"
+  },
+  {
+    "start": 273.4,
+    "end": 282.4,
+    "text": "and then the developer makes that version live through a promotion process where the ALB directs which version of the Lambda is live."
+  },
+  {
+    "start": 282.4,
+    "end": 288.4,
+    "text": "That's great. So this kind of helps us with high availability and make sure that you can roll back any changes if something goes wrong?"
+  },
+  {
+    "start": 288.4,
+    "end": 293.4,
+    "text": "High availability and then also blue-green deployment options and pre-testing options."
+  },
+  {
+    "start": 293.4,
+    "end": 299.47999999999996,
+    "text": "Awesome. I love the fact that you're using Lambda in multiple functions, so you're serving your internal users and your developers"
+  },
+  {
+    "start": 299.47999999999996,
+    "end": 305.47999999999996,
+    "text": "and also fetching some of the content that might not be rendered and doing it dynamically on the fly."
+  },
+  {
+    "start": 305.47999999999996,
+    "end": 313.47999999999996,
+    "text": "Well, Zach, thank you so much for coming down today and telling us a little bit more about rendering and content management at Washington Post."
+  },
+  {
+    "start": 313.47999999999996,
+    "end": 316.47999999999996,
+    "text": "And thank you for watching. This is my architecture."
+  },
+  {
+    "start": 316.48,
+    "end": 324.56,
+    "text": "nunca so much."
+  },
+  {
+    "start": 324.56,
+    "end": 326.64000000000004,
+    "text": "You"
+  },
+  {
+    "start": 326.64000000000004,
+    "end": 329.08000000000004,
+    "text": "eks"
+  },
+  {
+    "start": 329.08000000000004,
+    "end": 331.86,
+    "text": "іти"
+  },
+  {
+    "start": 331.86,
+    "end": 333.72,
+    "text": "ana"
+  },
+  {
+    "start": 333.72,
+    "end": 335.66,
+    "text": "hd"
+  },
+  {
+    "start": 335.66,
+    "end": 339.34000000000003,
+    "text": "du"
+  }
+]

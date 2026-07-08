@@ -1,0 +1,206 @@
+{
+  "step_by_step_reasoning": "Data scientists upload models via a UI Portal connected to a Platform API (EC2). The API stores metadata in OpenSearch, files in S3, and publishes build tasks to MSK (Kafka). A build runner (EC2) pulls these resources, gets dependencies from Artifactory, builds Docker images, stores them in ECR, and deploys to SageMaker. Status updates trigger EventBridge, Lambda, MSK, and a Fargate consumer, which updates OpenSearch and sends the final status back to the user.",
+  "graph": {
+    "name": "Experian Automated Model Ingestion and Deployment",
+    "link": "https://www.youtube.com/watch?v=-yCol_7qH2U",
+    "categories": "compute_intensive, data_ingestion",
+    "graph_usable": true,
+    "notes": "Automates onboarding of custom Python models from months to days using containerized pipelines and SageMaker endpoints."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Data Scientists",
+      "notes": "DATA_PEEK: Uploads Python serialized (.pkl) files and attributes.py via UI Portal."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Platform API",
+      "notes": "Handles incoming model upload and registration requests."
+    },
+    {
+      "id": "2",
+      "service": "OpenSearch",
+      "name": "Model Registry",
+      "notes": "Metadata store tracking model status, versions, and endpoint URLs."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Artifact Store",
+      "notes": "Stores uploaded raw model artifacts and attributes."
+    },
+    {
+      "id": "4",
+      "service": "MSK",
+      "name": "Kafka Event Bus",
+      "notes": "Asynchronous event broker managing pipeline stages."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Build Machine",
+      "notes": "WORKLOAD_PEEK: Runs Docker to containerize SageMaker-compatible images."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Artifactory",
+      "notes": "Hosts required code and model library dependencies."
+    },
+    {
+      "id": "7",
+      "service": "ECR",
+      "name": "Container Registry",
+      "notes": "Stores built SageMaker-compatible Docker images."
+    },
+    {
+      "id": "8",
+      "service": "SageMaker",
+      "name": "Model Endpoint",
+      "notes": "Hosts model for scalable auto-scaling inference."
+    },
+    {
+      "id": "9",
+      "service": "EventBridge",
+      "name": "Event Router",
+      "notes": "Monitors SageMaker endpoint change events."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Status Handler",
+      "notes": "Triggers on EventBridge signals to publish status changes back to MSK."
+    },
+    {
+      "id": "11",
+      "service": "Fargate",
+      "name": "Status Consumer",
+      "notes": "Consumes status updates, writes back to the UI portal and registry."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Uploads artifacts and triggers pipeline"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Creates registry entry"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves artifacts"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Publishes build event"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers build process"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Downloads model artifacts"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pulls internal dependency libraries"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pushes built container image"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Deploys container and endpoint configuration"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Emits status events"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers handler on change"
+    },
+    {
+      "source": "10",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Publishes change status back to topic"
+    },
+    {
+      "source": "4",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pulls message update"
+    },
+    {
+      "source": "11",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Updates endpoint details in registry"
+    },
+    {
+      "source": "11",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Pushes build completion status to UI"
+    }
+  ]
+}

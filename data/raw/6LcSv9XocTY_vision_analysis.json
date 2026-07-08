@@ -1,0 +1,220 @@
+{
+  "step_by_step_reasoning": "First, the customer (UserConsumerMobile) initiates a call to Amazon Connect. Connect performs a data dip via a Lambda function that queries a CRM (ThirdParty) and leverages Lex for natural language processing. Once routed, the caller interacts with the Agent. After the call, Connect exports recordings to an S3 bucket, which triggers post-call processing using Transcribe and Comprehend. Simultaneously, Connect streams real-time interaction events via Kinesis and Firehose into a separate S3 analytics bucket, which is queried using Athena for reporting.",
+  "graph": {
+    "name": "Intuit Global Contact Center Architecture with Amazon Connect",
+    "link": "https://www.youtube.com/watch?v=6LcSv9XocTY",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Serverless contact center solution built using Amazon Connect. Scales dynamically to handle seasonal TurboTax tax filing peaks while providing real-time data dips and post-call analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Taxpayer Customer",
+      "notes": "End-user calling in for tax assistance."
+    },
+    {
+      "id": "1",
+      "service": "Connect",
+      "name": "Amazon Connect",
+      "notes": "Core contact center service handling routing and telephony integration."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "CRM Data Dip Lambda",
+      "notes": "Retrieves caller profiles and routing context."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "CRM System",
+      "notes": "External customer database."
+    },
+    {
+      "id": "4",
+      "service": "Lex",
+      "name": "Amazon Lex",
+      "notes": "Handles natural language interactions for routing."
+    },
+    {
+      "id": "5",
+      "service": "UserCompanyAgent",
+      "name": "Tax Professional",
+      "notes": "Live agent assisting the customer."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Call Recordings S3",
+      "notes": "DATA_PEEK: Stores raw audio recordings from call sessions."
+    },
+    {
+      "id": "7",
+      "service": "Transcribe",
+      "name": "Amazon Transcribe",
+      "notes": "Converts call audio to text transcriptions."
+    },
+    {
+      "id": "8",
+      "service": "Comprehend",
+      "name": "Amazon Comprehend",
+      "notes": "Extracts sentiment and key topics from transcriptions."
+    },
+    {
+      "id": "9",
+      "service": "Kinesis",
+      "name": "Kinesis Data Streams",
+      "notes": "Ingests real-time contact center events."
+    },
+    {
+      "id": "10",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Buffers and loads event streams into S3."
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "Analytics S3 Bucket",
+      "notes": "Stores partitioned reporting and event data."
+    },
+    {
+      "id": "12",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Enables interactive ad-hoc SQL queries on event logs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer places call"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Invokes data dip"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches CRM profile"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns customer metadata"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns metadata to contact flow"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Triggers IVR path"
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns routing intent"
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Connects call to agent"
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Agent interacts with caller"
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Saves post-call audio"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers transcription"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sends transcripts for sentiment analysis"
+    },
+    {
+      "source": "1",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams interaction logs"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Passes logs to delivery stream"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes structured logs to S3"
+    },
+    {
+      "source": "12",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries metrics for analytics reporting"
+    }
+  ]
+}

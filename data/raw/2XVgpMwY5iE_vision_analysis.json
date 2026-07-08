@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "We trace the architecture chronologically based on the whiteboard and the transcript. 1. Hospitals (UserConsumerHospital) upload clinical images to a raw storage S3 bucket. 2. Pathologists (UserCompanyDomainExpert) use an EKS-based platform to label and annotate these images. 3. SageMaker pulls raw data from S3, orchestrates training with FSx for Lustre for high-speed I/O and IAM for stringent security (HDS compliance). 4. The final model is saved to a separate output S3 bucket. 5. EKS pulls the model for pathologists to validate, then hosts it for real-time clinical inference accessed by hospitals.",
+  "graph": {
+    "name": "Kinaï Medical Image Analysis and Annotation Pipeline",
+    "link": "https://www.youtube.com/watch?v=2XVgpMwY5iE",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Transitioned to SageMaker with FSx for Lustre, accelerating training by 30x and saving 30% on infrastructure costs. Compliant with HDS certification for sensitive health data."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerHospital",
+      "name": "Hospital / Clinicians",
+      "notes": "Upload raw medical images and request inference."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyDomainExpert",
+      "name": "Pathologists",
+      "notes": "Perform data labeling, annotations, and final model validation."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Raw Medical Images",
+      "notes": "DATA_PEEK: Stores around 5TB of raw medical images per project."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Kubernetes labeling & inference platform",
+      "notes": "Hosts labeling UI for pathologists and performs final model inference."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker Training",
+      "notes": "Orchestrates parallel training pipelines containerized in Docker."
+    },
+    {
+      "id": "5",
+      "service": "FSx",
+      "name": "FSx for Lustre",
+      "notes": "WORKLOAD_PEEK: High performance storage layer for accelerated training."
+    },
+    {
+      "id": "6",
+      "service": "IAM",
+      "name": "AWS IAM",
+      "notes": "Ensures data access control to comply with HDS certification."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Model & Results Storage",
+      "notes": "Stores exported models and pipeline execution results."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Hospitals upload raw medical images to S3."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pathologists access the labeling application."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Images are fetched from S3 for labeling."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Interactive labeling session returns results to pathologists."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Labeling platform triggers a new SageMaker training pipeline."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker streams training dataset from raw S3."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Uses FSx for fast I/O caching."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Verifies data access and compliance policies."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Saves trained model and output metrics."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Model results are loaded back to Kubernetes."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Pathologist views results to validate or reject the model."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Sends model validation approval back to platform."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "data",
+      "notes": "Hospitals query EKS for inferences using the validated model."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "data",
+      "notes": "Returns clinical analytics and prediction data back to the hospital."
+    }
+  ]
+}

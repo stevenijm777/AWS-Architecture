@@ -1,0 +1,284 @@
+{
+  "step_by_step_reasoning": "The transcript describes a Magento-based e-commerce platform run by Triboo. Users query Route 53 for DNS, and requests go through WAF to CloudFront. CloudFront routes static asset requests to S3 and dynamic requests to a custom load balancer (running on EC2). The custom load balancer forwards requests to an EKS cluster running Magento. EKS interacts with Aurora (MySQL backend), ElastiCache (sessions/caching), Elasticsearch (indexing), and EFS for shared file storage, while logs are saved to S3. For administrative access, developers connect via AWS VPN. A custom Mail Server runs on EC2, Redshift is used for BI, and Lambda handles monitoring, alerting, and configuration.",
+  "graph": {
+    "name": "Triboo Magento E-Commerce Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=6sew_hdI6cY",
+    "categories": "interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "E-commerce platform architecture handling over 100 stores with containerized environments using AWS EKS and custom EC2 load balancing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Customer",
+      "notes": "Shoppers visiting the online stores managed by Triboo."
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "Handles external domains and internal FQDNs for service-to-service calls."
+    },
+    {
+      "id": "2",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Protects against DDoS and bot attacks."
+    },
+    {
+      "id": "3",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Caches static assets at the edge and handles request routing behaviors."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Static S3 Bucket",
+      "notes": "Stores images and other static assets."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Custom Load Balancer",
+      "notes": "Runs 'pass secure' proprietary load balancing software on EC2 instances."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "Magento EKS Cluster",
+      "notes": "Runs containerized Magento storefronts, segregating search traffic and purchase traffic."
+    },
+    {
+      "id": "7",
+      "service": "Aurora",
+      "name": "Amazon Aurora",
+      "notes": "MySQL-compatible database for Magento relational data."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "Used for session storage and application caching."
+    },
+    {
+      "id": "9",
+      "service": "Elasticsearch",
+      "name": "Elasticsearch",
+      "notes": "Used for product catalog indexing and search features."
+    },
+    {
+      "id": "10",
+      "service": "EFS",
+      "name": "EFS / Custom NFS",
+      "notes": "Shared file system for media and assets (combination of EFS and custom EC2-based NFS)."
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "Log S3 Bucket",
+      "notes": "Saves system and application logs."
+    },
+    {
+      "id": "12",
+      "service": "UserCompanyDeveloper",
+      "name": "Triboo Ops/Dev Team",
+      "notes": "Internal users managing the platform services."
+    },
+    {
+      "id": "13",
+      "service": "VPN",
+      "name": "AWS VPN",
+      "notes": "IPsec VPN used as the secure entry point for managing all internal platform services."
+    },
+    {
+      "id": "14",
+      "service": "EC2",
+      "name": "Mail Server",
+      "notes": "Self-managed EC2 instance running email dispatching services."
+    },
+    {
+      "id": "15",
+      "service": "Redshift",
+      "name": "Amazon Redshift",
+      "notes": "Data warehouse for BI analytics."
+    },
+    {
+      "id": "16",
+      "service": "Lambda",
+      "name": "Monitoring & Config Lambda",
+      "notes": "Triggers monitoring, configuration tasks, and alerts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "DNS Lookup"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "DNS IP Response"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "HTTPS Request"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Filtered Traffic"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Fetch Static Assets"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Return Static Assets"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Dynamic Application Requests"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Forward to EKS Pods"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Session cache verification"
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Search queries"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Relational DB operations"
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "Shared file storage read/write"
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "11",
+      "type": "data",
+      "notes": "Write logs"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "12",
+      "type": "data",
+      "notes": "HTML Response"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "13",
+      "type": "data",
+      "notes": "Forward HTML"
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "14",
+      "type": "data",
+      "notes": "Final page render to user"
+    },
+    {
+      "source": "12",
+      "target": "13",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Secure VPN Connection"
+    },
+    {
+      "source": "13",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Manage cluster/deploy stores"
+    },
+    {
+      "source": "6",
+      "target": "14",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Trigger transactional emails"
+    },
+    {
+      "source": "6",
+      "target": "15",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingest analytical data for Business Intelligence"
+    },
+    {
+      "source": "16",
+      "target": "6",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Monitoring, alerts and configuration checks"
+    }
+  ]
+}

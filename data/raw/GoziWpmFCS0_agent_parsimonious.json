@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "This architecture implements a serverless data lake for iRobot. Raw JSON logs are ingested from a data pipeline into an Amazon S3 bucket, crawled by AWS Glue, and cataloged. An AWS Glue ETL job converts these raw logs into optimized Apache Parquet format stored in another S3 bucket. Finally, research scientists run ad-hoc queries across both S3 datasets via Amazon Athena using metadata from the AWS Glue Data Catalog.",
+  "graph": {
+    "name": "iRobot Serverless Data Lake Architecture",
+    "link": "https://www.youtube.com/watch?v=GoziWpmFCS0",
+    "categories": "data_ingestion, interactive",
+    "graph_usable": true,
+    "notes": "A completely serverless data lake processing 3 TB of raw JSON data per day. Converts data to Parquet to optimize queries and reduce costs for long-term historical analysis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDataStream",
+      "name": "Data Pipeline",
+      "notes": "Source pipeline ingesting raw JSON records."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 (JSON)",
+      "notes": "DATA_PEEK: Receives around 3 TB of JSON data per day."
+    },
+    {
+      "id": "2",
+      "service": "Glue",
+      "name": "Glue Crawler (JSON)",
+      "notes": "Crawls raw JSON data to automatically discover schema."
+    },
+    {
+      "id": "3",
+      "service": "Glue",
+      "name": "Glue Data Catalog",
+      "notes": "Stores metadata tables and schemas (column types, names, and tables)."
+    },
+    {
+      "id": "4",
+      "service": "Glue",
+      "name": "Glue Job",
+      "notes": "WORKLOAD_PEEK: Converts newly arrived JSON files into Apache Parquet format."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Parquet)",
+      "notes": "Stores historical data in columnar Parquet format for faster, cost-effective queries."
+    },
+    {
+      "id": "6",
+      "service": "Glue",
+      "name": "Glue Crawler (Parquet)",
+      "notes": "Crawls the converted Parquet files to update table metadata."
+    },
+    {
+      "id": "7",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Query engine used to query raw JSON and columnar Parquet data."
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyDomainExpert",
+      "name": "Research Scientists",
+      "notes": "Explores the data lake to find patterns, identify bugs, and design new features."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingests raw JSON records into S3 bucket"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Crawler inspects JSON data"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves table schemas in Data Catalog"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads JSON files"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes converted Parquet files"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Crawler inspects Parquet files"
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves Parquet schemas in Data Catalog"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Scientists execute analytical queries"
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches metadata and table structures"
+    },
+    {
+      "source": "7",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "3a",
+      "type": "data",
+      "notes": "Queries raw JSON (short-term history)"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3b",
+      "type": "data",
+      "notes": "Queries Parquet data (long-term history)"
+    }
+  ]
+}

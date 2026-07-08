@@ -1,0 +1,194 @@
+{
+  "step_by_step_reasoning": "The transcript describes a system where mobile users send lyrics synchronization feedback to a legacy containerized platform on EC2 (backed by Aurora and Couchbase). This feedback generates tasks saved in DynamoDB. AWS Fargate (via streaming service charts) and AWS Redshift (analytics rank) prioritize these tasks. AWS AppSync then distributes tasks to curators/internal users. Upon task completion, AWS Lambda is triggered to handle complex writes to DynamoDB and publish the updated lyrics back to the legacy system.",
+  "graph": {
+    "name": "Musixmatch Lyrics Crowd-Sourcing and Synchronization Platform",
+    "link": "https://www.youtube.com/watch?v=9LhiUsg3knw",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Architected to ingest continuous lyrics synchronization feedback from mobile apps and orchestrate curation tasks among curators, experts, and internal operators using AWS AppSync and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App Users",
+      "notes": "Provide direct and indirect feedback on lyrics sync quality."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Legacy Backend",
+      "notes": "Docker-based API servers managing application logic and publishing lyrics."
+    },
+    {
+      "id": "2",
+      "service": "Aurora",
+      "name": "Editorial Database",
+      "notes": "Stores official editorial lyrics data."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Couchbase DB",
+      "notes": "Self-hosted NoSQL cluster holding user-generated data."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "Tasks DynamoDB",
+      "notes": "Central registry holding tasks needing curation or validation."
+    },
+    {
+      "id": "5",
+      "service": "AppSync",
+      "name": "AWS AppSync",
+      "notes": "Distributes task status and synchronization data to curators in real-time."
+    },
+    {
+      "id": "6",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Curators and Experts",
+      "notes": "Review, edit, and sync lyrics based on received tasks."
+    },
+    {
+      "id": "7",
+      "service": "Fargate",
+      "name": "Fargate Prioritization Jobs",
+      "notes": "Runs batch jobs pulling music streaming charts to prioritize tasks."
+    },
+    {
+      "id": "8",
+      "service": "Redshift",
+      "name": "AWS Redshift Analytics",
+      "notes": "Calculates content ranks per country to help prioritize tasks."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Submission Orchestrator",
+      "notes": "Handles complex multi-write transactions and publishes completed content."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends feedback from mobile app."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries editorial metadata."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves user feedback details."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Creates curation tasks in DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns confirmation back to mobile user."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Updates task priority based on external streaming charts."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Injects priority ranks derived from country-specific analysis."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries active curation tasks."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Distributes synchronization and draft tasks."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Submits corrected drafts and tasks."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers complex orchestration for task completion."
+    },
+    {
+      "source": "9",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes final task state."
+    },
+    {
+      "source": "9",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Publishes updated lyrics into production database."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "meta",
+      "notes": "Acknowledges success to AppSync."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "7",
+      "type": "meta",
+      "notes": "Confirm task is successfully published."
+    }
+  ]
+}

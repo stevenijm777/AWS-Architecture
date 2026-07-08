@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "We identify the system's key components based on the whiteboard and transcript: 1. Web/Mobile Users connect via ApiGateway. 2. ApiGateway routes traffic to AWS Lambda, which queries and updates a MongoDB database. 3. CloudWatch events trigger Lambda to export match data from MongoDB to S3. 4. External Game APIs feed live scores into Lambda, which saves them directly to S3. 5. Amazon EMR reads from S3 to compute leaderboard rankings. 6. Amazon RedShift queries S3 data to perform analytics for coupons and promotions.",
+  "graph": {
+    "name": "FanFight Daily Fantasy Sports Architecture",
+    "link": "https://www.youtube.com/watch?v=3WgTBTDlQN8",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "FanFight scales to support over 1.5M registered users with peak workloads during live sporting matches. The system ingests live game scores and user predictions, processes leaderboards via Spark on EMR, and stores metadata in MongoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Web/Mobile Users",
+      "notes": "1.5M registered users creating fantasy teams."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives player requests and routes them to regional Lambdas."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Orchestrates API requests, data ingestion, and S3 dumps."
+    },
+    {
+      "id": "3",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Triggers periodic match-data archival flows."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Game APIs",
+      "notes": "External live score providers."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "MongoDB",
+      "notes": "Primary transactional database for game state and users."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "DATA_PEEK: Core data lake for raw game events and match metrics."
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "Amazon EMR",
+      "notes": "WORKLOAD_PEEK: Runs Apache Spark jobs to compute rankings and winnings."
+    },
+    {
+      "id": "8",
+      "service": "RedShift",
+      "name": "Amazon Redshift",
+      "notes": "Performs user behavior analytics to optimize promotional campaigns."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Users query APIs to join contests and check status."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forwards user requests."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queries and updates team details."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers match-end archival."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Requests archival dataset."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Exports match details to data lake."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes score updates."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Persists live points updates to data lake."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR pulls points data for processing."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Copies historical game data for analysis."
+    }
+  ]
+}

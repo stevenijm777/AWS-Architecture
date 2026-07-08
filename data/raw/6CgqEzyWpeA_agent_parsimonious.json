@@ -1,0 +1,238 @@
+{
+  "step_by_step_reasoning": "Based on the transcript: 1. Users (UserConsumerWebMobile) request personalized videos via API Gateway (ApiGateway) and play them via CloudFront (CloudFront). 2. API Gateway forwards requests to the Frontend Lambda (Lambda 3). 3. The Frontend Lambda pushes rendering jobs to the Ingestion SQS queue (SQS 6) and queries statuses from the Feedback SQS queue (SQS 7). 4. EC2 Spot Instances (EC2 8) pull jobs from SQS 6, read templates/segments from S3 (S3 11), upload rendered segments back to S3, and push status signals to SQS 7. 5. Spot Interruption notices are caught by CloudWatch (CloudWatch 10), which triggers a Spot Handler Lambda (Lambda 4) to drain the target EC2 instance. 6. Scaling is automated: Step Functions (StepFunctions 9) triggers a Scaling Lambda (Lambda 5) every 15 seconds to check CloudWatch metrics and adjust the EC2 Auto Scaling Group.",
+  "graph": {
+    "name": "Sunday Sky: Personalized Video Rendering at Scale",
+    "link": "https://www.youtube.com/watch?v=6CgqEzyWpeA",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Sunday Sky's Rendering as a Service (RAS) generates personalized videos at scale. User requests via API Gateway trigger a frontend Lambda, which pushes jobs to an SQS queue. EC2 Spot Instances pull jobs, render segments, and upload them to S3, from where they are served via CloudFront. Spot interruptions are managed via CloudWatch events triggering a drain Lambda. Scaling is orchestrated by Step Functions triggering a metric-checking Lambda."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Viewer",
+      "notes": "Viewer requesting and playing personalized videos."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "Amazon CloudFront",
+      "notes": "Caches and delivers video segments from S3 origin to viewers."
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives video rendering requests with usage plans and API keys."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "RAS Frontend Lambda",
+      "notes": "Validates requests, pushes jobs to SQS, and pulls statuses."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Spot Handler Lambda",
+      "notes": "Triggered by spot interruptions to drain EC2 instances."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Autoscaling Lambda",
+      "notes": "Checks CloudWatch metrics and triggers ASG scaling."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "Render Jobs Queue",
+      "notes": "Holds video rendering instructions."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "Status Feedback Queue",
+      "notes": "Receives quick updates from rendering engines."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "Rendering ASG Spot Instances",
+      "notes": "Auto Scaling Group of spot instances rendering video segments."
+    },
+    {
+      "id": "9",
+      "service": "StepFunctions",
+      "name": "Step Functions Orchestrator",
+      "notes": "Runs every 15 seconds to trigger scaling checks."
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Gathers engine metrics and handles spot interruption notices."
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "Video Segments Bucket",
+      "notes": "Stores uploaded video segments and playlist files."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Requests personalized video."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers frontend validation."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes rendering instructions."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Engines pull jobs from queue when they have capacity."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Uploads rendered video segments."
+    },
+    {
+      "source": "11",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Pulls assets or templates."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pushes response to status feedback queue."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pulls status response."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Returns video playlist link."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Plays video segments."
+    },
+    {
+      "source": "1",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Pulls segments from origin."
+    },
+    {
+      "source": "11",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers segments."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Plays segment to viewer."
+    },
+    {
+      "source": "10",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers on spot interruption event."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Signals engine to stop taking jobs and drain."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers scaling calculation Lambda every 15s."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Queries instances and load metrics."
+    },
+    {
+      "source": "10",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns metric outputs."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 5,
+      "seq": "3",
+      "type": "data",
+      "notes": "Signals ASG to scale up/down."
+    }
+  ]
+}

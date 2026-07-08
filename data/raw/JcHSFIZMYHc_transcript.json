@@ -1,0 +1,462 @@
+[
+  {
+    "start": 0.0,
+    "end": 14.24,
+    "text": "Hi, and welcome to another episode of This is My Architecture."
+  },
+  {
+    "start": 14.72,
+    "end": 19.66,
+    "text": "I'm Arati from AWS, and joining me in Mumbai today is Francis from CleverTap."
+  },
+  {
+    "start": 19.96,
+    "end": 21.8,
+    "text": "Francis, thank you for joining us today."
+  },
+  {
+    "start": 22.06,
+    "end": 23.46,
+    "text": "Thank you for having me over, Arati."
+  },
+  {
+    "start": 23.72,
+    "end": 25.92,
+    "text": "So Francis, tell us what CleverTap does."
+  },
+  {
+    "start": 25.92,
+    "end": 31.6,
+    "text": "CleverTap is an ML-powered customer lifecycle management and engagement platform."
+  },
+  {
+    "start": 32.480000000000004,
+    "end": 36.96,
+    "text": "We are at the forefront of analyzing granular consumer behavior"
+  },
+  {
+    "start": 36.96,
+    "end": 41.58,
+    "text": "and then completing the loop in real time with meaningful omni-channel engagement."
+  },
+  {
+    "start": 42.36,
+    "end": 45.42,
+    "text": "On interesting days, we ingest about 10 billion data points."
+  },
+  {
+    "start": 45.74,
+    "end": 47.32000000000001,
+    "text": "That's a lot of data points."
+  },
+  {
+    "start": 47.400000000000006,
+    "end": 50.14,
+    "text": "I'm sure it also comes in with a number of challenges."
+  },
+  {
+    "start": 50.64,
+    "end": 52.38,
+    "text": "So what are we going to discuss today?"
+  },
+  {
+    "start": 52.74,
+    "end": 54.44,
+    "text": "So there's two things to this, Arati."
+  },
+  {
+    "start": 54.44,
+    "end": 59.019999999999996,
+    "text": "There's the platform itself that supports all these users."
+  },
+  {
+    "start": 59.199999999999996,
+    "end": 63.06,
+    "text": "It helps ingest all this data and then enables omni-channel engagement."
+  },
+  {
+    "start": 63.459999999999994,
+    "end": 68.03999999999999,
+    "text": "But there's also this whole AWS stuff that powers the platform."
+  },
+  {
+    "start": 68.16,
+    "end": 71.14,
+    "text": "How do you sort of provision?"
+  },
+  {
+    "start": 71.34,
+    "end": 76.72,
+    "text": "How do you maintain across the lifecycle and then reproduce all of this infrastructure?"
+  },
+  {
+    "start": 77.44,
+    "end": 78.9,
+    "text": "That's what we're going to talk about today."
+  },
+  {
+    "start": 79.16,
+    "end": 79.4,
+    "text": "Okay."
+  },
+  {
+    "start": 79.64,
+    "end": 81.16,
+    "text": "So why don't we dive into the architecture?"
+  },
+  {
+    "start": 141.16,
+    "end": 145.29999999999998,
+    "text": "You need to zip it because that keeps CodeBuild happy."
+  },
+  {
+    "start": 145.42,
+    "end": 147.32,
+    "text": "They need a zip file as an input artifact."
+  },
+  {
+    "start": 148.4,
+    "end": 154.54,
+    "text": "So CodeBuild then gets triggered because there's a change in S3, an object change."
+  },
+  {
+    "start": 155.38,
+    "end": 162.56,
+    "text": "CodeBuild then sort of figures out files that have changed and pushes them to S3."
+  },
+  {
+    "start": 162.56,
+    "end": 163.46,
+    "text": "Okay."
+  },
+  {
+    "start": 163.94,
+    "end": 167.28,
+    "text": "How do you know files have changed when you push them to S3 here?"
+  },
+  {
+    "start": 167.58,
+    "end": 169.72,
+    "text": "We kind of need to detect change."
+  },
+  {
+    "start": 170.14000000000001,
+    "end": 176.76,
+    "text": "Otherwise, what would happen is that all these CodePipelines that depend upon files in S3 would start triggering."
+  },
+  {
+    "start": 177.6,
+    "end": 181.82,
+    "text": "And they would just run a change without anything really being in there."
+  },
+  {
+    "start": 181.82,
+    "end": 186.82,
+    "text": "So what we do is we download everything from S3 first in the CodeBuild phase."
+  },
+  {
+    "start": 187.29999999999998,
+    "end": 190.23999999999998,
+    "text": "We detect change by just doing a sum."
+  },
+  {
+    "start": 191.62,
+    "end": 196.22,
+    "text": "And then just the ones that are changing, those are the ones that get uploaded into S3."
+  },
+  {
+    "start": 196.98,
+    "end": 201.16,
+    "text": "Once they are in S3, a CodePipeline automatically triggers."
+  },
+  {
+    "start": 201.16,
+    "end": 207.92,
+    "text": "And a CodePipeline then would go and change, would apply a CloudFormation chain set on a stack."
+  },
+  {
+    "start": 207.98,
+    "end": 210.88,
+    "text": "And that's how a whole change is deployed in our environment."
+  },
+  {
+    "start": 211.24,
+    "end": 211.5,
+    "text": "Okay."
+  },
+  {
+    "start": 211.68,
+    "end": 213.72,
+    "text": "You mentioned about the change sets being applied."
+  },
+  {
+    "start": 213.82,
+    "end": 216.92,
+    "text": "Are there any manual intervention of approving these change sets?"
+  },
+  {
+    "start": 217.18,
+    "end": 222.76,
+    "text": "So there are some stacks that do not need any manual intervention in the CodePipeline phase."
+  },
+  {
+    "start": 222.76,
+    "end": 225.73999999999998,
+    "text": "But there are stacks which are pretty core."
+  },
+  {
+    "start": 225.85999999999999,
+    "end": 231.04,
+    "text": "They have stuff that should not be changed on a daily basis."
+  },
+  {
+    "start": 231.5,
+    "end": 236.79999999999998,
+    "text": "For those stacks, we have like an in-between phase where you go, you see the chain set,"
+  },
+  {
+    "start": 237.07999999999998,
+    "end": 239.68,
+    "text": "you review it once more before saying apply."
+  },
+  {
+    "start": 239.88,
+    "end": 244.01999999999998,
+    "text": "And that apply causes it to then sort of get applied to CloudFormation."
+  },
+  {
+    "start": 244.34,
+    "end": 244.57999999999998,
+    "text": "Okay."
+  },
+  {
+    "start": 244.92,
+    "end": 250.01999999999998,
+    "text": "From your operations team perspective, given that you've automated the entire deployment phase here,"
+  },
+  {
+    "start": 250.02,
+    "end": 252.64000000000001,
+    "text": "what access do they have to the console itself?"
+  },
+  {
+    "start": 253.46,
+    "end": 254.06,
+    "text": "So that's interesting."
+  },
+  {
+    "start": 254.18,
+    "end": 259.8,
+    "text": "What we've been able to achieve with all of this is 100% read-only access to the AWS console."
+  },
+  {
+    "start": 260.42,
+    "end": 263.42,
+    "text": "No one, no one has access, write access to the console."
+  },
+  {
+    "start": 264.18,
+    "end": 267.06,
+    "text": "Every time you need to make a change, no matter how small or big it is,"
+  },
+  {
+    "start": 267.18,
+    "end": 270.1,
+    "text": "you have to go through this whole pipeline."
+  },
+  {
+    "start": 270.64,
+    "end": 275.28000000000003,
+    "text": "And this ensures that we've got, we've been able to manage every single change and document it."
+  },
+  {
+    "start": 275.28,
+    "end": 280.4,
+    "text": "I think that's also neat because now as you plan to deploy in multiple regions,"
+  },
+  {
+    "start": 280.4,
+    "end": 283.61999999999995,
+    "text": "you have this process in place with the entire automations."
+  },
+  {
+    "start": 283.82,
+    "end": 287.15999999999997,
+    "text": "So you don't have to go step by step in other region deployment processes."
+  },
+  {
+    "start": 287.78,
+    "end": 288.03999999999996,
+    "text": "Yes."
+  },
+  {
+    "start": 288.09999999999997,
+    "end": 289.34,
+    "text": "So that kind of gives us an edge."
+  },
+  {
+    "start": 289.91999999999996,
+    "end": 295.41999999999996,
+    "text": "We run parallel deployments in AWS regions."
+  },
+  {
+    "start": 295.88,
+    "end": 300.44,
+    "text": "This is because customers are bound by laws within their region that the data can't leave the country,"
+  },
+  {
+    "start": 301.02,
+    "end": 304.84,
+    "text": "which is what this allows us to essentially orchestrate very, very easily."
+  },
+  {
+    "start": 304.84,
+    "end": 307.4,
+    "text": "So if there was a new region that we have customers in,"
+  },
+  {
+    "start": 307.82,
+    "end": 311.52,
+    "text": "we'd be able to pull all of this, put the whole stack together in a few hours."
+  },
+  {
+    "start": 311.76,
+    "end": 311.91999999999996,
+    "text": "Yes."
+  },
+  {
+    "start": 312.09999999999997,
+    "end": 312.35999999999996,
+    "text": "Okay."
+  },
+  {
+    "start": 312.79999999999995,
+    "end": 315.41999999999996,
+    "text": "Anything you're looking in the future in terms of enhancement?"
+  },
+  {
+    "start": 315.59999999999997,
+    "end": 317.94,
+    "text": "I know we talked about some manual intervention steps."
+  },
+  {
+    "start": 318.03999999999996,
+    "end": 320.09999999999997,
+    "text": "Any other thing that you are planning to improve?"
+  },
+  {
+    "start": 320.78,
+    "end": 324.73999999999995,
+    "text": "So, yeah, the manual thing is kind of irritating because we have to go now"
+  },
+  {
+    "start": 324.73999999999995,
+    "end": 329.58,
+    "text": "and suddenly look at all the regions where we are operating and go manually look at it"
+  },
+  {
+    "start": 329.58,
+    "end": 331.78,
+    "text": "and sort of say, this is, I approve this thing."
+  },
+  {
+    "start": 331.78,
+    "end": 336.4,
+    "text": "Instead, I would like it to just show up right at the PR."
+  },
+  {
+    "start": 336.61999999999995,
+    "end": 341.32,
+    "text": "So the minute a PR is created, if you could just get the change set back here,"
+  },
+  {
+    "start": 341.53999999999996,
+    "end": 344.23999999999995,
+    "text": "it not only shows you the code that's being changed,"
+  },
+  {
+    "start": 344.46,
+    "end": 347.41999999999996,
+    "text": "but also the resources that are going to be affected with this change."
+  },
+  {
+    "start": 348.11999999999995,
+    "end": 352.84,
+    "text": "And if you can just see it here, you know for sure that it's going to go through"
+  },
+  {
+    "start": 352.84,
+    "end": 356.58,
+    "text": "and you can take out that manual phase there and let all the deployment just flow through."
+  },
+  {
+    "start": 357.11999999999995,
+    "end": 357.38,
+    "text": "Okay."
+  },
+  {
+    "start": 357.53999999999996,
+    "end": 358.06,
+    "text": "That's great."
+  },
+  {
+    "start": 358.52,
+    "end": 360.46,
+    "text": "Francis, thank you for sharing this architecture."
+  },
+  {
+    "start": 360.64,
+    "end": 363.67999999999995,
+    "text": "Really neat mechanism of how you automate the entire process,"
+  },
+  {
+    "start": 363.79999999999995,
+    "end": 367.64,
+    "text": "especially I like it when folks don't have access into the console."
+  },
+  {
+    "start": 367.91999999999996,
+    "end": 369.41999999999996,
+    "text": "The read-only console access is great."
+  },
+  {
+    "start": 369.91999999999996,
+    "end": 373.9,
+    "text": "I'm sure your auditors and compliance folks are really happy with this architecture."
+  },
+  {
+    "start": 373.9,
+    "end": 378.47999999999996,
+    "text": "So yes, one of the motivations behind this is to also keep our auditors happy."
+  },
+  {
+    "start": 379.12,
+    "end": 381.35999999999996,
+    "text": "They can see every single change."
+  },
+  {
+    "start": 381.44,
+    "end": 382.88,
+    "text": "I can tell them here is a change log."
+  },
+  {
+    "start": 382.96,
+    "end": 384.02,
+    "text": "You can do whatever you like."
+  },
+  {
+    "start": 384.65999999999997,
+    "end": 386.71999999999997,
+    "text": "So that's, yeah, one for us, zero for the auditors."
+  },
+  {
+    "start": 387.28,
+    "end": 389.64,
+    "text": "Thank you for sharing this architecture with us today."
+  },
+  {
+    "start": 389.64,
+    "end": 392.28,
+    "text": "And thank you for watching This Is My Architecture."
+  }
+]

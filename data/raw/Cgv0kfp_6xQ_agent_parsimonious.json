@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "We first identify the user clients: iOS and Android devices, mapping to UserConsumerMobile. The central dashed box represents Snap's EKS infrastructure consisting of Gateway (GW), Media Service, Friend Graph, Snap DB, and Messaging Connection Service (MCS). On the left, we map CloudFront and S3 for media storage/distribution. On the right, ElastiCache acts as the connection store, and at the bottom, DynamoDB serves as the primary metadata database. We divide the architecture into two main workflows: Flow 0 for sending snaps and metadata persistence, and Flow 1 for delivering notifications and checking connection state.",
+  "graph": {
+    "name": "Snapchat High-Scale Ephemeral Messaging Architecture",
+    "link": "https://www.youtube.com/watch?v=Cgv0kfp_6xQ",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Snap's backend runs across 900+ EKS clusters, serving over 300 million daily active users. Snap DB abstracts DynamoDB to handle TTL, transactions, and ephemeral logic."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "iOS Client",
+      "notes": "Initiates snap upload requests."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Android Client",
+      "notes": "Receives notifications and retrieves snaps."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS API Gateway",
+      "notes": "Central ingress routing for active client sessions."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Media Delivery Service",
+      "notes": "Handles processing and routing of incoming snap media."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Friend Graph",
+      "notes": "Computes user relationships and delivery targets."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "Snap DB",
+      "notes": "Custom caching/transaction layer to optimize DynamoDB workloads."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "Messaging Connection Service",
+      "notes": "Manages persistent connections to clients for real-time delivery."
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Caches regional media closer to users for ultra-low latency retrieval."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Persistent object storage for ephemeral snap media files."
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "Stores active server-to-client connection mappings."
+    },
+    {
+      "id": "10",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "DATA_PEEK: Stores 400TB+ metadata. Nightly scans read 2B rows/minute to prune expired data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends snap request."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes media upload request."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Uploads snap media."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Persists media."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Triggers friend distribution lookup."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Passes metadata transaction."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Writes snap metadata."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Routes delivery request."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries connection details."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes message payload."
+    }
+  ]
+}

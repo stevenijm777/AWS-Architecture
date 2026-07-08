@@ -1,0 +1,178 @@
+{
+  "step_by_step_reasoning": "We trace the Snapchat architecture from the whiteboard and transcript. The client (iOS/Android) connects through an EKS Gateway (GW). The upload flow routes via EKS Media Service to CloudFront and S3. Metadata flow goes through EKS Messaging Service (MCS) and a custom SnapDB layer (running on EKS) to DynamoDB. The Friend Graph is another EKS microservice integrated into the stack. On the receive side, MCS queries ElastiCache for active connection/server IDs to quickly push the snap notification via GW, after which the client retrieves media from CloudFront/S3.",
+  "graph": {
+    "name": "Snapchat Massive Scale Media Delivery and Messaging",
+    "link": "https://www.youtube.com/watch?v=Cgv0kfp_6xQ",
+    "categories": "interactive, data_ingestion",
+    "graph_usable": true,
+    "notes": "Handles 300M+ DAUs and 5B+ Snaps/day. Leverages a custom database layer (SnapDB) on EKS to manage transaction layers and ephemeral data before persisting metadata in DynamoDB. Connection states are cached in ElastiCache to enable fast, real-time message pushing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Clients (iOS / Android)",
+      "notes": "Hundreds of millions of daily active users sending and receiving snaps."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "Gateway (GW)",
+      "notes": "EKS-based API gateway managing user connections and API routing."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Media Service (MEDIA)",
+      "notes": "EKS microservice responsible for media processing and delivery initiation."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Messaging Core Service (MCS)",
+      "notes": "EKS microservice managing messaging logic and orchestrating recipient notification flows."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "SnapDB",
+      "notes": "Custom database layer built on EKS to handle transactions, TTL, and ephemeral data logic."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "Friend Graph",
+      "notes": "EKS microservice handling friend relationship mapping."
+    },
+    {
+      "id": "6",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Global CDN providing low-latency media caching and distribution."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Object storage storing the snap media payload."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Stores persistent connection mapping (server and connection IDs) for push routing."
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DATA_PEEK: 400TB metadata storage. WORKLOAD_PEEK: Runs nightly scans processing 2B rows/minute for suggestions and cleaning ephemeral data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Client initiates snap upload request."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Gateway routes upload request to Media Service."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Media Service uploads media file."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Media is persisted in S3 close to the recipient."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Queries Friend Graph to validate messaging relations."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Gateway forwards message metadata to MCS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards transactional writes and metadata."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves structured snap metadata to DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries cache for recipient's active connection and server ID."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes message notification payload to target gateway server."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Gateway pushes message notification to recipient client."
+    },
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Recipient requests media download."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves snap image/video payload from S3."
+    }
+  ]
+}

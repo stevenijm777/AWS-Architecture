@@ -1,0 +1,180 @@
+{
+  "step_by_step_reasoning": "We trace the architecture chronologically. 1. Assembly AI clients (UserCompanyAPI) upload audio data to an API running on ECS (API Manager). 2. The API Manager transcodes audio and stores it in S3, while sending the orchestrator metadata to an Orchestrator ECS service. 3. The Orchestrator manages model execution sequences via SQS queues. 4. Multiple models running on ECS (ML Inference Pipeline) consume tasks from SQS and retrieve original audio from S3. 5. A custom scaling loop monitors SQS queue depth via CloudWatch to auto-scale ECS inference containers. 6. Once complete, Orchestrator sends an event to SNS, which triggers a webhook Lambda. 7. The Webhook Lambda notifies the API client asynchronously.",
+  "graph": {
+    "name": "Assembly AI Scalable ML Inference Architecture",
+    "link": "https://www.youtube.com/watch?v=vQgUkn3rAMY",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Handles millions of daily audio API requests. Implements custom predictive scaling for GPU tasks to optimize ECS container costs. Strictly enforces S3 lifecycle policies for SOC 2 security compliance."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAPI",
+      "name": "Assembly AI Clients",
+      "notes": "DATA_PEEK: Podcasting and telephony companies uploading raw or referenced audio files."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "API Manager Container",
+      "notes": "WORKLOAD_PEEK: Validates, transcodes raw audio, and returns synchronous request acknowledgment."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Audio Storage Bucket",
+      "notes": "DATA_PEEK: Stores transcoded audio. Implements strict lifecycle policies for SOC 2 data deletion."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "Orchestrator Service",
+      "notes": "WORKLOAD_PEEK: Directs transcription pipelines, coordinates model orders, and initiates asynchronous scaling decisions."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Model Job Queues",
+      "notes": "WORKLOAD_PEEK: Multiple queues buffering jobs for different ML models (speech-to-text, sentiment analysis, etc.)."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ML Inference Pipeline",
+      "notes": "WORKLOAD_PEEK: GPU-powered model instances (e.g. Conformer 2, LLMs) processing inference."
+    },
+    {
+      "id": "6",
+      "service": "CloudWatch",
+      "name": "Metrics & Auto Scaler",
+      "notes": "WORKLOAD_PEEK: Tracks queue depth and custom predictive metrics to dynamically scale up GPU containers."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "Completion SNS Topic",
+      "notes": "WORKLOAD_PEEK: Receives notifications upon completion of speech-to-text and NLP pipeline runs."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Webhook Notification Lambda",
+      "notes": "WORKLOAD_PEEK: Dispatches HTTP notifications back to the customer client asynchronously."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client submits transcription request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves transcoded audio file"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Dispatches jobs to Orchestrator"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Sends synchronous HTTP acceptance response"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes model tasks to individual SQS queues"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Inference containers poll queue tasks"
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches raw/transcoded audio files for processing"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reports completed inference results back"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Reports queue backlog depths"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Sends predictive workload pipeline states"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Scales model inference container tasks based on metrics"
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Publishes completion events"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers Webhook Lambda execution"
+    },
+    {
+      "source": "8",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers transcription results via async webhook call"
+    }
+  ]
+}

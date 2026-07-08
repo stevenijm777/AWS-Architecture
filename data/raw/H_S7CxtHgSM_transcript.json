@@ -1,0 +1,247 @@
+[
+  {
+    "start": 0.0,
+    "end": 13.4,
+    "text": "Welcome to This is My Architecture. I'm Arati and joining me today is Konstantin from Raiffeisen Bank International. Konstantin, welcome to the show."
+  },
+  {
+    "start": 13.4,
+    "end": 14.8,
+    "text": "Thanks for having me."
+  },
+  {
+    "start": 14.8,
+    "end": 17.2,
+    "text": "So Konstantin, tell us what you do at RBI."
+  },
+  {
+    "start": 17.2,
+    "end": 25.0,
+    "text": "RBI is a banking group. It's one of the biggest banking groups in the Central East Europe and we provide financial services."
+  },
+  {
+    "start": 25.0,
+    "end": 27.400000000000002,
+    "text": "Great. So what are we here to talk about today?"
+  },
+  {
+    "start": 27.4,
+    "end": 37.4,
+    "text": "Well, obviously since we are a bank, basically compliance and data security is a very important topic to us."
+  },
+  {
+    "start": 37.4,
+    "end": 45.4,
+    "text": "And that's why we have built a solution that allows us to keep the key management on premise and to have the control of our own encryption."
+  },
+  {
+    "start": 45.4,
+    "end": 47.4,
+    "text": "Great. Let's jump into the architecture."
+  },
+  {
+    "start": 47.4,
+    "end": 50.4,
+    "text": "Lovely. So basically we have two elements."
+  },
+  {
+    "start": 50.4,
+    "end": 56.4,
+    "text": "The first element is the onboarding element, which is creating a virtual wrapper, a virtual tenant."
+  },
+  {
+    "start": 56.4,
+    "end": 60.4,
+    "text": "And the second one is the key operation lifecycle."
+  },
+  {
+    "start": 60.4,
+    "end": 63.4,
+    "text": "Great. Why don't we talk about the onboarding element first?"
+  },
+  {
+    "start": 63.4,
+    "end": 64.4,
+    "text": "Lovely."
+  },
+  {
+    "start": 64.4,
+    "end": 75.4,
+    "text": "So basically what happens is that the security dev op teams, they push a file. It's called mappings.json into the Git."
+  },
+  {
+    "start": 75.4,
+    "end": 77.4,
+    "text": "What is the purpose of the mapping file there?"
+  },
+  {
+    "start": 77.4,
+    "end": 87.4,
+    "text": "The mapping file, it's actually to tell to the virtual tenant what are the accounts, AWS accounts, that comprise the virtual tenant."
+  },
+  {
+    "start": 87.4,
+    "end": 89.4,
+    "text": "Okay. So what happens after that?"
+  },
+  {
+    "start": 89.4,
+    "end": 97.4,
+    "text": "After that, then this file gets uploaded as a kind of artifact into S3. There is a Git action, what happens at the Git level."
+  },
+  {
+    "start": 97.4,
+    "end": 103.4,
+    "text": "And the uploading in S3 will then trigger a step function."
+  },
+  {
+    "start": 103.4,
+    "end": 107.4,
+    "text": "This step function will have a couple of parts."
+  },
+  {
+    "start": 107.4,
+    "end": 113.4,
+    "text": "The first part, it's going to go and create an EM role in the particular accounts."
+  },
+  {
+    "start": 113.4,
+    "end": 119.4,
+    "text": "And this EM role will allow Talas to assume the role and to do operations with a key."
+  },
+  {
+    "start": 119.4,
+    "end": 131.4,
+    "text": "The second part would be to create the virtual tenant itself at this level, where later the dev op teams will then generate the key."
+  },
+  {
+    "start": 131.4,
+    "end": 142.4,
+    "text": "And then the third part, once this flow is completely done, then it will notify back the security dev op teams that that particular team or product team is onboarded into Talas."
+  },
+  {
+    "start": 142.4,
+    "end": 152.4,
+    "text": "Great. So now based on this Lambda function and this IAM role, your Talas, which is your on-premises key management service, can now communicate directly with KMS."
+  },
+  {
+    "start": 152.4,
+    "end": 153.4,
+    "text": "That is correct."
+  },
+  {
+    "start": 153.4,
+    "end": 162.4,
+    "text": "Okay. Now that we have the onboarding sorted, how do your users generate keys on-premises and then use it with the AWS services?"
+  },
+  {
+    "start": 162.4,
+    "end": 171.4,
+    "text": "Right. So what happens is that the dev op teams, which are from a product team, they would then generate a key on Talas."
+  },
+  {
+    "start": 171.4,
+    "end": 175.4,
+    "text": "It's a symmetric 256-bit encryption."
+  },
+  {
+    "start": 175.4,
+    "end": 183.4,
+    "text": "And basically this would be the CMK, the master key from a customer managed key in KMS."
+  },
+  {
+    "start": 183.4,
+    "end": 191.4,
+    "text": "Later then, this gets imported over here as a kind of virtual wrapper where we have two keys inside."
+  },
+  {
+    "start": 191.4,
+    "end": 195.4,
+    "text": "We have the data key and the master key."
+  },
+  {
+    "start": 195.4,
+    "end": 200.4,
+    "text": "And all together they form the so-called data encryption key."
+  },
+  {
+    "start": 200.4,
+    "end": 211.4,
+    "text": "With this data encryption key, then later KMS will be able to encrypt either S3 or EBS or any other service."
+  },
+  {
+    "start": 211.4,
+    "end": 218.4,
+    "text": "So your users are now able to use the data encryption key that you generated using KMS with S3 and EBS?"
+  },
+  {
+    "start": 218.4,
+    "end": 220.4,
+    "text": "That is correct."
+  },
+  {
+    "start": 220.4,
+    "end": 227.4,
+    "text": "Great. You also mentioned, right, this is a highly regulated industry and there could be chances where you have to revoke keys or rotate keys."
+  },
+  {
+    "start": 227.4,
+    "end": 229.4,
+    "text": "How does that process happen?"
+  },
+  {
+    "start": 229.4,
+    "end": 237.4,
+    "text": "Right. So this virtual wrapper, what we created the so-called tenant, basically will be here all the time."
+  },
+  {
+    "start": 237.4,
+    "end": 240.4,
+    "text": "It's a persistent tenant. It will not get erased."
+  },
+  {
+    "start": 240.4,
+    "end": 259.4,
+    "text": "And if we have a data leakage issue, then what these DevOps teams will do with an API call, they can delete this master key, which will then get replicated into the KMS CMK customer managed key, which will then remove the secret from that wrapper key."
+  },
+  {
+    "start": 259.4,
+    "end": 267.4,
+    "text": "And basically by doing that, we will revoke the access to the secure encrypted files."
+  },
+  {
+    "start": 267.4,
+    "end": 273.4,
+    "text": "Yes. So your users now don't get or given you've revoked the key, there's no more access into your S3 or EBS."
+  },
+  {
+    "start": 273.4,
+    "end": 274.4,
+    "text": "That is correct."
+  },
+  {
+    "start": 274.4,
+    "end": 284.4,
+    "text": "Konstantin, thank you for sharing this architecture with us where you're able to manage an on-premises key management system in conjunction with our AWS services."
+  },
+  {
+    "start": 284.4,
+    "end": 285.4,
+    "text": "You're welcome."
+  },
+  {
+    "start": 285.4,
+    "end": 287.4,
+    "text": "And thank you for watching. This is my architecture."
+  },
+  {
+    "start": 287.4,
+    "end": 288.4,
+    "text": "You're welcome."
+  },
+  {
+    "start": 288.4,
+    "end": 291.4,
+    "text": "And thank you for watching. This is my architecture."
+  }
+]

@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "We identify the components from the whiteboard and transcript. The main workflow consists of active canary monitoring and a status page for internal users. 1. Internal Stakeholders (UserCompanyInternalPlatform) access the frontend hosted on Amplify. 2. Amplify talks to AppSync for GraphQL APIs. 3. AppSync triggers a Lambda resolver. 4. Lambda queries CloudWatch for canary status and metadata. 5. CloudWatch Canaries are run on a schedule triggered by a Time Trigger (EventBridge) and save artifacts (screenshots, HAR files) to S3.",
+  "graph": {
+    "name": "HBO Outside-In Monitoring with CloudWatch Canaries",
+    "link": "https://www.youtube.com/watch?v=D9qTotVJYss",
+    "categories": "control, data_ingestion",
+    "graph_usable": true,
+    "notes": "Serverless validation framework for monitoring HBO Max experiences globally. Uses CloudWatch Canaries deployed across multiple regions to simulate users, saving artifacts to S3 and exposing status via an Amplify/AppSync frontend."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Internal Stakeholders",
+      "notes": "WORKLOAD_PEEK: Incident response, customer care, and on-call teams viewing status."
+    },
+    {
+      "id": "1",
+      "service": "Amplify",
+      "name": "Amplify",
+      "notes": "Hosts the status page UI dashboard for stakeholders without AWS console access."
+    },
+    {
+      "id": "2",
+      "service": "AppSync",
+      "name": "AppSync",
+      "notes": "Provides a GraphQL interface to query canary status and alerts."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda Resolver",
+      "notes": "Uses AWS SDK to pull canary execution metadata, history, and screenshot logs."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "DATA_PEEK: Runs Synthetics Canaries every 1-5 minutes to test endpoints and manage alerting."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "DATA_PEEK: Stores canary test run artifacts, including HAR files and screenshots."
+    },
+    {
+      "id": "6",
+      "service": "EventBridge",
+      "name": "Time Trigger",
+      "notes": "Schedules the canary tests to run automatically."
+    }
+  ],
+  "edges": [
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers CloudWatch Synthetics Canaries on a schedule."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves HAR files and screenshots from canary runs."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Stakeholder accesses the experience status dashboard."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends GraphQL query for canary status."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Invokes backend Lambda resolver."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pulls historical runs, statuses, and logs."
+    }
+  ]
+}

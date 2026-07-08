@@ -1,0 +1,262 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.0,
+    "text": "Hi and welcome to This is My Architecture. Today I'm here with Dennis from Spryker. Hi Dennis."
+  },
+  {
+    "start": 12.0,
+    "end": 18.0,
+    "text": "Hi Stefan, thank you for inviting me. You're welcome. So tell us a bit about what Spryker is doing."
+  },
+  {
+    "start": 18.0,
+    "end": 28.0,
+    "text": "Spryker provides a commerce cloud operating system that is a platform to build custom sophisticated business models."
+  },
+  {
+    "start": 28.0,
+    "end": 38.0,
+    "text": "You can find our customers in the business verticals like B2C, B2B and marketplaces, building new challengers of eBay, Alibaba and even Amazon Marketplace."
+  },
+  {
+    "start": 38.0,
+    "end": 41.0,
+    "text": "Awesome, okay cool. So what are we looking at today?"
+  },
+  {
+    "start": 41.0,
+    "end": 47.0,
+    "text": "Today we'll be looking at ACP Application Composition Platform, which connects two worlds."
+  },
+  {
+    "start": 47.0,
+    "end": 53.0,
+    "text": "World of SaaS applications and world of PaaS applications built by developers."
+  },
+  {
+    "start": 53.0,
+    "end": 58.0,
+    "text": "Cool, so before we dive into the architecture, can you please tell us a bit about the scale of what you're doing?"
+  },
+  {
+    "start": 58.0,
+    "end": 67.0,
+    "text": "Of course. At the very beginning we aim for 15 millions of messages flying every day."
+  },
+  {
+    "start": 67.0,
+    "end": 77.0,
+    "text": "Considering 200 of consumers, we get about 3 billions of messages that will be consumed and transferred daily."
+  },
+  {
+    "start": 77.0,
+    "end": 85.0,
+    "text": "Awesome, okay cool. So now can you maybe also tell us a bit about the key players of this architecture and then I think we can dive into a business scenario."
+  },
+  {
+    "start": 85.0,
+    "end": 101.0,
+    "text": "Yeah, of course. So an example of this, of the use case would be when our customers would like to use a standard PIM system, but at the same time would like to introduce a very custom product feed or product catalog with personalization engine and other features."
+  },
+  {
+    "start": 101.0,
+    "end": 106.0,
+    "text": "Then they would make sure that these two applications can communicate with each other."
+  },
+  {
+    "start": 106.0,
+    "end": 108.0,
+    "text": "And that's where ACP comes to the game."
+  },
+  {
+    "start": 108.0,
+    "end": 114.0,
+    "text": "Understood. So what are the key non-functional challenges that you had to solve with this platform?"
+  },
+  {
+    "start": 114.0,
+    "end": 126.0,
+    "text": "One of the major challenges was account isolation because we want to make sure that not only tenants are isolated from each other, but also PBCs or SaaS applications also isolated."
+  },
+  {
+    "start": 126.0,
+    "end": 133.0,
+    "text": "But it's all, it comes with two types of isolation. One is a cross account isolation, but also regional isolation."
+  },
+  {
+    "start": 133.0,
+    "end": 136.0,
+    "text": "We want to provide a distributed system over multiple regions."
+  },
+  {
+    "start": 136.0,
+    "end": 142.0,
+    "text": "Okay, so let's start with the business scenario and then dive into the architecture. So where do we start?"
+  },
+  {
+    "start": 142.0,
+    "end": 161.0,
+    "text": "Usually we start with a message. If let's say a PIM system on the left side would like to provide the information about price update, it will throw a message in the API gateway that will send it to a Lambda function, which will play multiple roles in this case."
+  },
+  {
+    "start": 161.0,
+    "end": 169.0,
+    "text": "What are the roles? The first role is gluing these two services because as you know, not all AWS services have direct connectivity."
+  },
+  {
+    "start": 169.0,
+    "end": 177.0,
+    "text": "So this Lambda function will connect API gateway and the SNS service and apply special rules."
+  },
+  {
+    "start": 177.0,
+    "end": 188.0,
+    "text": "In this case will be dynamic rules coming from the dynamic DB, which we call in Spiker application tenant register service, which will define what rules will be applied to the SNS distribution system."
+  },
+  {
+    "start": 188.0,
+    "end": 195.0,
+    "text": "Okay, so can you tell us a bit more about the rules and then until the message lands on a FIFO topic?"
+  },
+  {
+    "start": 195.0,
+    "end": 202.0,
+    "text": "Yeah, of course. This rule can contain information about who should consume this message and are they authorized doing so."
+  },
+  {
+    "start": 202.0,
+    "end": 207.0,
+    "text": "Okay, so we're doing content based routing here and also before and we're doing authentication authorization."
+  },
+  {
+    "start": 207.0,
+    "end": 208.0,
+    "text": "Exactly."
+  },
+  {
+    "start": 208.0,
+    "end": 216.0,
+    "text": "Okay, so I see you have SNS FIFO here on the diagram. Why didn't you go for plain SNS or a service like EventBridge?"
+  },
+  {
+    "start": 216.0,
+    "end": 225.0,
+    "text": "The reason is simple because not all tenant applications and also PPC applications are capable of non-sequential message processing."
+  },
+  {
+    "start": 225.0,
+    "end": 234.0,
+    "text": "So we need to make sure that our partners and customers are secure on that site and we can guarantee the sequence of message delivery."
+  },
+  {
+    "start": 234.0,
+    "end": 238.0,
+    "text": "Awesome, understood. So the message is here on the topic. So what happens next?"
+  },
+  {
+    "start": 238.0,
+    "end": 255.0,
+    "text": "Once this message with the rules that were taken from the DynamoDB come to the SNS FIFO, it goes to the SQS service on the tenant side where it will wait until tenant application will process them asynchronously."
+  },
+  {
+    "start": 255.0,
+    "end": 259.0,
+    "text": "Okay, so then your tenants can read the message from the queue and they're good to go."
+  },
+  {
+    "start": 259.0,
+    "end": 260.0,
+    "text": "Exactly."
+  },
+  {
+    "start": 260.0,
+    "end": 266.0,
+    "text": "Okay, so now looking from the tenant side, what's the flow? Is it very similar or are there any special tricks that you're doing?"
+  },
+  {
+    "start": 266.0,
+    "end": 273.0,
+    "text": "That's exactly the question that we as architects ask ourselves and the flow will be very similar to what we've seen before."
+  },
+  {
+    "start": 273.0,
+    "end": 274.0,
+    "text": "Okay."
+  },
+  {
+    "start": 274.0,
+    "end": 288.0,
+    "text": "The message will come to the API Gateway which will hit the Lambda function. From Lambda function it will go to SNS and from SNS it will flow to the SQS service on the left side on the PPC side."
+  },
+  {
+    "start": 288.0,
+    "end": 289.0,
+    "text": "Oh, I see."
+  },
+  {
+    "start": 289.0,
+    "end": 297.0,
+    "text": "This architecture makes sure that our developers on both sides work with the same interfaces and no need to learn new technology stacks, just switch in sides."
+  },
+  {
+    "start": 297.0,
+    "end": 307.0,
+    "text": "I like that you mentioned developer productivity. I would also like to go back to our non-functional requirements, the security and also tenant isolation. How did you achieve that?"
+  },
+  {
+    "start": 307.0,
+    "end": 316.0,
+    "text": "Yeah. Basically using the API Gateway and SNS with dynamic rules, we can achieve full isolation between the messaging."
+  },
+  {
+    "start": 316.0,
+    "end": 326.0,
+    "text": "And the base for that is JVT token that includes the information about PPC or a tenant ID that will be then used in the routing process."
+  },
+  {
+    "start": 326.0,
+    "end": 333.0,
+    "text": "I see. So you can make sure that the right customer sends the data and you ensure also that the right consumer receives the data."
+  },
+  {
+    "start": 333.0,
+    "end": 336.0,
+    "text": "Exactly. And also that the payload is not disturbed."
+  },
+  {
+    "start": 336.0,
+    "end": 345.0,
+    "text": "I see. Cool. So that's the S is architecture. I think you're moving forward. What are the key initiatives that you're working on to evolve this architecture?"
+  },
+  {
+    "start": 345.0,
+    "end": 363.0,
+    "text": "Yeah. Thanks for asking. As we already discussed, the FIFO mechanism that we ensured, the next step will be to enable those customers and partners that work and produce applications that are not sequence dependent, because it will be much more performant, much more scalable and as well as secure."
+  },
+  {
+    "start": 363.0,
+    "end": 377.0,
+    "text": "Another improvement of this architecture will be introducing the business analytics tools, because if you imagine the number of messages, business messages coming from the left and the right side, we can get a lot more and better prediction to our customers and partners."
+  },
+  {
+    "start": 377.0,
+    "end": 380.0,
+    "text": "Okay. I understand. Thanks for sharing this architecture."
+  },
+  {
+    "start": 380.0,
+    "end": 382.0,
+    "text": "Thanks for asking. Thank you."
+  },
+  {
+    "start": 382.0,
+    "end": 385.0,
+    "text": "And thank you for watching. This is my architecture."
+  },
+  {
+    "start": 385.0,
+    "end": 387.0,
+    "text": "Thank you."
+  }
+]

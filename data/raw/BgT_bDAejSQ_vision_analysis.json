@@ -1,0 +1,158 @@
+{
+  "step_by_step_reasoning": "We first identify the user types and accounts from the transcript and diagram. The diagram shows Account A (containing two identical isolated environments/VPCs for development) and Account B (the production environment). The speaker mentions a developer using a public cloud portal to provision accounts. Within Account A, we have two EKS clusters running in private subnets, each utilizing a NAT Gateway in the public subnet for outbound internet traffic, and AWS Direct Connect to communicate back to the on-premises data center. In Account B, incoming production traffic from end-users goes through AWS WAF, then to an Application Load Balancer (ALB), and finally to the production EKS cluster. We represent the three distinct EKS clusters, two NAT Gateways, WAF, ALB, Direct Connect, and the users/on-prem environments to build the complete flow.",
+  "graph": {
+    "name": "GoDaddy's Zero-Trust Isolated Multi-Account Architecture",
+    "link": "https://www.youtube.com/watch?v=BgT_bDAejSQ",
+    "categories": "control, interactive",
+    "graph_usable": true,
+    "notes": "GoDaddy's multi-account architecture isolates environments into distinct AWS accounts to minimize the blast radius. It restricts lateral movement by disabling VPC peering, forcing communication to flow either through NAT Gateways or secure AWS Direct Connect to the on-premises DC. EKS nodes are automatically rotated every 24 hours using golden AMIs for strong security posture."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "GoDaddy Developer",
+      "notes": "GoDaddy internal developers who initiate the application readiness process."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Public Cloud Portal",
+      "notes": "Custom portal used by developers for AWS account provisioning and readiness reviews."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS Cluster (Env 1)",
+      "notes": "EKS cluster running within Account A (isolated dev environment 1). Rebuilds nodes every 24 hours."
+    },
+    {
+      "id": "3",
+      "service": "NAT",
+      "name": "NAT Gateway (Env 1)",
+      "notes": "Provides secure outbound-only internet access for EKS cluster in Env 1."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "EKS Cluster (Env 2)",
+      "notes": "EKS cluster running within Account A (isolated dev environment 2). Rebuilds nodes every 24 hours."
+    },
+    {
+      "id": "5",
+      "service": "NAT",
+      "name": "NAT Gateway (Env 2)",
+      "notes": "Provides secure outbound-only internet access for EKS cluster in Env 2."
+    },
+    {
+      "id": "6",
+      "service": "DirectConnect",
+      "name": "AWS Direct Connect",
+      "notes": "Establishes a dedicated connection between AWS and GoDaddy's on-premises environment."
+    },
+    {
+      "id": "7",
+      "service": "OnPremDC",
+      "name": "On-Premises Data Center",
+      "notes": "GoDaddy internal data centers hosting on-premise services."
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWeb",
+      "name": "End User",
+      "notes": "Customers/end-users accessing the live GoDaddy application."
+    },
+    {
+      "id": "9",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Web Application Firewall protecting production workloads from web exploits."
+    },
+    {
+      "id": "10",
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Distributes incoming traffic to the production EKS cluster."
+    },
+    {
+      "id": "11",
+      "service": "EKS",
+      "name": "EKS Cluster (Production)",
+      "notes": "Production EKS cluster hosting the application in Account B."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer triggers cloud review and account provisioning workflows."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EKS Env 1 traffic routed to external resources via NAT Gateway."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EKS Env 2 traffic routed to external resources via NAT Gateway."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "EKS Env 1 routes traffic through Direct Connect to access on-prem databases/services."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS Env 2 routes traffic through Direct Connect to access on-prem databases/services."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Traffic arrives at GoDaddy On-Premises Data Center."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "End-user requests pass through AWS WAF."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "WAF-approved traffic is forwarded to the Application Load Balancer."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB routes the production traffic to the Production EKS Cluster."
+    }
+  ]
+}

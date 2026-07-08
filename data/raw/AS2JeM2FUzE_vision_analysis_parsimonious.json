@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "The architecture is structured around a central self-managed Kubernetes cluster running on EC2 (labeled K8S). Data sources (external crawlers, premium connectors, and carrier data) send inputs through an Elastic Load Balancer (ELB) into the Kubernetes cluster. The cluster uses Amazon MQ to buffer and decouple data ingestion microservices. Cleaned data is written to MongoDB Atlas over a VPC Peering connection. Consumers (underwriters, agents, carriers) access the APIs through the Kong API Gateway hosted on the Kubernetes cluster, which authenticates users via Keycloak using RDS (PostgreSQL) and manages session caching via Redis (ElastiCache).",
+  "graph": {
+    "name": "Intellect Design Fabric Data Platform",
+    "link": "https://www.youtube.com/watch?v=AS2JeM2FUzE",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Big data platform processing 1-2M messages for risk profiling. Migrated from MongoDB on EC2 to MongoDB Atlas with VPC Peering."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Data Sources",
+      "notes": "Crawlers, premium connectors, and custom carrier feeds."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Distributes incoming crawled and connector data."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "K8S Cluster",
+      "notes": "Self-managed Kubernetes hosting microservices, Kong Gateway, Keycloak, and Jupyter Notebooks."
+    },
+    {
+      "id": "3",
+      "service": "AmazonMQ",
+      "name": "Amazon MQ",
+      "notes": "Decouples microservices and queues message processing."
+    },
+    {
+      "id": "4",
+      "service": "VPCPeering",
+      "name": "VPC Peering",
+      "notes": "Provides private routing to MongoDB Atlas."
+    },
+    {
+      "id": "5",
+      "service": "MongoDBAtlas",
+      "name": "MongoDB Atlas",
+      "notes": "Stores curated entity profiles and risk data."
+    },
+    {
+      "id": "6",
+      "service": "UserConsumerWeb",
+      "name": "Consumers",
+      "notes": "Underwriters and policy agents querying risk scores."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS Postgres",
+      "notes": "Stores configuration for Kong and identity data for Keycloak."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "Redis Cache",
+      "notes": "Handles user session and cache management."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Raw crawled data ingestion."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fans out traffic to K8S microservices."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes unprocessed messages to the queue."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Consumes and processes data pipeline tasks."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Routes traffic securely through VPC peering."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Writes refined analytics to MongoDB."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Underwriter requests sent to Kong API Gateway."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Authenticates and authorizes via Keycloak database."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves or updates user session state."
+    }
+  ]
+}

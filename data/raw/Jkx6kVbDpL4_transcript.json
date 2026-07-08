@@ -1,0 +1,392 @@
+[
+  {
+    "start": 0.0,
+    "end": 10.44,
+    "text": "Welcome to This is My Architecture. I'm Boaz and I have here with me Ofer from Nielsen Marketing Cloud."
+  },
+  {
+    "start": 10.44,
+    "end": 15.66,
+    "text": "Hi Ofer. Hi Boaz. Tell us about Nielsen Marketing Cloud. So Nielsen Marketing Cloud is a data"
+  },
+  {
+    "start": 15.66,
+    "end": 20.240000000000002,
+    "text": "management platform. We prepare marketing segmentation data that can then be used for"
+  },
+  {
+    "start": 20.240000000000002,
+    "end": 25.02,
+    "text": "campaigns. So basically you're getting files from different resources and then sending them to the"
+  },
+  {
+    "start": 25.02,
+    "end": 30.6,
+    "text": "different networks? Right, so we basically create all the data in another part of the system and then"
+  },
+  {
+    "start": 30.6,
+    "end": 38.82,
+    "text": "our my system which is called DataOut gets these files on this side and then processes them and"
+  },
+  {
+    "start": 38.82,
+    "end": 43.44,
+    "text": "uploads them to the ad networks that are partners of ours. Okay, so let's walk through the system."
+  },
+  {
+    "start": 43.44,
+    "end": 50.519999999999996,
+    "text": "Okay, so I think the first thing I want to mention is that this system runs a huge amount of data. We"
+  },
+  {
+    "start": 50.52,
+    "end": 60.720000000000006,
+    "text": "process about 250 billion events a day. That's a huge scale. Right, and these events come in files. Each file has a bunch of events in them which are the segmentation data."
+  },
+  {
+    "start": 60.720000000000006,
+    "end": 68.04,
+    "text": "It gets processed and gets sent to the ad platforms. The files pretty much come into the system and are"
+  },
+  {
+    "start": 68.04,
+    "end": 75.54,
+    "text": "written to an S3 bucket. They get some processing like transformations and formatting using a Spark EMR cluster."
+  },
+  {
+    "start": 75.54,
+    "end": 86.74000000000001,
+    "text": "Get written to another S3 bucket and from here they go to Lambda functions that do all the processing of a last formatting and sending it to the ad platform."
+  },
+  {
+    "start": 86.74000000000001,
+    "end": 92.04,
+    "text": "So you have your process data and then you're just taking it and splitting it with Lambda functions?"
+  },
+  {
+    "start": 92.04,
+    "end": 98.16000000000001,
+    "text": "Yes, correct. So the Lambda functions actually do the last part of the work of uploading it to all the platforms."
+  },
+  {
+    "start": 98.16,
+    "end": 110.16,
+    "text": "There's additional layer of data here which is all the data about the files and how to manage them. So this information goes through here and gets written to a Postgres RDS database."
+  },
+  {
+    "start": 110.16,
+    "end": 120.16,
+    "text": "We have a little work manager Lambda that reads the information, makes decisions which files need to process in which way, sends it to the Spark cluster."
+  },
+  {
+    "start": 120.16,
+    "end": 129.16,
+    "text": "So all your metadata is stored in RDS and you keep updating it to the flow."
+  },
+  {
+    "start": 129.16,
+    "end": 144.16,
+    "text": "Yes, correct. We have a second work manager Lambda that basically reads information about the process files and then does like a fan out architecture of invoking many many Lambdas that then upload it to the networks."
+  },
+  {
+    "start": 144.16,
+    "end": 157.16,
+    "text": "In total we have over 100 networks we upload data to. Once these Lambdas are done, they update back through an SQS queue and this gets updated back to the database."
+  },
+  {
+    "start": 157.16,
+    "end": 159.16,
+    "text": "Some status that I process this file."
+  },
+  {
+    "start": 159.16,
+    "end": 162.16,
+    "text": "Correct. And if it needs to be retried and stuff like that."
+  },
+  {
+    "start": 162.16,
+    "end": 168.16,
+    "text": "So this looks like a huge system, 250 billion requests per day. I assume you had some challenges with it."
+  },
+  {
+    "start": 168.16,
+    "end": 182.16,
+    "text": "Yeah, so I think the main, the three things that are really interesting about the system are the following. One is scale. The other one is rate limiting, which is something surprising we didn't expect that we'd have to do."
+  },
+  {
+    "start": 182.16,
+    "end": 186.16,
+    "text": "And the last one which everybody's worried about always is costs."
+  },
+  {
+    "start": 186.16,
+    "end": 192.16,
+    "text": "Okay, so obviously 250 billion events a day, scale is very, very important. Let's talk about the scale of the system."
+  },
+  {
+    "start": 192.16,
+    "end": 205.16,
+    "text": "Okay, so our top day ever, we had 55 terabytes of data. On that day we got 17 million files. And we had about 30 million Lambda invocations."
+  },
+  {
+    "start": 205.16,
+    "end": 213.16,
+    "text": "This is one day? Yeah, in one day. And the system basically managed it without any problems. We were constantly following it and just surprised at how well it worked."
+  },
+  {
+    "start": 213.16,
+    "end": 220.16,
+    "text": "Some of the, in some minutes we had something around like 3000 Lambdas up in the air concurrently running."
+  },
+  {
+    "start": 220.16,
+    "end": 230.16,
+    "text": "Okay. The interesting thing about it is that on a normal day, the lowest hour in the day has about one terabyte of data."
+  },
+  {
+    "start": 230.16,
+    "end": 241.16,
+    "text": "But the peak hours have about six terabytes of data. So the system has to breathe up and down as the data comes in and basically scale up and down throughout the day constantly."
+  },
+  {
+    "start": 241.16,
+    "end": 244.16,
+    "text": "Do you need to do anything to scale it up, scale it down?"
+  },
+  {
+    "start": 244.16,
+    "end": 251.16,
+    "text": "This is really the nice thing about it. So because of the serverless Lambda function architecture, the system basically does it on its own."
+  },
+  {
+    "start": 251.16,
+    "end": 261.15999999999997,
+    "text": "We just invoke a lot of Lambdas and it scales up and as the data dwindles down, the amount of invocations go down. We pretty much get it for free."
+  },
+  {
+    "start": 261.15999999999997,
+    "end": 268.15999999999997,
+    "text": "Out of the box. So I see with 3000 Lambdas invocated at the same time, rate limiting can be a challenge both internally and externally."
+  },
+  {
+    "start": 268.16,
+    "end": 272.16,
+    "text": "Can you tell us about what you did to prevent those challenges?"
+  },
+  {
+    "start": 272.16,
+    "end": 278.16,
+    "text": "So originally we didn't think that's an issue, but we got some emails from some of our partners that say, guys, what are you doing?"
+  },
+  {
+    "start": 278.16,
+    "end": 284.16,
+    "text": "You're killing our servers. And we started checking and obviously we could handle any burst of data that would come in."
+  },
+  {
+    "start": 284.16,
+    "end": 287.16,
+    "text": "We'd automatically just handle it, but the world doesn't work like this."
+  },
+  {
+    "start": 287.16,
+    "end": 293.16,
+    "text": "So some of the systems that you send so much data, it's kind of like running a DDoS attack against them."
+  },
+  {
+    "start": 293.16,
+    "end": 299.16,
+    "text": "So we had to do something and just to be good neighbors and we introduced a rate limiting mechanism."
+  },
+  {
+    "start": 299.16,
+    "end": 305.16,
+    "text": "So the way it works is we have some smarts in this work manager Lambda. It basically invokes a lot of Lambdas."
+  },
+  {
+    "start": 305.16,
+    "end": 315.16,
+    "text": "So it needs to know about all of them. Yeah. So it makes some intelligent decisions based on the size of the files and the number of events in them and so forth."
+  },
+  {
+    "start": 315.16,
+    "end": 320.16,
+    "text": "And we could pretty much rate limit on anything we want that's really important to our partners."
+  },
+  {
+    "start": 320.16,
+    "end": 321.16,
+    "text": "Such as?"
+  },
+  {
+    "start": 321.16,
+    "end": 329.16,
+    "text": "We can limit on megabits per second, the amount of HTTP connections open, number of requests, and a few other things like that."
+  },
+  {
+    "start": 329.16,
+    "end": 331.16,
+    "text": "And can you actually limit both specific networks?"
+  },
+  {
+    "start": 331.16,
+    "end": 337.16,
+    "text": "Yeah. So that's pretty much configured per network and then we adhere to the limits that we set."
+  },
+  {
+    "start": 337.16,
+    "end": 343.16,
+    "text": "So for example, if we have one network that we set a limit for 250 megabits per second."
+  },
+  {
+    "start": 343.16,
+    "end": 350.16,
+    "text": "So if we get more data than that, it would just stay in the queue and wait and then we'll just gradually send it out."
+  },
+  {
+    "start": 350.16,
+    "end": 354.16,
+    "text": "The other interesting thing about it is that we had our own DDoS attack."
+  },
+  {
+    "start": 354.16,
+    "end": 360.16,
+    "text": "So as the number of invocations of Lambdas grew, originally we were writing back to the Postgres database."
+  },
+  {
+    "start": 360.16,
+    "end": 367.16,
+    "text": "But we ran into a limit of the number of connections you can open against the database and starting to have it became a choke point."
+  },
+  {
+    "start": 367.16,
+    "end": 372.16,
+    "text": "So we introduced another queue as a buffer that all the Lambdas report back to the queue."
+  },
+  {
+    "start": 372.16,
+    "end": 377.16,
+    "text": "And we have one Lambda that picks it up in batches of events and writes it."
+  },
+  {
+    "start": 377.16,
+    "end": 380.16,
+    "text": "And you don't need it in real time, it can wait there for as long as it is."
+  },
+  {
+    "start": 380.16,
+    "end": 385.16,
+    "text": "Usually it's a few seconds, but it's fine. We just need an update if the file was successful or not."
+  },
+  {
+    "start": 385.16,
+    "end": 393.16,
+    "text": "Okay, so let's talk about costs. So I assume that size of a system, many of our customers are looking at it and say this is probably pretty expensive."
+  },
+  {
+    "start": 393.16,
+    "end": 400.16,
+    "text": "Right, so I think the main thing we worried about as we were building the system is making sure we have costs under control."
+  },
+  {
+    "start": 400.16,
+    "end": 408.16,
+    "text": "The system today costs us about $1,000 a day. So that's around $300,000 a year."
+  },
+  {
+    "start": 408.16,
+    "end": 416.16,
+    "text": "And as we were building this, we really wanted to be in control of the cost, so we started measuring costs."
+  },
+  {
+    "start": 416.16,
+    "end": 423.16,
+    "text": "So the way we measure it, we started out by the costs were about $7.7 per billion events."
+  },
+  {
+    "start": 423.16,
+    "end": 433.16,
+    "text": "And we had a goal to reduce this. It took us about a year. Today we are at about $425 per billion events and still going."
+  },
+  {
+    "start": 433.16,
+    "end": 438.16,
+    "text": "So can you tell us a bit how did you get from this $7.7 to $425?"
+  },
+  {
+    "start": 438.16,
+    "end": 446.16,
+    "text": "Okay, so the nice thing about Lambdas as opposed to other architecture where you're paying for the servers and then if you improve your code, you're still paying for the servers."
+  },
+  {
+    "start": 446.16,
+    "end": 453.16,
+    "text": "With Lambdas, the minute you improve your code and the Lambdas are more efficient, it immediately translates to cost savings."
+  },
+  {
+    "start": 453.16,
+    "end": 462.16,
+    "text": "So we had a few initiatives to reduce costs. One of them, for example, is that we realized there's a trade-off between how long the cost is going."
+  },
+  {
+    "start": 462.16,
+    "end": 469.16,
+    "text": "How long the Lambda function runs and the memory footprint. If you reduce the memory footprint, you save on the cost."
+  },
+  {
+    "start": 469.16,
+    "end": 474.16,
+    "text": "You might increase the length of the time it runs, but it might still be worthwhile."
+  },
+  {
+    "start": 474.16,
+    "end": 476.16,
+    "text": "You have to find the exact point where it makes sense."
+  },
+  {
+    "start": 476.16,
+    "end": 484.16,
+    "text": "Right. So it's kind of like an optimization problem. So we wrote a simulator that could simulate different loads on the Lambdas with different memory sizes."
+  },
+  {
+    "start": 484.16,
+    "end": 496.16,
+    "text": "We experimented with it and run a few hundred different combinations and found the exact sweet spot of where it's going to be optimized and then improved our code so it'll work exactly in that sweet spot."
+  },
+  {
+    "start": 496.16,
+    "end": 505.16,
+    "text": "And that drove the cost down. Another thing we did is we played around with the number of HTTP connections or the requests we send in each connection."
+  },
+  {
+    "start": 505.16,
+    "end": 514.1600000000001,
+    "text": "And we found that with the sweet spot there that if we send more connections, we're waiting for all of them to complete and it's going to take maybe longer."
+  },
+  {
+    "start": 514.1600000000001,
+    "end": 519.1600000000001,
+    "text": "But the total cost may be lower because we're sending more data at the same time."
+  },
+  {
+    "start": 519.16,
+    "end": 529.16,
+    "text": "So we had a very interesting system here with a huge scale of 250 billion events per day, rate limits that actually solve some of the problems you had during the implementation of the system."
+  },
+  {
+    "start": 529.16,
+    "end": 534.16,
+    "text": "And of course, the cost issue that you solve very nicely. Thank you very much, Ofer."
+  },
+  {
+    "start": 534.16,
+    "end": 535.16,
+    "text": "Thank you."
+  },
+  {
+    "start": 535.16,
+    "end": 537.16,
+    "text": "And thank you very much for watching. This is my architecture."
+  }
+]

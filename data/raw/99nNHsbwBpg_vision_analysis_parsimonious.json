@@ -1,0 +1,76 @@
+{
+  "step_by_step_reasoning": "Based on the whiteboard and the transcript, Skyscanner runs a self-managed Kubernetes cluster on EC2 entirely using Spot instances. The whiteboard displays a Kubernetes Cluster Autoscaler (K8S CA) at the top, which controls multiple Auto Scaling Groups (ASGs). We represent the K8S CA as an EC2 node since it runs inside the cluster, and we map the two physically drawn ASG icons to two AutoScaling nodes. The worker nodes managed by these ASGs are represented as EC2 instances. The arrows show K8S CA triggering scaling events on both ASGs, which in turn manage the lifecycle of the EC2 worker instances.",
+  "graph": {
+    "name": "Skyscanner 100% Spot Instance Kubernetes Architecture",
+    "link": "https://www.youtube.com/watch?v=99nNHsbwBpg",
+    "categories": "compute_intensive,control",
+    "graph_usable": true,
+    "notes": "Handles 60k-70k QPS and peak loads of 3,500-4,000 cores using 100% Spot instances. Utilizes multiple ASGs to diversify spot instance types across AZs. A custom script handles the 2-minute spot termination notice by draining nodes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "Kubernetes Cluster Autoscaler",
+      "notes": "WORKLOAD_PEEK: Adjusts ASG desired counts. Patched to prevent scaling lockups at zero nodes."
+    },
+    {
+      "id": "1",
+      "service": "AutoScaling",
+      "name": "Auto Scaling Group 1",
+      "notes": "WORKLOAD_PEEK: Spot pool ASG spanning multiple AZs. Diversified with instance types like C3/C4/C5."
+    },
+    {
+      "id": "2",
+      "service": "AutoScaling",
+      "name": "Auto Scaling Group 2",
+      "notes": "WORKLOAD_PEEK: Separate Spot pool ASG to maximize spot capacity availability."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Worker Nodes (ASG 1)",
+      "notes": "DATA_PEEK: Runs HAProxy ingress controllers. Detects spot termination metadata to drain pods gracefully."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Worker Nodes (ASG 2)",
+      "notes": "DATA_PEEK: Runs HAProxy ingress controllers. Coordinates with ELB to stop incoming traffic during termination."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Triggers scale-up/down actions on ASG 1 based on cluster demand."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers scale-up/down actions on ASG 2."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Provisions or terminates worker instances in ASG 1."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Provisions or terminates worker instances in ASG 2."
+    }
+  ]
+}

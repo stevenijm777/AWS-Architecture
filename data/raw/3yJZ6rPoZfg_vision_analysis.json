@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "First, we identify the two distinct environments: the AWS Data account on the left and the AWS User Experience & Processing account on the right. In the Data account, there is an S3 bucket and an EKS cluster. These connect via VPC Peering to the EKS cluster in the User/Processing account. On the processing side, users upload data directly to an S3 bucket using pre-signed URLs. S3 triggers events to an SQS queue, which is read by EKS. EKS triggers processing steps back through SQS to an Auto Scaling Group (ASG) of EC2 instances, which finally save the processed geospatial data back to S3.",
+  "graph": {
+    "name": "Hexagon Digital Reality Processing Pipeline",
+    "link": "https://www.youtube.com/watch?v=3yJZ6rPoZfg",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles high-precision geospatial data securely and privately across multiple AWS environments via VPC Peering. Uses Auto Scaling Groups on EC2 to process compute-heavy, variable-workload geospatial datasets."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "End User / Device",
+      "notes": "Uploads raw geospatial data from handheld devices or vehicle scanners."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 (Data Account)",
+      "notes": "DATA_PEEK: Main store for licensed geospatial data."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS (Data Account)",
+      "notes": "WORKLOAD_PEEK: Exposes and serves the central geospatial data sets."
+    },
+    {
+      "id": "3",
+      "service": "VPCPeering",
+      "name": "VPC Peering",
+      "notes": "Connects the central data account to development, QA, and production accounts using AWS backbone."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "EKS (User Pro Account)",
+      "notes": "WORKLOAD_PEEK: Handles user experience, metadata logic, and coordinates job processing."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (User/Upload Bucket)",
+      "notes": "DATA_PEEK: Multi-tenant bucket for raw user uploads and final processed outputs."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Buffers upload notifications and processing job items."
+    },
+    {
+      "id": "7",
+      "service": "AutoScaling",
+      "name": "ASG (EC2 Workers)",
+      "notes": "WORKLOAD_PEEK: Dynamic pool of customized EC2 instances pulling container templates from ECR."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EKS queries the core geospatial S3 database."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transfers data securely over AWS backbone."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Reaches the User/Processing account."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Direct file uploads via S3 pre-signed URLs."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 event notification triggers on successful upload."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS microservice consumes S3 upload notification."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EKS submits job back to queue for worker instances."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EC2 processing instances poll jobs from SQS."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Uploads the final processed output back to S3."
+    }
+  ]
+}

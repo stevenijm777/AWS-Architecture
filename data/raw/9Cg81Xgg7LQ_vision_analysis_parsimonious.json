@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "We identify six main components from the whiteboard: GIVING (monolith on EC2), SQL Server (ThirdParty database), APPS (Node platform on EC2), ECS (Identity service container), DynamoDB (for event sourcing), and Kinesis (for distributing events). X-Ray is positioned at the top for distributed tracing. The flows capture the migration/strangler pattern where apps and giving platform interact with the new ECS identity service, which saves events to DynamoDB and streams them to Kinesis, which syncs updates back to the monolith.",
+  "graph": {
+    "name": "Pushpay Monolith Decomposition to Containerized Microservices",
+    "link": "https://www.youtube.com/watch?v=9Cg81Xgg7LQ",
+    "categories": "compute_intensive, data_ingestion",
+    "graph_usable": true,
+    "notes": "Decomposing a .NET/SQL Server monolith into containerized .NET Core microservices on ECS, utilizing DynamoDB for event sourcing and Kinesis to sync back with the legacy platform."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "Giving Platform (Monolith)",
+      "notes": "WORKLOAD_PEEK: Legacy .NET Windows monolith."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "SQL Server",
+      "notes": "DATA_PEEK: Database for the legacy monolith."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Apps Platform",
+      "notes": "WORKLOAD_PEEK: Node-based apps platform."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "Identity Service (ECS)",
+      "notes": "WORKLOAD_PEEK: .NET Core container running on Alpine Linux hosting a GraphQL API."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DATA_PEEK: Event store capturing user profile histories."
+    },
+    {
+      "id": "5",
+      "service": "Kinesis",
+      "name": "Kinesis Stream",
+      "notes": "DATA_PEEK: Distributes events back to other microservices and legacy platform."
+    },
+    {
+      "id": "6",
+      "service": "XRay",
+      "name": "AWS X-Ray",
+      "notes": "Used for tracing requests across the distributed system."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Monolith database queries."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sign-in/up requests from legacy platform to new Identity API."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sign-in/up requests from Apps platform to GraphQL API."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Stores events in DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Publishes events to Kinesis."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Synchronization loop back to the monolith."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "meta",
+      "notes": "Sends execution trace logs."
+    }
+  ]
+}

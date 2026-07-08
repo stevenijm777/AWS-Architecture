@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "The transcript describes an IoT pipeline for train monitoring. Locomotives generate ~3 million data samples daily. This raw data is ingested via an initial Lambda function, put into a raw Kinesis stream, filtered via Kinesis Analytics, and routed to a normalized Kinesis stream. A second identical pipeline is mentioned for track-side sensors. From the unified Kinesis stream, a management Lambda inserts the normalized data into DynamoDB. Consumers (algorithms evaluating train condition) query the data through API Gateway, which triggers the same manager Lambda to retrieve and return records from DynamoDB.",
+  "graph": {
+    "name": "SBB Cargo Train Sensor Ingestion and Digital Twin Platform",
+    "link": "https://www.youtube.com/watch?v=4-teOQ_dJvY",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Low-maintenance serverless digital twin architecture. Filters high-volume IoT data (3M messages/day per train) down to critical indicators using Kinesis Analytics before storing in DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyIOT",
+      "name": "Train & Track Sensors",
+      "notes": "DATA_PEEK: Produces ~3 million raw samples per train daily."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "WORKLOAD_PEEK: Simple serverless function translating and forwarding variable-format raw IoT data."
+    },
+    {
+      "id": "2",
+      "service": "KinesisDataStream",
+      "name": "Raw Data Stream",
+      "notes": "Buffers the raw ingest data stream."
+    },
+    {
+      "id": "3",
+      "service": "KinesisAnalytics",
+      "name": "Kinesis Data Analytics",
+      "notes": "Filters and reduces incoming sensor data to critical parameters."
+    },
+    {
+      "id": "4",
+      "service": "KinesisDataStream",
+      "name": "Normalized Stream",
+      "notes": "Aggregates filtered and structured digital twin data from multiple sources."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Data Manager Lambda",
+      "notes": "Manages writes to DynamoDB and handles read queries via API Gateway."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Digital Twin Database",
+      "notes": "Stores current status and health history of train components."
+    },
+    {
+      "id": "7",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Exposes endpoints for algorithms to query train health status."
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Analysis Algorithms",
+      "notes": "Consuming system determining if trains need immediate maintenance."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends sensor telemetry"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes raw telemetry"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Streams data for real-time analytics"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Forwards filtered telemetry"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers processing Lambda"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Persists digital twin record"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries train condition metrics"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers query execution"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads train status history"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns data record"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Responds with data payload"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Delivers query results"
+    }
+  ]
+}

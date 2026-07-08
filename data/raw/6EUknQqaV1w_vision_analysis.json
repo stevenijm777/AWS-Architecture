@@ -1,0 +1,184 @@
+{
+  "step_by_step_reasoning": "We start with incoming real-time cloud provider events (UserCompanyDataStream) sent to the Kinesis Data Stream for Collection. The data is processed and stored in Amazon Neptune as the primary graph database. Changes are synchronized to Elasticsearch (OpenSearch) and DynamoDB (Backing Store). A Sharder Service monitors metrics in CloudWatch from Neptune and Elasticsearch to balance write operations. For rules evaluation, resource updates flow from Neptune to a second Kinesis Data Stream (Rules Engine). The Rules Engine queries Neptune, writes security violations to a second DynamoDB instance, and dispatches alerts via SES (Email) and ThirdParty channels (Slack/Splunk).",
+  "graph": {
+    "name": "CloudHealth SecureState Real-Time Security Monitoring Architecture",
+    "link": "https://www.youtube.com/watch?v=6EUknQqaV1w",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles billions of events daily to secure 50M+ cloud assets. Uses Amazon Neptune for graph-based resource modeling, supplemented by Elasticsearch and DynamoDB. Employs a custom Sharder service to dynamically load balance write streams based on real-time CloudWatch metrics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDataStream",
+      "name": "Cloud Provider Events",
+      "notes": "Real-time event logs from AWS, Azure, and GCP."
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "Kinesis (Collection)",
+      "notes": "DATA_PEEK: Collects billions of resource state events daily."
+    },
+    {
+      "id": "2",
+      "service": "Neptune",
+      "name": "Amazon Neptune",
+      "notes": "WORKLOAD_PEEK: Graph DB holding 50M+ interconnected resources."
+    },
+    {
+      "id": "3",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Powers searching, analytical aggregations, and reporting."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Backing Store)",
+      "notes": "Tracks resource configuration history."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Gathers CPU/memory performance metrics."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Sharder Service",
+      "notes": "Dynamically coordinates Neptune write limits."
+    },
+    {
+      "id": "7",
+      "service": "KinesisDataStream",
+      "name": "Kinesis (Rules Engine)",
+      "notes": "Triggers rules execution on resource changes."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Violations)",
+      "notes": "Stores detected security policy violations."
+    },
+    {
+      "id": "9",
+      "service": "SES",
+      "name": "Email Notifications",
+      "notes": "Dispatches security alerts to clients."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Slack & Splunk Alerts",
+      "notes": "Routes real-time alerts to third-party tools."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests raw event streams."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Publishes parsed resources to Neptune."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Syncs graph changes to Elasticsearch."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves config updates in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Monitors Neptune performance."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Monitors Elasticsearch performance."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Feeds capacity metrics to Sharder."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Balances shard distribution."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes changes to rule pipeline."
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries Neptune graph to check rules."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes policy violations."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers email notifications."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends Slack/Splunk notifications."
+    }
+  ]
+}

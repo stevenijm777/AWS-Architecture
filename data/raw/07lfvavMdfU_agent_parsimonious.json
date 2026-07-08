@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "We first identify the user node representing the uploading client based on the incoming arrow and transcript. S3 acts as the initial landing bucket, which triggers Step Functions. Step Functions orchestrates Elemental MediaConvert for proxy creation, and calls the AI services: Rekognition for computer vision, and Transcribe followed by Comprehend for NLP analysis. All extracted metadata is stored temporarily in DynamoDB. Finally, the Reach Engine platform, running on EC2 and EKS, ingests this metadata for user search, playback, and further workflow orchestration.",
+  "graph": {
+    "name": "Levels Beyond: Media to Cloud Video Processing and Metadata Extraction Pipeline",
+    "link": "https://www.youtube.com/watch?v=07lfvavMdfU",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "A serverless media processing pipeline that uses AWS Step Functions to orchestrate video transcoding via MediaConvert and parallel AI metadata extraction (Rekognition, Transcribe, Comprehend). Extracted metadata is unified in DynamoDB before being indexed into the Reach Engine system hosted on EKS and EC2."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Video Creators / Users",
+      "notes": "Upload raw video footage to the ingest bucket."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 Ingest Bucket",
+      "notes": "DATA_PEEK: Raw video files in various production formats."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Orchestration",
+      "notes": "WORKLOAD_PEEK: Coordinates transcoding, metadata extraction, and AI analysis steps."
+    },
+    {
+      "id": "3",
+      "service": "MediaConvert",
+      "name": "Elemental MediaConvert",
+      "notes": "Generates low-bitrate web proxies for browser-based video playback and previewing."
+    },
+    {
+      "id": "4",
+      "service": "Rekognition",
+      "name": "Rekognition",
+      "notes": "Extracts visual metadata including celebrities, content moderation flags, and timestamps."
+    },
+    {
+      "id": "5",
+      "service": "Transcribe",
+      "name": "Transcribe",
+      "notes": "Converts audio tracks from ingested videos into text transcripts."
+    },
+    {
+      "id": "6",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Performs sentiment analysis and entity extraction on the transcripts."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Temporary Metadata Store",
+      "notes": "DATA_PEEK: Serves as a staging database to aggregate technical and AI-generated metadata."
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "Reach Engine (EKS)",
+      "notes": "Runs the containerized orchestration and search workflows for Reach Engine."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "Reach Engine (EC2)",
+      "notes": "Runs application workloads and user interface instances for media management."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Upload raw media files."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers processing state machine on file upload."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Initiates proxy generation transcodes."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers visual analysis."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves object and celebrity labels with timecodes."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers audio transcription."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Feeds transcribed text for NLP analysis."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves extracted text entities and analysis."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pulls unified metadata into the Reach Engine application layer."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pulls unified metadata into Reach Engine portal."
+    }
+  ]
+}

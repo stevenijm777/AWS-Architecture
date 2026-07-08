@@ -1,0 +1,214 @@
+{
+  "step_by_step_reasoning": "We trace the architecture chronologically from the DNS edge servers uploading data to S3, through the ingestion pipeline driven by SNS and SQS to EC2-based transformers. The transformed raw parquet data in the S3 warehouse triggers aggregators via SNS to generate hourly/daily rollups catalogs in AWS Glue, which are queried by analysts and consumers using Amazon Athena.",
+  "graph": {
+    "name": "Verkara Scalable DNS Edge Network Analytics Pipeline",
+    "link": "https://www.youtube.com/watch?v=W4QzOaKCX2Y",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Ingests 20 TB of compressed data per day (6.6M records/second) from global edge DNS resolvers, processes it through EC2 transformers/aggregators to S3, cataloging it with AWS Glue, and querying via Amazon Athena to isolate workload query performance."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "Global DNS Edge Resolvers",
+      "notes": "Generates 530 billion transactions per day in compressed files."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 Ingest Bucket",
+      "notes": "Receives 400,000 compressed files daily from edge locations."
+    },
+    {
+      "id": "2",
+      "service": "SNS",
+      "name": "Ingest SNS Topic",
+      "notes": "Triggers notifications upon S3 file uploads."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Ingest SQS Queue",
+      "notes": "Buffers incoming notification messages for transformers."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Transformers",
+      "notes": "Converts proprietary compressed files to Parquet format."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Warehouse Bucket",
+      "notes": "Stores transformed parquet raw data and aggregated level tables."
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "Warehouse SNS Topic",
+      "notes": "Triggers downstream aggregators upon raw file upload."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 Aggregators",
+      "notes": "Rolls up raw data into minute, hour, and day aggregations."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue Data Catalog",
+      "notes": "Manages schema definitions for different aggregated tables."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Executes isolated ad-hoc and reporting queries without performance degradation."
+    },
+    {
+      "id": "10",
+      "service": "UserCompanyAnalyst",
+      "name": "Internal Analysts",
+      "notes": "Access reports and execute analytics queries."
+    },
+    {
+      "id": "11",
+      "service": "UserConsumerAPI",
+      "name": "External API Customers",
+      "notes": "Query DNS analytical endpoints."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Upload compressed DNS resolver logs"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "S3 event notification trigger"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Route notifications"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Poll messages"
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fetch raw compressed log files"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Upload Parquet files into raw warehouse partition"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "S3 event notification for new raw files"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Trigger aggregator tasks"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetch raw data and save aggregated views back to warehouse S3 paths"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Update schemas and tables catalog"
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Initiate query requests"
+    },
+    {
+      "source": "11",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Initiate API query requests"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieve table and partition schemas"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Query aggregated parquet tables"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Deliver analytical query results"
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Deliver API analytical results"
+    }
+  ]
+}

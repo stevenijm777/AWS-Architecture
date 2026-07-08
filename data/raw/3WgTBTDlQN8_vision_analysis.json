@@ -1,0 +1,192 @@
+{
+  "step_by_step_reasoning": "We trace the architecture chronologically. 1. Web/mobile clients access the platform through API Gateway, triggering a Lambda that reads/writes to MongoDB (external software). 2. For scheduled match initialization, CloudWatch triggers a second Lambda that moves match data from MongoDB to S3. 3. External Game APIs push real-time score changes to a third Lambda, which updates S3. 4. EMR runs Spark jobs to read data from S3, compute rankings, and update MongoDB for real-time leaderboard access. 5. S3 data is loaded into Redshift for historical analytics and coupon targeting.",
+  "graph": {
+    "name": "FanFight Daily Fantasy Sports Architecture",
+    "link": "https://www.youtube.com/watch?v=3WgTBTDlQN8",
+    "categories": "data_ingestion,interactive,compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles 1.5M registered users, recalculating rankings in near real-time post match starts using Spark on EMR."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Web and Mobile Users",
+      "notes": "Active gamers viewing boards and joining contests."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Handles user ingress requests."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "User Request Handler",
+      "notes": "Executes transaction and query logic."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "MongoDB",
+      "notes": "Primary transactional store."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "Event Rule Trigger",
+      "notes": "Schedules match start extraction."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Match Data Extractor",
+      "notes": "Copies starting match details to S3."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Game APIs",
+      "notes": "External sport feed provider."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Score Update Processor",
+      "notes": "Ingests real-time score feeds."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Raw Data Store",
+      "notes": "Central data lake for processing."
+    },
+    {
+      "id": "9",
+      "service": "EMR",
+      "name": "Spark Processing",
+      "notes": "Generates leaderboard scores."
+    },
+    {
+      "id": "10",
+      "service": "Redshift",
+      "name": "Redshift Warehouse",
+      "notes": "Used for analytical operations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User actions"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Proxy request"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Get/Set state"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Return data"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Format reply"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Render in app"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Match start trigger"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pull match details"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Write raw data to lake"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Webhooks for live play score"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Append score update"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Batch data load"
+    },
+    {
+      "source": "9",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Save computed rankings"
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Load data for analytics"
+    }
+  ]
+}

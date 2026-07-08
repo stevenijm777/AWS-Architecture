@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "We identify two main ingestion pipelines matching the physical structure of the board. The top ingestion pipeline takes locomotive sensor data (Producer) through a Lambda, Kinesis, and Kinesis Analytics chain to filter and downsample. The second, hand-drawn track sensor pipeline is cloned using IaC and merges into a central, normalized Kinesis stream. A secondary Lambda handles writing this consolidated data to DynamoDB, as well as serving read queries requested through an API Gateway to the downstream consumer algorithm.",
+  "graph": {
+    "name": "Swiss Federal Railway SBB Freight Train Digital Twin Architecture",
+    "link": "https://www.youtube.com/watch?v=4-teOQ_dJvY",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Serverless ingestion and processing pipeline designed using infrastructure-as-code (IaC) templates for easily cloning additional ingestion sources (e.g., track-side sensors) and consolidating them into a unified digital twin state store."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyIOT",
+      "name": "Locomotive Producer",
+      "notes": "DATA_PEEK: Generates approximately 3 million samples daily per locomotive."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "WORKLOAD_PEEK: Converts source-specific locomotive message structures into a standard payload format."
+    },
+    {
+      "id": "2",
+      "service": "Kinesis",
+      "name": "Raw Ingest Stream",
+      "notes": "Buffer for incoming high-volume telemetry data."
+    },
+    {
+      "id": "3",
+      "service": "KinesisAnalytics",
+      "name": "Telemetry Filter",
+      "notes": "WORKLOAD_PEEK: Filters noise and reduces data volume to only the essential metrics needed for digital twin."
+    },
+    {
+      "id": "4",
+      "service": "UserCompanyIOT",
+      "name": "Track Sensors Producer",
+      "notes": "Represents the alternate hand-drawn sensor pipeline on the track."
+    },
+    {
+      "id": "5",
+      "service": "Kinesis",
+      "name": "Normalized Stream",
+      "notes": "Consolidated stream collecting processed telemetry from all sensors."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "State Handler Lambda",
+      "notes": "WORKLOAD_PEEK: Dual-purpose function managing read/write operations to DynamoDB."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Digital Twin Database",
+      "notes": "Stores current state of freight trains and physical components."
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "Query API",
+      "notes": "Provides access endpoint for internal processing algorithms."
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Analysis Consumer",
+      "notes": "Runs decision logic to evaluate train safety and parts condition."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingests raw telemetry"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes transformed data"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Streams data for real-time analytics"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends filtered events to normalized queue"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pushes secondary cloned track pipeline output"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers database write handler"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves state data"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries condition data"
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers retrieval request"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads train status"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns payload response"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "5",
+      "type": "data",
+      "notes": "Delivers query results to consumer"
+    }
+  ]
+}

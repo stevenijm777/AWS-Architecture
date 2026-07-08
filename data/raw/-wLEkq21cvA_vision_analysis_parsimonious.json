@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows a automated migration architecture. 1. A user node 'Migration Team' interacts with DynamoDB and Slack. 2. Slack triggers an EC2 instance representing the Migration Factory. 3. On-premises server replicates data to an EC2 Hot Replica and registers details with Application Discovery Service. 4. The EC2 Migration Factory coordinates App Discovery, CloudEndure, and bakes an AMI. 5. The baked AMI is shared across the account boundary (dashed line) to create a Shared AMI, which is then launched as a Target Account EC2 instance.",
+  "graph": {
+    "name": "Versent Automated Migration Factory",
+    "link": "https://www.youtube.com/watch?v=-wLEkq21cvA",
+    "categories": "compute_intensive,control",
+    "graph_usable": true,
+    "notes": "Reduces migration time from 4 hours to 10 minutes per server by automating agent data capture, block replication, and target-account launching."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Migration Team",
+      "notes": "Triggers and manages migration metadata."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": "ChatOps interface used to initiate migration commands."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DATA_PEEK: Stores target account metadata, IPs, subnets, and tagging requirements."
+    },
+    {
+      "id": "3",
+      "service": "OnPremDC",
+      "name": "On-Prem Server",
+      "notes": "Source servers slated for migration."
+    },
+    {
+      "id": "4",
+      "service": "AppDiscovery",
+      "name": "Application Discovery Service",
+      "notes": "WORKLOAD_PEEK: Captures TCP connections and performance utilization data."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Migration Factory EC2",
+      "notes": "WORKLOAD_PEEK: Orchestration engine coordinating the end-to-end migration process."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "CloudEndure",
+      "notes": "Manages block-level continuous volume replication."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 Hot Replica",
+      "notes": "Destination replica target for continuous data replication."
+    },
+    {
+      "id": "8",
+      "service": "AMI",
+      "name": "Bake AMI",
+      "notes": "AMI created from the finalized replica."
+    },
+    {
+      "id": "9",
+      "service": "AMI",
+      "name": "Shared AMI",
+      "notes": "AMI shared securely with the target AWS account."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "Target Account EC2",
+      "notes": "WORKLOAD_PEEK: Final migrated instance running in target VPC."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Seeds target AWS metadata."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Gathers network and resource utilization metadata."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Replicates source storage block-by-block."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Issues migration command."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers API to run orchestrator."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves dependency and sizing details."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Instructs replication system to stop continuous copying."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Freezes replica state."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Triggers AMI creation from hot replica."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Shares AMI with target account."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Launches EC2 using destination metadata."
+    }
+  ]
+}

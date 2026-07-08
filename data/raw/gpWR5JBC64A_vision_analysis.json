@@ -1,0 +1,158 @@
+{
+  "step_by_step_reasoning": "We analyze the transcript chronologically to construct the architecture. First, restaurant owners process orders via their Electronic Point of Sale (EPOS) machines (mapped to UserConsumerPOS) using the Amplify SDK. These sync orders in real-time across devices via AWS AppSync. AppSync uses Lambda Resolvers to process the orders and writes the transactional data to DynamoDB (which migrated from Aurora). Second, for the real-time analytics pipeline, DynamoDB Streams pushes events to Kinesis Data Streams, which then writes the raw data into an S3 data lake. Third, franchise owners and back-office analysts (UserCompanyAnalyst) access QuickSight dashboards, which query the computed data from S3 to deliver real-time operational insights.",
+  "graph": {
+    "name": "Food Hub Serverless EPOS Sync and Real-Time Analytics",
+    "link": "https://www.youtube.com/watch?v=gpWR5JBC64A",
+    "categories": "data_ingestion,interactive,compute_intensive",
+    "graph_usable": true,
+    "notes": "Food Hub handles over 63 million orders annually, with peak concurrency reaching 300 orders per minute. This fully serverless architecture allows them to scale seamlessly during weekend spikes while providing real-time synchronization across restaurant kitchen stations and instant operational dashboards for franchise owners."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerPOS",
+      "name": "Restaurant EPOS Machines",
+      "notes": "Used by restaurant staff across multiple kitchen sections. Leverages the Amplify SDK to stay in sync."
+    },
+    {
+      "id": "1",
+      "service": "AppSync",
+      "name": "AWS AppSync",
+      "notes": "Manages GraphQL subscriptions to provide real-time order syncing across all EPOS devices."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda Resolvers",
+      "notes": "Resolves AppSync queries, mutations, and subscriptions. Handles scaling during high peak order volumes."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Primary transactional database storing order states. Replaced Aurora to improve scaling with DynamoDB Streams enabled."
+    },
+    {
+      "id": "4",
+      "service": "Kinesis",
+      "name": "Amazon Kinesis Data Streams",
+      "notes": "Captures real-time changes from DynamoDB Streams to manage state and stream data to S3."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "Amazon S3 Data Lake",
+      "notes": "Stores historical order and transactional data for ETL and reporting."
+    },
+    {
+      "id": "6",
+      "service": "QuickSight",
+      "name": "Amazon QuickSight",
+      "notes": "Visualizes real-time performance insights for back-office and franchise managers."
+    },
+    {
+      "id": "7",
+      "service": "UserCompanyAnalyst",
+      "name": "Franchise & Back Office Users",
+      "notes": "Analyzes daily restaurant stats and triggers marketing campaigns based on real-time data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EPOS machines sync order states via GraphQL mutations using Amplify SDK."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "AppSync triggers Lambda resolvers to handle business logic."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda resolves the query and persists the order state into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB confirms success back to the Lambda resolver."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda returns the resolved order object."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "AppSync broadcasts order updates to all connected EPOS subscriptions."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "DynamoDB Streams pushes database change events to Kinesis."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis streams and dumps the transactional data into S3."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Back-office and franchise users request reporting dashboards."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "QuickSight queries the S3 data lake to compute analytics."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 returns requested aggregate transactional dataset."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Renders real-time insights back to the analysts."
+    }
+  ]
+}

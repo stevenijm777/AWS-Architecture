@@ -1,0 +1,212 @@
+[
+  {
+    "start": 0.0,
+    "end": 10.0,
+    "text": "Hi and welcome to This is My Architecture in New Zealand."
+  },
+  {
+    "start": 10.0,
+    "end": 13.0,
+    "text": "I am Nick and I'm joined by Carlos today."
+  },
+  {
+    "start": 13.0,
+    "end": 16.0,
+    "text": "For those of you, those are people who don't know who Halter is,"
+  },
+  {
+    "start": 16.0,
+    "end": 19.0,
+    "text": "can you tell us a little bit about Halter and the device you're holding?"
+  },
+  {
+    "start": 19.0,
+    "end": 25.0,
+    "text": "Sure thing. So Halter is a New Zealand based startup that allows farmers to remotely manage their farms."
+  },
+  {
+    "start": 25.0,
+    "end": 34.0,
+    "text": "And our solution is based on this caller. So this caller is solar powered and GPS enabled that uses mainly sound and vibration to give cues to the cows."
+  },
+  {
+    "start": 34.0,
+    "end": 38.0,
+    "text": "And this caller goes on each cow on the farm."
+  },
+  {
+    "start": 38.0,
+    "end": 45.0,
+    "text": "And we also have a mobile app that allows farmers to create the virtual fences, physically shift the cows within the farm,"
+  },
+  {
+    "start": 45.0,
+    "end": 49.0,
+    "text": "and also monitor the health and well-being of the animals 24 per 7."
+  },
+  {
+    "start": 49.0,
+    "end": 53.0,
+    "text": "Wow. I'd love to know more. And one thing I know about farms is they are often very remote."
+  },
+  {
+    "start": 53.0,
+    "end": 56.0,
+    "text": "How have you solved the connectivity challenges?"
+  },
+  {
+    "start": 56.0,
+    "end": 62.0,
+    "text": "Yes. Callers can talk to our back end in two ways. The first one is over WiFi."
+  },
+  {
+    "start": 62.0,
+    "end": 68.0,
+    "text": "So when connected on WiFi, the caller talks to IoT Core directly over MEQTT."
+  },
+  {
+    "start": 68.0,
+    "end": 76.0,
+    "text": "So WiFi is great for throughput. The problem is that the WiFi range is not great and also it's super power hungry."
+  },
+  {
+    "start": 76.0,
+    "end": 85.0,
+    "text": "So we use another radio technology called LoRa. So this is a long range and low power technology."
+  },
+  {
+    "start": 85.0,
+    "end": 93.0,
+    "text": "So the caller talks to a base station on the farm. And then this base station is connected on the internet and talks to EC2."
+  },
+  {
+    "start": 93.0,
+    "end": 102.0,
+    "text": "And we just host a third part software here on EC2. And that's pretty much how the data comes from the caller to the backend system."
+  },
+  {
+    "start": 102.0,
+    "end": 106.0,
+    "text": "That's great. And how do you ingest and process all this data from your devices?"
+  },
+  {
+    "start": 106.0,
+    "end": 113.0,
+    "text": "We need to combine the data coming from the two sources. So the first thing we do is putting that on the Kinesis stream."
+  },
+  {
+    "start": 113.0,
+    "end": 122.0,
+    "text": "So this is the raw stream of data. So the data here is in a binary format and can be duplicated because it comes from two different sources."
+  },
+  {
+    "start": 122.0,
+    "end": 132.0,
+    "text": "Then we have a lambda function that consumes the data from here, dedoops the data and also decodes it and makes it a lot more digestible to the upstream services."
+  },
+  {
+    "start": 132.0,
+    "end": 142.0,
+    "text": "So we ship it as a JSON to the next Kinesis stream. So this is the processed Kinesis stream data."
+  },
+  {
+    "start": 142.0,
+    "end": 149.0,
+    "text": "And this one is the main stream in the system. So we have lots of different parts of the backend consuming data from here."
+  },
+  {
+    "start": 149.0,
+    "end": 162.0,
+    "text": "One of them is an Apache Flink application that runs on top of Kinesis Analytics. So what this application does is aggregating this call location data into buckets of 10 minutes."
+  },
+  {
+    "start": 162.0,
+    "end": 168.0,
+    "text": "And we also enrich the data with a geoindex and we use this geoindex later on to do aggregation."
+  },
+  {
+    "start": 168.0,
+    "end": 178.0,
+    "text": "So once the data is ready, we just ship as a file to S3 and we use farm ID and data as the partition key."
+  },
+  {
+    "start": 178.0,
+    "end": 181.0,
+    "text": "in order to avoid hot partitions."
+  },
+  {
+    "start": 181.0,
+    "end": 185.0,
+    "text": "Awesome. There must be a lot of data. How does farmers actually make use of this data?"
+  },
+  {
+    "start": 185.0,
+    "end": 193.0,
+    "text": "Sure. We have a feature in our app, which is a cow location heat map. So this shows where cows have been like on the last six or 12 months."
+  },
+  {
+    "start": 193.0,
+    "end": 200.0,
+    "text": "So when the farmer wants to request that report, the app sends a request to our backend, which is hosted on ECS Fargate."
+  },
+  {
+    "start": 200.0,
+    "end": 210.0,
+    "text": "And the ECS Fargate will do the orchestration on acquiring the data. The data is stored on S3 as I mentioned. So we use Athena to do the actual query."
+  },
+  {
+    "start": 210.0,
+    "end": 219.0,
+    "text": "So this is a classic MapReduce problem where you have to go like through a lot of data points and aggregated and counted. So Athena does a great job at it."
+  },
+  {
+    "start": 219.0,
+    "end": 237.0,
+    "text": "We can process roughly 25 million data points in roughly 10 seconds. And then when the result of the query is done, the ECS Fargate application will go to S3, get the data, and then send it back to the app."
+  },
+  {
+    "start": 237.0,
+    "end": 241.0,
+    "text": "And the app can render a nice heat map."
+  },
+  {
+    "start": 241.0,
+    "end": 247.0,
+    "text": "Wow. That's actually a lot more data points than I imagined. And what does farms do with this data?"
+  },
+  {
+    "start": 247.0,
+    "end": 254.0,
+    "text": "Sure. This can give a great insight to the farmers to know where cows haven't spent too much time on the farm."
+  },
+  {
+    "start": 254.0,
+    "end": 264.0,
+    "text": "So they know where to put fertilizers and or even change their grazing patterns in order to put the cows in those areas, in order to have more nutrients there naturally."
+  },
+  {
+    "start": 264.0,
+    "end": 276.0,
+    "text": "So this will help farmers to comply with New Zealand regulations around how much nitrogen you can apply per hectare on the farm and also possibly make them save tens of thousands of dollars per year."
+  },
+  {
+    "start": 276.0,
+    "end": 286.0,
+    "text": "Awesome. Thank you for sharing this interesting architecture. It's been really interesting learning about how Halter is using location data to optimize pasture management for farms around the globe."
+  },
+  {
+    "start": 286.0,
+    "end": 289.0,
+    "text": "And thank you for watching. This is my architecture."
+  },
+  {
+    "start": 289.0,
+    "end": 290.0,
+    "text": "Thank you for watching."
+  },
+  {
+    "start": 290.0,
+    "end": 291.0,
+    "text": "Thank you for watching."
+  }
+]

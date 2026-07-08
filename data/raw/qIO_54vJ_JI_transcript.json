@@ -1,0 +1,282 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.24,
+    "text": "Welcome to This is My Architecture New Zealand. I'm Andre and here is another Andre from Lancome."
+  },
+  {
+    "start": 12.24,
+    "end": 16.0,
+    "text": "Welcome to the show. Yeah, great to be here. Thanks. Can you tell me about Lancome and this solution?"
+  },
+  {
+    "start": 16.0,
+    "end": 21.76,
+    "text": "Yeah, absolutely. So Lancome Technology, we're based here in Aotearoa, New Zealand. We're a technology provider,"
+  },
+  {
+    "start": 21.76,
+    "end": 27.04,
+    "text": "so think software development, cloud infrastructure, that sort of thing. And today I'd like to share this architecture"
+  },
+  {
+    "start": 27.04,
+    "end": 32.48,
+    "text": "we developed for a video conferencing solution that connects loss adjusters in the insurance industry"
+  },
+  {
+    "start": 32.48,
+    "end": 38.64,
+    "text": "to clients that are making insurance claims. So basically what the application does is it connects"
+  },
+  {
+    "start": 38.64,
+    "end": 47.519999999999996,
+    "text": "those loss adjustment agents via a remote video call that's facilitated by a custom web app to clients"
+  },
+  {
+    "start": 48.16,
+    "end": 53.120000000000005,
+    "text": "that are connected just through their phone, sharing that video stream through their camera,"
+  },
+  {
+    "start": 53.12,
+    "end": 57.599999999999994,
+    "text": "and it allows them to perform remote assessments of any damages relating to that claim."
+  },
+  {
+    "start": 57.599999999999994,
+    "end": 62.879999999999995,
+    "text": "Perfect. So you've got agents connecting to the clients. How do you actually connect the video? How"
+  },
+  {
+    "start": 62.879999999999995,
+    "end": 68.16,
+    "text": "does it work? Yeah, absolutely. So we've got our two sets of users and they both connect to a video"
+  },
+  {
+    "start": 68.16,
+    "end": 75.52,
+    "text": "platform called OpenVideo. It's an open source platform that is hosted on EC2. So OpenVideo facilitates those"
+  },
+  {
+    "start": 75.52,
+    "end": 83.28,
+    "text": "video sessions and using a protocol called WebRTC. And it allows the agents to view those damages just"
+  },
+  {
+    "start": 83.28,
+    "end": 90.16,
+    "text": "through the camera on the client's phone and assess those damages. So once the call is finished, a recording"
+  },
+  {
+    "start": 90.16,
+    "end": 96.39999999999999,
+    "text": "of that is saved onto disk on the EC2 instance. So we have a little script that's just running here and"
+  },
+  {
+    "start": 96.39999999999999,
+    "end": 102.8,
+    "text": "that will pick up those raw recording files and upload them to S3 where they can be later processed."
+  },
+  {
+    "start": 102.8,
+    "end": 108.16,
+    "text": "Now you have to save the video to S3 and you need to process them. So how do you do that?"
+  },
+  {
+    "start": 108.16,
+    "end": 115.2,
+    "text": "So what we do is when the files are uploaded to S3, that triggers an event notification to SQS."
+  },
+  {
+    "start": 115.92,
+    "end": 122.64,
+    "text": "And those messages are polled by a service running on ECS Fargate. So what the service does is it takes"
+  },
+  {
+    "start": 122.64,
+    "end": 129.84,
+    "text": "the raw files that are uploaded to S3 and processes them with a tool called FFMPIC. So that tool will"
+  },
+  {
+    "start": 129.84,
+    "end": 136.8,
+    "text": "combine the audio and video streams of both parties and produce an output that is encoded to a more"
+  },
+  {
+    "start": 136.8,
+    "end": 143.92000000000002,
+    "text": "consumable format called HLS or HTTP live streaming. And then those process files are uploaded back into"
+  },
+  {
+    "start": 143.92000000000002,
+    "end": 152.24,
+    "text": "S3. So we've got our video files there. And they're saved to S3 for later review by the loss adjustment agents."
+  },
+  {
+    "start": 152.24,
+    "end": 157.60000000000002,
+    "text": "When I work with my insurance company, I usually call them during the business hours. How do you"
+  },
+  {
+    "start": 157.60000000000002,
+    "end": 164.4,
+    "text": "handle the peaks and the highs and the lows? Yeah, so you know, of course, these companies have"
+  },
+  {
+    "start": 164.4,
+    "end": 169.28,
+    "text": "times of peak traffic where there are many sessions ongoing and so lots of recordings to process."
+  },
+  {
+    "start": 169.92000000000002,
+    "end": 176.64000000000001,
+    "text": "So we've leveraged the scalability of Fargate to handle this. We have auto scaling policies that look at"
+  },
+  {
+    "start": 176.64,
+    "end": 182.72,
+    "text": "the size of the SQS queue. So how many messages are waiting to be processed. So as that number increases"
+  },
+  {
+    "start": 182.72,
+    "end": 189.2,
+    "text": "and we have more messages coming in, we are able to scale up the number of tasks automatically."
+  },
+  {
+    "start": 189.2,
+    "end": 194.88,
+    "text": "So that number of tasks increases and we're able to process those videos faster and reduce the amount"
+  },
+  {
+    "start": 194.88,
+    "end": 199.2,
+    "text": "of time that the loss adjustment agents are waiting to review their videos."
+  },
+  {
+    "start": 200.48,
+    "end": 203.2,
+    "text": "And then can you then scale down if you need to as well?"
+  },
+  {
+    "start": 203.2,
+    "end": 208.16,
+    "text": "Yeah, absolutely. So when the number of messages goes down or in the case of some small businesses"
+  },
+  {
+    "start": 208.16,
+    "end": 213.11999999999998,
+    "text": "outside of business hours, it may even go all the way to zero and we can scale that all the way down"
+  },
+  {
+    "start": 213.11999999999998,
+    "end": 216.48,
+    "text": "to zero as well. So that really saves on the costs there."
+  },
+  {
+    "start": 217.2,
+    "end": 222.79999999999998,
+    "text": "I love the flexibility for the big and small businesses. That's a good benefit of using Fargate."
+  },
+  {
+    "start": 222.79999999999998,
+    "end": 227.6,
+    "text": "I see it in the same time you're also using EC2. Can you walk us through what made you chose different"
+  },
+  {
+    "start": 227.6,
+    "end": 233.04,
+    "text": "technologies? Absolutely. So, you know, we have leveraged Fargate where we can and the benefits"
+  },
+  {
+    "start": 233.04,
+    "end": 241.6,
+    "text": "that it provides as being a serverless service. But in the case of OpenVideo, it supports an EC2-based"
+  },
+  {
+    "start": 241.6,
+    "end": 246.39999999999998,
+    "text": "deployment. That's the option that we had to take. And so we were able to utilize this sort of"
+  },
+  {
+    "start": 246.39999999999998,
+    "end": 252.0,
+    "text": "flexibility of EC2 platform to support that part of the architecture and deliver a complete solution."
+  },
+  {
+    "start": 252.0,
+    "end": 258.24,
+    "text": "I can see that being a lot of videos where all the agents are connecting. How do you make sure that you"
+  },
+  {
+    "start": 258.24,
+    "end": 263.12,
+    "text": "manage the storage costs for the platform? Yeah. Yeah. So you can see we've got S3 Glacier here."
+  },
+  {
+    "start": 264.08,
+    "end": 270.96000000000004,
+    "text": "What we have is essentially some lifecycle policies that will allow us to reduce those long-term storage"
+  },
+  {
+    "start": 270.96000000000004,
+    "end": 276.08,
+    "text": "costs. So there is a lot of data. When we're processing, we're actually outputting multiple"
+  },
+  {
+    "start": 276.08,
+    "end": 282.56,
+    "text": "different resolutions to support dynamic playback. But those process files then can end up being, you know,"
+  },
+  {
+    "start": 282.56,
+    "end": 287.92,
+    "text": "sort of up to two times larger than the raw files themselves. So there's a lot of data to manage,"
+  },
+  {
+    "start": 287.92,
+    "end": 293.68,
+    "text": "but it's important that we retain those recordings in the long term for legal reasons. So to manage"
+  },
+  {
+    "start": 293.68,
+    "end": 299.84000000000003,
+    "text": "those storage costs, after a certain amount of time has passed, we delete the process video files. And"
+  },
+  {
+    "start": 299.84000000000003,
+    "end": 307.04,
+    "text": "then for the original raw recordings, we migrate those to S3 Glacier. And that really reduces those long-term"
+  },
+  {
+    "start": 307.04,
+    "end": 313.52000000000004,
+    "text": "storage costs. And then in the event that we need to restore any of those archived recordings,"
+  },
+  {
+    "start": 313.52000000000004,
+    "end": 319.52000000000004,
+    "text": "we can simply take that raw file and put it through the same process again and restore the video to its"
+  },
+  {
+    "start": 319.52000000000004,
+    "end": 324.64000000000004,
+    "text": "original state. Now that's a perfect use case for Glacier when you can store the raw file and then"
+  },
+  {
+    "start": 324.64000000000004,
+    "end": 329.12,
+    "text": "process them again if you need to. Well, thank you for sharing this architecture and particularly the"
+  },
+  {
+    "start": 329.12,
+    "end": 334.48,
+    "text": "details that made you choose between Fargate and EC2. Yeah, no, thanks for having me. It's great to share"
+  },
+  {
+    "start": 334.48,
+    "end": 348.88,
+    "text": "our experience with AWS. Thank you for watching. This is my architecture New Zealand."
+  }
+]

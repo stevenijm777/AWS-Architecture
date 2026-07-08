@@ -1,0 +1,94 @@
+{
+  "step_by_step_reasoning": "The transcript describes a build system on AWS EKS triggered by a GitLab instance (UserCompanyDeveloper). The system consists of dedicated GitLab Runners in an EKS Base Node Group, which spawn build job pods in an EKS Worker Node Group that auto-scales dynamically (0 to 50 nodes). The pods access build caches and artifacts stored in Amazon S3 via a VPC endpoint to optimize performance, before uploading new artifacts and reporting completion back to the runner, which updates GitLab.",
+  "graph": {
+    "name": "Age of Learning's Scalable EKS Build Architecture",
+    "link": "https://www.youtube.com/watch?v=t8JCvcnFX10",
+    "categories": "compute_intensive",
+    "graph_usable": true,
+    "notes": "Migrated from 150 individual VMs to an autoscaling EKS-based GitLab Runner architecture. Handles 20k to 25k builds per month, yielding 50-60% faster build times and significant cost savings via spot instances and S3 gateway caching."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "GitLab CI Platform",
+      "notes": "Primary GitLab instance where developers commit code and trigger CI/CD builds."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "GitLab Runners (Base Node Group)",
+      "notes": "Dedicated, always-on base node group running GitLab runners to queue and coordinate incoming build requests."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Build Jobs (Worker Node Group)",
+      "notes": "WORKLOAD_PEEK: Dynamically scales from 0 to 50 instances utilizing Spot instances (.16xlarge and .metal) in multiple AZ subnets to run Kubernetes build pods."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Artifact and Cache S3 Bucket",
+      "notes": "DATA_PEEK: Stores cache and build artifacts up to 50GB in size. Accessed via VPC endpoint to achieve high throughput and 50-60% build speedups."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "GitLab triggers runner to start build."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Runner schedules and spins up a Kubernetes job pod on the worker node group."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Job pod queries S3 for existing cache/artifacts."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 returns cached items to speed up compilation and scanning."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Completed job uploads fresh build cache/artifacts back to S3."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Job reports build completion status back to the coordinator runner."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Runner passes build results back to primary GitLab instance."
+    }
+  ]
+}

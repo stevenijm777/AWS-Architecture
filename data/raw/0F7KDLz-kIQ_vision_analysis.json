@@ -1,0 +1,246 @@
+{
+  "step_by_step_reasoning": "We analyze the architecture based on the transcript chronologically: 1. User traffic arrives via Route 53 / CloudFront to an internal Route 53 instance. 2. The internal Route 53 serves as a dynamic weight distributor to split traffic between two paths: Serverless (API Gateway + Lambda) and Containerized (ECS on Fargate). 3. ECS handles standard steady-state load but has scaling latency. Lambda absorbs rapid spikes (e.g., push notifications). 4. Both compute paths perform CRUD operations against 4 backend datastores: ElastiCache, DocumentDB, RDS, and OpenSearch (Elasticsearch). 5. To enable dynamic routing, CloudWatch monitors ECS load, triggering a weight-adjusting Lambda function that updates the internal Route 53 weights via the AWS SDK.",
+  "graph": {
+    "name": "Zigbang Hybrid Auto-scaling Architecture with Dynamic Weighted Routing",
+    "link": "https://www.youtube.com/watch?v=0F7KDLz-kIQ",
+    "categories": "interactive, control",
+    "graph_usable": true,
+    "notes": "Hybrid architecture using ECS on Fargate and AWS Lambda to balance cost, performance, and scaling limits. Real-time weighted routing is managed dynamically by CloudWatch and Lambda based on active compute load."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Zigbang App Users",
+      "notes": "End users accessing real-estate information, search, and push alerts."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "Global CDN",
+      "notes": "Caches static assets and handles global request entry."
+    },
+    {
+      "id": "2",
+      "service": "Route53",
+      "name": "Internal Route 53",
+      "notes": "Used for dynamic weighted traffic routing between ECS and Serverless paths."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Exposes endpoints for the serverless compute path."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Application Lambda",
+      "notes": "Scales instantly to absorb rapid traffic spikes during marketing events."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS Fargate Cluster",
+      "notes": "Handles main steady-state application load cost-effectively."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElastiCache (Redis)",
+      "notes": "Caches transient/volatile data for high-speed query response."
+    },
+    {
+      "id": "7",
+      "service": "DocumentDB",
+      "name": "DocumentDB",
+      "notes": "Stores highly read or unstructured document data."
+    },
+    {
+      "id": "8",
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "Handles standard relational transactional CRUD workloads."
+    },
+    {
+      "id": "9",
+      "service": "OpenSearch",
+      "name": "Elasticsearch Service",
+      "notes": "Powers apartment address searches and stores application troubleshooting logs."
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "CloudWatch Monitoring",
+      "notes": "Tracks ECS load metrics to evaluate scaling conditions."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Route 53 Weight Updater",
+      "notes": "Triggered by metrics to dynamically update Route 53 weighted record sets via SDK."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests route through CloudFront."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Requests directed to internal dynamic weight router."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Routes spike traffic to API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3a",
+      "type": "data",
+      "notes": "Triggers serverless app logic."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Routes steady-state traffic directly to container fleet."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Queries/writes transient cache data."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Queries/writes unstructured data."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "4c",
+      "type": "data",
+      "notes": "Relational transactions."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "4d",
+      "type": "data",
+      "notes": "Performs search or writes application logs."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3b_1",
+      "type": "data",
+      "notes": "Queries/writes transient cache data."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3b_2",
+      "type": "data",
+      "notes": "Queries/writes unstructured data."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3b_3",
+      "type": "data",
+      "notes": "Relational transactions."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "3b_4",
+      "type": "data",
+      "notes": "Performs search or writes application logs."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "5a",
+      "type": "data",
+      "notes": "Returns response payload."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "6a",
+      "type": "data",
+      "notes": "Relays response to CDN."
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4b_resp",
+      "type": "data",
+      "notes": "Returns response payload directly to CDN."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Delivers final response back to mobile/web clients."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Emits CPU/memory utilization metrics."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers Route 53 controller when threshold bounds are exceeded."
+    },
+    {
+      "source": "11",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Dynamically shifts weighted routing rules to shield ECS during peak spikes."
+    }
+  ]
+}
