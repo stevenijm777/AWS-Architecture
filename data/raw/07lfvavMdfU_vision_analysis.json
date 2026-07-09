@@ -1,198 +1,154 @@
 {
-  "step_by_step_reasoning": "We trace the architecture flow chronologically: ingest starts with a user upload to S3, which triggers orchestration. The workflow splits into media transcoding via MediaConvert and metadata extraction using Lambda. A second analysis pipeline orchestrates AI services (Rekognition, Transcribe, Comprehend) to enrich metadata stored in DynamoDB. Finally, the consolidated data is ingested into Reach Engine running on EC2 and EKS.",
+  "step_by_step_reasoning": "Based on the World Model and transcript, the architecture represents Levels Beyond's Media to Cloud workflow. We define nodes for all entities specified in the World Model (including the User, storage services, step functions, serverless processing services, database, and Reach Engine container compute). The flow represents a unified ingestion and media enrichment workflow, which begins with the User uploading files, sequentially triggers transcoding, celebrity/visual extraction, audio transcription, NLP analysis, and temporary DynamoDB storage, before finally ingesting into the Reach Engine on EKS.",
   "graph": {
-    "name": "Media to Cloud Orchestration with Reach Engine",
+    "name": "Levels Beyond Media to Cloud Enrichment Workflow",
     "link": "https://www.youtube.com/watch?v=07lfvavMdfU",
-    "categories": "data_ingestion, compute_intensive",
+    "categories": "data_ingestion, compute_intensive, control",
     "graph_usable": true,
-    "notes": "Serverless media ingest and enrichment pipeline that extracts metadata, transcodes video, runs AI/ML sentiment and content analysis, and stores temporary metadata in DynamoDB before feeding a Reach Engine platform hosted on EC2 and EKS."
+    "notes": "An AWS Step Functions orchestrated serverless workflow for ingesting media into Reach Engine. Videos are transcoded to browser-compatible proxies via AWS Elemental MediaConvert, while parallel metadata extraction is handled via Amazon Rekognition, Transcribe, and Comprehend before storing technical and enriched metadata in Amazon DynamoDB."
   },
   "nodes": [
     {
-      "id": "user",
-      "service": "UserConsumerWeb",
-      "name": "Web User",
-      "notes": "Users uploading content and viewing media/metadata in the browser."
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User",
+      "notes": "Represents the user uploading media files to the ingest bucket."
     },
     {
-      "id": "s3",
+      "id": "1",
       "service": "S3",
-      "name": "Input S3 Bucket",
-      "notes": "Receives the uploaded raw video and stores processed proxies."
+      "name": "S3",
+      "notes": "S3 bucket where the raw media files are uploaded and proxy files are stored."
     },
     {
-      "id": "step_functions_ingest",
+      "id": "2",
       "service": "StepFunctions",
-      "name": "Ingest Orchestrator",
-      "notes": "Orchestrates transcoding and basic metadata extraction."
+      "name": "Step Functions",
+      "notes": "Orchestrates the media processing workflows, triggering encoding and metadata extraction services."
     },
     {
-      "id": "mediaconvert",
+      "id": "3",
       "service": "MediaConvert",
-      "name": "AWS Elemental MediaConvert",
-      "notes": "Generates low-res browser-compatible proxies from source videos."
+      "name": "Elemental MediaConvert",
+      "notes": "Transcodes input videos into browser-compatible proxies."
     },
     {
-      "id": "lambda_meta",
-      "service": "Lambda",
-      "name": "Metadata Extractor",
-      "notes": "Extracts technical checksums and media information."
-    },
-    {
-      "id": "step_functions_analysis",
-      "service": "StepFunctions",
-      "name": "Analysis Orchestrator",
-      "notes": "Orchestrates AI services for content enrichment."
-    },
-    {
-      "id": "rekognition",
+      "id": "4",
       "service": "Rekognition",
-      "name": "Amazon Rekognition",
-      "notes": "Identifies celebrities, violence, and tags contents with timestamps."
+      "name": "Rekognition",
+      "notes": "Analyzes visual media for celebrity recognition, content moderation, and other visual tags."
     },
     {
-      "id": "transcribe",
+      "id": "5",
       "service": "Transcribe",
-      "name": "Amazon Transcribe",
-      "notes": "Converts audio from content to text."
+      "name": "Transcribe",
+      "notes": "Translates the audio from the video into text."
     },
     {
-      "id": "comprehend",
+      "id": "6",
       "service": "Comprehend",
-      "name": "Amazon Comprehend",
-      "notes": "Analyzes transcribed text for entities and profanity."
+      "name": "Comprehend",
+      "notes": "Performs natural language processing on transcribed text to extract insights and entities."
     },
     {
-      "id": "dynamodb",
+      "id": "7",
       "service": "DynamoDB",
-      "name": "Temporary Metadata Store",
-      "notes": "Stores intermediate metadata temporarily before final ingest."
+      "name": "DynamoDB",
+      "notes": "Serves as a temporary database storing the extracted metadata from multiple streams."
     },
     {
-      "id": "reach_ec2",
+      "id": "8",
       "service": "EC2",
-      "name": "Reach Engine Portal",
-      "notes": "Host environment for Reach Engine front-end and web interfaces."
+      "name": "EC2 (Reach Engine)",
+      "notes": "Computes part of the Reach Engine system."
     },
     {
-      "id": "reach_eks",
+      "id": "9",
       "service": "EKS",
-      "name": "Reach Engine Orchestration",
-      "notes": "Kubernetes cluster executing core processing, search, and orchestration logic."
+      "name": "EKS (Reach Engine)",
+      "notes": "Runs the containerized Reach Engine orchestrator and platform."
     }
   ],
   "edges": [
     {
-      "source": "user",
-      "target": "s3",
+      "source": "0",
+      "target": "1",
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "User uploads raw video file to input bucket"
+      "notes": "User uploads the raw video file into the S3 ingest bucket."
     },
     {
-      "source": "s3",
-      "target": "step_functions_ingest",
+      "source": "1",
+      "target": "2",
       "flow_id": 0,
       "seq": "1",
-      "type": "meta",
-      "notes": "S3 upload triggers the ingest Step Functions workflow"
+      "type": "control",
+      "notes": "Upload event triggers the AWS Step Functions workflow orchestration."
     },
     {
-      "source": "step_functions_ingest",
-      "target": "mediaconvert",
+      "source": "2",
+      "target": "3",
       "flow_id": 0,
       "seq": "2",
-      "type": "data",
-      "notes": "Kicks off proxy transcoding job"
+      "type": "control",
+      "notes": "Step Functions initiates the video transcoding job in Elemental MediaConvert."
     },
     {
-      "source": "mediaconvert",
-      "target": "s3",
+      "source": "3",
+      "target": "1",
       "flow_id": 0,
       "seq": "3",
       "type": "data",
-      "notes": "Outputs the web-playable proxy back to S3"
+      "notes": "Elemental MediaConvert saves the generated proxy video back to the S3 bucket."
     },
     {
-      "source": "step_functions_ingest",
-      "target": "lambda_meta",
+      "source": "2",
+      "target": "4",
       "flow_id": 0,
       "seq": "4",
-      "type": "data",
-      "notes": "Triggers lambda functions to extract technical metadata"
+      "type": "control",
+      "notes": "Step Functions triggers AWS Rekognition to extract visual and tag data from the video."
     },
     {
-      "source": "lambda_meta",
-      "target": "dynamodb",
+      "source": "4",
+      "target": "7",
       "flow_id": 0,
       "seq": "5",
       "type": "data",
-      "notes": "Saves extracted checksums and basic technical metadata"
+      "notes": "Visual analysis results and tags are stored in DynamoDB."
     },
     {
-      "source": "step_functions_ingest",
-      "target": "step_functions_analysis",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "Triggers the second analysis step function after basic ingest finishes"
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "control",
+      "notes": "Step Functions triggers Amazon Transcribe to convert audio to text."
     },
     {
-      "source": "step_functions_analysis",
-      "target": "rekognition",
-      "flow_id": 1,
-      "seq": "1",
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
       "type": "data",
-      "notes": "Triggers computer vision analysis on video content"
+      "notes": "Transcribed text is sent to Amazon Comprehend for entity and sentiment analysis."
     },
     {
-      "source": "rekognition",
-      "target": "dynamodb",
-      "flow_id": 1,
-      "seq": "2",
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "8",
       "type": "data",
-      "notes": "Saves timestamped tags and metadata"
+      "notes": "Comprehend text analytics results are saved in DynamoDB."
     },
     {
-      "source": "step_functions_analysis",
-      "target": "transcribe",
-      "flow_id": 1,
-      "seq": "3",
+      "source": "7",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "9",
       "type": "data",
-      "notes": "Triggers speech-to-text audio processing"
-    },
-    {
-      "source": "transcribe",
-      "target": "comprehend",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Sends extracted transcript text to Comprehend for NLP analysis"
-    },
-    {
-      "source": "comprehend",
-      "target": "dynamodb",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Saves NLP extracted entity and sentiment data"
-    },
-    {
-      "source": "dynamodb",
-      "target": "reach_eks",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "Triggers bulk ingest of compiled metadata into Reach Engine"
-    },
-    {
-      "source": "dynamodb",
-      "target": "reach_ec2",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Imports metadata to frontend search portal"
+      "notes": "Extracted metadata in DynamoDB is imported into the Reach Engine platform running on EKS for user search and curation."
     }
   ]
 }

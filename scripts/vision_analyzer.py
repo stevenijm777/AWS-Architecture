@@ -7,6 +7,7 @@ from __future__ import annotations
 import base64
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -71,157 +72,94 @@ aws_services_str = ", ".join(AWS_SERVICES)
 user_actors_str = ", ".join(USER_ACTORS)
 
 
-CLOUDSCAPE_PROMPT_TEMPLATE = """\
-You are an expert AWS Solutions Architect. You are analyzing a whiteboard \
-screenshot from an AWS "This is My Architecture" YouTube video, along with \
-the full transcript of the video.
+# Robust JSON text cleaner to prevent syntax errors
+def clean_json_text(text: str) -> str:
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1]
+        if "```" in text:
+            text = text[:text.rfind("```")]
+    text = text.strip()
+    # Remove trailing commas in lists or objects
+    text = re.sub(r',\s*([\]}])', r'\1', text)
+    return text
 
-Your task is to extract the cloud architecture shown, encoding it using the \
-Cloudscape dataset schema (FAST25 paper by Satija et al.).
 
-## RULES:
-1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", \
-"EC2", "DynamoDB", "EKS", "CloudFront", "Aurora", "ElastiCache", "MSK", \
-"SQS", "SNS", "ApiGateway", "Pinpoint", "KMS", "CloudWatch", "StepFunctions", etc.
-2. For actors/users: ONLY add User nodes that are EXPLICITLY shown as \
-icons on the whiteboard OR explicitly mentioned as actors in the \
-transcript (e.g., "the end user", "our developers", "mobile app users"). \
-Do NOT invent User nodes to complete a flow. Choose from this list based on the video context: <USER_ACTORS_PLACEHOLDER>.
-3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
-4. Do NOT use "ThirdParty" for internal microservices (e.g., "Friend Graph", "SnapDB", "Messaging Service"). Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda"), putting the microservice name in the `notes` field. Use "ThirdParty" only for external third-party software (e.g. MySQL, Nginx).
-5. NODE MULTIPLICITY (CRITICAL): Each node can appear MULTIPLE times. \
-If the transcript explicitly describes multiple instances, distinct phases, \
-or separate functions for a single service (e.g., "three separate Lambda \
-functions", "first it hits a Lambda, then another Lambda"), you MUST create \
-a distinct JSON node for EACH instance, even if the whiteboard diagram only \
-shows a single icon. Do NOT group distinct functions into a single node.
-6. Edges must have: flow_id (integer, grouping related interactions into \
-workflows), seq (string, ordering within flow), type ("data" for data \
-movement, "meta" for request triggers / ack responses). Default to "data" for all edges. Only use "meta" for edges that represent: (a) monitoring/observability signals to CloudWatch, (b) orchestration/triggers from StepFunctions, or (c) acknowledgment responses that don't carry payload data.
-7. Map ONLY the edges that represent actual data movement or control flow \
-shown on the whiteboard or described in the transcript. Do NOT add \
-return/response paths unless they are explicitly drawn on the diagram \
-or explicitly described as a separate step in the transcript.
-8. Minimize the number of flows. Group related sequential interactions into a single flow. A typical architecture should have 2-5 flows, not more.
-9. The `notes` field for nodes should capture context from the transcript: \
-how the service is used, data volumes, configurations mentioned. Use \
-prefixes like "DATA_PEEK:" for data info and "WORKLOAD_PEEK:" for workload.
-10. TRANSCRIPT OVERRIDES IMAGE (SOURCE OF TRUTH): The transcript dictates \
-the actual execution flow. The image is often simplified due to limited \
-whiteboard space. If the image shows 1 icon (e.g., 1 Lambda) but the \
-transcript details a sequence of 3 Lambdas, your output MUST contain 3 \
-separate Lambda nodes with their specific distinct edges mapping the true \
-chronological workflow. When image and transcript conflict, ALWAYS prefer \
-the transcript.
+MFR_STAGE_1_PROMPT_TEMPLATE = """You are an expert cloud architecture ontology modeler.
+Your task is to analyze the provided whiteboard diagram and audio transcript to build a structured "World Model" representing the architecture components and their physical drawn connections.
 
-## COMMON CONFUSION PAIRS (be careful):
-- ALB and ELB are DIFFERENT services. ALB = Application Load Balancer. ELB = Classic Elastic Load Balancer. Use whichever the speaker mentions.
-- EC2, ECS, EKS, Fargate are DIFFERENT compute services. Do NOT substitute.
-- Kinesis, KinesisDataStreams, KinesisDataFirehose, KinesisAnalytics are DIFFERENT. Use the exact sub-service mentioned.
-- OpenSearch (formerly Elasticsearch Service) is a specific service.
+Do NOT generate the final graph, node IDs, or edge sequences. Focus strictly on identifying the entities and the VISUAL CONNECTIONS drawn on the whiteboard.
 
-## PARSIMONY PRINCIPLE:
-Prefer FEWER nodes and edges over more. If you are unsure whether a service \
-exists in the architecture, DO NOT include it. It is better to miss a real \
-service than to hallucinate a fake one. The ground truth typically has 6-12 \
-nodes and 5-15 edges. If your output has significantly more, you are likely \
-over-generating.
+## ENTITY IDENTIFICATION RULES:
+1. Identify all active systems, databases, cloud services, and actors.
+2. Use valid AWS services from this list: <AWS_SERVICES_PLACEHOLDER>.
+3. Identify actors/users from this list: <USER_ACTORS_PLACEHOLDER>. Map internal operations/migration teams to "UserCompanyAgent".
+4. Map on-premises/external systems to "ThirdParty" (e.g. legacy databases, Slack, or on-premises servers), unless a physically drawn corporate data center box is shown.
+5. Do NOT include transient files, packages, or disk images (like AMIs, zip files, or container images) as entities. They are transition properties, not permanent nodes.
 
-## VALID SERVICE NAMES:
-You MUST only use names from this list of canonical services when defining the `service` field in the nodes list (do not invent names or use raw abbreviations unless listed here):
-<AWS_SERVICES_PLACEHOLDER>
+## VISUAL CONNECTION RULES:
+1. Look closely at the whiteboard image. Identify every drawn connection line or arrow between the entities.
+2. Note the source, target, and the direction of the arrow.
+3. Only list connections that are VISUALLY represented by lines or arrows on the board. Do NOT list connections that are only mentioned in the audio but have no line drawn on the board.
+
+## FORMAT RULES:
+- Inside JSON string fields, NEVER use unescaped double quotes. Use single quotes instead (e.g. write 'AMI' instead of "AMI").
 
 ## OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown fences):
 {
-  "step_by_step_reasoning": "Analyze the transcript chronologically. Identify every single component mentioned. Explicitly state if a visual icon represents multiple distinct functions. (e.g., 'The speaker mentions 3 Lambdas: one to check the API, one to store in S3, one to create proxy URLs. So I will create 3 Lambda nodes.')",
+  "entities": [
+    {"service": "AWS Service or Actor Name", "name": "Label on the whiteboard", "type": "AWS_Service|User|ThirdParty", "rationale": "..."}
+  ],
+  "visual_connections": [
+    {"source_label": "Label of source box", "target_label": "Label of target box", "arrow_direction": "source_label -> target_label", "description": "What this line represents"}
+  ]
+}
+"""
+
+MFR_STAGE_2_PROMPT_TEMPLATE = """You are an expert AWS Solutions Architect. Your task is to compile the final cloud architecture graph from the provided World Model, whiteboard image, and audio transcript.
+
+You must follow the structure and level of detail of the Cloudscape dataset schema.
+
+## WORLD MODEL (IMMUTABLE INPUT):
+Below is the verified World Model of the architecture. You MUST strictly adhere to this model.
+<WORLD_MODEL_PLACEHOLDER>
+
+## RULES FOR NODES:
+1. Create nodes ONLY for the services and actors listed in the "entities" section of the World Model. Do NOT invent or add any other services, actors, or transient nodes (such as AMIs, packages, or config files).
+
+## RULES FOR EDGES:
+1. Create edges ONLY for the connections listed in the "visual_connections" section of the World Model.
+2. Keep the exact source and target direction as specified in the "visual_connections" (arrow_direction).
+3. Do NOT create return/response paths or API acknowledgments (e.g., target sending back status) unless they are physically drawn as a separate arrow on the whiteboard.
+4. Set "type" to "control" for system triggers, API calls, scripts, or command invocations. Set "type" to "data" ONLY for actual block data replication, payload transmission, or database reads/writes.
+5. Set the "notes" field for each edge to describe the interaction, combining the transcript details with the visual path.
+6. The `flow_id` represents unique workflows. Sequential steps in the same workflow must share the same `flow_id` and have sequential `seq` numbers (0, 1, 2, 3...) based on the transcript chronology.
+
+## FORMAT RULES:
+- Inside JSON string fields, NEVER use unescaped double quotes. Use single quotes instead (e.g. write 'AMI' instead of "AMI").
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Deduce the nodes and edges from the World Model entities and visual connections, ordering them chronologically...",
   "graph": {
     "name": "<title of the architecture>",
     "link": "<youtube URL if known, else empty string>",
     "categories": "<comma-separated from: data_ingestion, interactive, compute_intensive, control, other>",
     "graph_usable": true,
-    "notes": "<distilled context: requirements, scale, key design decisions>"
+    "notes": "<distilled context>"
   },
   "nodes": [
-    {"id": "0", "service": "...", "name": "", "notes": "..."}
+    {"id": "0", "service": "service name from entities", "name": "name from entities", "notes": "context of usage"}
   ],
   "edges": [
-    {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""}
+    {"source": "node_id", "target": "node_id", "flow_id": 0, "seq": "0", "type": "data|control", "notes": "action detail"}
   ]
 }
-
-If the image does NOT contain an AWS architecture diagram, return:
-{"graph": {}, "nodes": [], "edges": []}
 """
 
-CLOUDSCAPE_PROMPT = CLOUDSCAPE_PROMPT_TEMPLATE.replace(
-    "<USER_ACTORS_PLACEHOLDER>", user_actors_str
-).replace(
-    "<AWS_SERVICES_PLACEHOLDER>", aws_services_str
-)
-
-
-# ── Public API ───────────────────────────────────────────────
-
-def analyze_frame(
-    frame_path: Path,
-    transcript: str = "",
-    video_url: str = "",
-    detected_symbols: dict[str, list[dict[str, Any]]] | None = None,
-) -> dict[str, Any]:
-    """
-    Send a single keyframe + transcript + detected symbols to Gemini for architecture extraction.
-
-    Parameters
-    ----------
-    frame_path : Path
-        Path to the whiteboard image.
-    transcript : str
-        Full transcript of the video (from Whisper).
-    video_url : str
-        YouTube URL for the video.
-    detected_symbols : dict, optional
-        AWS icons detected on the frame.
-
-    Returns
-    -------
-    dict
-        Parsed JSON with ``graph``, ``nodes``, ``edges`` in Cloudscape schema.
-    """
-    client = _get_client()
-
-    # Read and encode image
-    image_bytes = frame_path.read_bytes()
-    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
-
-    # Determine MIME type
-    suffix = frame_path.suffix.lower()
-    mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png"}.get(
-        suffix.lstrip("."), "image/jpeg"
-    )
-
-    # Build prompt with transcript context
-    prompt_parts = [CLOUDSCAPE_PROMPT]
-    if video_url:
-        prompt_parts.append(f"\n## VIDEO URL:\n{video_url}")
-    if transcript:
-        prompt_parts.append(f"\n## FULL TRANSCRIPT:\n{transcript}")
-    if detected_symbols:
-        detected_parts = ["\n## DETECTED AWS SERVICE SYMBOLS (GUIDELINE):"]
-        detected_parts.append("The following AWS service symbols were detected using OpenCV template matching in this whiteboard frame:")
-        for service, occurrences in sorted(detected_symbols.items()):
-            count = len(occurrences)
-            box_strs = [f"box: {det['box']}" for det in occurrences]
-            detected_parts.append(f"- {service}: {count} occurrences ({', '.join(box_strs)})")
-        detected_parts.append("\nPlease use this information to ensure the count and service types of nodes in your output graph correspond correctly to these physical icons in the diagram.")
-        prompt_parts.append("\n".join(detected_parts))
-
-    full_prompt = "\n".join(prompt_parts)
-
-    console.print(f"  [dim]→ Analyzing {frame_path.name} with Gemini ({GEMINI_MODEL})…[/]")
-    if transcript:
-        console.print(f"  [dim]  Including transcript ({len(transcript)} chars)[/]")
-
+def _call_gemini_with_retry(client: genai.Client, full_prompt: str, mime: str, image_b64: str):
     import time
     max_retries = 5
     retry_delay = 10
@@ -246,7 +184,7 @@ def analyze_frame(
                 ],
                 config={"response_mime_type": "application/json"},
             )
-            break
+            return response
         except Exception as e:
             err_msg = str(e)
             if attempt < max_retries - 1 and any(x in err_msg.upper() or y in err_msg for x in ["503", "429", "UNAVAILABLE", "LIMIT"] for y in ["demand", "ResourceExhausted", "quota"]):
@@ -257,95 +195,111 @@ def analyze_frame(
             else:
                 raise e
 
-    # Parse the JSON response
-    raw_text = response.text.strip()
-    console.print(f"[dim]Gemini response text: {raw_text}[/]")
 
-    # Strip possible markdown fences (```json ... ```)
-    if raw_text.startswith("```"):
-        raw_text = raw_text.split("\n", 1)[1]
-        if "```" in raw_text:
-            raw_text = raw_text[: raw_text.rfind("```")]
-        raw_text = raw_text.strip()
+# ── Public API ───────────────────────────────────────────────
 
-    # Try direct parse first
-    data = None
+def analyze_frame(
+    frame_path: Path,
+    transcript: str = "",
+    video_url: str = "",
+    detected_symbols: dict[str, list[dict[str, Any]]] | None = None,
+) -> dict[str, Any]:
+    """
+    Send a single keyframe + transcript + detected symbols to Gemini for architecture extraction.
+    Uses the Double-Model (Modeler + Planner) technique.
+    """
+    client = _get_client()
+
+    # Read and encode image
+    image_bytes = frame_path.read_bytes()
+    image_b64 = base64.b64encode(image_bytes).decode("utf-8")
+
+    # Determine MIME type
+    suffix = frame_path.suffix.lower()
+    mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png"}.get(
+        suffix.lstrip("."), "image/jpeg"
+    )
+
+    # ── Stage 1: MODELER (Generate World Model) ──
+    formatted_prompt_1 = MFR_STAGE_1_PROMPT_TEMPLATE.replace(
+        "<USER_ACTORS_PLACEHOLDER>", user_actors_str
+    ).replace(
+        "<AWS_SERVICES_PLACEHOLDER>", aws_services_str
+    )
+    
+    prompt_parts_1 = [formatted_prompt_1]
+    if video_url:
+        prompt_parts_1.append(f"\n## VIDEO URL:\n{video_url}")
+    if transcript:
+        prompt_parts_1.append(f"\n## FULL TRANSCRIPT:\n{transcript}")
+    if detected_symbols:
+        detected_parts = ["\n## DETECTED AWS SERVICE SYMBOLS (GUIDELINE):"]
+        for service, occurrences in sorted(detected_symbols.items()):
+            count = len(occurrences)
+            box_strs = [f"box: {det['box']}" for det in occurrences]
+            detected_parts.append(f"- {service}: {count} occurrences ({', '.join(box_strs)})")
+        prompt_parts_1.append("\n".join(detected_parts))
+
+    full_prompt_1 = "\n".join(prompt_parts_1)
+
+    console.print(f"  [dim]→ [Stage 1 Modeler] Building World Model for {frame_path.name} with Gemini ({GEMINI_MODEL})…[/]")
+    response_1 = _call_gemini_with_retry(client, full_prompt_1, mime, image_b64)
+    world_model_text = clean_json_text(response_1.text)
+    
     try:
-        data = json.loads(raw_text)
+        world_model = json.loads(world_model_text)
     except json.JSONDecodeError:
-        # Fallback: try to extract JSON object from mixed text
-        start = raw_text.find("{")
-        end = raw_text.rfind("}") + 1
+        # fallback parsing
+        start = world_model_text.find("{")
+        end = world_model_text.rfind("}") + 1
         if start >= 0 and end > start:
             try:
-                data = json.loads(raw_text[start:end])
+                world_model = json.loads(world_model_text[start:end])
+            except json.JSONDecodeError:
+                world_model = {"entities": [], "visual_connections": []}
+        else:
+            world_model = {"entities": [], "visual_connections": []}
+
+    console.print(f"  [green]✓[/] World Model generated ({len(world_model.get('entities', []))} entities, {len(world_model.get('visual_connections', []))} connections)")
+
+    # ── Stage 2: PLANNER (Compile Architecture Graph) ──
+    formatted_prompt_2 = MFR_STAGE_2_PROMPT_TEMPLATE.replace(
+        "<WORLD_MODEL_PLACEHOLDER>", json.dumps(world_model, indent=2, ensure_ascii=False)
+    )
+    
+    prompt_parts_2 = [formatted_prompt_2]
+    if video_url:
+        prompt_parts_2.append(f"\n## VIDEO URL:\n{video_url}")
+    if transcript:
+        prompt_parts_2.append(f"\n## FULL TRANSCRIPT:\n{transcript}")
+
+    full_prompt_2 = "\n".join(prompt_parts_2)
+
+    console.print(f"  [dim]→ [Stage 2 Planner] Compiling final architecture graph with Gemini ({GEMINI_MODEL})…[/]")
+    response_2 = _call_gemini_with_retry(client, full_prompt_2, mime, image_b64)
+    graph_json_text = clean_json_text(response_2.text)
+
+    # Parse final JSON graph
+    data = None
+    try:
+        data = json.loads(graph_json_text)
+    except json.JSONDecodeError:
+        # Fallback: try to extract JSON object from mixed text
+        start = graph_json_text.find("{")
+        end = graph_json_text.rfind("}") + 1
+        if start >= 0 and end > start:
+            try:
+                data = json.loads(graph_json_text[start:end])
             except json.JSONDecodeError:
                 pass
 
     if isinstance(data, list):
-        console.print("[yellow]WARNING: Gemini returned a list of architectures. Merging them into a single graph...[/]")
-        merged = {
-            "step_by_step_reasoning": "",
-            "graph": {
-                "name": "",
-                "link": "",
-                "categories": "",
-                "graph_usable": True,
-                "notes": ""
-            },
-            "nodes": [],
-            "edges": []
-        }
-        reasonings = []
-        names = []
-        notes_list = []
-        categories_set = set()
-        
-        for idx, sub in enumerate(data):
-            reasonings.append(f"--- Architecture {idx+1} ({sub.get('graph', {}).get('name', 'Unnamed')}) ---\n{sub.get('step_by_step_reasoning', '')}")
-            names.append(sub.get("graph", {}).get("name", ""))
-            notes_list.append(sub.get("graph", {}).get("notes", ""))
-            
-            # Categories
-            cats = sub.get("graph", {}).get("categories", "")
-            if cats:
-                for c in cats.split(","):
-                    c_clean = c.strip()
-                    if c_clean:
-                        categories_set.add(c_clean)
-                        
-            # Map nodes and assign unique IDs
-            id_map = {}
-            for node in sub.get("nodes", []):
-                orig_id = str(node.get("id", ""))
-                new_id = str(len(merged["nodes"]))
-                id_map[orig_id] = new_id
-                
-                node_copy = dict(node)
-                node_copy["id"] = new_id
-                merged["nodes"].append(node_copy)
-                
-            # Map edges using the new IDs
-            for edge in sub.get("edges", []):
-                edge_copy = dict(edge)
-                orig_src = str(edge.get("source", ""))
-                orig_tgt = str(edge.get("target", ""))
-                edge_copy["source"] = id_map.get(orig_src, orig_src)
-                edge_copy["target"] = id_map.get(orig_tgt, orig_tgt)
-                merged["edges"].append(edge_copy)
-                
-        # Consolidate metadata
-        merged["step_by_step_reasoning"] = "\n\n".join(reasonings)
-        merged["graph"]["name"] = f"Consolidated AWS Architectures ({', '.join([n for n in names if n])})"
-        merged["graph"]["link"] = data[0].get("graph", {}).get("link", "") if data else ""
-        merged["graph"]["categories"] = ", ".join(sorted(categories_set))
-        merged["graph"]["notes"] = " ".join([n for n in notes_list if n])
-        
-        data = merged
+        console.print("[yellow]WARNING: Gemini Planner returned a list. Using the first item...[/]")
+        data = data[0] if data else {"graph": {}, "nodes": [], "edges": []}
 
     if data is None:
-        console.print(f"[yellow]WARNING: Failed to parse Gemini response as JSON[/]")
-        console.print(f"[dim]{raw_text[:500]}[/]")
+        console.print(f"[yellow]WARNING: Failed to parse Gemini Planner response as JSON[/]")
+        console.print(f"[dim]{graph_json_text[:500]}[/]")
         data = {"graph": {}, "nodes": [], "edges": []}
 
     node_count = len(data.get("nodes", []))

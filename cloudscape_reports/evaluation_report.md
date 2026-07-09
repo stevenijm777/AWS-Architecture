@@ -1,6 +1,6 @@
 # Combined Evaluation Report: Generated Graphs vs Cloudscape Ground Truth
 
-*Generated: 2026-07-08 10:33:54*
+*Generated: 2026-07-09 08:13:03*
 
 ## 1. Executive Summary (Side-by-Side Comparison)
 
@@ -8,7 +8,7 @@ This table compares performance metrics across all generated graph directories.
 
 | Run Directory | Videos | Service F1 (unique) | Service F1 (multiset) | Edge F1 | Edge Type Acc | Node Ratio |
 |---|---|---|---|---|---|---|
-| **Standard (data/graphs)** | 57 | 79.6% | 76.3% | 48.1% | 82.2% | 1.20x |
+| **Standard (data/graphs)** | 57 | 79.5% | 76.3% | 50.2% | 75.8% | 1.19x |
 | **Parsimonious API (data/graphs_parsimonious)** | 49 | 84.1% | 83.1% | 57.0% | 88.6% | 1.05x |
 
 ### Fleiss's Kappa Inter-Rater Reliability
@@ -16,7 +16,7 @@ This table compares performance metrics across all generated graph directories.
 Fleiss's Kappa measures agreement among 3 raters (Ground Truth, Standard, and Parsimonious) 
 across all 27 shared videos and 169 services:
 
-- **Fleiss's Kappa (K):** `0.8267`
+- **Fleiss's Kappa (K):** `0.8283`
 
 - **Interpretation:** Acuerdo casi perfecto (Altamente confiable)
 
@@ -31,23 +31,23 @@ across all 27 shared videos and 169 services:
 
 | # | Video ID | Svc P | Svc R | Svc F1 | Edge P | Edge R | Edge F1 | Gen N | GT N | Gen E | GT E | Missing | Hallucinated |
 |---|----------|-------|-------|--------|--------|--------|---------|-------|------|-------|------|---------|--------------|
-| 1 | `-wLEkq21cvA` | 100% | 100% | 100% | 100% | 90% | 95% | 9 | 9 | 9 | 10 | — | — |
-| 2 | `Cgv0kfp_6xQ` | 100% | 100% | 100% | 77% | 71% | 74% | 10 | 10 | 13 | 14 | — | — |
-| 3 | `Kebb0LOVC28` | 100% | 100% | 100% | 47% | 38% | 42% | 11 | 9 | 17 | 21 | — | — |
-| 4 | `-3lnf5lzsH0` | 100% | 92% | 96% | 40% | 38% | 39% | 14 | 13 | 15 | 16 | OnPremDC | — |
-| 5 | `07lfvavMdfU` | 91% | 100% | 95% | 71% | 71% | 71% | 12 | 10 | 14 | 14 | — | Lambda |
-| 6 | `6YkguepAQuQ` | 100% | 90% | 95% | 38% | 30% | 33% | 9 | 10 | 8 | 10 | VPC | — |
-| 7 | `6EUknQqaV1w` | 88% | 100% | 93% | 77% | 91% | 83% | 11 | 9 | 13 | 11 | — | SES |
-| 8 | `1aYoIZvabbk` | 86% | 100% | 92% | 44% | 80% | 57% | 7 | 6 | 9 | 5 | — | EC2 |
-| 9 | `Felt-hOU6kU` | 86% | 100% | 92% | 50% | 100% | 67% | 8 | 7 | 8 | 4 | — | VPC |
+| 1 | `-wLEkq21cvA` | 100% | 100% | 100% | 100% | 100% | 100% | 9 | 9 | 10 | 10 | — | — |
+| 2 | `6YkguepAQuQ` | 100% | 100% | 100% | 100% | 40% | 57% | 10 | 10 | 4 | 10 | — | — |
+| 3 | `Cgv0kfp_6xQ` | 100% | 100% | 100% | 77% | 71% | 74% | 10 | 10 | 13 | 14 | — | — |
+| 4 | `Kebb0LOVC28` | 100% | 100% | 100% | 47% | 38% | 42% | 11 | 9 | 17 | 21 | — | — |
+| 5 | `-3lnf5lzsH0` | 100% | 92% | 96% | 40% | 38% | 39% | 14 | 13 | 15 | 16 | OnPremDC | — |
+| 6 | `6EUknQqaV1w` | 88% | 100% | 93% | 77% | 91% | 83% | 11 | 9 | 13 | 11 | — | SES |
+| 7 | `Felt-hOU6kU` | 86% | 100% | 92% | 50% | 100% | 67% | 8 | 7 | 8 | 4 | — | VPC |
+| 8 | `2L0m28ZLmtE` | 92% | 92% | 92% | 58% | 64% | 61% | 14 | 13 | 12 | 11 | EC2 | UserCompanyAnalyst |
+| 9 | `07lfvavMdfU` | 90% | 90% | 90% | 80% | 57% | 67% | 10 | 10 | 10 | 14 | UserConsumerWeb | UserConsumerWebMobile |
 | 10 | `Ly_UhX3LCCs` | 80% | 100% | 89% | 20% | 29% | 24% | 7 | 7 | 10 | 7 | — | UserCompanyAPI |
-| 11 | `2L0m28ZLmtE` | 85% | 92% | 88% | 15% | 36% | 21% | 15 | 13 | 27 | 11 | ThirdParty | CloudFormation, UserCompanyAnalyst |
-| 12 | `Pc7_uOdlGKo` | 88% | 88% | 88% | 45% | 56% | 50% | 9 | 9 | 11 | 9 | UserConsumerMobile | UserCompanyAnalyst |
-| 13 | `-kA0ahrhX3I` | 86% | 86% | 86% | 25% | 50% | 33% | 11 | 9 | 16 | 8 | UserCompanyDeveloper | UserConsumerWeb |
+| 11 | `Pc7_uOdlGKo` | 88% | 88% | 88% | 45% | 56% | 50% | 9 | 9 | 11 | 9 | UserConsumerMobile | UserCompanyAnalyst |
+| 12 | `-kA0ahrhX3I` | 86% | 86% | 86% | 100% | 50% | 67% | 11 | 9 | 4 | 8 | UserCompanyDeveloper | UserCompanyAgent |
+| 13 | `1aYoIZvabbk` | 75% | 100% | 86% | 56% | 100% | 71% | 8 | 6 | 9 | 5 | — | AutoScaling, ThirdParty |
 | 14 | `NfUwtK8ALtw` | 86% | 86% | 86% | 80% | 75% | 77% | 9 | 9 | 15 | 16 | UserConsumerWeb | UserConsumerWebMobile |
 | 15 | `wjtSHyENv0I` | 86% | 86% | 86% | 62% | 71% | 67% | 8 | 8 | 16 | 14 | UserConsumerWeb | UserCompanyAgent |
 | 16 | `OQKOHNtyz3E` | 80% | 89% | 84% | 61% | 46% | 52% | 12 | 11 | 18 | 24 | UserConsumerMobile | UserCompanyAnalyst, UserConsumerWebMobile |
-| 17 | `2e3vOxsHekE` | 83% | 83% | 83% | 67% | 67% | 67% | 6 | 6 | 6 | 6 | UserConsumerEdge | UserConsumerIOT |
+| 17 | `2e3vOxsHekE` | 83% | 83% | 83% | 75% | 50% | 60% | 6 | 6 | 4 | 6 | UserConsumerEdge | UserConsumerIOT |
 | 18 | `D9qTotVJYss` | 83% | 83% | 83% | 44% | 40% | 42% | 6 | 6 | 9 | 10 | UserCompanyAgent | UserCompanyInternalPlatform |
 | 19 | `AS2JeM2FUzE` | 88% | 78% | 82% | 55% | 50% | 52% | 8 | 9 | 11 | 12 | UserConsumerWeb, VPCPeering | UserCompanyAnalyst |
 | 20 | `H_S7CxtHgSM` | 78% | 88% | 82% | 41% | 58% | 48% | 11 | 11 | 17 | 12 | UserCompanyAgent | IAM, UserCompanyDeveloper |

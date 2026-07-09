@@ -1,320 +1,194 @@
 {
-  "step_by_step_reasoning": "Based on the transcript, Sanofi's Darwin data science environment enables 30-40 analyst users to securely analyze health data. The architecture starts with a static frontend (S3 website, CloudFront CDN, Cognito with SSO authentication). The dynamic backend leverages API Gateway and DynamoDB for actions and tracing. To provision isolated analytical environments, API Gateway communicates with Service Catalog, which uses CloudFormation to launch SageMaker notebooks and custom RStudio instances (mapped to EC2). For AI capabilities, API Gateway invokes distinct Lambda functions: one utilizing the Amazon Translate SDK for batch document translations, and another leveraging Comprehend Medical to identify and de-identify critical medical metadata. All processed and source datasets are stored securely within isolated S3 buckets and a central Data Lake.",
+  "step_by_step_reasoning": "We trace the architecture's flows based on the user's interaction journey described in the transcript. Flow 0 represents user authentication and portal loading: Sanofi analysts access the frontend securely served by Amazon CloudFront from Amazon S3, using AWS Cognito federated with Sanofi SSO for single sign-on authentication. Flow 1 represents auditing: dynamic requests from the portal route through Amazon API Gateway to log activities and fetch user metadata in Amazon DynamoDB. Flow 2 represents data science workspace provisioning: requests from the portal trigger AWS Service Catalog to safely launch secure, isolated RStudio and Amazon SageMaker analytics environments, coordinated via AWS Lambda hooks. Flow 3 represents the NLP translation and de-identification pipeline: custom AWS Lambda functions leverage Amazon Translate and Amazon Comprehend Medical to parse medical data securely within the ecosystem.",
   "graph": {
-    "name": "Sanofi - Secure Real-World Evidence Data Science Platform",
+    "name": "Sanofi Darwin - Real World Evidence (RWE) Data Analytics Platform",
     "link": "https://www.youtube.com/watch?v=2L0m28ZLmtE",
-    "categories": "compute_intensive, interactive, data_ingestion",
+    "categories": "interactive, compute_intensive, other",
     "graph_usable": true,
-    "notes": "Secure environment designed for data scientists to run smart data analytics. Designed around strong auditing, data segregation, and restricted data downloads."
+    "notes": "An enterprise analytical workspace platform built for Sanofi data scientists to securely analyze medical and Real World Evidence (RWE) data. It hosts static assets on S3 distributed via CloudFront, secures user authentication via AWS Cognito federated with Sanofi SSO, provisions reproducible analytical sandboxes (RStudio, SageMaker) via Service Catalog, and runs de-identification and translation pipelines using Lambda with Amazon Comprehend Medical and Amazon Translate."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserCompanyAnalyst",
-      "name": "Sanofi Data Scientists",
-      "notes": "Analyst team conducting medical analytics using RStudio and SageMaker."
+      "name": "Users",
+      "notes": "Sanofi data scientists and analysts accessing the data analytics portal."
     },
     {
       "id": "1",
-      "service": "CloudFront",
-      "name": "CloudFront Distribution",
-      "notes": "Serves static content and manages HTTPS certificates."
+      "service": "ThirdParty",
+      "name": "SANOFI SSO",
+      "notes": "Sanofi corporate Single Sign-On Identity Provider federated with Cognito."
     },
     {
       "id": "2",
-      "service": "S3",
-      "name": "Portal Static Hosting",
-      "notes": "S3 bucket configured for static portal hosting."
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "CloudFront CDN serving the portal static website with SSL/TLS certificate offloading."
     },
     {
       "id": "3",
       "service": "Cognito",
-      "name": "Cognito Federated Identity",
-      "notes": "Authenticates users via federation with Sanofi's internal SSO."
+      "name": "COGNITO",
+      "notes": "AWS Cognito managing authentication and federation with Sanofi's identity provider."
     },
     {
       "id": "4",
-      "service": "ApiGateway",
-      "name": "API Gateway",
-      "notes": "Directs dynamic API calls and handles portal operations."
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 bucket hosting the static website assets of the portal."
     },
     {
       "id": "5",
-      "service": "DynamoDB",
-      "name": "User Trace DynamoDB",
-      "notes": "WORKLOAD_PEEK: Tracks metadata and audit logs for all user activities."
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Amazon API Gateway managing dynamic REST API endpoints for user and audit metadata."
     },
     {
       "id": "6",
-      "service": "ServiceCatalog",
-      "name": "Service Catalog Portfolio",
-      "notes": "Allows users to self-provision pre-configured templates."
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Amazon DynamoDB storing user metadata and comprehensive platform audit logs."
     },
     {
       "id": "7",
-      "service": "CloudFormation",
-      "name": "CloudFormation Engine",
-      "notes": "Deploys repeatable, isolated analytics environments."
+      "service": "ServiceCatalog",
+      "name": "SERVICE CATALOG",
+      "notes": "AWS Service Catalog managing standardized analytical environment provisioning via CloudFormation."
     },
     {
       "id": "8",
-      "service": "SageMaker",
-      "name": "SageMaker Notebooks",
-      "notes": "WORKLOAD_PEEK: Provisioned with 100GB encrypted disks for secure workspaces."
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "AWS Lambda executing provisioning lifecycle scripts and analytical backend tasks."
     },
     {
       "id": "9",
-      "service": "EC2",
-      "name": "RStudio Workspace",
-      "notes": "Custom EC2 instances running RStudio for analytical modeling."
+      "service": "ThirdParty",
+      "name": "R STUDIO",
+      "notes": "Standardized RStudio analytical workspace provisioned per-user."
     },
     {
       "id": "10",
-      "service": "S3",
-      "name": "Data Lake & User S3 Buckets",
-      "notes": "DATA_PEEK: Real World Evidence datasets kept secure within the cloud perimeter."
+      "service": "SageMaker",
+      "name": "SAGEMAKER",
+      "notes": "Amazon SageMaker notebook instances provisioned for individual ML development."
     },
     {
       "id": "11",
-      "service": "Lambda",
-      "name": "Translation Worker",
-      "notes": "Batch translates files via AWS SDK integration."
+      "service": "Translate",
+      "name": "TRANSLATE",
+      "notes": "Amazon Translate used for bulk document translation of clinical and medical text files."
     },
     {
       "id": "12",
-      "service": "Translate",
-      "name": "Amazon Translate",
-      "notes": "Performs bulk machine translation of raw medical records."
+      "service": "Comprehend",
+      "name": "COMPREHEND MEDICAL",
+      "notes": "Amazon Comprehend Medical used to recognize medical entities and de-identify sensitive data."
     },
     {
       "id": "13",
-      "service": "Lambda",
-      "name": "NLP Extraction Worker",
-      "notes": "Executes medical entity detection workflows."
-    },
-    {
-      "id": "14",
-      "service": "Comprehend",
-      "name": "Comprehend Medical",
-      "notes": "Identifies sensitive medical entities to allow data curation."
+      "service": "S3",
+      "name": "DATA LAKE",
+      "notes": "Secure landing zone and analytical data lake with strong access boundaries to prevent extraction."
     }
   ],
   "edges": [
     {
       "source": "0",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "0",
-      "type": "data",
-      "notes": "Accesses portal UI"
-    },
-    {
-      "source": "1",
       "target": "2",
       "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Retrieves portal assets"
+      "seq": 0,
+      "type": "control",
+      "notes": "Users access the web portal interface via CloudFront CDN."
     },
     {
       "source": "2",
-      "target": "1",
+      "target": "4",
       "flow_id": 0,
-      "seq": "2",
+      "seq": 1,
       "type": "data",
-      "notes": "Returns static site assets"
+      "notes": "CloudFront serves the static portal assets stored securely in S3."
     },
     {
       "source": "1",
-      "target": "0",
-      "flow_id": 0,
-      "seq": "3",
-      "type": "data",
-      "notes": "Delivers client page"
-    },
-    {
-      "source": "0",
       "target": "3",
       "flow_id": 0,
-      "seq": "4",
-      "type": "data",
-      "notes": "Requests auth token via SSO federated SSO"
+      "seq": 2,
+      "type": "control",
+      "notes": "Sanofi SSO federates user authentication with Amazon Cognito."
     },
     {
       "source": "3",
-      "target": "0",
-      "flow_id": 0,
-      "seq": "5",
-      "type": "data",
-      "notes": "Returns verified auth token"
-    },
-    {
-      "source": "0",
       "target": "4",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "Sends portal API requests"
+      "flow_id": 0,
+      "seq": 3,
+      "type": "control",
+      "notes": "Cognito session token authorizes access to protected portal assets in S3."
     },
     {
       "source": "4",
       "target": "5",
       "flow_id": 1,
-      "seq": "1",
+      "seq": 0,
+      "type": "control",
+      "notes": "Static portal frontend triggers dynamic API operations using API Gateway."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": 1,
       "type": "data",
-      "notes": "Records action and telemetry logs"
+      "notes": "API Gateway records user actions and stores/reads metadata in DynamoDB for traceability."
     },
     {
       "source": "4",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "Triggers workspace provisioning"
-    },
-    {
-      "source": "6",
       "target": "7",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Passes CloudFormation stack configuration"
-    },
-    {
-      "source": "7",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "meta",
-      "notes": "Spins up secure SageMaker Instance"
+      "flow_id": 2,
+      "seq": 0,
+      "type": "control",
+      "notes": "User interacts with the frontend to trigger deployment of workspace sandboxes via Service Catalog."
     },
     {
       "source": "7",
       "target": "9",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "meta",
-      "notes": "Spins up custom RStudio EC2 instance"
+      "flow_id": 2,
+      "seq": 1,
+      "type": "control",
+      "notes": "Service Catalog provisions isolated RStudio server environments for statistics workloads."
     },
     {
-      "source": "4",
-      "target": "0",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "Confirms environment creation status"
+      "source": "7",
+      "target": "10",
+      "flow_id": 2,
+      "seq": 2,
+      "type": "control",
+      "notes": "Service Catalog spins up custom encrypted SageMaker Notebooks for users."
     },
     {
-      "source": "0",
+      "source": "7",
       "target": "8",
       "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "Connects to SageMaker Notebook interface"
+      "seq": 3,
+      "type": "control",
+      "notes": "Service Catalog orchestrates lifecycle hooks using AWS Lambda functions."
     },
     {
       "source": "8",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Reads & writes active model datasets"
-    },
-    {
-      "source": "0",
-      "target": "9",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Connects to RStudio IDE"
-    },
-    {
-      "source": "9",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Performs reads/writes on analytical data"
-    },
-    {
-      "source": "4",
       "target": "11",
-      "flow_id": 2,
-      "seq": "4",
-      "type": "data",
-      "notes": "Invokes language translation job"
+      "flow_id": 3,
+      "seq": 0,
+      "type": "control",
+      "notes": "Lambda triggers translation of bulk clinical documentation using Amazon Translate SDK."
     },
     {
-      "source": "11",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "5",
-      "type": "data",
-      "notes": "Fetches raw file to translate"
-    },
-    {
-      "source": "11",
+      "source": "8",
       "target": "12",
-      "flow_id": 2,
-      "seq": "6",
-      "type": "data",
-      "notes": "Sends file text via SDK"
-    },
-    {
-      "source": "12",
-      "target": "11",
-      "flow_id": 2,
-      "seq": "7",
-      "type": "data",
-      "notes": "Returns translated data output"
-    },
-    {
-      "source": "11",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "8",
-      "type": "data",
-      "notes": "Saves translated file to sandbox bucket"
-    },
-    {
-      "source": "4",
-      "target": "13",
-      "flow_id": 2,
-      "seq": "9",
-      "type": "data",
-      "notes": "Invokes entity extraction job"
-    },
-    {
-      "source": "13",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "10",
-      "type": "data",
-      "notes": "Loads medical document content"
-    },
-    {
-      "source": "13",
-      "target": "14",
-      "flow_id": 2,
-      "seq": "11",
-      "type": "data",
-      "notes": "Requests entity and syntax analysis"
-    },
-    {
-      "source": "14",
-      "target": "13",
-      "flow_id": 2,
-      "seq": "12",
-      "type": "data",
-      "notes": "Returns parsed patient & clinical metadata"
-    },
-    {
-      "source": "13",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "13",
-      "type": "data",
-      "notes": "Persists structured findings to user storage"
+      "flow_id": 3,
+      "seq": 1,
+      "type": "control",
+      "notes": "Lambda invokes Comprehend Medical to detect PHI and de-identify raw files."
     }
   ]
 }
