@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The architecture is split into ingestion, pre-processing, and post-processing phases. First, 100k IoT sensors (UserConsumerIOT) send water usage and alarm data through API Gateway. A Transformer Lambda standardizes the multi-protocol payload, splitting it into SQS queues for Flow and Alarm data. A Preprocessor Lambda queries ElastiCache Redis to determine which metrics need processing, filtering out redundant records. The remaining 40% of data is sent to a Post-Processor EC2 instance, which saves time-series events into DynamoDB and aggregated daily stats into Aurora. Finally, end-user mobile devices consume this data via APIs.",
+  "graph": {
+    "name": "Vigod Aqua Water Management Platform",
+    "link": "https://www.youtube.com/watch?v=CE03UMddoYU",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "An IoT utility monitoring architecture that scales to handle 27 million daily events while reducing costs by 25% through SQS buffering, smart caching, and serverless ingestion."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Sensors",
+      "notes": "100k field water meters transmitting utility data."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for incoming utility data stream."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Transformer",
+      "notes": "Standardizes raw data from multiple generations of sensors."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Flow Queue",
+      "notes": "Buffers sensor flow data."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Alarm Queue",
+      "notes": "Buffers active sensor alarm events."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Preprocessor",
+      "notes": "Processes queued records and decides which data warrants persistence."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "Elastic Cache",
+      "notes": "Redis cache used by the preprocessor to filter redundant data."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Post Processor",
+      "notes": "Processes the filtered 40% of data stream."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores event data such as tank deliveries and pump events."
+    },
+    {
+      "id": "9",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Stores aggregated daily statistics."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Client",
+      "notes": "End users accessing visualization reports and portals."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sensors transmit usage and alarm metrics."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers transformation execution."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pushes normalized flow data to queue."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pushes normalized alarm data to queue."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Preprocessor pulls flow records."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Preprocessor pulls alarm records."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Consults Redis cache to filter redundant data points."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Passes filtered 40% of events for final processing."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Saves point-in-time events."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "Stores daily metrics."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "11",
+      "type": "data",
+      "notes": "Feeds mobile apps with event logs."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "12",
+      "type": "data",
+      "notes": "Feeds dashboards with daily usage aggregates."
+    }
+  ]
+}
