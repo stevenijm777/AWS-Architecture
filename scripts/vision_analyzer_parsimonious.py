@@ -197,7 +197,8 @@ def analyze_frame(
         console.print(f"  [dim]  Including transcript ({len(transcript)} chars)[/]")
 
     import time
-    max_retries = 3
+    import os
+    max_retries = int(os.environ.get("GEMINI_MAX_RETRIES", "3"))
     retry_delay = 10
     response = None
 
