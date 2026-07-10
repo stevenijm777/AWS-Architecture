@@ -61,8 +61,8 @@ def main():
     start_time = time.time()
     successful = 0
     failed = 0
-    max_success = 10
-    max_failures = 3
+    max_success = 2
+    max_failures = 2
 
     env = dict(os.environ)
     env["NO_GT_COMPARE"] = "true"
