@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "Data from various customer sources (EFS, DynamoDB, Redshift, S3) is aggregated and transformed using AWS Glue. The transformed data is written to a central S3 bucket. This write triggers a Lambda function (Cluster stage), which invokes SageMaker to cluster customer groups. Next, a secondary prediction run (Predict stage) is triggered on SageMaker. SageMaker outputs the 'next best offer' recommendations back into S3. The prediction outputs are finally consumed via APIs for real-time applications or visualized through BI dashboards.",
+  "graph": {
+    "name": "TASOLS Event-Driven Serverless Machine Learning Pipeline",
+    "link": "https://www.youtube.com/watch?v=GJ1So_pbZWk",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "A serverless, event-driven machine learning architecture that chains SageMaker models (k-means clustering and random forest prediction) to deliver real-time recommendations and BI dashboards."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EFS",
+      "name": "EFS",
+      "notes": "Source for unstructured flat files."
+    },
+    {
+      "id": "1",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Source for transactional NoSQL data."
+    },
+    {
+      "id": "2",
+      "service": "Redshift",
+      "name": "Redshift",
+      "notes": "Source for structured columnar data."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Input",
+      "notes": "Landing zone for batch CSV and raw data inputs."
+    },
+    {
+      "id": "4",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Performs ETL on incoming source data."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Central",
+      "notes": "Stores ready data and triggers the ML pipeline on write events."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Orchestrates SageMaker ML jobs sequentially."
+    },
+    {
+      "id": "7",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Runs k-means clustering and random forest prediction models."
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerAPI",
+      "name": "API Client",
+      "notes": "Real-time API endpoints for operational application integration."
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyAnalyst",
+      "name": "BI Dashboard",
+      "notes": "Consumes downstream prediction results for analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests unstructured files into Glue."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests transactional data into Glue."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests warehouse data into Glue."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests batch files into Glue."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Loads clean data into central S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 write event triggers orchestrating Lambda."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda invokes SageMaker training and prediction runs."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves generated ML predictions back to S3."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Exposes predicted offers via low-latency API."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Supplies prediction metrics to analytical dashboards."
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture shows data ingestion and processing pipelines for Jubilant Foodworks (Domino's). Transactional data flows from POS devices in restaurants and E-Commerce apps. E-Commerce data goes to an RDS MySQL database, which is replicated to S3 via DMS. POS data goes to an EC2 consolidation database, then moved to S3 via custom ETL. S3 acts as the central data lake. EMR reads raw data from S3, processes it into a curated layer, and loads hot data (last 5-6 months) into Amazon Redshift. Redshift Spectrum allows querying cold data directly from S3, while Athena is used for serverless ad-hoc analytics on historical S3 data.",
+  "graph": {
+    "name": "Jubilant Foodworks Serverless Data Lake and Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=G07keU4g-LU",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Data lake architecture utilizing AWS analytics services to ingest POS and e-commerce transaction data, separating hot data in Redshift from cold data in S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerPOS",
+      "name": "POS",
+      "notes": "Point of sale machines in 1,200 restaurants."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "E-COMM",
+      "notes": "Customer facing mobile application and website."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "POS DB",
+      "notes": "Consolidation database server on AWS cloud."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "E-Comm DB",
+      "notes": "Transactional MySQL database for e-commerce orders."
+    },
+    {
+      "id": "4",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "AWS Database Migration Service replicates e-commerce database to S3."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Central data lake with raw and curated data buckets."
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Transforms raw S3 data to curated layer, and loads curated hot data to Redshift."
+    },
+    {
+      "id": "7",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Data warehouse storing hot transactional data (last 5-6 months)."
+    },
+    {
+      "id": "8",
+      "service": "RedShift",
+      "name": "Redshift Spectrum",
+      "notes": "Queries historical cold/warm data directly from S3."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Provides ad-hoc SQL querying capability over S3 data for analysts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Online orders flow into restaurant POS systems."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "E-commerce orders written to MySQL database."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "DMS reads transaction data."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "DMS writes raw transactional data to S3."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "POS systems upload local restaurant sales data to consolidation DB."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Custom ETL scripts transform and load POS DB data to S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR pulls raw data for transformation."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR writes curated data back to S3."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 5,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR loads curated hot data into Redshift."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 6,
+      "seq": "0",
+      "type": "data",
+      "notes": "Spectrum transparently queries cold data from S3."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 7,
+      "seq": "0",
+      "type": "data",
+      "notes": "Analysts execute ad-hoc SQL queries on S3 historical data."
+    }
+  ]
+}

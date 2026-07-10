@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "The architecture is structured into ingestion, near-real-time streaming, long-term batch warehousing, and consumption layers. We map the customer VPC components (EC2 with agent, CloudTrail) sending data to ThreatStack's central Kafka cluster. From Kafka, the data splits into two paths: a near-real-time path processed by Flink and saved to S3 in GZIP JSON, and a 30-day warehousing path processed by EMR into S3 in Parquet format. An EC2 orchestrator manages the EMR jobs. Downstream analytics are performed on the Parquet data via Athena, SageMaker, and EMR.",
+  "graph": {
+    "name": "ThreatStack Telemetry Ingestion and Analytics Pipeline",
+    "link": "https://www.youtube.com/watch?v=INog0_9tCtY",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Ingestion pipeline processing 60 billion daily events. Employs a split stream: near-real-time via Flink to S3, and long-term batch via EMR to S3 Parquet for SQL, ML, and reporting queries."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "VPC",
+      "name": "Customer VPC",
+      "notes": "Boundary for customer environment."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Customer EC2 Instances",
+      "notes": "Runs ThreatStack security agent."
+    },
+    {
+      "id": "2",
+      "service": "CloudTrail",
+      "name": "AWS CloudTrail",
+      "notes": "Tracks user activity and API usage."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Apache Kafka",
+      "notes": "Ingests events and serializes them into Avro."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Apache Flink",
+      "notes": "Processes and routes real-time streams."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "NRT S3 Bucket",
+      "notes": "Stores near-real-time JSON data GZIPed."
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "EMR Batch Cluster",
+      "notes": "Processes and batches 30-day data."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Parquet S3 Bucket",
+      "notes": "Long-term data warehouse storing Parquet files."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "Orchestration Instance",
+      "notes": "Launches secure EMR clusters and submits Spark JARs."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Runs ad-hoc SQL queries on Parquet logs."
+    },
+    {
+      "id": "10",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "Trains models for anomaly detection."
+    },
+    {
+      "id": "11",
+      "service": "EMR",
+      "name": "EMR Analytics Cluster",
+      "notes": "Executes analytics and nightly reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends agent telemetry."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0a",
+      "type": "data",
+      "notes": "Sends CloudTrail logs."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams real-time events."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes GZIP JSON."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Feeds 30-day batch stream."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes Parquet format."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Orchestrates cluster lifecycle."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0a",
+      "type": "data",
+      "notes": "Submits analytical JAR jobs."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries security data."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 4,
+      "seq": "1a",
+      "type": "data",
+      "notes": "Feeds ML models."
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "flow_id": 4,
+      "seq": "1b",
+      "type": "data",
+      "notes": "Processes reporting data."
+    }
+  ]
+}

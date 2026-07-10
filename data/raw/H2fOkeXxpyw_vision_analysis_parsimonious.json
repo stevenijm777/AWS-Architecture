@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture is split into deployment and invocation phases. In the deployment phase, developers use a CLI (UserCompanyDeveloper) to push code to a scalable deployment service running on EC2. This service records deployment states in DynamoDB and pushes jobs into SQS to manage rate limits. A backend EC2 worker polls SQS to safely deploy the code as Lambda functions in a secure, isolated AWS account. In the invocation phase, end-users using browsers (UserConsumerWeb) access an invocation service on EC2 which performs auth checks and executes the targeted customer Lambda using secure V8 isolates.",
+  "graph": {
+    "name": "Atlassian Forge Extensibility Platform",
+    "link": "https://www.youtube.com/watch?v=H2fOkeXxpyw",
+    "categories": "compute_intensive,interactive,control",
+    "graph_usable": true,
+    "notes": "Atlassian Forge uses a multi-tenant Lambda execution model with V8 isolates inside a dedicated AWS account to secure tenant code execution."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer CLI",
+      "notes": "Developers write and deploy custom application code using the CLI."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Deployment Web Service",
+      "notes": "Receives and scales deployment requests from the developer CLI."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "State Database",
+      "notes": "Stores and tracks the progress and state of active deployments."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Deployment Queue",
+      "notes": "Buffers deployment requests to prevent rate limiting of the Lambda control plane."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Deployment Worker",
+      "notes": "Consumes deployment jobs from SQS and creates customer Lambdas."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Customer Lambdas",
+      "notes": "Runs tenant code in dedicated AWS account using secure V8 isolates."
+    },
+    {
+      "id": "6",
+      "service": "UserConsumerWeb",
+      "name": "End User Browser",
+      "notes": "Interacts with Forge applications and triggers function execution."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Invocation Service",
+      "notes": "Handles authentication, permission checks, and triggers Lambda execution."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Developer deploys code using CLI."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Persists deployment state tracking."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enqueues deployment tasks."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "4",
+      "type": "data",
+      "notes": "Worker polls deployment jobs."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 4,
+      "seq": "5",
+      "type": "data",
+      "notes": "Deploys custom code as Lambda function."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 5,
+      "seq": "6",
+      "type": "data",
+      "notes": "Requests application features/renders."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "7",
+      "type": "data",
+      "notes": "Invokes the targeted Lambda function."
+    }
+  ]
+}
