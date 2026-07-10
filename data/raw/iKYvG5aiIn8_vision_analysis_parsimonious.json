@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "Data is replicated from on-premise SQL Server to an S3 landing bucket using AWS DMS. Landing updates trigger S3 event notifications to SQS queues. Amazon EventBridge schedules run AWS Step Functions to orchestrate AWS Glue ETL jobs. Glue consumes queue events to update the S3 Delta Lake. Data Scientists then query the Delta Lake for machine learning models.",
+  "graph": {
+    "name": "True Blue Serverless Data Lake Architecture",
+    "link": "https://www.youtube.com/watch?v=iKYvG5aiIn8",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Serverless data lake architecture utilizing AWS Glue to process database transactions and updates in near-real time instead of EMR."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "SQL Server",
+      "notes": "On-premises transactional databases."
+    },
+    {
+      "id": "1",
+      "service": "DMS",
+      "name": "AWS DMS",
+      "notes": "Replicates transactional databases to S3."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Landing S3",
+      "notes": "S3 landing bucket for raw transactional Parquet files."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Amazon SQS",
+      "notes": "Buffers S3 event notifications categorized by latency."
+    },
+    {
+      "id": "4",
+      "service": "EventBridge",
+      "name": "Amazon EventBridge",
+      "notes": "Triggers step functions based on scheduled latency rules."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates AWS Glue workflows."
+    },
+    {
+      "id": "6",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Serverless ETL jobs processing and writing updates to Delta Lake."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Delta Lake S3",
+      "notes": "Three-tiered (bronze, silver, gold) Delta Lake storage."
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyAnalyst",
+      "name": "Data Scientist",
+      "notes": "Data scientists querying Delta Lake tables via PySpark SQL."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Replicates source data."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes Parquet files to landing bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 event notifications published to SQS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers workflows at scheduled intervals."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Invokes AWS Glue jobs."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Glue reads S3 file locations from queues."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes upserts and updates to Delta Lake."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries views and raw data using PySpark."
+    }
+  ]
+}

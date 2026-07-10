@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture shows an asynchronous audio transcription pipeline. Clients (UserCompanyAPI) upload audio data to an API Manager running on ECS. The API Manager saves the transcoded audio in Amazon S3 and forwards metadata to an Orchestrator (ECS). The Orchestrator manages model execution using Amazon SQS to distribute tasks to Inference Containers (ECS). A custom scaling loop uses CloudWatch Metrics to dynamically scale GPU resources based on queue depth and predictive model requirements. After processing, the Orchestrator publishes completion events to SNS, triggering a Lambda webhook to asynchronously notify the users.",
+  "graph": {
+    "name": "AssemblyAI High-Scalability Audio Transcribing and ML Inference Pipeline",
+    "link": "https://www.youtube.com/watch?v=vQgUkn3rAMY",
+    "categories": "compute_intensive, data_ingestion",
+    "graph_usable": true,
+    "notes": "AssemblyAI uses ECS for both orchestrating workflows and hosting dozens of custom ML speech-to-text models on GPUs. A custom scaling loop leveraging CloudWatch and SQS queue depth handles scaling challenges while controlling costs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAPI",
+      "name": "AssemblyAI Users",
+      "notes": "External client applications submitting raw audio files or referencing existing buckets."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "API Manager ECS",
+      "notes": "Validates requests and handles initial audio ingestion and transcoding."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "Orchestrator ECS",
+      "notes": "Decides which ML models to run and coordinates execution order."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores transcoded audio with strict security lifecycle policies."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch Metrics",
+      "notes": "Gathers queue depth and orchestrator signals to run a custom pre-scaling loop."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "Amazon SQS",
+      "notes": "Buffers job messages driving the model inference pipeline."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "Inference Models ECS",
+      "notes": "Dozens of speech-to-text, speaker labeling, and LLM models on GPU instances."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "Amazon SNS",
+      "notes": "Receives completed workflow status signals from the Orchestrator."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Webhook Lambda",
+      "notes": "Asynchronously delivers transcription notifications back to client endpoints."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client sends audio to API Manager"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends validated request parameters"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Uploads transcoded audio payload"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Enqueues model tasks"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Inference models poll queue for work"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Inference container downloads audio by reference"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes status and metric data"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Custom scaler pre-scales ECS tasks using metric predictions"
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers complete status notification"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers delivery webhook function"
+    },
+    {
+      "source": "8",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Asynchronous HTTP post of transcription results to user"
+    }
+  ]
+}

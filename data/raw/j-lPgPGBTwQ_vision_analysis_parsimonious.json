@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "We start with the cow collars (UserConsumerIOT) which send data through two paths: WiFi to IoT Core and LoRa to EC2. Both ingestion paths pipe data into a Raw Kinesis Stream. A Lambda function processes this data (deduplicating and decoding to JSON) and sends it to a Processed Kinesis Stream. Kinesis Analytics (using Apache Flink) aggregates the stream and partitions it into S3. For the query path, the Farmer (UserConsumerFarmer) requests a heatmap from the mobile app, triggering an ECS Fargate container. The container runs an Athena query against the S3 data and retrieves the aggregated results.",
+  "graph": {
+    "name": "Halter IoT Cattle Tracking and Pasture Management Architecture",
+    "link": "https://www.youtube.com/watch?v=j-lPgPGBTwQ",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "IoT telemetry pipeline ingesting WiFi and LoRa cattle collar data, processing it through Kinesis and Lambda, and serving spatial analytics to farmers via ECS and Athena."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Cattle Collar Devices",
+      "notes": "Solar-powered, GPS-enabled collars sending telemetry over WiFi or LoRa."
+    },
+    {
+      "id": "1",
+      "service": "IoTCore",
+      "name": "IoT Core",
+      "notes": "Ingests high-throughput collar data over WiFi using MQTT."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "LoRa Base Station Server",
+      "notes": "EC2 instance running third-party software to handle LoRa base station traffic."
+    },
+    {
+      "id": "3",
+      "service": "KinesisDataStream",
+      "name": "Raw Kinesis Stream",
+      "notes": "Aggregates duplicate, binary formatted telemetry from both ingestion paths."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Deduplication & Decoding Lambda",
+      "notes": "Decodes binary payloads to JSON and removes duplicate telemetry entries."
+    },
+    {
+      "id": "5",
+      "service": "KinesisDataStream",
+      "name": "Processed Kinesis Stream",
+      "notes": "Main processed JSON stream consumed by multiple downstream services."
+    },
+    {
+      "id": "6",
+      "service": "KinesisAnalytics",
+      "name": "Kinesis Analytics",
+      "notes": "Runs Apache Flink to aggregate location data and add geo-indices."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Stores partitioned location data using farm ID and date as keys."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Queries historical location data in S3 to perform MapReduce aggregations."
+    },
+    {
+      "id": "9",
+      "service": "ECS",
+      "name": "ECS Fargate",
+      "notes": "Backend API service that orchestrates query initiation and fetches results."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerFarmer",
+      "name": "Farmer Mobile App",
+      "notes": "End-user interface used by farmers to view cow location heatmaps."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Collar transmits data via WiFi MQTT"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams raw WiFi payloads"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Collar transmits data over long-range LoRa"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams raw LoRa payloads"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda pulls binary data"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda writes decoded JSON"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis Analytics reads processed streams"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves aggregated records to S3 partition"
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Farmer requests location heatmap report"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "ECS Fargate triggers Athena MapReduce query"
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS Fargate retrieves final results from S3"
+    }
+  ]
+}

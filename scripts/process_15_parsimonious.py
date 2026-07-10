@@ -38,8 +38,8 @@ def main():
 
     print(f"Total missing videos with transcript and good whiteboard: {len(missing_videos)}")
     
-    # Take exactly 15
-    target_videos = missing_videos[:15]
+    # Take the last 15
+    target_videos = missing_videos[-15:]
     if not target_videos:
         print("No missing videos to process!")
         return
@@ -50,6 +50,11 @@ def main():
     start_time = time.time()
     successful = 0
     failed = 0
+
+    import os
+    env = dict(os.environ)
+    env["NO_GT_COMPARE"] = "true"
+    env["PYTHONIOENCODING"] = "utf-8"
 
     for idx, video_id in enumerate(target_videos, 1):
         url = f"https://www.youtube.com/watch?v={video_id}"
@@ -64,8 +69,8 @@ def main():
                 str(project_root / "main_parsimonious.py"),
                 "--url", url
             ]
-            # Run with a 90-second timeout to prevent indefinite hangs
-            res = subprocess.run(cmd, timeout=90, capture_output=True, text=True, check=True)
+            # Run with a 90-second timeout to prevent indefinite hangs, set UTF-8 encoding
+            res = subprocess.run(cmd, timeout=90, capture_output=True, text=True, encoding="utf-8", env=env, check=True)
             duration = time.time() - single_start
             print(res.stdout)
             print(f"✓ Finished {video_id} in {duration:.2f}s")
@@ -95,18 +100,8 @@ def main():
     print(f"  * Failed:     {failed}")
     print(f"  * Total Time:  {total_duration:.2f} seconds ({total_duration/60:.2f} minutes)")
     print("==================================================")
-
-    # Run evaluation script to update metrics
-    print("\n🔄 Running evaluation to update reports...")
-    try:
-        eval_script = project_root / "scripts" / "evaluate_graphs.py"
-        # Run evaluation with UTF-8 env
-        env = dict(sys.environ)
-        env["PYTHONIOENCODING"] = "utf-8"
-        subprocess.run([sys.executable, str(eval_script)], env=env, check=True)
-        print("✓ Evaluation reports successfully updated!")
-    except Exception as e:
-        print(f"✗ Failed to run evaluation: {e}")
+    # Evaluation is skipped to avoid using the Ground Truth or original Cloudscape files.
+    pass
 
 if __name__ == "__main__":
     main()
