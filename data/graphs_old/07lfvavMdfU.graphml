@@ -1,0 +1,181 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d12" for="edge" attr.name="id" attr.type="string" />
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="user">
+      <data key="d5">Web User</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">Users uploading content and viewing media/metadata in the browser.</data>
+    </node>
+    <node id="s3">
+      <data key="d5">Input S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Receives the uploaded raw video and stores processed proxies.</data>
+    </node>
+    <node id="step_functions_ingest">
+      <data key="d5">Ingest Orchestrator</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates transcoding and basic metadata extraction.</data>
+    </node>
+    <node id="mediaconvert">
+      <data key="d5">AWS Elemental MediaConvert</data>
+      <data key="d6">MediaConvert</data>
+      <data key="d7">Generates low-res browser-compatible proxies from source videos.</data>
+    </node>
+    <node id="lambda_meta">
+      <data key="d5">Metadata Extractor</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Extracts technical checksums and media information.</data>
+    </node>
+    <node id="step_functions_analysis">
+      <data key="d5">Analysis Orchestrator</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates AI services for content enrichment.</data>
+    </node>
+    <node id="rekognition">
+      <data key="d5">Amazon Rekognition</data>
+      <data key="d6">Rekognition</data>
+      <data key="d7">Identifies celebrities, violence, and tags contents with timestamps.</data>
+    </node>
+    <node id="transcribe">
+      <data key="d5">Amazon Transcribe</data>
+      <data key="d6">Transcribe</data>
+      <data key="d7">Converts audio from content to text.</data>
+    </node>
+    <node id="comprehend">
+      <data key="d5">Amazon Comprehend</data>
+      <data key="d6">Comprehend</data>
+      <data key="d7">Analyzes transcribed text for entities and profanity.</data>
+    </node>
+    <node id="dynamodb">
+      <data key="d5">Temporary Metadata Store</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores intermediate metadata temporarily before final ingest.</data>
+    </node>
+    <node id="reach_ec2">
+      <data key="d5">Reach Engine Portal</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Host environment for Reach Engine front-end and web interfaces.</data>
+    </node>
+    <node id="reach_eks">
+      <data key="d5">Reach Engine Orchestration</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Kubernetes cluster executing core processing, search, and orchestration logic.</data>
+    </node>
+    <edge source="user" target="s3">
+      <data key="d8">0</data>
+      <data key="d9">User uploads raw video file to input bucket</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="s3" target="step_functions_ingest">
+      <data key="d8">0</data>
+      <data key="d9">S3 upload triggers the ingest Step Functions workflow</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="step_functions_ingest" target="mediaconvert">
+      <data key="d8">0</data>
+      <data key="d9">Kicks off proxy transcoding job</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="step_functions_ingest" target="lambda_meta">
+      <data key="d8">0</data>
+      <data key="d9">Triggers lambda functions to extract technical metadata</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="step_functions_ingest" target="step_functions_analysis">
+      <data key="d8">1</data>
+      <data key="d9">Triggers the second analysis step function after basic ingest finishes</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="mediaconvert" target="s3">
+      <data key="d8">0</data>
+      <data key="d9">Outputs the web-playable proxy back to S3</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="lambda_meta" target="dynamodb">
+      <data key="d8">0</data>
+      <data key="d9">Saves extracted checksums and basic technical metadata</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="step_functions_analysis" target="rekognition">
+      <data key="d8">1</data>
+      <data key="d9">Triggers computer vision analysis on video content</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="step_functions_analysis" target="transcribe">
+      <data key="d8">1</data>
+      <data key="d9">Triggers speech-to-text audio processing</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="rekognition" target="dynamodb">
+      <data key="d8">1</data>
+      <data key="d9">Saves timestamped tags and metadata</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="transcribe" target="comprehend">
+      <data key="d8">1</data>
+      <data key="d9">Sends extracted transcript text to Comprehend for NLP analysis</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="comprehend" target="dynamodb">
+      <data key="d8">1</data>
+      <data key="d9">Saves NLP extracted entity and sentiment data</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="dynamodb" target="reach_eks">
+      <data key="d8">2</data>
+      <data key="d9">Triggers bulk ingest of compiled metadata into Reach Engine</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <edge source="dynamodb" target="reach_ec2">
+      <data key="d8">2</data>
+      <data key="d9">Imports metadata to frontend search portal</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+      <data key="d12">0</data>
+    </edge>
+    <data key="d0">Levels Beyond: Digital Content Orchestration</data>
+    <data key="d1">https://www.youtube.com/watch?v=07lfvavMdfU</data>
+    <data key="d2">Serverless media ingest and enrichment pipeline that extracts metadata, transcodes video, runs AI/ML sentiment and content analysis, and stores temporary metadata in DynamoDB before feeding a Reach Engine platform hosted on EC2 and EKS.</data>
+    <data key="d3">data_ingestion, compute_intensive</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

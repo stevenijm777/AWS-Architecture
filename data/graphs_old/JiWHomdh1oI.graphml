@@ -1,0 +1,123 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Customer MySQL Database</data>
+      <data key="d6">OnPremDC</data>
+      <data key="d7">Source database for data replication. Example: MySQL with hundreds of tables. WORKLOAD_PEEK: Data is fetched every five minutes.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Orchestration Service Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Central orchestration service. WORKLOAD_PEEK: Generates and responds to events. Triggers data connector every five minutes. Receives alerts from data connector upon successful S3 sync. Triggers Redshift loader.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Config and State Store</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">DATA_PEEK: Acts as a configuration and state store. Used by Orchestration Lambda and Data Connector Lambda to store sync progress, metrics (sync duration, records fetched), and schema change information.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Data Connector Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Pulls data from source database. WORKLOAD_PEEK: Batches incoming requests into multiple independent, parallel pieces for speed and fault tolerance (e.g., per table or multiple batches for large tables). DATA_PEEK: Stores state and schema changes in DynamoDB. Stages raw data in S3. Alerts Orchestration service upon successful sync.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Raw Data Staging Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">DATA_PEEK: Staging area for raw data fetched by the Data Connector Lambda.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Redshift Loader Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">DataCoral Redshift service. WORKLOAD_PEEK: Picks up data from S3. Reads schema changes from DynamoDB. Sends DDL statements to modify Redshift table if schema changed. Issues COPY statements to load data from S3 into Redshift.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Destination Redshift Cluster</data>
+      <data key="d6">RedShift</data>
+      <data key="d7">Target data warehouse for replicated data. WORKLOAD_PEEK: Can receive DDL statements for schema modification and COPY statements for data loading. DATA_PEEK: Replicating over 500 billion records per month across all customers.</data>
+    </node>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Orchestration Lambda reads and writes configuration/state information to DynamoDB.</data>
+      <data key="d10">0.1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Orchestration service (at the fifth minute) sends an event to trigger the Data Connector Lambda.</data>
+      <data key="d10">0.2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="1" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Orchestration Service sends an event to trigger the Redshift Loader Lambda.</data>
+      <data key="d10">1.2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="3" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Data Connector Lambda fetches data from the customer's MySQL database.</data>
+      <data key="d10">0.3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Data Connector Lambda saves state information (progress, metrics, schema changes) into DynamoDB.</data>
+      <data key="d10">0.4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Raw data fetched by the Data Connector Lambda gets staged in S3.</data>
+      <data key="d10">0.5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Data Connector Lambda alerts the Orchestration Service that data has been successfully written to S3.</data>
+      <data key="d10">1.1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Redshift cluster pulls data directly from S3 using the COPY statement.</data>
+      <data key="d10">1.6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Redshift Loader Lambda reads schema change information from DynamoDB.</data>
+      <data key="d10">1.3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">If schema has changed, Redshift Loader Lambda sends DDL statements to modify the destination Redshift table.</data>
+      <data key="d10">1.4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="1">
+      <data key="d8">1</data>
+      <data key="d9">Redshift Loader Lambda issues a COPY statement to Redshift.</data>
+      <data key="d10">1.5</data>
+      <data key="d11">meta</data>
+    </edge>
+    <data key="d0">Datacoral: Using Serverless to Create Data Pipelines</data>
+    <data key="d1">https://www.youtube.com/watch?v=JiWHomdh1oI</data>
+    <data key="d2">DataCoral is a serverless data engineering platform deployed in the customer's VPC. It extracts data from various sources (e.g., MySQL, SaaS, S3) and loads it into data warehouses (e.g., Redshift, Snowflake). The architecture supports moving over 500 billion records per month, handles schema changes dynamically, and uses batching for speed-up and fault tolerance. Data never leaves the customer's VPC.</data>
+    <data key="d3">data_ingestion, compute_intensive, control</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
