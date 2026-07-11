@@ -57,7 +57,7 @@ El repositorio cuenta con dos versiones del pipeline principal que se estructura
     * `graphs/`: Contiene los grafos generados (`.graphml`) y una subcarpeta `visual/` con los archivos de extensión de estilo para yEd.
     * `cloudscape_gt/`: Contiene los grafos de referencia manuales de la base de datos de FAST25 (Ground Truth) y sus versiones visuales (`visual/`).
     * `templates/`: Plantillas cortadas de logos AWS en estilos clásico 3D y plano (flat).
-  * **`simplified/`**: Réplica ordenada de la estructura del proyecto. Esta versión simplifica el diseño visual de los diagramas generados y exportados a yEd, eliminando notas de descripción en las relaciones para evitar bloques gigantes de texto que tapen las flechas.
+
 
 ---
 
@@ -479,28 +479,6 @@ FUNCION visualize_all_gt():
         # Exportar con el estilo yEd a la carpeta visual
         export_yed_graphml(G, video_id, output_dir=directorio_gt)
 ```
-
----
-
-## 4. Diferencia entre la Versión Estándar y la Versión Simplificada (`simplified/`)
-
-El usuario dispone de una carpeta independiente llamada `/simplified` para evitar sobreescribir o dañar el pipeline de extracción y validación original.
-
-### Versión Estándar (`/`)
-* **Propósito**: Extracción completa de datos fiel a la base de datos de FAST25.
-* **Diseño Visual**: Las flechas en yEd incluyen el texto descriptivo de las interacciones (`notes`). Esto genera textos largos sobre las flechas en el lienzo de dibujo.
-* **Pseudocódigo de Relaciones en Grafo**:
-  ```python
-  G.add_edge(src, tgt, flow_id=..., notes=edge.get("notes", ""), seq=..., type=...)
-  ```
-
-### Versión Simplificada (`/simplified`)
-* **Propósito**: Generar diagramas visualmente impecables, profesionales y compactos.
-* **Diseño Visual**: Se eliminan por completo los comentarios descriptivos sobre las flechas, dejando únicamente la etiqueta de secuencia (ej. `F1.2 [meta]`). Esto previene que los textos tapen las líneas y cajas en yEd, imitando los diagramas hechos manualmente.
-* **Pseudocódigo de Relaciones en Grafo**:
-  ```python
-  G.add_edge(src, tgt, flow_id=..., notes="", seq=..., type=...) # La nota va vacía
-  ```
 
 ---
 
