@@ -292,7 +292,6 @@ def estimate_occlusion_fast(img: np.ndarray, debug_save_path: Path | str | None 
         # Draw ROI rectangle in yellow
         cv2.rectangle(debug_img, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 255), 2)
         
-        # Write text info
         cv2.putText(
             debug_img,
             f"Occlusion: {occlusion_pct:.1f}%",
@@ -308,7 +307,6 @@ def estimate_occlusion_fast(img: np.ndarray, debug_save_path: Path | str | None 
     return occlusion_pct
 
 
-
 # ── Main frame selection logic ──────────────────────────────────
 
 def select_best_frame(
@@ -317,14 +315,19 @@ def select_best_frame(
     debug: bool = False,
 ) -> dict:
     """
-    Select the best whiteboard frame for a video following the user's updated Whisper-centric algorithm:
-    1. Whisper time bounds.
-    2. Focus on last 60% of frames (start_idx = 40%).
-    3. Dark percentage calibration.
-    4. Mask saturated icons.
-    5. Calculate score = (edge_density * 50) - (occlusion * 5) where occlusion is calculated on img_masked.
+    Select the best whiteboard frame for a video following the user's updated algorithm:
+    1. Carga (Solo el último 40% del video: start_idx = 60%).
+    2. FILTRO 1: ELIMINACIÓN DE PANTALLAS CLARAS (dark_px_pct < 0.20).
+    3. FILTRO 2: ELIMINACIÓN DE OUTROS / LOGOS (skin_pct < 0.015).
+    4. SCORING:
+       - Mask saturated square AWS service icons.
+       - Calculate edge density (Canny on median blur of central ROI).
+       - Calculate occlusion (skin mask ROI).
+       - Score = (edge_density * 50) - (occlusion * 5).
+    5. Save best frame to _pizarra/best_whiteboard.jpg.
+    6. Copy best frame to data/bad_whiteboard/{video_id}.jpg for manual review.
     """
-    frames_dir = frames_dir or FRAMES_DIR
+    frames_dir = Path(frames_dir or FRAMES_DIR)
     video_frames_dir = frames_dir / video_id
 
     if not video_frames_dir.exists():
@@ -335,6 +338,12 @@ def select_best_frame(
         video_frames_dir.glob(f"{video_id}_frame_*.jpg"),
         key=lambda p: int(p.stem.split("_frame_")[-1]),
     )
+    if not all_frames:
+        # Fallback to general *.jpg if needed
+        all_frames = sorted(
+            video_frames_dir.glob("*.jpg"),
+            key=lambda p: int(p.stem.split("_frame_")[-1]) if "_frame_" in p.stem else 0,
+        )
 
     if not all_frames:
         raise FileNotFoundError(f"No frames found in {video_frames_dir}")
@@ -342,99 +351,46 @@ def select_best_frame(
     total = len(all_frames)
     console.print(f"\n[bold cyan]🔍 Frame Selection for {video_id}[/] ({total} frames total)")
 
-    # 1. INTELIGENCIA DE TIEMPO (WHISPER)
-    transcript_path = RAW_DIR / f"{video_id}_transcript.json"
-    ultimo_segundo_hablado = None
-
-    if transcript_path.exists():
-        try:
-            with open(transcript_path, "r", encoding="utf-8") as f:
-                segmentos = json.load(f)
-                if segmentos:
-                    ultimo_segundo_hablado = segmentos[-1].get("end")
-                    console.print(f"🎙️ Whisper: Última palabra en el segundo {ultimo_segundo_hablado:.2f}s")
-        except Exception as e:
-            console.print(f"[yellow]⚠ Failed to load transcript for timing: {e}[/]")
-    
-    if ultimo_segundo_hablado is None:
-        console.print(f"⚠️ No se encontró transcripción, no se aplicará corte de tiempo.")
-        # Default fallback value for filter check
-        filter_limit_sec = 999999.0
-    else:
-        filter_limit_sec = ultimo_segundo_hablado
-
-    # Get FPS
-    video_path = RAW_DIR / f"{video_id}.mp4"
-    if video_path.exists():
-        cap = cv2.VideoCapture(str(video_path))
-        fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-        cap.release()
-    else:
-        fps = 30.0
-
-    # Load candidates from the last 60% of the video
-    start_idx = int(total * 0.4)
-    if ultimo_segundo_hablado is not None:
-        # If Whisper is active, we can safely search until the very end because Whisper will cut the outro precisely
-        candidates = all_frames[start_idx:]
-        console.print(f"🚀 Procesando {len(candidates)} frames candidatos (Whisper activo)...")
-    else:
-        # Fallback: slice off the last 5% to avoid the outro screen
-        end_idx = max(start_idx + 1, total - max(5, int(total * 0.05)))
-        candidates = all_frames[start_idx:end_idx]
-        console.print(f"🚀 Procesando {len(candidates)} frames candidatos (rango: {start_idx} a {end_idx}, fallback sin Whisper)...")
-
-    # 2. CALIBRACIÓN DE OSCURIDAD
-    max_dark_pct = 0.0
-    for fp in candidates:
-        img = cv2.imread(str(fp))
-        if img is None:
-            continue
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        dark_pct = np.sum(gray < 50) / gray.size
-        if dark_pct > max_dark_pct:
-            max_dark_pct = dark_pct
-
-    dynamic_threshold = max_dark_pct * 0.40
-    console.print(f"🎚️ Oscuridad Máxima: {max_dark_pct:.1%}. Umbral Mínimo: {dynamic_threshold:.1%}")
+    # 1. Carga (Solo el último 40% del video)
+    start_idx = int(total * 0.6)
+    candidates = all_frames[start_idx:]
+    console.print(f"🚀 Procesando {len(candidates)} frames (Último 40% del video)...")
 
     scored_frames = []
-    discarded = []
+    discarded_count = 0
 
-    # 3. FILTRADO Y SCORING
     for fp in candidates:
-        # A. FILTRO WHISPER (Con +1 de seguridad)
-        try:
-            frame_num = int(fp.stem.split("_frame_")[-1])
-        except ValueError:
-            continue
-
-        # Calculate frame time. If frame_num is a raw index (> 1000), divide by fps.
-        # If frame_num is sequential, multiply by the frame extraction interval.
-        if frame_num > 1000:
-            tiempo_frame_segundos = (frame_num / fps) + 1
-        else:
-            tiempo_frame_segundos = frame_num * FRAME_INTERVAL_SEC
-
-        if tiempo_frame_segundos > filter_limit_sec:
-            discarded.append({"name": fp.name, "reason": f"Whisper outro ({tiempo_frame_segundos:.1f}s > {filter_limit_sec:.1f}s)"})
-            continue # ¡ELIMINADO POR WHISPER! (Es el outro)
-
         img = cv2.imread(str(fp))
         if img is None:
-            continue
-
-        # B. BLANK TRANSITION FILTER (Robustness fallback)
-        if is_blank_transition(img):
-            discarded.append({"name": fp.name, "reason": "Blank transition"})
             continue
 
         h, w = img.shape[:2]
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        # C. SCORING DE PIZARRA
-        # Enmascarar íconos cuadrados de negro para no confundir al detector de humanos
+        # ---------------------------------------------------------
+        # FILTRO 1: ELIMINACIÓN DE PANTALLAS CLARAS
+        # ---------------------------------------------------------
+        dark_px_pct = np.sum(gray < 45) / (h * w)
+        if dark_px_pct < 0.20:
+            discarded_count += 1
+            continue
+
+        # ---------------------------------------------------------
+        # FILTRO 2: ELIMINACIÓN DE OUTROS / LOGOS (Falta de piel)
+        # ---------------------------------------------------------
+        skin_mask = cv2.inRange(hsv, (0, 30, 60), (25, 170, 255))
+        skin_pct = np.sum(skin_mask > 0) / skin_mask.size
+
+        # Si no hay ni un 1.5% de piel humana, es un logo o texto 100% seguro.
+        if skin_pct < 0.015:
+            discarded_count += 1
+            continue
+
+        # ---------------------------------------------------------
+        # SCORING (Solo llegan las verdaderas pizarras con humanos)
+        # ---------------------------------------------------------
+        # 1. Pintar íconos cuadrados de negro
         sat_mask = (hsv[:, :, 1] > 80) & (hsv[:, :, 2] > 60)
         contours, _ = cv2.findContours(sat_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         img_masked = img.copy()
@@ -443,19 +399,17 @@ def select_best_frame(
             if 0.05 * min(h, w) < cw < 0.15 * min(h, w) and 0.85 < (cw / ch) < 1.15:
                 cv2.rectangle(img_masked, (x, y), (x + cw, y + ch), (0, 0, 0), -1)
 
-        # Canny (Densidad de Tiza) en la zona segura (28% al 72% del ancho)
+        # 2. Densidad de Tiza (Centro)
         roi_gray = gray[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
         edges = cv2.Canny(cv2.medianBlur(roi_gray, 7), 80, 200)
         edge_density = np.sum(edges > 0) / edges.size
 
-        # Oclusión (Piel humana) en la zona segura (from img_masked)
-        skin_mask = cv2.inRange(cv2.cvtColor(img_masked, cv2.COLOR_BGR2HSV), (0, 30, 60), (25, 170, 255))
+        # 3. Penalización por Oclusión (Centro) - ¡BUG ARREGLADO!
         roi_skin = skin_mask[int(h * 0.15):int(h * 0.95), int(w * 0.28):int(w * 0.72)]
         occlusion = np.sum(roi_skin > 0) / roi_skin.size
 
-        # Fórmula: Premia la tiza, castiga fuerte al humano estorbando
+        # Cálculo final
         score = (edge_density * 50) - (occlusion * 5)
-        
         scored_frames.append({
             "path": fp,
             "score": score,
@@ -463,14 +417,20 @@ def select_best_frame(
             "occlusion": occlusion,
         })
 
-    # Robust Fallback in case Whisper cut was too aggressive or all frames filtered out
+    # Robust Fallback in case all frames filtered out
     if not scored_frames:
         console.print("[yellow]⚠ Todos los frames fueron eliminados. Usando fallback de último frame.[/]")
         fp = all_frames[-1]
+        img = cv2.imread(str(fp))
+        h, w = img.shape[:2]
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        roi_gray = gray[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
+        edges = cv2.Canny(cv2.medianBlur(roi_gray, 7), 80, 200)
+        edge_density = np.sum(edges > 0) / edges.size
         scored_frames.append({
             "path": fp,
             "score": 0.0,
-            "edge_density": 0.0,
+            "edge_density": edge_density,
             "occlusion": 0.0,
         })
 
@@ -481,14 +441,21 @@ def select_best_frame(
     console.print(f"  [bold green]✓ Selected:[/] {best['path'].name} "
                   f"(score={best['score']:.3f}, edge_density={best['edge_density']:.3f}, occlusion={best['occlusion']:.1%})")
 
-    # Save best_whiteboard.jpg
-    pizarra_dir = frames_dir / f"{video_id}_pizarra"
+    # Save best_whiteboard.jpg inside _pizarra/
+    pizarra_dir = video_frames_dir.parent / f"{video_id}_pizarra"
     pizarra_dir.mkdir(parents=True, exist_ok=True)
     dest = pizarra_dir / "best_whiteboard.jpg"
-    
     import shutil
     shutil.copy(best["path"], dest)
     console.print(f"  [green]✓[/] Saved → {dest}")
+
+    # Copy to bad_whiteboard for manual review
+    bad_wb_dir = video_frames_dir.parent.parent / "bad_whiteboard"
+    if bad_wb_dir.exists():
+        bad_wb_dest = bad_wb_dir / f"{video_id}.jpg"
+        import shutil
+        shutil.copy(best["path"], bad_wb_dest)
+        console.print(f"  [green]✓[/] Copied to bad_whiteboard → {bad_wb_dest}")
 
     if debug:
         # Save JSON debug
@@ -496,7 +463,6 @@ def select_best_frame(
             "video_id": video_id,
             "total_frames": total,
             "analyzed_from": start_idx,
-            "discarded": discarded,
             "scores": [
                 {
                     "frame": sf["path"].name,
@@ -518,7 +484,7 @@ def select_best_frame(
         "final_score": best["score"],
         "content_score": best["edge_density"],
         "occlusion_pct": best["occlusion"] * 100,
-        "discarded_count": len(discarded),
+        "discarded_count": discarded_count,
     }
 
 
