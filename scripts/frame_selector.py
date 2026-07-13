@@ -313,19 +313,19 @@ def select_best_frame(
         video_id: str,
         frames_dir: Path | None = None,
         debug: bool = False,
-        min_area_icono: int = 500,
+        min_area_icono: int = 2000,
 ) -> dict:
     """
     Select the best whiteboard frame for a video following the final algorithm:
     1. Carga (Último 80% del video).
-    2. FILTRO 1: ELIMINACIÓN DE OUTROS / LOGOS (skin_pct < 0.015).
+    2. FILTRO 1: Evaluación de piel (bandera booleana para indulto).
     3. FILTRO 2: ANOMALÍAS ESTADÍSTICAS (Purger transición al outro a brillo 30).
-    4. FILTRO 3: VALIDACIÓN DE ÍCONOS AWS (Al menos 1 legítimo con min_area_icono).
+    4. FILTRO 3: VALIDACIÓN DE ÍCONOS AWS + Filtro Diferencial (Anillo).
     5. SCORING:
        - Mask AWS service icons directly on Grayscale.
        - Calculate capped chalk density (GaussianBlur + Canny 30,100 capped at 0.015).
        - Calculate occlusion (skin mask ROI).
-       - Score = puntos_iconos (num_iconos * 5) + puntos_tiza (capped_density * 50) - penalizacion_oclusion (occlusion * 40) + bono_piel (skin_pct * 100).
+       - Score equilibrado con límite en el bono de piel.
     """
     frames_dir = Path(frames_dir or FRAMES_DIR)
     video_frames_dir = frames_dir / video_id
@@ -369,14 +369,11 @@ def select_best_frame(
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         # ---------------------------------------------------------
-        # FILTRO 1: ELIMINACIÓN DE OUTROS / LOGOS (Falta de piel)
+        # FILTRO 1: EVALUACIÓN DE PIEL (Sin descarte inmediato)
         # ---------------------------------------------------------
         skin_mask = cv2.inRange(hsv, (0, 30, 60), (25, 170, 255))
         skin_pct = np.sum(skin_mask > 0) / skin_mask.size
-
-        if skin_pct < 0.015:
-            discarded_count += 1
-            continue
+        tiene_piel = skin_pct >= 0.014 # Guardamos la bandera para el Indulto
 
         # ---------------------------------------------------------
         # FILTRO 2: FILTRADO DE ANOMALÍAS (Purger transición al outro)
@@ -391,16 +388,15 @@ def select_best_frame(
             continue
 
         # ---------------------------------------------------------
-        # FILTRO 3: VALIDACIÓN DE ÍCONOS AWS (Con filtro de área mínima)
+        # FILTRO 3: VALIDACIÓN DE ÍCONOS AWS + FILTRO DIFERENCIAL
         # ---------------------------------------------------------
-        # 2. Conteo de Íconos AWS y censura en matriz gris
-        sat_mask_raw = (hsv[:, :, 1] > 80) & (hsv[:, :, 2] > 60)
+        # Saturación relajada para tolerar pizarras digitales/cristal
+        sat_mask_raw = (hsv[:, :, 1] > 40) & (hsv[:, :, 2] > 80)
 
-        # 2. Apertura Morfológica para "cortar" la tiza pegada a los íconos
+        # Mantenemos el kernel fuerte (13x13) para la tiza
         kernel_corte = np.ones((13, 13), np.uint8)
         sat_mask = cv2.morphologyEx(sat_mask_raw.astype(np.uint8), cv2.MORPH_OPEN, kernel_corte)
 
-        # 3. Buscar contornos en la máscara ya limpia
         contours, _ = cv2.findContours(sat_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         iconos_validos = []
@@ -408,45 +404,69 @@ def select_best_frame(
             x, y, cw, ch = cv2.boundingRect(cnt)
             area = cv2.contourArea(cnt)
             
-            # Validar dimensiones, relación de aspecto cuadrada y tamaño mínimo de seguridad
-            if 0.05 * min(h, w) < cw < 0.15 * min(h, w) and 0.85 < (cw / ch) < 1.15:
-                if area >= min_area_icono:
+            # Geometría relajada (0.70 a 1.35)
+            if 0.05 * min(h, w) < cw < 0.15 * min(h, w) and 0.70 < (cw / ch) < 1.35 and area >= min_area_icono:
+                
+                # --- LÓGICA DEL ANILLO (Contraste Local) ---
+                margen = 20
+                x_out = max(0, x - margen)
+                y_out = max(0, y - margen)
+                w_out = min(w - x_out, cw + (margen * 2))
+                h_out = min(h - y_out, ch + (margen * 2))
+
+                mask_anillo = np.zeros((h, w), dtype=np.uint8)
+                cv2.rectangle(mask_anillo, (x_out, y_out), (x_out+w_out, y_out+h_out), 255, -1)
+                cv2.rectangle(mask_anillo, (x, y), (x+cw, y+ch), 0, -1)
+
+                brillo_icono = np.mean(gray[y:y+ch, x:x+cw])
+                brillo_anillo = cv2.mean(gray, mask=mask_anillo)[0]
+
+                delta_contraste = abs(brillo_icono - brillo_anillo)
+
+                # Si hay contraste (> 40.0), es un ícono real
+                if delta_contraste >= 40.0:
                     iconos_validos.append((x, y, cw, ch))
 
-        # CONDICIONAL: Exigir que tenga al menos 1 ícono de AWS legítimo en pantalla
         num_iconos = len(iconos_validos)
+
+        # ---------------------------------------------------------
+        # LÓGICA DE RECHAZO COMBINADA (El Indulto)
+        # ---------------------------------------------------------
+        # Si NO hay piel humana, perdonamos el frame SOLO SI tiene 2+ íconos (es un plano puro de la pizarra).
+        if not tiene_piel and num_iconos < 1:
+            discarded_count += 1
+            continue
+
+        # Exigimos al menos 1 ícono legítimo siempre
         if num_iconos < 1:
             discarded_count += 1
             continue
 
         # ---------------------------------------------------------
-        # SCORING (Solo verdaderas pizarras limpias con humanos e íconos)
+        # SCORING (Solo verdaderas pizarras limpias)
         # ---------------------------------------------------------
-        # 1. Pintar íconos cuadrados de negro directamente en la escala de grises
         gray_masked = gray.copy()
         for (x, y, cw, ch) in iconos_validos:
             cv2.rectangle(gray_masked, (x, y), (x + cw, y + ch), (0, 0, 0), -1)
 
-        # 2. Densidad de Tiza (Suave con GaussianBlur y altamente sensible con Canny 30, 100)
         roi_gray = gray_masked[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
         roi_blur = cv2.GaussianBlur(roi_gray, (3, 3), 0)
         edges = cv2.Canny(roi_blur, 30, 100)
         edge_density = np.sum(edges > 0) / edges.size
 
-        # Límite superior estricto (Cap) para la tiza
         capped_density = min(edge_density, 0.015)
 
-        # 3. Penalización por Oclusión (Centro de la pizarra)
         roi_skin = skin_mask[int(h * 0.15):int(h * 0.95), int(w * 0.28):int(w * 0.72)]
         occlusion = np.sum(roi_skin > 0) / roi_skin.size
 
-        # 4. Cálculo de pesos equilibrado
+        # --- CÁLCULO DE PESOS REBALANCEADO ---
         puntos_iconos = num_iconos * 5
         puntos_tiza = capped_density * 50
-        bono_piel = skin_pct * 100
         penalizacion_oclusion = occlusion * 40
+        
+        # Bono de piel capeado al 10% (Máximo 5 puntos, equivalente a 1 ícono)
+        bono_piel = min(skin_pct, 0.10) * 50 
 
-        # Ecuación matemática final corregida
         score = puntos_iconos + puntos_tiza - penalizacion_oclusion + bono_piel
 
         scored_frames.append({
