@@ -344,7 +344,7 @@ def select_best_frame(
 
     # 1. INTELIGENCIA DE TIEMPO (WHISPER)
     transcript_path = RAW_DIR / f"{video_id}_transcript.json"
-    ultimo_segundo_hablado = 999999.0
+    ultimo_segundo_hablado = None
 
     if transcript_path.exists():
         try:
@@ -355,8 +355,13 @@ def select_best_frame(
                     console.print(f"🎙️ Whisper: Última palabra en el segundo {ultimo_segundo_hablado:.2f}s")
         except Exception as e:
             console.print(f"[yellow]⚠ Failed to load transcript for timing: {e}[/]")
-    else:
+    
+    if ultimo_segundo_hablado is None:
         console.print(f"⚠️ No se encontró transcripción, no se aplicará corte de tiempo.")
+        # Default fallback value for filter check
+        filter_limit_sec = 999999.0
+    else:
+        filter_limit_sec = ultimo_segundo_hablado
 
     # Get FPS
     video_path = RAW_DIR / f"{video_id}.mp4"
@@ -367,10 +372,17 @@ def select_best_frame(
     else:
         fps = 30.0
 
-    # Cargar solo el último 60% de los frames
+    # Load candidates from the last 60% of the video
     start_idx = int(total * 0.4)
-    candidates = all_frames[start_idx:]
-    console.print(f"🚀 Procesando {len(candidates)} frames candidatos...")
+    if ultimo_segundo_hablado is not None:
+        # If Whisper is active, we can safely search until the very end because Whisper will cut the outro precisely
+        candidates = all_frames[start_idx:]
+        console.print(f"🚀 Procesando {len(candidates)} frames candidatos (Whisper activo)...")
+    else:
+        # Fallback: slice off the last 5% to avoid the outro screen
+        end_idx = max(start_idx + 1, total - max(5, int(total * 0.05)))
+        candidates = all_frames[start_idx:end_idx]
+        console.print(f"🚀 Procesando {len(candidates)} frames candidatos (rango: {start_idx} a {end_idx}, fallback sin Whisper)...")
 
     # 2. CALIBRACIÓN DE OSCURIDAD
     max_dark_pct = 0.0
@@ -404,12 +416,17 @@ def select_best_frame(
         else:
             tiempo_frame_segundos = frame_num * FRAME_INTERVAL_SEC
 
-        if tiempo_frame_segundos > ultimo_segundo_hablado:
-            discarded.append({"name": fp.name, "reason": f"Whisper outro ({tiempo_frame_segundos:.1f}s > {ultimo_segundo_hablado:.1f}s)"})
+        if tiempo_frame_segundos > filter_limit_sec:
+            discarded.append({"name": fp.name, "reason": f"Whisper outro ({tiempo_frame_segundos:.1f}s > {filter_limit_sec:.1f}s)"})
             continue # ¡ELIMINADO POR WHISPER! (Es el outro)
 
         img = cv2.imread(str(fp))
         if img is None:
+            continue
+
+        # B. BLANK TRANSITION FILTER (Robustness fallback)
+        if is_blank_transition(img):
+            discarded.append({"name": fp.name, "reason": "Blank transition"})
             continue
 
         h, w = img.shape[:2]

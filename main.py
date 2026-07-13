@@ -187,7 +187,7 @@ def run_pipeline(
     # Automatically select the best whiteboard frame locally if not already done
     pizarra_dir = FRAMES_DIR / f"{video_id}_pizarra"
     best_occl_path = pizarra_dir / "best_whiteboard.jpg"
-    if not best_occl_path.exists():
+    if not best_occl_path.exists() or force:
         console.print("[dim]Running frame selector locally to find best whiteboard...[/]")
         try:
             from scripts.frame_selector import select_best_frame
