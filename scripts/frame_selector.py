@@ -313,21 +313,19 @@ def select_best_frame(
         video_id: str,
         frames_dir: Path | None = None,
         debug: bool = False,
+        min_area_icono: int = 500,
 ) -> dict:
     """
     Select the best whiteboard frame for a video following the final algorithm:
-    1. Carga (Último 40% del video).
+    1. Carga (Último 80% del video).
     2. FILTRO 1: ELIMINACIÓN DE OUTROS / LOGOS (skin_pct < 0.015).
-    3. FILTRO 2: ANOMALÍAS ESTADÍSTICAS (Purger transición al mapamundi a brillo 30).
-    4. FILTRO 3: VALIDACIÓN DE ÍCONOS AWS (Al menos 1 ícono de AWS).
+    3. FILTRO 2: ANOMALÍAS ESTADÍSTICAS (Purger transición al outro a brillo 30).
+    4. FILTRO 3: VALIDACIÓN DE ÍCONOS AWS (Al menos 1 legítimo con min_area_icono).
     5. SCORING:
-       - Mask saturated square AWS service icons directly on Grayscale.
-       - Calculate real chalk density (Threshold 70 + Canny).
+       - Mask AWS service icons directly on Grayscale.
+       - Calculate capped chalk density (GaussianBlur + Canny 30,100 capped at 0.015).
        - Calculate occlusion (skin mask ROI).
-       - Calculate global skin bonus (premiar tomas amplias).
-       - Score = (edge_density * 50) - (occlusion * 40) + skin_bonus.
-    6. Save best frame to _pizarra/best_whiteboard.jpg.
-    7. Copy best frame to data/bad_whiteboard/{video_id}.jpg for manual review.
+       - Score = puntos_iconos (num_iconos * 5) + puntos_tiza (capped_density * 50) - penalizacion_oclusion (occlusion * 40) + bono_piel (skin_pct * 100).
     """
     frames_dir = Path(frames_dir or FRAMES_DIR)
     video_frames_dir = frames_dir / video_id
@@ -353,10 +351,10 @@ def select_best_frame(
     total = len(all_frames)
     console.print(f"\n[bold cyan]🔍 Frame Selection for {video_id}[/] ({total} frames total)")
 
-    # 1. Carga
-    start_idx = int(total * 0.6) * 0 # se actualizo a cargar todo el video, ya que hay casos donde es necesario
+    # 1. Carga el 80% del video
+    start_idx = int(total * 0.2)  
     candidates = all_frames[start_idx:]
-    console.print(f"🚀 Procesando {len(candidates)} frames (Último 40% del video)...")
+    console.print(f"🚀 Procesando {len(candidates)} frames (Último 80% del video)...")
 
     scored_frames = []
     discarded_count = 0
@@ -388,7 +386,7 @@ def select_best_frame(
         edges_anom = cv2.Canny(cv2.medianBlur(roi_limpio_anom, 7), 80, 200)
         edge_density_anom = np.sum(edges_anom > 0) / edges_anom.size
 
-        if edge_density_anom > 0.030:
+        if edge_density_anom > 0.0495:
             discarded_count += 1
             continue
 
@@ -398,8 +396,7 @@ def select_best_frame(
         # 2. Conteo de Íconos AWS y censura en matriz gris
         sat_mask_raw = (hsv[:, :, 1] > 80) & (hsv[:, :, 2] > 60)
 
-        # 2. NUEVO: Apertura Morfológica para "cortar" la tiza pegada a los íconos
-        # Un kernel de 13x13 borrará líneas finas (tiza) pero mantendrá los bloques cuadrados grandes (íconos)
+        # 2. Apertura Morfológica para "cortar" la tiza pegada a los íconos
         kernel_corte = np.ones((13, 13), np.uint8)
         sat_mask = cv2.morphologyEx(sat_mask_raw.astype(np.uint8), cv2.MORPH_OPEN, kernel_corte)
 
@@ -409,45 +406,57 @@ def select_best_frame(
         iconos_validos = []
         for cnt in contours:
             x, y, cw, ch = cv2.boundingRect(cnt)
-            # Validar que cumpla con el tamaño y la relación de aspecto cuadrada
+            area = cv2.contourArea(cnt)
+            
+            # Validar dimensiones, relación de aspecto cuadrada y tamaño mínimo de seguridad
             if 0.05 * min(h, w) < cw < 0.15 * min(h, w) and 0.85 < (cw / ch) < 1.15:
-                iconos_validos.append((x, y, cw, ch))
+                if area >= min_area_icono:
+                    iconos_validos.append((x, y, cw, ch))
 
-        # CONDICIONAL: Exigir que tenga al menos 1 ícono de AWS en pantalla.
-        if len(iconos_validos) < 1:
+        # CONDICIONAL: Exigir que tenga al menos 1 ícono de AWS legítimo en pantalla
+        num_iconos = len(iconos_validos)
+        if num_iconos < 1:
             discarded_count += 1
             continue
 
         # ---------------------------------------------------------
         # SCORING (Solo verdaderas pizarras limpias con humanos e íconos)
         # ---------------------------------------------------------
-        # 1. BUG FIXED: Pintar íconos cuadrados de negro directamente en la escala de grises
+        # 1. Pintar íconos cuadrados de negro directamente en la escala de grises
         gray_masked = gray.copy()
         for (x, y, cw, ch) in iconos_validos:
             cv2.rectangle(gray_masked, (x, y), (x + cw, y + ch), (0, 0, 0), -1)
 
-        # 2. Densidad de Tiza (Umbral 70 para eliminar ruido)
+        # 2. Densidad de Tiza (Suave con GaussianBlur y altamente sensible con Canny 30, 100)
         roi_gray = gray_masked[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
-        _, roi_tiza = cv2.threshold(roi_gray, 70, 255, cv2.THRESH_TOZERO)
-        edges = cv2.Canny(cv2.medianBlur(roi_tiza, 7), 80, 200)
+        roi_blur = cv2.GaussianBlur(roi_gray, (3, 3), 0)
+        edges = cv2.Canny(roi_blur, 30, 100)
         edge_density = np.sum(edges > 0) / edges.size
 
-        # 3. Penalización por Oclusión (Centro)
+        # Límite superior estricto (Cap) para la tiza
+        capped_density = min(edge_density, 0.015)
+
+        # 3. Penalización por Oclusión (Centro de la pizarra)
         roi_skin = skin_mask[int(h * 0.15):int(h * 0.95), int(w * 0.28):int(w * 0.72)]
         occlusion = np.sum(roi_skin > 0) / roi_skin.size
 
-        # 4. Bono de Piel Global (Premiar tomas con múltiples presentadores)
-        skin_bonus = skin_pct * 100
+        # 4. Cálculo de pesos equilibrado
+        puntos_iconos = num_iconos * 5
+        puntos_tiza = capped_density * 50
+        bono_piel = skin_pct * 100
+        penalizacion_oclusion = occlusion * 40
 
-        # Cálculo final (Aumento del valor de oclusión a * 40)
-        score = (edge_density * 50) - (occlusion * 40) + skin_bonus
+        # Ecuación matemática final corregida
+        score = puntos_iconos + puntos_tiza - penalizacion_oclusion + bono_piel
 
         scored_frames.append({
             "path": fp,
             "score": score,
             "edge_density": edge_density,
+            "capped_density": capped_density,
             "occlusion": occlusion,
-            "skin_bonus": skin_bonus
+            "skin_bonus": bono_piel,
+            "num_iconos": num_iconos
         })
 
     # Robust Fallback in case all frames filtered out
@@ -458,14 +467,19 @@ def select_best_frame(
         h, w = img.shape[:2]
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         roi_gray = gray[int(h * 0.1):int(h * 0.9), int(w * 0.28):int(w * 0.72)]
-        edges = cv2.Canny(cv2.medianBlur(roi_gray, 7), 80, 200)
+        roi_blur = cv2.GaussianBlur(roi_gray, (3, 3), 0)
+        edges = cv2.Canny(roi_blur, 30, 100)
         edge_density = np.sum(edges > 0) / edges.size
+        capped_density = min(edge_density, 0.015)
+        score = (capped_density * 50)
         scored_frames.append({
             "path": fp,
-            "score": 0.0,
+            "score": score,
             "edge_density": edge_density,
+            "capped_density": capped_density,
             "occlusion": 0.0,
-            "skin_bonus": 0.0
+            "skin_bonus": 0.0,
+            "num_iconos": 0
         })
 
     scored_frames.sort(key=lambda x: x["score"], reverse=True)
@@ -473,7 +487,7 @@ def select_best_frame(
     # Output selection details
     best = scored_frames[0]
     console.print(f"  [bold green]✓ Selected:[/] {best['path'].name} "
-                  f"(score={best['score']:.3f}, edge={best['edge_density']:.3f}, occ={best['occlusion']:.1%}, bonus={best['skin_bonus']:.2f})")
+                  f"(score={best['score']:.3f}, edge={best['edge_density']:.3f}, occ={best['occlusion']:.1%}, bonus={best['skin_bonus']:.2f}, iconos={best.get('num_iconos', 0)})")
 
     # Save best_whiteboard.jpg inside _pizarra/
     pizarra_dir = video_frames_dir.parent / f"{video_id}_pizarra"
@@ -500,8 +514,10 @@ def select_best_frame(
                     "frame": sf["path"].name,
                     "score": round(sf["score"], 4),
                     "edge_density": round(sf["edge_density"], 4),
+                    "capped_density": round(sf.get("capped_density", 0.0), 4),
                     "occlusion": round(sf["occlusion"], 4),
-                    "skin_bonus": round(sf["skin_bonus"], 4)
+                    "skin_bonus": round(sf["skin_bonus"], 4),
+                    "num_iconos": sf.get("num_iconos", 0)
                 }
                 for sf in scored_frames[:20]
             ],
@@ -518,6 +534,7 @@ def select_best_frame(
         "content_score": best["edge_density"],
         "occlusion_pct": best["occlusion"] * 100,
         "discarded_count": discarded_count,
+        "skin_bonus": best["skin_bonus"]
     }
 
 # ── CLI ─────────────────────────────────────────────────────────
