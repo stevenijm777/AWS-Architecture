@@ -353,8 +353,8 @@ def select_best_frame(
     total = len(all_frames)
     console.print(f"\n[bold cyan]🔍 Frame Selection for {video_id}[/] ({total} frames total)")
 
-    # 1. Carga (Solo el último 40% del video)
-    start_idx = int(total * 0.6)
+    # 1. Carga
+    start_idx = int(total * 0.6) * 0 # se actualizo a cargar todo el video, ya que hay casos donde es necesario
     candidates = all_frames[start_idx:]
     console.print(f"🚀 Procesando {len(candidates)} frames (Último 40% del video)...")
 
@@ -393,10 +393,18 @@ def select_best_frame(
             continue
 
         # ---------------------------------------------------------
-        # FILTRO 3: VALIDACIÓN DE ÍCONOS AWS
+        # FILTRO 3: VALIDACIÓN DE ÍCONOS AWS (Con filtro de área mínima)
         # ---------------------------------------------------------
-        sat_mask = (hsv[:, :, 1] > 80) & (hsv[:, :, 2] > 60)
-        contours, _ = cv2.findContours(sat_mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        # 2. Conteo de Íconos AWS y censura en matriz gris
+        sat_mask_raw = (hsv[:, :, 1] > 80) & (hsv[:, :, 2] > 60)
+
+        # 2. NUEVO: Apertura Morfológica para "cortar" la tiza pegada a los íconos
+        # Un kernel de 13x13 borrará líneas finas (tiza) pero mantendrá los bloques cuadrados grandes (íconos)
+        kernel_corte = np.ones((13, 13), np.uint8)
+        sat_mask = cv2.morphologyEx(sat_mask_raw.astype(np.uint8), cv2.MORPH_OPEN, kernel_corte)
+
+        # 3. Buscar contornos en la máscara ya limpia
+        contours, _ = cv2.findContours(sat_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
         iconos_validos = []
         for cnt in contours:
