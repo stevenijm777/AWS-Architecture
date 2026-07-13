@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture is extracted directly from the whiteboard diagram showing Orange Theory Fitness's OT Live virtual class system. It depicts two primary user types (Coach and Member) interacting with several AWS serverless services. Authentication goes through Cognito. Metadata operations go through API Gateway and Lambda to Aurora. Real-time video and heart rate streaming are powered by Chime SDK. Continuous heart rate analytics are pushed from the Member app to Kinesis and saved in S3. Workout summaries are written via Lambda to DynamoDB for mobile consumption.",
+  "graph": {
+    "name": "Orange Theory Fitness OT Live Virtual Classes",
+    "link": "https://www.youtube.com/watch?v=Eoq7E6jMtBs",
+    "categories": "data_ingestion, compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Serverless interactive fitness platform utilizing Chime SDK for real-time video and WebSocket metrics, and Kinesis for high-frequency telemetry ingestion."
+  },
+  "nodes": [
+    {
+      "id": "coach",
+      "service": "UserCompanyAgent",
+      "name": "Coach Interface",
+      "notes": "Web portal for class coaching and monitoring real-time participant heart rates."
+    },
+    {
+      "id": "member",
+      "service": "UserConsumerMobile",
+      "name": "Member App",
+      "notes": "Mobile/tablet app for members joining virtual workouts and transmitting heart rate telemetry."
+    },
+    {
+      "id": "chime",
+      "service": "Chime",
+      "name": "Chime SDK",
+      "notes": "Enables interactive, low-latency video feeds and WebSocket connections."
+    },
+    {
+      "id": "cognito",
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "Authenticates coaches and members."
+    },
+    {
+      "id": "apigateway",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Exposes REST endpoints for class metadata."
+    },
+    {
+      "id": "lambda",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Processes API requests and handles database persistence logic."
+    },
+    {
+      "id": "aurora",
+      "service": "Aurora",
+      "name": "Aurora DB",
+      "notes": "Relational storage for class schedules and metadata."
+    },
+    {
+      "id": "dynamodb",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Fast, key-value storage for individual workout summaries."
+    },
+    {
+      "id": "kinesis",
+      "service": "Kinesis",
+      "name": "Kinesis Data Stream",
+      "notes": "Ingests high-frequency, second-by-second workout metrics."
+    },
+    {
+      "id": "s3",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Provides durable, long-term analytical storage."
+    }
+  ],
+  "edges": [
+    {
+      "source": "coach",
+      "target": "cognito",
+      "flow_id": 1,
+      "seq": "1a",
+      "type": "data",
+      "notes": "Coach authentication request."
+    },
+    {
+      "source": "member",
+      "target": "cognito",
+      "flow_id": 1,
+      "seq": "1b",
+      "type": "data",
+      "notes": "Member authentication request."
+    },
+    {
+      "source": "coach",
+      "target": "apigateway",
+      "flow_id": 2,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Coach requests class metadata."
+    },
+    {
+      "source": "member",
+      "target": "apigateway",
+      "flow_id": 2,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Member requests class metadata."
+    },
+    {
+      "source": "apigateway",
+      "target": "lambda",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Forwards API payload."
+    },
+    {
+      "source": "lambda",
+      "target": "aurora",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Retrieves class details."
+    },
+    {
+      "source": "member",
+      "target": "chime",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams real-time video & heart rate telemetry."
+    },
+    {
+      "source": "chime",
+      "target": "coach",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers real-time student feeds to coach monitor."
+    },
+    {
+      "source": "member",
+      "target": "kinesis",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams analytical telemetry."
+    },
+    {
+      "source": "kinesis",
+      "target": "s3",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "Archives raw metrics to data lake."
+    },
+    {
+      "source": "lambda",
+      "target": "dynamodb",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves post-workout summary for member app access."
+    }
+  ]
+}

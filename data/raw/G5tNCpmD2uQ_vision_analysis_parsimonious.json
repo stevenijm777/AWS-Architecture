@@ -1,0 +1,130 @@
+{
+  "step_by_step_reasoning": "The architecture separates online low-latency ad serving from offline batch processing and machine learning training. On the online side, a UserConsumerMobile client makes requests through an Application Load Balancer (ALB) to an ECS cluster running on EC2. The ECS application fetches user features from DynamoDB and invokes a SageMaker Model Endpoint to predict install probability. On the offline side, raw data is loaded from a bottom S3 bucket (Data Lake) into EMR, which aggregates and outputs processed datasets to a top S3 bucket. Data scientists access this processed dataset from SageMaker Notebooks to train and deploy models.",
+  "graph": {
+    "name": "Voodoo Mobile Ad Cross-Promotion Architecture",
+    "link": "https://www.youtube.com/watch?v=G5tNCpmD2uQ",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "An AWS architecture that handles over 100 million model invocations daily to optimize cross-promotion of mobile games using Amazon ECS, DynamoDB, and SageMaker."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Gamer",
+      "notes": "End-user playing a Voodoo game, triggering cross-promotion ad requests."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Distributes incoming traffic to the ad serving backend."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs the microservices that handle ad filtering and model requests."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Provides the underlying compute instances for the ECS cluster."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores and retrieves real-time user features for predictions."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker Endpoint",
+      "notes": "Hosts deployed ML models to return real-time ad install probability predictions."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Data Lake S3",
+      "notes": "Stores raw analytical and transactional game data."
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs scheduled batch jobs to aggregate and join data sources."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Dataset S3",
+      "notes": "Stores processed datasets ready for ML training."
+    },
+    {
+      "id": "9",
+      "service": "SageMaker",
+      "name": "SageMaker Notebook",
+      "notes": "Used by data scientists to experiment, validate online performance, and run offline tests."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "User requests an ad."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes traffic to ad serving container."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries user features."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Involves SageMaker endpoint for prediction scoring."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR reads raw records from Data Lake."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR writes structured datasets."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads prepared datasets for model testing and training."
+    }
+  ]
+}

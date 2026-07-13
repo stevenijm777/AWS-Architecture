@@ -1,0 +1,192 @@
+{
+  "step_by_step_reasoning": "The architecture shows a real-time recommendation system at Peloton. 1. The Peloton client sends a recommendation request to the EKS Hydration Service. 2. The Hydration Service passes this to the EKS Recommendation Service (the orchestrator). 3. The Recommendation Service retrieves candidates from the Graph Database (Neptune), features from the DynamoDB Feature Store, and model info from the Model Registry. 4. These are sent to the EKS Inference Service to score classes. 5. Results go back through the Recommendation Service and Hydration Service to the Client. 6. Simultaneously, the Recommendation Service logs events via MSK, which flow back to S3. 7. Offline, EMR pulls S3 data to preprocess features (populating Neptune and DynamoDB) and feeds the training data to EKS Model Training, which outputs to the Model Registry.",
+  "graph": {
+    "name": "Peloton Real-time Personalization and Recommendation Engine",
+    "link": "https://www.youtube.com/watch?v=ym_Gz_zH7w8",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Hybrid real-time ML inference and daily offline ML training architecture built using EKS, EMR, and various managed storage systems."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Client",
+      "notes": "Peloton Member Interface (bike, tread, or mobile app)."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "Amazon EKS Hydration Service",
+      "notes": "Hydrates generated recommendations for delivery to clients."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Amazon EKS Recommendation Service",
+      "notes": "Orchestrates candidate generation, feature retrieval, and inference requests."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Amazon EKS Inference Service",
+      "notes": "Scores candidate workouts using trained machine learning models."
+    },
+    {
+      "id": "4",
+      "service": "Neptune",
+      "name": "Graph Database",
+      "notes": "Maintains social graph, workout, and instructor connections for candidate generation."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB Feature Store",
+      "notes": "Low-latency store for user feature vectors used during model scoring."
+    },
+    {
+      "id": "6",
+      "service": "ModelRegistry",
+      "name": "Model Registry",
+      "notes": "Stores trained ML model versions and artifacts."
+    },
+    {
+      "id": "7",
+      "service": "MSK",
+      "name": "Amazon MSK Event Logging",
+      "notes": "Logs recommendation events asynchronously for training and analytics."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3 Historical Data",
+      "notes": "Datalake storing historical workout logs and feedback loop event data."
+    },
+    {
+      "id": "9",
+      "service": "EMR",
+      "name": "Amazon EMR Data Preprocessing",
+      "notes": "Runs daily Spark jobs to prepare training features and populate low-latency databases."
+    },
+    {
+      "id": "10",
+      "service": "EKS",
+      "name": "Amazon EKS Model Training",
+      "notes": "GPU-accelerated daily batch training of machine learning models."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Initiates recommendation request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards request to recommendation orchestrator"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries candidates"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fetches member feature vectors"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Retrieves latest ML model location"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Sends payload for inference scoring"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Returns scored class rankings"
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Asynchronously streams logs to Kafka"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams feedback events to historical storage"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR processes historical S3 data"
+    },
+    {
+      "source": "9",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Populates relationship data"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes engineered features"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Feeds training pipeline"
+    },
+    {
+      "source": "10",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Registers new model artifact"
+    }
+  ]
+}

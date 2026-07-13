@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The architecture is extracted directly from the whiteboard representation of the parcel tracking pipeline. Handheld scanners (UserCompanyAgent) submit scan events to an ingestion API hosted on Fargate, which writes to DynamoDB. A Lambda function processes the DynamoDB streams and sends updates to an SNS topic. SNS fans out tasks to multiple SQS queues, which decouple downstream Fargate workers, including those updating the public website (UserConsumerWeb).",
+  "graph": {
+    "name": "Freightways High-Volume Parcel Scanning Pipeline",
+    "link": "https://www.youtube.com/watch?v=E8wYXtvGy5k",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Freightways processes over 50 million parcel scans annually. The solution scales seamlessly from 500 scans/minute to 1500 scans/minute during peak hours, ensuring tracking visibility is updated within 5 minutes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "Handheld Scanner",
+      "notes": "Handheld scan devices used by drivers on-site to log package actions."
+    },
+    {
+      "id": "1",
+      "service": "Fargate",
+      "name": "Fargate Ingestion API",
+      "notes": "Consumes and handles incoming scan payloads from various sources."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Persists scan events and emits updates through DynamoDB Streams."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Stream Processor Lambda",
+      "notes": "Processes DynamoDB Streams and publishes to SNS."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS Fanout Topic",
+      "notes": "Distributes scan events to multiple downstream queues."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "Website SQS Queue",
+      "notes": "Decouples the primary tracking stream from the website update engine."
+    },
+    {
+      "id": "6",
+      "service": "Fargate",
+      "name": "Fargate Website Engine",
+      "notes": "Processes tracking status updates and renders them on the site."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "Public Website",
+      "notes": "Allows end-users to view parcel tracking status updates."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "Image/Async SQS Queue",
+      "notes": "Buffers secondary asynchronous tasks such as signature/image scans."
+    },
+    {
+      "id": "9",
+      "service": "Fargate",
+      "name": "Fargate Async Processor",
+      "notes": "Processes and manages asynchronous scan payloads."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Drivers upload parcel tracking scans via handheld devices."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ingestion API writes scan payload into DynamoDB table."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB Streams triggers Lambda function."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda forwards scan messages to SNS topic."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 4,
+      "seq": "5",
+      "type": "data",
+      "notes": "SNS publishes messages to Website SQS queue."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 5,
+      "seq": "5",
+      "type": "data",
+      "notes": "SNS publishes messages to Image/Async SQS queue."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 6,
+      "seq": "6",
+      "type": "data",
+      "notes": "Fargate pulls scan details from the queue."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 7,
+      "seq": "7",
+      "type": "data",
+      "notes": "Website engine updates the tracking status display."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 8,
+      "seq": "6",
+      "type": "data",
+      "notes": "Fargate pulls processing tasks from the SQS queue."
+    }
+  ]
+}

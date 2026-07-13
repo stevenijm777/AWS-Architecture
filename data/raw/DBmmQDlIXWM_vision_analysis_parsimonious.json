@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The whiteboard depicts Spryker's Application Composition Platform (ACP), designed to connect Packaged Business Components (PBCs / SaaS) with Tenant PaaS applications symmetrically. The left-to-right flow starts with a message from a PBC passing through API Gateway, triggering a Lambda that retrieves routing rules from DynamoDB, and forwards the message to an SNS FIFO topic, which routes it sequentially into a Tenant SQS FIFO queue for consumption. The right-to-left flow operates identically but in reverse, enabling bi-directional, decoupled, and ordered communication.",
+  "graph": {
+    "name": "Spryker: Decoupled SaaS and PaaS Application Integration Platform",
+    "link": "https://www.youtube.com/watch?v=DBmmQDlIXWM",
+    "categories": "data_ingestion, interactive",
+    "graph_usable": true,
+    "notes": "Decoupled bi-directional FIFO messaging platform connecting external SaaS components with tenant applications securely using token-based isolation."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "PBC (Packaged Business Component)",
+      "notes": "External SaaS partner application acting as message producer or consumer."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway (PBC)",
+      "notes": "Ingests API calls and messages from the PBC side."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Routing Lambda (PBC)",
+      "notes": "Applies authorization and dynamic routing rules from DynamoDB."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB Tenant Register",
+      "notes": "Central registry storing routing rules and tenant details."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS FIFO",
+      "notes": "Provides ordered, sequence-guaranteed message routing."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS FIFO (Tenant)",
+      "notes": "Buffers ordered messages for consumption by the tenant application."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Tenant App",
+      "notes": "External tenant PaaS application processing asynchronous messages."
+    },
+    {
+      "id": "7",
+      "service": "ApiGateway",
+      "name": "API Gateway (Tenant)",
+      "notes": "Ingests API requests and events from the Tenant side."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Routing Lambda (Tenant)",
+      "notes": "Applies tenant-side routing rules fetched from DynamoDB."
+    },
+    {
+      "id": "9",
+      "service": "SQS",
+      "name": "SQS FIFO (PBC)",
+      "notes": "Buffers ordered messages for consumption by the PBC SaaS platform."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1.1",
+      "type": "data",
+      "notes": "PBC sends messages or events"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1.2",
+      "type": "data",
+      "notes": "Triggers validation Lambda"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1.3",
+      "type": "data",
+      "notes": "Fetches tenant routing rules"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1.4",
+      "type": "data",
+      "notes": "Publishes to SNS FIFO"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1.5",
+      "type": "data",
+      "notes": "Routes sequentially to SQS queue"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1.6",
+      "type": "data",
+      "notes": "Tenant App consumes message"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2.1",
+      "type": "data",
+      "notes": "Tenant sends messages back"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2.2",
+      "type": "data",
+      "notes": "Triggers validation Lambda"
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2.3",
+      "type": "data",
+      "notes": "Fetches target routing rules"
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2.4",
+      "type": "data",
+      "notes": "Publishes back to SNS FIFO"
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2.5",
+      "type": "data",
+      "notes": "Routes sequentially to SQS queue"
+    },
+    {
+      "source": "9",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2.6",
+      "type": "data",
+      "notes": "PBC SaaS consumes message"
+    }
+  ]
+}

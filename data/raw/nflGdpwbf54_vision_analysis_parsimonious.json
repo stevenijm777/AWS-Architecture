@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "Based on the whiteboard and transcript: 1. Chemists (User) trigger the workflow by submitting a search request to API Gateway. 2. API Gateway forwards this to a Lambda function. 3. Lambda queries an RDS database to enrich search parameters. 4. Lambda dynamically spins up an orchestrator container on ECS. 5. The orchestrator coordinates with AWS Fargate worker tasks (using Spot instances) via Amazon MQ (RabbitMQ). 6. Fargate workers perform the heavy molecular searches, communicate results back, and write final outputs to S3. 7. The user downloads results from S3 using a pre-signed URL received via email.",
+  "graph": {
+    "name": "Vertex Pharmaceuticals Molecule Search Platform",
+    "link": "https://www.youtube.com/watch?v=nflGdpwbf54",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "Serverless, on-demand molecular search architecture utilizing ECS, Fargate Spot, and Amazon MQ to run up to 500 parallel worker tasks."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDomainExpert",
+      "name": "Chemists / Scientists",
+      "notes": "Submits molecule search request and downloads results."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Ingests HTTPS POST request with search parameters."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Enriches queries and launches the on-demand ECS environment."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "Relational Database",
+      "notes": "Stores metadata used to enrich search parameters."
+    },
+    {
+      "id": "4",
+      "service": "AmazonMQ",
+      "name": "Amazon MQ",
+      "notes": "RabbitMQ broker coordinating orchestrator and worker tasks."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "Amazon ECS",
+      "notes": "Runs the orchestrator task to manage the search lifecycle."
+    },
+    {
+      "id": "6",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Runs search worker tasks utilizing Spot instances for cost efficiency."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores final search results."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Submits search parameters payload"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers Lambda function"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries parameters metadata"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Spins up orchestrator task on ECS"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Publishes search sub-tasks"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Workers consume tasks"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Workers send execution updates"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Orchestrator reads updates to optimize search"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes final search results"
+    },
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Downloads results via pre-signed URL"
+    }
+  ]
+}

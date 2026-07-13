@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture is extracted directly from the whiteboard diagram and transcript. We define the user as UserCompanyDeveloper who inputs scripts. The Scheduler (EC2) places jobs onto the Job Queue (SQS). Public Monitors (EC2) pull from the Job Queue and test the Public Endpoint (ThirdParty). Private Monitors (EC2) route through Global Accelerator to the Monitor API (EC2) to fetch jobs and report metrics, performing internal tests on the Private Endpoint (ThirdParty). Results are fed to the Results Queue (SQS) to complete the feedback loop.",
+  "graph": {
+    "name": "New Relic Synthetics Private and Public Monitoring",
+    "link": "https://www.youtube.com/watch?v=FmhL2334GIY",
+    "categories": "compute_intensive, control",
+    "graph_usable": true,
+    "notes": "Automated synthetic testing architecture using public and private minions to run scripted tests against endpoints securely."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer / CI/CD",
+      "notes": "Submits test scripts via UI, API, or CI/CD pipelines."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Scheduler",
+      "notes": "Manages automated execution frequency for synthetic tests."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Job Queue",
+      "notes": "Buffers scheduled test jobs for execution."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Monitor API",
+      "notes": "Serves jobs and receives metrics from private monitors."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Results Queue",
+      "notes": "Stores test results for alerting and dashboard visualization."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Public Monitors",
+      "notes": "New Relic-managed containerized runtimes for public testing."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Public Endpoint",
+      "notes": "Customer's public-facing website or API."
+    },
+    {
+      "id": "7",
+      "service": "GlobalAccelerator",
+      "name": "Global Accelerator",
+      "notes": "Provides static IPs for secure routing from private minions."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "Private Monitors",
+      "notes": "Customer-hosted containerized minions running inside private networks."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Private Endpoint",
+      "notes": "Customer's internal site or API behind firewalls."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Schedules test script."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pushes run details to queue."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Passes job data to monitor API."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Public monitors pull jobs."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 4,
+      "seq": "3",
+      "type": "data",
+      "notes": "Executes test on public API."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 5,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Communicates via static IPs."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 5,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Retrieves jobs from API."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 6,
+      "seq": "5",
+      "type": "data",
+      "notes": "Tests internal private API."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 7,
+      "seq": "6",
+      "type": "data",
+      "notes": "Sends execution results to queue."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 8,
+      "seq": "7",
+      "type": "data",
+      "notes": "Schedules next iteration."
+    }
+  ]
+}

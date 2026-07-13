@@ -240,8 +240,9 @@ def run_pipeline(
         print_graph_summary(G)
 
         # ── Step 7: Compare with Ground Truth (if available) ─────
+        import os
         gt_path = Path("data/cloudscape_gt") / f"{video_id}.graphml"
-        if gt_path.exists():
+        if os.environ.get("NO_GT_COMPARE") != "true" and gt_path.exists():
             console.rule("[bold cyan]Step 7 · Compare with Ground Truth")
             from scripts.graph_builder import compare_with_ground_truth
             compare_with_ground_truth(G, gt_path)
