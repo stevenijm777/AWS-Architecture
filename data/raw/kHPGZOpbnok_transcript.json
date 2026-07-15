@@ -1,0 +1,207 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.64,
+    "text": "Hello and welcome to This Is My Architecture. Today I'm joined by Josh from Ookla. Hi Josh."
+  },
+  {
+    "start": 12.64,
+    "end": 16.88,
+    "text": "Hi, thank you for having me. So let's start off. Can you tell me a little bit about what Ookla does?"
+  },
+  {
+    "start": 16.88,
+    "end": 22.8,
+    "text": "Yeah, so Ookla's flagship product is Speedtest, which is the best way for consumers to measure"
+  },
+  {
+    "start": 22.8,
+    "end": 27.28,
+    "text": "their internet connection. Awesome. Well, I know I've used it before. I'm sure many people watching"
+  },
+  {
+    "start": 27.28,
+    "end": 30.8,
+    "text": "have used it as well, but I'm really excited to hear more about the architecture we have"
+  },
+  {
+    "start": 30.8,
+    "end": 37.52,
+    "text": "today. So can you dive in for us? Yeah, absolutely. So as users take Speedtests, we receive reports"
+  },
+  {
+    "start": 37.52,
+    "end": 43.84,
+    "text": "about their internet experience to an API. We receive about 4,000 of those per second."
+  },
+  {
+    "start": 46.32,
+    "end": 52.72,
+    "text": "Those come from consumers to our API that drops them into a Kinesis stream. This Kinesis stream"
+  },
+  {
+    "start": 52.72,
+    "end": 60.64,
+    "text": "really enables us to have an async architecture from here on out. We also get 24 hours of data"
+  },
+  {
+    "start": 60.64,
+    "end": 65.92,
+    "text": "retention in that Kinesis stream. So if we have any slowdowns or issues further in the pipeline,"
+  },
+  {
+    "start": 65.92,
+    "end": 71.84,
+    "text": "we can always catch up. So we have the data retained in Kinesis. Awesome. So why Kinesis?"
+  },
+  {
+    "start": 71.84,
+    "end": 79.92,
+    "text": "Yeah, so Kinesis gives us a lot of robust scale opportunity. We previously used to do a lot of work"
+  },
+  {
+    "start": 79.92,
+    "end": 85.92,
+    "text": "inline in the API connecting to RDS, that sort of thing. And this has allowed us to scale far beyond"
+  },
+  {
+    "start": 85.92,
+    "end": 90.4,
+    "text": "what we could do with that system. That's great. So once we're in Kinesis, where does the data flow"
+  },
+  {
+    "start": 90.4,
+    "end": 97.92,
+    "text": "from there? Yeah, so we then hit our report enrichment step, which is where we build links between the"
+  },
+  {
+    "start": 97.92,
+    "end": 104.0,
+    "text": "measurement data that we see in these reports and fact tables that we have in RDS. So these facts might"
+  },
+  {
+    "start": 104.0,
+    "end": 109.6,
+    "text": "be things like the mobile carrier or the device manufacturer or the geographic place that we"
+  },
+  {
+    "start": 109.6,
+    "end": 115.52,
+    "text": "want to associate these measurements with. Oh, that's great. So we have the data flowing to RDS here,"
+  },
+  {
+    "start": 115.52,
+    "end": 121.52,
+    "text": "and I see we have Kinesis Firehose up there. So what happens from there? Yeah, so once we've enriched"
+  },
+  {
+    "start": 121.52,
+    "end": 129.04,
+    "text": "these reports with the dimensions from the fact tables, we write those enriched JSON reports to Kinesis"
+  },
+  {
+    "start": 129.04,
+    "end": 137.28,
+    "text": "Firehose. Kinesis Firehose gathers several thousand of those and compresses them and writes them to as"
+  },
+  {
+    "start": 137.28,
+    "end": 145.92,
+    "text": "newline separated JSON into our S3 data lake. So I'm guessing with 4000 reports per second, how much data"
+  },
+  {
+    "start": 145.92,
+    "end": 153.6,
+    "text": "do we have in that data lake? Yeah, so we have a little over five petabytes of data uncompressed in"
+  },
+  {
+    "start": 153.6,
+    "end": 159.68,
+    "text": "that data lake. Wow, that's a lot. So the data moves to the data lake. Where does it go from there?"
+  },
+  {
+    "start": 160.4,
+    "end": 165.6,
+    "text": "Yeah, so after the data lake, we really want to pull through to our data warehouse, which is Redshift,"
+  },
+  {
+    "start": 166.24,
+    "end": 171.92,
+    "text": "for our further aggregation and processing. To do that, we use a Lambda job. It's triggered on new"
+  },
+  {
+    "start": 171.92,
+    "end": 179.2,
+    "text": "objects landing in the data lake. That Lambda job normalizes the data into the CSV that we can pull into"
+  },
+  {
+    "start": 179.2,
+    "end": 186.0,
+    "text": "Redshift tables. And so down here with Redshift, do we have this data flowing to customers or is this"
+  },
+  {
+    "start": 186.0,
+    "end": 192.64,
+    "text": "for internal use? Yeah, so Redshift really gives us the the power to run aggregates over long time frames"
+  },
+  {
+    "start": 193.2,
+    "end": 199.2,
+    "text": "and come up with the the insights and analysis that we want to write back to RDS and ultimately expose"
+  },
+  {
+    "start": 199.2,
+    "end": 203.28,
+    "text": "back to our customers through the Speedtest Intelligence product. So I know that we have some"
+  },
+  {
+    "start": 203.83999999999997,
+    "end": 207.76,
+    "text": "near real-time data happening. Is there any way to go back and use some past data?"
+  },
+  {
+    "start": 207.76,
+    "end": 216.95999999999998,
+    "text": "Yeah, so we actually we use Athena to explore the data, the full breadth of data that we have"
+  },
+  {
+    "start": 216.95999999999998,
+    "end": 222.0,
+    "text": "collected in the data lake. It allows us to write SQL queries and analyze any field in the JSON that"
+  },
+  {
+    "start": 222.0,
+    "end": 228.0,
+    "text": "we've collected. Once we've identified a new piece of data or new analysis that we'd like to do and"
+  },
+  {
+    "start": 228.0,
+    "end": 234.16,
+    "text": "expose to our customers, we are able to actually trigger this Lambda job retroactively on the historical"
+  },
+  {
+    "start": 234.16,
+    "end": 239.04,
+    "text": "data in the data lake. We can go back six months or a year and pull those insights through and it's as"
+  },
+  {
+    "start": 239.04,
+    "end": 245.68,
+    "text": "if we've been collecting them for a year. Yeah, so we have a lot of data coming in. We also see a lot of"
+  },
+  {
+    "start": 245.68,
+    "end": 251.68,
+    "text": "serverless happening in here too, which is awesome. This must be really great for your customers to have"
+  },
+  {
+    "start": 251.68,
+    "end": 257.92,
+    "text": "the ability to get this past data near real-time data and then provide these insights. So thanks so much"
+  },
+  {
+    "start": 257.92,
+    "end": 270.24,
+    "text": "for joining us, Josh. I've learned a lot and thank you for watching. This is my architecture."
+  }
+]

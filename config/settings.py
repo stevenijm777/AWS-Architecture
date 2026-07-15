@@ -11,15 +11,19 @@ load_dotenv(_PROJECT_ROOT / ".env")
 
 
 # ── Paths ────────────────────────────────────────────────────
-DATA_DIR    = _PROJECT_ROOT / "data"
-RAW_DIR     = DATA_DIR / "raw"
-AUDIO_DIR   = DATA_DIR / "audio"
-FRAMES_DIR  = DATA_DIR / "frames"
-GRAPHS_DIR  = DATA_DIR / "graphs"
-LOGS_DIR    = _PROJECT_ROOT / "logs"
+DATA_DIR            = _PROJECT_ROOT / "data"
+RAW_DIR             = DATA_DIR / "raw"
+AUDIO_DIR           = DATA_DIR / "audio"
+FRAMES_DIR          = DATA_DIR / "frames"
+GRAPHS_DIR          = DATA_DIR / "graphs"
+GOOD_WHITEBOARD_DIR = DATA_DIR / "good_whiteboard"
+BAD_WHITEBOARD_DIR  = DATA_DIR / "bad_whiteboard"
+UNPROCESSED_DIR     = DATA_DIR / "un_processed"
+PROCESADOS_DIR      = DATA_DIR / "procesados"
+LOGS_DIR            = _PROJECT_ROOT / "logs"
 
 # Ensure all dirs exist
-for d in (RAW_DIR, AUDIO_DIR, FRAMES_DIR, GRAPHS_DIR, LOGS_DIR):
+for d in (RAW_DIR, AUDIO_DIR, FRAMES_DIR, GRAPHS_DIR, GOOD_WHITEBOARD_DIR, BAD_WHITEBOARD_DIR, UNPROCESSED_DIR, PROCESADOS_DIR, LOGS_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
 
@@ -53,5 +57,5 @@ VIDEO_FORMAT: str = os.getenv(
 # - gemini-2.0-pro-exp-02-05          (Experimental high intelligence model)
 # - gemini-1.5-flash                  (Standard flash model)
 # - gemini-1.5-pro                    (Standard pro model, large context window)
-GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
 

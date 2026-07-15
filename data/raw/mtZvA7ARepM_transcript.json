@@ -1,0 +1,267 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.16,
+    "text": "Welcome to This Is My Architecture. I'm James and I'm here with Tony Coleman from Temenos."
+  },
+  {
+    "start": 11.16,
+    "end": 15.48,
+    "text": "Thanks for coming Tony. Hi James, glad to be here. Can you tell me a bit about Temenos, Tony?"
+  },
+  {
+    "start": 15.48,
+    "end": 23.88,
+    "text": "Temenos is the world's number one banking software. We have around 3,000 firms including 41 of the top"
+  },
+  {
+    "start": 23.88,
+    "end": 30.24,
+    "text": "50 banks around the world running the software and relying on Temenos to support the interactions"
+  },
+  {
+    "start": 30.24,
+    "end": 35.64,
+    "text": "and transactions of around half a billion banking customers. That's quite a big deal."
+  },
+  {
+    "start": 35.64,
+    "end": 40.8,
+    "text": "So tell me about some of the problems that you're faced with. So there's two stories that we're going"
+  },
+  {
+    "start": 40.8,
+    "end": 46.879999999999995,
+    "text": "to talk about today and the first one is around the idea of elastic scalability, automatic elastic"
+  },
+  {
+    "start": 46.879999999999995,
+    "end": 53.16,
+    "text": "scalability. This is the some of the drivers we're seeing very unpredictable workloads coming from the"
+  },
+  {
+    "start": 53.16,
+    "end": 59.58,
+    "text": "market and we need a solution and an architecture that will support that. Not only to burst out when"
+  },
+  {
+    "start": 59.58,
+    "end": 66.06,
+    "text": "you see those peak loads but as importantly to scale back down so that you are only paying for"
+  },
+  {
+    "start": 66.06,
+    "end": 72.96,
+    "text": "the infrastructure that you need to service those requests. So that's the first part. The second part"
+  },
+  {
+    "start": 72.96,
+    "end": 80.1,
+    "text": "is ease of maintenance and manageability and we're starting to hear phrases like lights out data center."
+  },
+  {
+    "start": 80.1,
+    "end": 88.67999999999999,
+    "text": "A lot of challenger banks don't want an IT department. A huge part of the cost of an IT department is people."
+  },
+  {
+    "start": 88.67999999999999,
+    "end": 96.36,
+    "text": "And by using and leveraging the platform and the managed services, a lot of that responsibility is pushed to the cloud platform."
+  },
+  {
+    "start": 96.36,
+    "end": 101.52,
+    "text": "Right. These can be hard problems to solve. So let's have a look at your architecture and see how you're doing that."
+  },
+  {
+    "start": 101.52,
+    "end": 122.52,
+    "text": "Sure. So all of our requests start and end at the API gateway really. So it doesn't matter whether the request is coming from an open banking API or a customer on a mobile device or an assisted channel. It doesn't matter. Everything is rooted through to the API gateway."
+  },
+  {
+    "start": 122.52,
+    "end": 133.1,
+    "text": "Obviously there are some perimeter services that we're not showing here. The API gateway will then, based on the endpoint, route one of two two ways."
+  },
+  {
+    "start": 133.1,
+    "end": 143.68,
+    "text": "The first route to talk about is this route on the left to Fargate. So here the first port of call is the API gateway uses the elastic load balancer."
+  },
+  {
+    "start": 143.68,
+    "end": 150.68,
+    "text": "And this load balancer's job here is to route the request through to the correct container image."
+  },
+  {
+    "start": 150.68,
+    "end": 163.26000000000002,
+    "text": "So we use Fargate to host our containers. And that is where the transaction processing logic sits. And there we persist the data down into our DS."
+  },
+  {
+    "start": 163.26000000000002,
+    "end": 174.26000000000002,
+    "text": "And then normally the response goes back up the chain. In addition, we have the stream along the bottom where we take the events that are generated as part of that transaction."
+  },
+  {
+    "start": 174.26,
+    "end": 181.26,
+    "text": "Now that might be data events or it might be more complicated business events. But those are pushed through into Kinesis."
+  },
+  {
+    "start": 181.26,
+    "end": 194.84,
+    "text": "We use Kinesis to push through those events in turn to a Lambda. And the Lambda's job here is to take that business event or the data event and produce a query optimized data model."
+  },
+  {
+    "start": 194.84,
+    "end": 199.84,
+    "text": "And that's ultimately where the data ends up over here in Dynamo."
+  },
+  {
+    "start": 199.84,
+    "end": 203.84,
+    "text": "And so why are you using two databases here, RDS and DynamoDB?"
+  },
+  {
+    "start": 203.84,
+    "end": 214.84,
+    "text": "So over in RDS, this is our OLTP database. It's designed and the database schema is there to process transactions as quickly and efficiently as possible."
+  },
+  {
+    "start": 214.84,
+    "end": 218.84,
+    "text": "Sometimes that means that the queries aren't as great as they might be."
+  },
+  {
+    "start": 218.84,
+    "end": 229.84,
+    "text": "So we solve this by using a CQRS pattern and offloading the majority of our query workloads into a query optimized database."
+  },
+  {
+    "start": 229.84,
+    "end": 233.84,
+    "text": "So not only is it a query optimized database, it's a query optimized data model."
+  },
+  {
+    "start": 233.84,
+    "end": 237.84,
+    "text": "So not all the data ends up in Dynamo, only the things we need there."
+  },
+  {
+    "start": 237.84,
+    "end": 240.84,
+    "text": "Okay, perfect. And then what's happening on this side of the diagram?"
+  },
+  {
+    "start": 240.84,
+    "end": 251.84,
+    "text": "So for exactly that part of it, a lot of the, if not all of a query workload now gets pushed through from the API gateway directly to the Lambda."
+  },
+  {
+    "start": 251.84,
+    "end": 259.84000000000003,
+    "text": "And the Lambda does the normal stuff that you'd expect to construct a query to the database and then simply interrogates Dynamo to do that."
+  },
+  {
+    "start": 259.84000000000003,
+    "end": 266.84000000000003,
+    "text": "And this gives us a very, very rapid response time. It gives us a very efficient footprint as well."
+  },
+  {
+    "start": 266.84,
+    "end": 274.84,
+    "text": "That's very nice. And we can see that across the board here, you're using managed services, which must hugely reduce the amount of work your customers have to do."
+  },
+  {
+    "start": 274.84,
+    "end": 281.84,
+    "text": "Absolutely. And as an example of that, one of the deliverables of this architecture is a set of CloudFormation scripts."
+  },
+  {
+    "start": 281.84,
+    "end": 292.84,
+    "text": "And these are being rolled out and used by customers and our engineers and pre-sales teams alike to spin up exactly this architecture, you know, with very little skills or knowledge needed."
+  },
+  {
+    "start": 292.84,
+    "end": 299.84,
+    "text": "So it's massively removing and reducing the need for manual steps in that deployment phase."
+  },
+  {
+    "start": 299.84,
+    "end": 307.84,
+    "text": "Brilliant. So you said the other challenge that you face is one of scalability and being able to elastically scale the system. Can you tell me more about how you're achieving that?"
+  },
+  {
+    "start": 307.84,
+    "end": 322.84,
+    "text": "So it's a tale of two sides here. So the transaction processing engines, both in Fargate and in Lambdas and the query engines in Lambdas as well, scale pretty much automatically for us."
+  },
+  {
+    "start": 322.84,
+    "end": 328.84,
+    "text": "So in Fargate, we did some work to expose some custom metrics for the background services workload."
+  },
+  {
+    "start": 328.84,
+    "end": 335.84,
+    "text": "But for the online workload, we use pretty much the standard metrics and the scalability of Fargate itself."
+  },
+  {
+    "start": 335.84,
+    "end": 344.84,
+    "text": "Fargate's excellent because it enables us to not only scale out the containers, but it also scales the underlying infrastructure as well."
+  },
+  {
+    "start": 344.84,
+    "end": 358.84,
+    "text": "This is important, obviously, for the burst out. But when the workload goes away, we scale back so the infrastructure is not paid for anymore, meaning you're only paying for the usage that you actually need."
+  },
+  {
+    "start": 358.84,
+    "end": 360.84,
+    "text": "So that's on the Fargate side."
+  },
+  {
+    "start": 360.84,
+    "end": 365.84,
+    "text": "That's very important. Now, you told me that you've been running a benchmark on this architecture. How's that going?"
+  },
+  {
+    "start": 365.84,
+    "end": 377.84,
+    "text": "Very well. So it's, you know, we are at the point now where we're talking overall the transaction load we're putting through is around 50,000 transactions a second."
+  },
+  {
+    "start": 377.84,
+    "end": 386.84,
+    "text": "It's actually slightly higher. And that's a split between transaction processing happening and also the query workloads that we put through."
+  },
+  {
+    "start": 386.84,
+    "end": 404.84,
+    "text": "But, you know, over 12,500 transactions a second are what I would call proper transactions as opposed to queries where there's a banking transactions, they're moving money, and it's pushing the, this sort of streaming technology."
+  },
+  {
+    "start": 404.84,
+    "end": 417.84,
+    "text": "And it means that it was very important for us to test all of this out to ensure that the kinesis streams and the lambdas going into Dynamo was keeping up with the pressure that we applied to, to Fargate."
+  },
+  {
+    "start": 417.84,
+    "end": 433.84,
+    "text": "And it keeps up with it very nicely. One of the things we were very surprised about, pleasantly surprised at these very high transaction volumes, is there was basically nothing we needed to do in the Lambda or even the Dynamo database model."
+  },
+  {
+    "start": 433.84,
+    "end": 444.84,
+    "text": "Arguably, we got it right first time, but it was great to see that the Lambda and Dynamo just scaling when we were pushing it through to those extreme volumes with very little work at all."
+  },
+  {
+    "start": 444.84,
+    "end": 450.84,
+    "text": "That's fantastic, isn't it? Great to hear. Well, thank you for coming, Tony. And thank you for watching. This is my architecture."
+  }
+]

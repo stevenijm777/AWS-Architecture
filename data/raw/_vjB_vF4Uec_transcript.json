@@ -1,0 +1,317 @@
+[
+  {
+    "start": 0.0,
+    "end": 10.0,
+    "text": "Welcome to another episode of This is My Architecture."
+  },
+  {
+    "start": 10.0,
+    "end": 14.0,
+    "text": "I'm Arati and joining me today is John from Nisuni."
+  },
+  {
+    "start": 14.0,
+    "end": 16.0,
+    "text": "John, thank you for joining us today."
+  },
+  {
+    "start": 16.0,
+    "end": 18.0,
+    "text": "Thank you. Thank you for having me."
+  },
+  {
+    "start": 18.0,
+    "end": 20.0,
+    "text": "John, tell us what Nisuni does."
+  },
+  {
+    "start": 20.0,
+    "end": 23.0,
+    "text": "So Nisuni creates a global file infrastructure for enterprise customers."
+  },
+  {
+    "start": 23.0,
+    "end": 30.0,
+    "text": "We have a massively scalable file system that's automatically versioned and available anywhere through our edge appliances."
+  },
+  {
+    "start": 30.0,
+    "end": 37.0,
+    "text": "So that means that you can access the same file from basically any point where you can put an edge appliance throughout the globe."
+  },
+  {
+    "start": 37.0,
+    "end": 41.0,
+    "text": "So accessing files from anywhere, what were the challenges in building this architecture?"
+  },
+  {
+    "start": 41.0,
+    "end": 47.0,
+    "text": "Well, the biggest challenge is making sure that you don't overwrite data when you're writing on top of a file."
+  },
+  {
+    "start": 47.0,
+    "end": 51.0,
+    "text": "So it's commonly talked about as the consistency challenge or a lock challenge."
+  },
+  {
+    "start": 51.0,
+    "end": 57.0,
+    "text": "So the problem is I can access my file system from these edge appliances."
+  },
+  {
+    "start": 57.0,
+    "end": 61.0,
+    "text": "Edge appliances can live anywhere. They could be in an EC2 region. They could be in outposts."
+  },
+  {
+    "start": 61.0,
+    "end": 70.0,
+    "text": "But if I'm going to open up a file, I have to make sure that if I open up that file, let's say I've got Arati opening up that file,"
+  },
+  {
+    "start": 70.0,
+    "end": 73.0,
+    "text": "that no one else can open up that file as well."
+  },
+  {
+    "start": 73.0,
+    "end": 76.0,
+    "text": "And it's really easy if we're talking about one appliance."
+  },
+  {
+    "start": 76.0,
+    "end": 83.0,
+    "text": "But once you're talking about multiple appliances accessing the same file, how is it that when I open up that file, someone else isn't going to open up that file?"
+  },
+  {
+    "start": 83.0,
+    "end": 86.0,
+    "text": "So that's called a global file locking problem."
+  },
+  {
+    "start": 86.0,
+    "end": 89.0,
+    "text": "So we create a global file locking infrastructure for that."
+  },
+  {
+    "start": 89.0,
+    "end": 93.0,
+    "text": "So how do you solve for it? Like where does this logic lie of how you lock these files?"
+  },
+  {
+    "start": 93.0,
+    "end": 98.0,
+    "text": "Well, our innovation was we said, you know, the lock information can't just live here in the appliance."
+  },
+  {
+    "start": 98.0,
+    "end": 104.0,
+    "text": "It's got to be a global service because your appliances can be anywhere, which means that your lock should be also anywhere."
+  },
+  {
+    "start": 104.0,
+    "end": 108.0,
+    "text": "So we create a global file lock service and we put it inside of a region."
+  },
+  {
+    "start": 108.0,
+    "end": 117.0,
+    "text": "And so now when you open up a file in appliance, first thing that the file does is it says, hey, I need to check to see whether or not anyone else has that file locked or not."
+  },
+  {
+    "start": 117.0,
+    "end": 120.0,
+    "text": "And it does so by accessing the service."
+  },
+  {
+    "start": 120.0,
+    "end": 124.0,
+    "text": "So we're going to do this. Then there's some logic that looks for the name of the file."
+  },
+  {
+    "start": 124.0,
+    "end": 130.0,
+    "text": "And then we look in a record and DynamoDB database to say, hey, is there a lock set on here?"
+  },
+  {
+    "start": 130.0,
+    "end": 135.0,
+    "text": "Is there not a lock set on here? And the challenge here is you're waiting, you as a user waiting to open that file."
+  },
+  {
+    "start": 135.0,
+    "end": 142.0,
+    "text": "So this has to be super, super low latency. So that's why we use Dynamo, super low latency, incredibly scalable, really fast."
+  },
+  {
+    "start": 142.0,
+    "end": 144.0,
+    "text": "So you can open these files very quickly."
+  },
+  {
+    "start": 144.0,
+    "end": 150.0,
+    "text": "Got it. So as a user, you've got Dynamo that's helping them, helping you with the low latency side."
+  },
+  {
+    "start": 150.0,
+    "end": 156.0,
+    "text": "of things, right? You mentioned this is a global architecture. So how do you achieve this global architecture?"
+  },
+  {
+    "start": 156.0,
+    "end": 162.0,
+    "text": "Well, we realized that, you know, one of the other big problems is if we're telling everyone to go back to one region for the global file lock service,"
+  },
+  {
+    "start": 162.0,
+    "end": 168.0,
+    "text": "the latency is going to get really, really high. So if I've got an appliance that's, you know, in Texas,"
+  },
+  {
+    "start": 168.0,
+    "end": 175.0,
+    "text": "and I've got another appliance that's at my outpost in Singapore, if Singapore is always contacting U.S. East, that's way, way too long."
+  },
+  {
+    "start": 175.0,
+    "end": 179.0,
+    "text": "So what we said was, we're going to have to come up with a second region."
+  },
+  {
+    "start": 179.0,
+    "end": 184.0,
+    "text": "And so we did this. And we said, we're going to come up with another region in which you have a global file lock service available,"
+  },
+  {
+    "start": 184.0,
+    "end": 190.0,
+    "text": "so that you can very quickly access the same stack, but in a location that's closer to you."
+  },
+  {
+    "start": 190.0,
+    "end": 194.0,
+    "text": "Got it. So how do you achieve consistency now when you have two regions?"
+  },
+  {
+    "start": 194.0,
+    "end": 201.0,
+    "text": "Well, before we actually did this, we built this six years ago, and DynamoDB at that time did not have global tables."
+  },
+  {
+    "start": 201.0,
+    "end": 209.0,
+    "text": "So we wrote this Lambda function along with Kinesis and some other stuff. And basically, it was making sure that there was consistency between multiple region tables."
+  },
+  {
+    "start": 209.0,
+    "end": 217.0,
+    "text": "And then once global tables came out, we said, okay, this is great. Dynamo is going to take care of this part. Dynamo is going to make sure that that goes back and forth."
+  },
+  {
+    "start": 217.0,
+    "end": 223.0,
+    "text": "And we said, you know, the way to maintain consistency really should be at the at DNS."
+  },
+  {
+    "start": 223.0,
+    "end": 231.0,
+    "text": "So now the appliance goes directly here to DNS and it says, hey, Route 53, I'm trying to access the U.S. East lock service."
+  },
+  {
+    "start": 231.0,
+    "end": 235.0,
+    "text": "U.S. East is paired with U.S. West. So U.S. East will say, okay, U.S. East is here."
+  },
+  {
+    "start": 235.0,
+    "end": 243.0,
+    "text": "If something goes wrong, Route 53, because it's got its own mechanisms to determine availability, is going to tell us whether or not any part of this stack,"
+  },
+  {
+    "start": 243.0,
+    "end": 250.0,
+    "text": "including EC2 or Dynamo is down. Now Route 53 can do its active passive failover. In this case, it will be to U.S. West."
+  },
+  {
+    "start": 250.0,
+    "end": 255.0,
+    "text": "But what our Lambda does, we do something a little bit extra here. We say, okay, once I realize there's a problem here,"
+  },
+  {
+    "start": 255.0,
+    "end": 262.0,
+    "text": "I've got a TTL of one minute to actually move everything over. I know there's some lag and consistency of the Dynamo database."
+  },
+  {
+    "start": 262.0,
+    "end": 267.0,
+    "text": "Lambda here is going to tell this ELB right away, hey, start rejecting requests."
+  },
+  {
+    "start": 267.0,
+    "end": 275.0,
+    "text": "This appliance knows that if I get a 503 back, I'm just going to keep redoing requests for a period of time so I can make sure everything gets transferred over."
+  },
+  {
+    "start": 275.0,
+    "end": 283.0,
+    "text": "So this Lambda here is basically telling this service to stop taking requests, waits until Dynamo says, hey, I'm all set,"
+  },
+  {
+    "start": 283.0,
+    "end": 289.0,
+    "text": "waits for Route 53 to say that it's failed everything over, and then everything can be in this other region here."
+  },
+  {
+    "start": 289.0,
+    "end": 297.0,
+    "text": "Got it. So you are basically using Lambda to trigger these functions that say, hey, I've got consistency achieved, failover to the other region now."
+  },
+  {
+    "start": 297.0,
+    "end": 305.0,
+    "text": "It's sort of like an extra level of regional failover on top of some really great multi-regional availability options."
+  },
+  {
+    "start": 305.0,
+    "end": 308.0,
+    "text": "And what scale are we talking here in terms of the file lock architecture?"
+  },
+  {
+    "start": 308.0,
+    "end": 317.0,
+    "text": "Last year we did 31, 32 billion requests. At the most we do probably close to about 2,000 requests per second."
+  },
+  {
+    "start": 317.0,
+    "end": 328.0,
+    "text": "That's growing at, we're doubling about every 12 to 18 months. So we're always preparing for each of these regions to be about twice as much as they will be in about 18 months."
+  },
+  {
+    "start": 328.0,
+    "end": 335.0,
+    "text": "And in terms of latency, we're shooting for, you know, in the, you know, 40, 50, 60 milliseconds for this entire transaction to happen."
+  },
+  {
+    "start": 335.0,
+    "end": 340.0,
+    "text": "So everything here has to be fast. And this point, again, has to be as close as possible."
+  },
+  {
+    "start": 340.0,
+    "end": 346.0,
+    "text": "Got it. Thank you, John. That's impressive scale. And you've also achieved for that lesser latency that's required."
+  },
+  {
+    "start": 346.0,
+    "end": 351.0,
+    "text": "That's typically a challenge for this kind of architecture. Thank you for sharing this architecture with us."
+  },
+  {
+    "start": 351.0,
+    "end": 355.0,
+    "text": "And thank you for joining us in This Is My Architecture. See you soon."
+  }
+]

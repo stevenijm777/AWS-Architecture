@@ -1,0 +1,226 @@
+{
+  "step_by_step_reasoning": "The architecture is modeled according to the three distinct layers described in the transcript: Process, Store, and Consume. We map each node from the World Model's entities. For connections, we capture the data ingestion flow (from Car through REST API to S3, SQS, and EKS processing with Step Functions) as Flow 0, and the data delivery/consumption flow (from the Store layer databases S3, Elasticsearch, CockroachDB to the Consume layer EKS, API Gateway, Webapp, and ultimately the users) as Flow 1.",
+  "graph": {
+    "name": "Mobileye Dynamic RAM Cloud Architecture",
+    "link": "https://www.youtube.com/watch?v=5hjkSczrke4",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Dynamic RAM is an evolutionary platform at Mobileye that processes vehicle sensor and visual inspection data to provide city planners and operators with mobility intelligence and live event data. It leverages an auto-scaling EKS processing layer, Step Functions for serverless algorithmic workflows, and a multi-tiered storage layer consisting of Amazon S3, Elasticsearch, and CockroachDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Car",
+      "notes": "Vehicles collecting sensor and visual inspection data as they drive."
+    },
+    {
+      "id": "1",
+      "service": "REST API",
+      "name": "REST API",
+      "notes": "Ingestion REST API hosted in a separate AWS account to receive vehicle payloads."
+    },
+    {
+      "id": "2",
+      "service": "Amazon S3",
+      "name": "S3 (Ingest)",
+      "notes": "S3 bucket storing raw vehicle ingestion data."
+    },
+    {
+      "id": "3",
+      "service": "Amazon SQS",
+      "name": "SQS",
+      "notes": "Queue used to trigger processing workers based on incoming raw S3 files."
+    },
+    {
+      "id": "4",
+      "service": "Amazon EKS",
+      "name": "EKS (Process)",
+      "notes": "Auto-scaling EKS cluster executing workers that preprocess and format incoming telemetry data."
+    },
+    {
+      "id": "5",
+      "service": "AWS Step Functions",
+      "name": "Step Functions",
+      "notes": "Orchestrates AWS Lambda functions running algorithms like potential construction zone extraction."
+    },
+    {
+      "id": "6",
+      "service": "Amazon S3",
+      "name": "S3 (Store)",
+      "notes": "Stores preprocessed and formatted intermediate datasets."
+    },
+    {
+      "id": "7",
+      "service": "Amazon OpenSearch Service",
+      "name": "Elasticsearch",
+      "notes": "Document database providing self-indexing for cost-effective event query capabilities."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Cockroach DB",
+      "notes": "Relational database used for frequent and high-volume data updates, deployed inside EKS."
+    },
+    {
+      "id": "9",
+      "service": "Amazon API Gateway",
+      "name": "API Gateway",
+      "notes": "Exposes secure REST API endpoints to city planners and operators."
+    },
+    {
+      "id": "10",
+      "service": "Amazon EKS",
+      "name": "EKS (Consume)",
+      "notes": "EKS cluster hosting application servers to serve processed insights to the web application and APIs."
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "Webapp",
+      "notes": "Front-end web dashboard visualizing live event maps."
+    },
+    {
+      "id": "12",
+      "service": "User",
+      "name": "Planners & Operators",
+      "notes": "Enterprise customers such as city and road planners who consume analytical reports."
+    },
+    {
+      "id": "13",
+      "service": "User",
+      "name": "Users",
+      "notes": "End-users utilizing the web application to visualize mapped events."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Vehicles upload collected sensor and visual inspection data to the ingestion REST API."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingestion REST API stores data payloads to S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Triggers message creation in SQS to notify processors of new items."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "EKS workers pull jobs/tasks from the SQS queue."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "EKS workers invoke Step Functions to execute parallel algorithm execution and workflow orchestration."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "EKS workers write formatted data to the S3 store."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Algorithms run via Step Functions write their output results to S3."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "EKS workers write insights and event documents into Elasticsearch."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "EKS workers execute frequent table updates in CockroachDB."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "S3 datasets are mapped or made accessible to the API Gateway."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS cluster reads indexed event details from Elasticsearch."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS cluster reads operational data updates from CockroachDB."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "EKS acts as the upstream backend serving requests for API Gateway."
+    },
+    {
+      "source": "9",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "City planners consume structured analytics and reports directly via the API."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "control",
+      "notes": "EKS cluster hosts and serves API payloads rendering on the web app."
+    },
+    {
+      "source": "11",
+      "target": "13",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "control",
+      "notes": "End-users access the front-end dashboard to visualize live event maps."
+    }
+  ]
+}

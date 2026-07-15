@@ -1,0 +1,218 @@
+{
+  "step_by_step_reasoning": "Analyze the whiteboard architecture and transcript to identify the three main layers: Process, Store, and Consume. We map the external vehicle sources (left) to a landing S3 bucket via a REST API, which triggers SQS queues processed by EKS. Processed data is sent to S3 and orchestrated by Step Functions, then stored in Elasticsearch and CockroachDB. Finally, the consume layer exposes REST APIs via API Gateway and a Web App backed by another EKS cluster, serving external city planners and operators.",
+  "graph": {
+    "name": "Mobileye Dynamic RAM Platform",
+    "link": "https://www.youtube.com/watch?v=5hjkSczrke4",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Dynamic RAM is a multi-layer mobility intelligence platform processing vehicle telemetry to provide city planners with road and traffic insights."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Vehicles",
+      "notes": "Anonymized telemetry and visual inspections sent from cars."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "REST API",
+      "notes": "Ingestion REST API in a separate AWS account."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Ingestion S3",
+      "notes": "Stores raw ingested vehicle data."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Buffers raw messages for scaling downstream processing."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Processing EKS",
+      "notes": "Autoscaling workers that process vehicle data."
+    },
+    {
+      "id": "5",
+      "service": "Step Functions",
+      "name": "Step Functions",
+      "notes": "Orchestrates algorithm flows and Lambda functions."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Store S3",
+      "notes": "Stores preprocessed and formatted data."
+    },
+    {
+      "id": "7",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Document store for quick queries and self-indexing."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "CockroachDB",
+      "notes": "Relational DB running on EKS for frequent updates."
+    },
+    {
+      "id": "9",
+      "service": "API Gateway",
+      "name": "API Gateway",
+      "notes": "Exposes secure REST APIs to consumers."
+    },
+    {
+      "id": "10",
+      "service": "EKS",
+      "name": "Consume EKS",
+      "notes": "EKS cluster serving the frontend and REST APIs."
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "Web App",
+      "notes": "Frontend application for platform insights."
+    },
+    {
+      "id": "12",
+      "service": "UserConsumerWeb",
+      "name": "City Planners",
+      "notes": "Consumes REST APIs for road segment and traffic insights."
+    },
+    {
+      "id": "13",
+      "service": "UserConsumerWeb",
+      "name": "End Users",
+      "notes": "Users accessing the web application dashboard."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Vehicles upload telemetry"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves raw data"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers processing queue"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS pulls from queue"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Stores preprocessed files"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Invokes algorithms"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Saves algorithm results"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Saves indexed records"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Saves relational updates"
+    },
+    {
+      "source": "12",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Planners request API data"
+    },
+    {
+      "source": "9",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves S3 stored insights"
+    },
+    {
+      "source": "13",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Accesses frontend dashboard"
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Queries backend app server"
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fetches document metrics"
+    },
+    {
+      "source": "10",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Fetches high-frequency updates"
+    }
+  ]
+}

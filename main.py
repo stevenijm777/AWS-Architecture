@@ -24,11 +24,13 @@ from config.settings import (
     FRAMES_DIR,
     GRAPHS_DIR,
     RAW_DIR,
+    GOOD_WHITEBOARD_DIR,
+    BAD_WHITEBOARD_DIR,
 )
-from scripts.downloader import download_video, extract_video_id
-from scripts.extractor import extract_audio, extract_keyframes
-from scripts.transcriber import transcribe, get_timestamped_segments
-from scripts.graph_builder import (
+from scripts.core.downloader import download_video, extract_video_id
+from scripts.core.extractor import extract_audio, extract_keyframes
+from scripts.core.transcriber import transcribe, get_timestamped_segments
+from scripts.core.graph_builder import (
     create_graph_from_cloudscape_json,
     export_graphml,
     print_graph_summary,
@@ -44,9 +46,10 @@ def run_pipeline(
     language: str | None = None,
     force: bool = False,
     force_vision: bool = False,
+    mode: str = "standard",
 ) -> Path:
     """
-    Execute the full extraction pipeline:
+    Execute the full extraction pipeline (standard or parsimonious):
 
     1. Download video & metadata
     2. Extract audio (WAV 16 kHz mono)
@@ -60,14 +63,14 @@ def run_pipeline(
 
     # ── Banner ───────────────────────────────────────────────
     console.print(Panel.fit(
-        "[bold white]Cloud Architecture Extractor[/]\n"
+        f"[bold white]Cloud Architecture Extractor ({mode.capitalize()} Mode)[/]\n"
         "[dim]YouTube → Whisper → Gemini → GraphML[/]",
         border_style="cyan",
     ))
 
     video_id = extract_video_id(url)
     transcript_path = RAW_DIR / f"{video_id}_transcript.json"
-    good_whiteboard_path = Path(__file__).resolve().parent / "data" / "good_whiteboard" / f"{video_id}.jpg"
+    good_whiteboard_path = GOOD_WHITEBOARD_DIR / f"{video_id}.jpg"
 
     fast_path = False
     if not skip_vision and transcript_path.exists() and good_whiteboard_path.exists():
@@ -173,10 +176,10 @@ def run_pipeline(
             )
 
     # ── Step 5: Vision Analysis (Cloudscape schema) ─────────
-    console.rule("[bold cyan]Step 5 · Analyze Keyframes (Gemini Vision)")
+    console.rule(f"[bold cyan]Step 5 · Analyze Keyframes (Gemini Vision - {mode.capitalize()} Mode)")
     
     if not skip_vision:
-        good_whiteboard_path = Path(__file__).resolve().parent / "data" / "good_whiteboard" / f"{video_id}.jpg"
+        good_whiteboard_path = GOOD_WHITEBOARD_DIR / f"{video_id}.jpg"
         if not good_whiteboard_path.exists():
             console.print(
                 f"[bold red]✗ Pipeline stopped: Video {video_id} has no approved frame in data/good_whiteboard/.[/]\n"
@@ -190,12 +193,13 @@ def run_pipeline(
     if not best_occl_path.exists() or force:
         console.print("[dim]Running frame selector locally to find best whiteboard...[/]")
         try:
-            from scripts.frame_selector import select_best_frame
+            from scripts.core.frame_selector import select_best_frame
             select_best_frame(video_id, debug=True)
         except Exception as e:
             console.print(f"[yellow]⚠ Frame selector failed: {e}[/]")
 
-    analysis_path = RAW_DIR / f"{video_id}_vision_analysis.json"
+    analysis_suffix = "_vision_analysis_parsimonious.json" if mode == "parsimonious" else "_vision_analysis.json"
+    analysis_path = RAW_DIR / f"{video_id}{analysis_suffix}"
 
     if skip_vision:
         console.print("[yellow]⚠  Skipping vision analysis (--skip-vision)[/]")
@@ -213,8 +217,7 @@ def run_pipeline(
             
         if best_frame:
             import shutil
-            dst_bad = Path(__file__).resolve().parent / "data" / "bad_whiteboard" / f"{video_id}.jpg"
-            dst_bad.parent.mkdir(parents=True, exist_ok=True)
+            dst_bad = BAD_WHITEBOARD_DIR / f"{video_id}.jpg"
             try:
                 shutil.copy2(best_frame, dst_bad)
                 console.print(f"[green]✓[/] Copied selected frame to bad_whiteboard/{video_id}.jpg for manual review.")
@@ -227,7 +230,10 @@ def run_pipeline(
         with open(analysis_path, "r", encoding="utf-8") as f:
             analysis_result = json.load(f)
     else:
-        from scripts.vision_analyzer import analyze_frame
+        if mode == "parsimonious":
+            from scripts.core.vision_analyzer_parsimonious import analyze_frame
+        else:
+            from scripts.core.vision_analyzer import analyze_frame
 
         # Build transcript text from segments
         transcript_text = " ".join(
@@ -261,17 +267,25 @@ def run_pipeline(
         graphml_path = None
     else:
         # ── Step 6: Build Graph (Cloudscape-compatible) ──────────
-        console.rule("[bold cyan]Step 6 · Build Graph & Export GraphML")
+        console.rule(f"[bold cyan]Step 6 · Build Graph & Export GraphML ({mode.capitalize()} Mode)")
         G = create_graph_from_cloudscape_json(
             analysis_result,
             video_id=video_id,
             video_url=url,
         )
 
-        graphml_path = export_graphml(G, video_id)
+        if mode == "parsimonious":
+            output_dir = Path("data/graphs_parsimonious")
+            output_dir.mkdir(parents=True, exist_ok=True)
+            graphml_path = export_graphml(G, video_id, output_dir=output_dir)
+            version_str = "version_3"
+        else:
+            graphml_path = export_graphml(G, video_id)
+            version_str = "version_2"
+
         try:
-            from scripts.tracker import add_to_tracker
-            add_to_tracker(video_id, "version_2")
+            from scripts.core.tracker import add_to_tracker
+            add_to_tracker(video_id, version_str)
         except Exception as e:
             console.print(f"[yellow]⚠ Failed to register in tracker:[/] {e}")
             
@@ -282,7 +296,7 @@ def run_pipeline(
         gt_path = Path("data/cloudscape_gt") / f"{video_id}.graphml"
         if gt_path.exists():
             console.rule("[bold cyan]Step 7 · Compare with Ground Truth")
-            from scripts.graph_builder import compare_with_ground_truth
+            from scripts.core.graph_builder import compare_with_ground_truth
             compare_with_ground_truth(G, gt_path)
 
     # ── Summary ──────────────────────────────────────────────
@@ -330,7 +344,7 @@ def parse_args() -> argparse.Namespace:
         epilog="""
 Examples:
   python main.py --url "https://www.youtube.com/watch?v=abc123"
-  python main.py --url "https://youtu.be/abc123" --interval 15
+  python main.py --url "https://youtu.be/abc123" --mode parsimonious
   python main.py --url "..." --skip-vision --lang en
         """,
     )
@@ -358,6 +372,10 @@ Examples:
         "--force-vision", action="store_true",
         help="Force vision analysis, ignoring cached vision analysis but reusing transcript",
     )
+    parser.add_argument(
+        "--mode", choices=["standard", "parsimonious"], default="standard",
+        help="Pipeline processing mode (default: standard)",
+    )
     return parser.parse_args()
 
 
@@ -371,6 +389,7 @@ if __name__ == "__main__":
             language=args.lang,
             force=args.force,
             force_vision=args.force_vision,
+            mode=args.mode,
         )
         console.print(f"\n[bold green]🎉 Done![/] GraphML → {output}\n")
     except KeyboardInterrupt:
