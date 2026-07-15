@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The user starts from the web/mobile client, which targets CloudFront. Lambda@Edge handles traffic splitting between the legacy API gateway and the new Amazon API Gateway. On the new path, API Gateway triggers a custom authorizer (Lambda) which validates scopes against DynamoDB. For container services, API Gateway routes through an ELB to an Nginx proxy to handle mutual TLS, which then passes traffic to a private ALB fronting the backend container services.",
+  "graph": {
+    "name": "Accolade API Gateway Migration and Security Architecture",
+    "link": "https://www.youtube.com/watch?v=Jz2RPRhF6Fs",
+    "categories": "interactive, control",
+    "graph_usable": true,
+    "notes": "Migration architecture from legacy XML API gateway to Amazon API Gateway. Uses CloudFront and Lambda@Edge for traffic shifting, custom Lambda authorizers with DynamoDB for scope validation, and Nginx for mutual TLS termination before a private ALB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "User",
+      "notes": "Web and mobile clients sending API requests."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN caching and entry point for routing."
+    },
+    {
+      "id": "2",
+      "service": "LambdaAtEdge",
+      "name": "Lambda@Edge",
+      "notes": "Handles traffic shifting between legacy gateway and AWS API Gateway."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Legacy API Gateway",
+      "notes": "XML-configured legacy backend API."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Centralized, secure gateway natively integrating with Lambda."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Custom Authorizer Lambda",
+      "notes": "Decodes JWT tokens and verifies scopes."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Externalized store for API scope configurations."
+    },
+    {
+      "id": "7",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Load balances traffic from API Gateway to Nginx."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Nginx Proxy",
+      "notes": "Terminates mutual TLS connection from API Gateway."
+    },
+    {
+      "id": "9",
+      "service": "ALB",
+      "name": "Private ALB",
+      "notes": "Fronts private containerized backend services."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Initiates API request with JWT token."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers edge routing logic."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3a",
+      "type": "data",
+      "notes": "Routes legacy traffic to legacy API."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3b",
+      "type": "data",
+      "notes": "Routes migrated traffic to Amazon API Gateway."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Invokes custom authorizer to validate token."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queries DynamoDB to verify scopes."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes validated request to backend cluster."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards to Nginx proxy for mutual TLS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Sends requests to the private ALB."
+    }
+  ]
+}

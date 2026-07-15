@@ -38,8 +38,8 @@ def main():
 
     print(f"Total missing videos with transcript and good whiteboard: {len(missing_videos)}")
     
-    # Take the last 15
-    target_videos = missing_videos[-15:]
+    # Take the first 15 (next ones in line)
+    target_videos = missing_videos[:15]
     if not target_videos:
         print("No missing videos to process!")
         return
@@ -50,16 +50,27 @@ def main():
     start_time = time.time()
     successful = 0
     failed = 0
+    max_success = 15
+    max_failures = 3
 
     import os
     env = dict(os.environ)
     env["NO_GT_COMPARE"] = "true"
+    env["GEMINI_MAX_RETRIES"] = "1"  # Disable retries inside vision_analyzer_parsimonious
     env["PYTHONIOENCODING"] = "utf-8"
 
     for idx, video_id in enumerate(target_videos, 1):
+        if successful >= max_success:
+            print(f"\nReached target of {max_success} successful graphs. Stopping.")
+            break
+        if failed >= max_failures:
+            print(f"\nReached {max_failures} failures. Stopping early to prevent token/quota waste.")
+            break
+
         url = f"https://www.youtube.com/watch?v={video_id}"
         print(f"\n==================================================")
-        print(f"[{idx}/15] Processing {video_id}...")
+        print(f"[Success: {successful}/{max_success}, Failures: {failed}/{max_failures}]")
+        print(f"Processing video: {video_id} ({idx}/{len(target_videos)})...")
         print(f"==================================================")
         
         single_start = time.time()
@@ -69,11 +80,11 @@ def main():
                 str(project_root / "main_parsimonious.py"),
                 "--url", url
             ]
-            # Run with a 90-second timeout to prevent indefinite hangs, set UTF-8 encoding
+            # Run with a 90-second timeout, set UTF-8 encoding
             res = subprocess.run(cmd, timeout=90, capture_output=True, text=True, encoding="utf-8", env=env, check=True)
             duration = time.time() - single_start
             print(res.stdout)
-            print(f"✓ Finished {video_id} in {duration:.2f}s")
+            print(f"✓ Finished {video_id} successfully in {duration:.2f}s")
             successful += 1
         except subprocess.TimeoutExpired as e:
             duration = time.time() - single_start
@@ -96,8 +107,8 @@ def main():
     total_duration = time.time() - start_time
     print("\n==================================================")
     print("Batch processing complete!")
-    print(f"  * Successful: {successful}")
-    print(f"  * Failed:     {failed}")
+    print(f"  * Successful: {successful}/{max_success}")
+    print(f"  * Failed:     {failed}/{max_failures}")
     print(f"  * Total Time:  {total_duration:.2f} seconds ({total_duration/60:.2f} minutes)")
     print("==================================================")
     # Evaluation is skipped to avoid using the Ground Truth or original Cloudscape files.

@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "We identify web and mobile actors routing requests through an API gateway layer to an Elastic Load Balancer (ELB). ELB forwards requests to an EKS cluster hosting microservices, including a continuous payroll engine. This engine interacts bi-directionally with Amazon MSK (Streaming for Kafka) to handle real-time shift events. EKS writes state to Aurora PostgreSQL. Aurora syncs with ElastiCache and Elasticsearch (OpenSearch) for low-latency queries and lookups by the application.",
+  "graph": {
+    "name": "ADP Workforce Now Real-Time Payroll Architecture",
+    "link": "https://www.youtube.com/watch?v=KiH7hVJKzns",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Scalable human capital management architecture using EKS microservices and real-time Kafka event streaming to calculate up-to-the-minute payroll."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Users",
+      "notes": "Employees and employers accessing via web browsers."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Users",
+      "notes": "Employees clocking in/out via mobile devices."
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API Layer",
+      "notes": "Handles incoming API requests from devices."
+    },
+    {
+      "id": "3",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Load balancing cluster distributing traffic to EKS."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "EKS Cluster",
+      "notes": "Runs hundreds of microservices including continuous calc payroll engine."
+    },
+    {
+      "id": "5",
+      "service": "MSK",
+      "name": "Streaming for Kafka",
+      "notes": "Processes high-speed clock-out events."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora PostgreSQL",
+      "notes": "Encrypted system of record with row-level security."
+    },
+    {
+      "id": "7",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Caches user entitlements for fast retrieval."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Powering employee and payroll history searches."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Web requests to API layer."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Mobile requests to API layer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards API traffic to ELB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Distributes traffic to microservices in EKS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EKS publishes clock-out event to Kafka."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Continuous payroll engine reads event to recalculate."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Stores transactional payroll data."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "7",
+      "type": "data",
+      "notes": "Syncs database data to cache."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "8",
+      "type": "data",
+      "notes": "Syncs database data to search cluster."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "9",
+      "type": "data",
+      "notes": "Queries entitlements on login."
+    }
+  ]
+}

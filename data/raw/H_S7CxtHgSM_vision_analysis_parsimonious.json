@@ -1,0 +1,190 @@
+{
+  "step_by_step_reasoning": "The architecture is split into two main flows as highlighted on the whiteboard: 1) Onboarding Flow (left side, dashed lines): The Security DevOps team pushes a configuration file to Git, which uploads it to S3, triggering an orchestration workflow using AWS Step Functions, AWS Lambda, and Amazon SNS to provision IAM roles and configure Thales KMS virtual tenants. 2) Key Operations Flow (right side, solid lines): The DevOps/Product team generates symmetric keys on the on-premises Thales KMS, which assumes the provisioned IAM roles to import/configure Customer Managed Keys (CMKs) in AWS KMS. These keys are then used by AWS KMS to encrypt S3 buckets and EBS volumes.",
+  "graph": {
+    "name": "On-Premises Key Management with AWS KMS Integration",
+    "link": "https://www.youtube.com/watch?v=H_S7CxtHgSM",
+    "categories": "control",
+    "graph_usable": true,
+    "notes": "Raiffeisen Bank International's solution for maintaining on-premises key management control while seamlessly utilizing KMS to secure AWS services like S3 and EBS in a highly compliant banking environment."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Security DevOps Team",
+      "notes": "Pushes the mappings.json configuration file containing account mappings to Git to initiate onboarding."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Git Repository",
+      "notes": "Houses configuration files and uses Git Actions to upload artifacts to S3."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Artifact Bucket",
+      "notes": "Stores mapping configuration files and triggers Step Functions upon upload."
+    },
+    {
+      "id": "3",
+      "service": "StepFunctions",
+      "name": "Onboarding Step Function",
+      "notes": "Orchestrates the onboarding process: creating IAM roles, triggering Lambda to set up Thales KMS tenants, and sending completion alerts via SNS."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Sends notifications back to the Security DevOps team upon successful onboarding."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Onboarding Lambda",
+      "notes": "Invoked by Step Functions to set up virtual wrappers/tenants within Thales KMS."
+    },
+    {
+      "id": "6",
+      "service": "IAM",
+      "name": "IAM Role",
+      "notes": "Cross-account IAM roles allowing Thales KMS to perform key operations in AWS."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Thales KMS",
+      "notes": "On-premises Key Management Service used to generate symmetric keys and manage virtual tenants securely."
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyDeveloper",
+      "name": "DevOps / Product Team",
+      "notes": "Responsible for generating master cryptographic keys on Thales and managing key lifecycles (rotation/revocation)."
+    },
+    {
+      "id": "9",
+      "service": "KMS",
+      "name": "AWS KMS",
+      "notes": "Imports symmetric keys from Thales as Customer Managed Keys (CMKs) to perform resource-level encryption."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 Data Bucket",
+      "notes": "Data stored in S3 is encrypted using the customer-managed keys imported into KMS."
+    },
+    {
+      "id": "11",
+      "service": "EBS",
+      "name": "EBS Volume",
+      "notes": "EBS volumes are encrypted using the customer-managed keys imported into KMS."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pushes mappings.json configuration file."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Uploads mapping file artifact via Git Action."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers the onboarding Step Function execution."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Creates specific IAM roles in the target AWS accounts."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Triggers Lambda to set up virtual tenant."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4c",
+      "type": "data",
+      "notes": "Creates virtual wrappers/tenants in Thales KMS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4d",
+      "type": "data",
+      "notes": "Signals SNS of workflow completion."
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Sends confirmation of tenant onboarding."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Generates symmetric 256-bit encryption keys on-prem."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Assumes the IAM role to gain permission to import keys."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Imports the generated symmetric key into KMS as a CMK."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3a",
+      "type": "data",
+      "notes": "Encrypts S3 storage with the imported customer-managed key."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3b",
+      "type": "data",
+      "notes": "Encrypts EBS block storage with the imported customer-managed key."
+    }
+  ]
+}

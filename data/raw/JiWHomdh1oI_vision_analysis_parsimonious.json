@@ -1,0 +1,128 @@
+{
+  "step_by_step_reasoning": "The architecture is a serverless data pipeline designed by DataCoral to replicate data from source databases to Redshift. 1. An Orchestration Lambda (backed by DynamoDB for state/config) triggers the process. 2. It invokes a Data Connector Lambda. 3. This connector pulls data from the source database, staging it in S3 while updating state/metrics in DynamoDB. 4. Once staging is complete, the connector alerts the Orchestration Lambda. 5. The Orchestration Lambda triggers the Redshift Loader Lambda. 6. The Loader Lambda runs DDL/COPY commands to load the data from S3 into Redshift.",
+  "graph": {
+    "name": "DataCoral Serverless Data Integration Platform",
+    "link": "https://www.youtube.com/watch?v=JiWHomdh1oI",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Fully serverless data pipeline deployed inside the customer's VPC to ensure data privacy."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Source Database",
+      "notes": "The source database containing tables to replicate (e.g., MySQL, Postgres)."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Orchestration Lambda",
+      "notes": "Generates and responds to coordination events."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "Orchestration DynamoDB",
+      "notes": "Stores metadata, configuration, sync progress, and metrics."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Data Connector Lambda",
+      "notes": "Batches requests and fetches data in parallel from the source database."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Staging Bucket",
+      "notes": "Temporarily stores raw data fetched from the source."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Redshift Loader Lambda",
+      "notes": "Manages destination schema updates and triggers COPY commands."
+    },
+    {
+      "id": "6",
+      "service": "Redshift",
+      "name": "Destination Redshift",
+      "notes": "The target data warehouse where replicated data is analyzed."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reads configuration and orchestrator state."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers data connector every 5 minutes."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Connector fetches data in parallel batches."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves raw fetched data."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 4,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes sync progress and metrics."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 5,
+      "seq": "5",
+      "type": "data",
+      "notes": "Alerts that staging is complete."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 6,
+      "seq": "6",
+      "type": "data",
+      "notes": "Triggers data loading step."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 7,
+      "seq": "7",
+      "type": "data",
+      "notes": "Applies DDL updates and runs COPY statement."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 8,
+      "seq": "8",
+      "type": "data",
+      "notes": "Loads staged data."
+    }
+  ]
+}

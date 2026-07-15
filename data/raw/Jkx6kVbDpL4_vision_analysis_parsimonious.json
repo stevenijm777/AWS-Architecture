@@ -1,0 +1,220 @@
+{
+  "step_by_step_reasoning": "The architecture is split into ingestion, transformation, and distribution phases. In the ingestion phase, files arrive from external systems (UserCompanyDataStream) and are placed in S3 for storage, while their metadata is queued in SQS. A work manager Lambda processes these SQS messages to store tracking state in RDS. In the transformation phase, an EMR trigger Lambda reads RDS state to run Spark transformations on EMR, reading raw S3 files and outputting optimized files to another S3 bucket, updating RDS upon completion. In the distribution phase, a second work manager Lambda initiates a massive fan-out execution of uploader Lambdas. These uploaders pull files from the output S3 bucket, upload them to external Ad Networks under configure-based rate-limits, and report status back to RDS asynchronously through a buffering SQS queue and a batching status writer Lambda to avoid Postgres connection exhaustion.",
+  "graph": {
+    "name": "Nielsen Marketing Cloud DataOut Platform",
+    "link": "https://www.youtube.com/watch?v=Jkx6kVbDpL4",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Handles 250 billion daily events scaling dynamically using Serverless Lambdas and Spark on EMR. Protects downstream systems from API overload using queue-based buffering and smart rate-limiting."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDataStream",
+      "name": "Data Files",
+      "notes": "External client data source emitting raw files."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Input Bucket",
+      "notes": "Stores incoming raw data files."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Metadata SQS",
+      "notes": "Buffers ingestion metadata details."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Metadata Ingestion Lambda",
+      "notes": "Processes SQS metadata events."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "Postgres RDS",
+      "notes": "Central state database managing processing workflows."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "EMR Scheduler Lambda",
+      "notes": "Coordinates EMR jobs based on database state."
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "Spark Cluster",
+      "notes": "Performs file transformation and formatting."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Output Bucket",
+      "notes": "Stores transformed and formatted target files."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Upload Coordinator Lambda",
+      "notes": "Performs fan-out triggers of uploaders based on RDS status."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Target Uploader Lambdas",
+      "notes": "Runs concurrently up to thousands of instances to push files."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Ad Networks",
+      "notes": "External advertising partner destinations."
+    },
+    {
+      "id": "11",
+      "service": "SQS",
+      "name": "Buffer SQS Queue",
+      "notes": "Prevents RDS DB connection exhaustion by queuing status reports."
+    },
+    {
+      "id": "12",
+      "service": "Lambda",
+      "name": "Status Database Writer",
+      "notes": "Pulls batches from SQS to update RDS states."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Uploads raw files"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sends file metadata"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pulls metadata messages"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes ingestion metadata into database"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Polls for files ready to process"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Triggers EMR Spark task"
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "EMR Spark reads raw data"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Writes formatted data"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "data",
+      "notes": "Updates execution state"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "10",
+      "type": "data",
+      "notes": "Polls completed files metadata"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "11",
+      "type": "data",
+      "notes": "Triggers concurrent uploads (fan-out)"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "12",
+      "type": "data",
+      "notes": "Reads formatted output files"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "13",
+      "type": "data",
+      "notes": "Uploads with configured rate limits"
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "14",
+      "type": "data",
+      "notes": "Queues completion status"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "15",
+      "type": "data",
+      "notes": "Pulls status reports in batches"
+    },
+    {
+      "source": "12",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "16",
+      "type": "data",
+      "notes": "Updates database state"
+    }
+  ]
+}
