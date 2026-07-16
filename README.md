@@ -95,7 +95,7 @@ FRAME_INTERVAL_SEC=10
 
 ---
 
-## 🚀 Instrucciones de Ejecución
+## Instrucciones de Ejecución
 
 ### **1. Procesar un único Video por URL**
 
@@ -120,7 +120,7 @@ python main.py --url "https://www.youtube.com/watch?v=5hjkSczrke4" --mode parsim
 
 ---
 
-## 📊 Visualizadores Streamlit (Explorador Interactivo)
+## Visualizadores Streamlit (Explorador Interactivo)
 
 El proyecto incluye una suite interactiva de exploradores en [cloudscape_explorer/](file:///home/stemjara/Projects/AWS-Architecture/cloudscape_explorer) para navegar visualmente por las arquitecturas generadas y compararlas contra las referencias manuales.
 
@@ -137,45 +137,6 @@ Esto levantará **tres servidores Streamlit concurrentes** en los siguientes pue
 
 *Para apagar los tres servidores a la vez, simplemente presiona `Ctrl + C` en la terminal.*
 
----
-
-## 🧪 Laboratorio de Jupyter Notebooks
-
-Para pruebas y análisis locales, Melissa y el equipo pueden abrir los cuadernos de experimentos en [whiteboard_selection_lab/](file:///home/stemjara/Projects/AWS-Architecture/whiteboard_selection_lab).
-
-La estructura de carpetas de almacenamiento pesado (`bad_whiteboard/`, `frames/`, etc.) ya está integrada mediante archivos de control de Git (`.gitkeep`). Solo deben levantar Jupyter:
-```bash
-jupyter notebook
-```
-Y abrir archivos como `Final_Visualization.ipynb` o `graficas.ipynb` para analizar visualmente la precisión de las máscaras de color, oclusión de siluetas de presentadores y correlación de texto.
 
 ---
-
-## ⚠️ Consideraciones Especiales y Limitaciones
-
-El pipeline cuenta con reglas automáticas de exclusión para evitar tokens desperdiciados o fallos del modelo:
-1. **Vídeos Especiales y Recopilaciones:** Los videos que contienen palabras clave en su título como *"spotlight"*, *"greatest hits"*, *"bloopers"*, o *"reprise"* se omiten de manera segura.
-2. **Idioma:** Solo se procesan videos en **inglés**. Los videos en español, francés, italiano, japonés o alemán se excluyen ya que Whisper en otro idioma desalinea las etiquetas de los servicios de AWS mapeados en inglés.
-3. **Duración:** Vídeos de **12 minutos o más** son omitidos por el pipeline de lotes para evitar transcripciones sobredimensionadas que generen alucinación de aristas.
-
----
-
-## ❓ Preguntas y Decisiones de Diseño (Para la Profesora)
-
-Hemos recopilado las siguientes dudas arquitectónicas y metodológicas clave basadas en las métricas obtenidas y los casos particulares del dataset:
-
-1. **Grafo Objetivo por Video:**
-   * ¿Se espera que al final del proyecto contemos con un grafo para cada uno de los videos válidos del dataset? En aquellos casos especiales donde el modelo cometa imprecisiones debido a una pizarra con mala iluminación o diagramación no estándar, ¿debemos construir/corregir dichos grafos manualmente para asegurar un dataset de referencia completo?
-
-2. **Umbral de Calidad Aceptable:**
-   * ¿Cuál es el umbral de precisión y exhaustividad (*F1-Score*) que se consideraría satisfactorio para validar la efectividad de nuestro pipeline automático? Actualmente, el modo unificado estándar obtiene un **91.92% en F1 de Servicios (Nodos)** y un **67.78% en F1 de Conexiones (Aristas)** sobre el benchmark core.
-
-3. **Nivel de Detalle en la Dirección de Flujos (Conexiones):**
-   * ¿Qué tan detallados debemos ser con la dirección de las aristas? Específicamente, ¿debemos contemplar flujos bidireccionales (peticiones de ida y vuelta) o relaciones entrecortadas (mensajes de control/confirmación)? Actualmente, la lógica del pipeline prioriza el flujo principal de datos y no considera exhaustivamente las flechas de regreso.
-
-4. **Flexibilidad en la Evaluación de Componentes Equivalentes:**
-   * Detectamos discrepancias entre lo extraído por el modelo y el Ground Truth manual (por ejemplo, clasificar un nodo genérico como `ThirdParty` frente a usar nombres específicos como `REST API` o `Salesforce`). ¿Sería viable modificar la evaluación para que no penalice al modelo si selecciona un sinónimo funcional o un equivalente semántico aceptable?
-
-5. **Discrepancia Visual/Conversacional y Nodos Duplicados:**
-   * Hay videos donde los presentadores duplican visualmente el mismo servicio en la pizarra por estética de diseño (e.g., video `3yJZ6rPoZfg`), o donde mencionan servicios que no se dibujan (y viceversa). ¿Cómo se sugiere ponderar o resolver esta falta de consistencia entre la información del canal de audio (Whisper) y la imagen (Gemini Vision)?
 
