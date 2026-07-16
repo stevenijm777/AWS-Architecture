@@ -23,8 +23,7 @@ console = Console()
 
 
 def load_valid_services() -> dict[str, str]:
-    """Load valid service names from services.csv for validation & normalization."""
-    csv_path = Path(__file__).resolve().parent.parent / "graph_renderer" / "services.csv"
+    csv_path = Path(__file__).resolve().parent.parent.parent / "graph_renderer" / "services.csv"
     if not csv_path.exists():
         return {}
 

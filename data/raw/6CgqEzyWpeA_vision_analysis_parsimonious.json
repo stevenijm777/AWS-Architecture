@@ -1,0 +1,190 @@
+{
+  "step_by_step_reasoning": "We identify the client devices (UserConsumerWeb) sending requests to API Gateway. This initiates a Lambda function which enqueues jobs in a top SQS queue. Spot-instance rendering engines running in an EC2 Auto Scaling Group consume jobs, upload video segments to S3, and push completion data to a bottom SQS queue. The frontend Lambda retrieves these playlist links for playback via CloudFront. Spot interruptions are handled using CloudWatch Events and a drainage Lambda, while custom scaling is managed by Step Functions triggering a metric-evaluation Lambda.",
+  "graph": {
+    "name": "SundaySky Personalized Video Rendering Architecture",
+    "link": "https://www.youtube.com/watch?v=6CgqEzyWpeA",
+    "categories": "compute_intensive, interactive",
+    "graph_usable": true,
+    "notes": "A scalable video rendering architecture (Rendering as a Service - RAS) utilizing cost-efficient spot instances on EC2 managed via custom Step Functions scaling and automated Spot Interruption workflows."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Client Devices",
+      "notes": "Web and mobile clients requesting personalized video content."
+    },
+    {
+      "id": "1",
+      "service": "APIGateway",
+      "name": "API Gateway",
+      "notes": "Handles incoming requests, managing usage plans and API keys."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Frontend Lambda",
+      "notes": "Validates requests and manages queue interaction."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Jobs SQS Queue",
+      "notes": "Buffers incoming video rendering jobs."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Response SQS Queue",
+      "notes": "Holds completed rendering results and playlists."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Rendering ASG",
+      "notes": "Auto-scaling spot instances processing rendering jobs."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Video S3 Bucket",
+      "notes": "Stores rendered video segments and playlists."
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Caches and streams video segments to end users."
+    },
+    {
+      "id": "8",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Monitors spot instances and collects custom queue metrics."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Interruption Lambda",
+      "notes": "Drains active jobs from spot instances marked for termination."
+    },
+    {
+      "id": "10",
+      "service": "StepFunctions",
+      "name": "Scaling Orchestrator",
+      "notes": "Triggers scaling logic checks every 15 seconds."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Scaling Calculator",
+      "notes": "Calculates required rendering capacity and updates ASG."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends rendering request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Invokes validation handler"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pushes rendering parameters"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Engines pull jobs when free"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Pushes playlist information"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Pulls and returns playlist URL to client"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Uploads completed MP4 segments"
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Requests video stream"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetches segments from S3 origin"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers 2-min termination warning"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Instructs targeted instance to drain and detach"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Runs scaling evaluation loop"
+    },
+    {
+      "source": "11",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Modifies desired capacity of ASG"
+    }
+  ]
+}

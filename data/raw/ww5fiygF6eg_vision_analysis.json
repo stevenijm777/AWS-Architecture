@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The architecture is initiated by a scheduled CloudWatch Event that triggers AWS Step Functions. Step Functions then orchestrates a workflow consisting of three Lambda functions. The first Lambda function queries the third-party drone imaging service via API to check for new images. The second Lambda function copies these processed images (orthomosaics, terrain, and elevation models) from the third-party system into an Amazon S3 bucket. A third Lambda function creates raster proxy files pointing to these S3 assets and writes them to the on-premise Database. Finally, the on-premise mapping Server accesses these images from S3 seamlessly by using the raster proxies via AWS Storage Gateway.",
+  "graph": {
+    "name": "Marathon Oil Serverless Drone Imagery Ingestion and Mapping Architecture",
+    "link": "https://www.youtube.com/watch?v=ww5fiygF6eg",
+    "categories": "data_ingestion, control",
+    "graph_usable": true,
+    "notes": "Serverless drone image ingestion pipeline that automatically loads orthomosaics and digital terrain models from a third-party drone capture service into Amazon S3, using raster proxies in an on-premise database and AWS Storage Gateway to allow legacy on-premise mapping software to read S3 objects directly."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "3rd Party",
+      "notes": "Represents the external drone imagery capturing software and pilots."
+    },
+    {
+      "id": "1",
+      "service": "Amazon CloudWatch",
+      "name": "Cloudwatch Event",
+      "notes": "The scheduled trigger event modeled as a CloudWatch Event."
+    },
+    {
+      "id": "2",
+      "service": "AWS Step Functions",
+      "name": "Step Functions",
+      "notes": "Orchestrates the serverless workflow."
+    },
+    {
+      "id": "3",
+      "service": "Amazon Simple Storage Service (S3)",
+      "name": "S3",
+      "notes": "Stores the processed imagery and index files."
+    },
+    {
+      "id": "4",
+      "service": "AWS Lambda",
+      "name": "Lambda",
+      "notes": "Executes the integration logic to fetch images, save to S3, and create raster proxies."
+    },
+    {
+      "id": "5",
+      "service": "AWS Storage Gateway",
+      "name": "Storage Gateway",
+      "notes": "Allows the on-premise server to access images in S3 directly."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Server",
+      "notes": "On-premise mapping application server."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Database",
+      "notes": "On-premise database where raster proxies are stored."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "The scheduled CloudWatch Event triggers the Step Functions workflow."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions orchestrates and invokes the Lambda functions."
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "The first Lambda function calls the 3rd Party API to check for new images."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda function writes the fetched images into the S3 bucket."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Visual representation of the image files being transferred and stored in the S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "The third Lambda function writes the raster proxy URL into the on-premise database."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "control",
+      "notes": "The on-premise mapping server accesses files through AWS Storage Gateway."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Storage Gateway connects the on-premise mapping software to the S3 bucket."
+    }
+  ]
+}

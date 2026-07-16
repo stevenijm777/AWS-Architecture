@@ -1,0 +1,120 @@
+{
+  "step_by_step_reasoning": "We identify nodes matching the whiteboard icons: the user accessing via web browser (UserConsumerWeb), the Web Server and Job Manager (EC2), the database (RDS), the IMF wrapping server (EC2), the customer S3 bucket (S3), the metadata extractor (Lambda), and the G3 processing engines running Asset Manager (EC2). Edges represent the workflow: user UI access, background metadata scanning via Lambda, saving metadata to the DB, submitting transcode jobs to G3 instances, copying assets from/to S3, and wrapping files with the IMF server.",
+  "graph": {
+    "name": "Cinefilm PixelStrings Cloud Architecture",
+    "link": "https://www.youtube.com/watch?v=BZ32w0SSAoY",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "PixelStrings runs video processing workflows (retiming, deinterlacing, noise removal) on GPU-enabled EC2 instances utilizing customer-owned S3 buckets."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Browser",
+      "notes": "End-user interface to create accounts, configure workflows, and trigger processing jobs."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Web Server & Job Manager",
+      "notes": "Hosts the web frontend and coordinates jobs, triggering metadata extraction and orchestration."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "Database",
+      "notes": "Caches video metadata retrieved by Lambda to expose to the frontend web server."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Customer S3 Bucket",
+      "notes": "User-managed bucket containing raw source clips and destination for processed outputs."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Metadata Extractor",
+      "notes": "Invokes MediaInfo on S3 objects to retrieve metadata in the background."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "G3 GPU Nodes",
+      "notes": "GPU-accelerated instances executing Wormhole, Spacetime, and Dark Energy transcode engines."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "IMF Server",
+      "notes": "Handles Interoperable Master Format (IMF) wrapping for platforms like Netflix."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "User logs in, views assets, and configures transcode workflow."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Job Manager triggers Lambda to parse video files."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2.1",
+      "type": "data",
+      "notes": "Lambda reads video header info directly from the customer S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves extracted metadata into the database for the frontend to render."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 4,
+      "seq": "4",
+      "type": "data",
+      "notes": "Submits transcoding jobs to parallel GPU processing instances."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 5,
+      "seq": "5",
+      "type": "data",
+      "notes": "Asset Manager copies raw input files locally and transfers processed outputs back to S3."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 6,
+      "seq": "6",
+      "type": "data",
+      "notes": "Instructs IMF server to package transcode outputs into IMF format."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 6,
+      "seq": "6.1",
+      "type": "data",
+      "notes": "Asset Manager uploads finalized IMF files to user's S3 bucket."
+    }
+  ]
+}
