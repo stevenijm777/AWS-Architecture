@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "We identify two distinct user interactions: the initial ad auction (WWW) and the subsequent conversion event. The architecture divides these into a high-performance bidding layer and a tracking layer running on EC2 Spot. High-speed lookup is achieved using Redis (ElastiCache) for data younger than 1 hour. For older events, data is archived to S3 (with a Lambda transforming JSON to Parquet) and queried via Athena triggered by SQS and a helper Lambda.",
+  "graph": {
+    "name": "Smadex Programmatic Advertising Architecture",
+    "link": "https://www.youtube.com/watch?v=l0mvXogANE4",
+    "categories": "data_ingestion, interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "Hybrid hot/cold data storage architecture designed for low latency and cost optimization, processing 1 million requests per second."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web/App Users",
+      "notes": "Initiates ad requests and interacts with ads."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Bidding Servers (Spot)",
+      "notes": "Handles 1M/sec bid requests within 100ms latency budget."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Tracking Servers (Spot)",
+      "notes": "Tracks post-bid user interactions using unique IDs."
+    },
+    {
+      "id": "3",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "In-memory cache holding hot bid events (1-hour TTL)."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Raw and optimized historical bid data storage."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda Parquet Converter",
+      "notes": "Transforms JSON data to Parquet format to optimize Athena query costs."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "Amazon SQS",
+      "notes": "Queues tracking events older than 1 hour for cold-path resolution."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda Query Executor",
+      "notes": "Triggered by SQS to invoke Athena queries."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Queries historical cold data in S3 using partitioned Parquet files."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Dispatches bid requests during web load."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes bid ID to Redis with 1h TTL."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Flushes bid data every minute as JSON."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Triggers converter on new file arrival."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Saves optimized Parquet files."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends user interaction events with ID."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Looks up IDs for events < 1 hour old."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enqueues events older than 1 hour."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Triggers query execution."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Runs search query."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Scans S3 bucket to match conversion IDs."
+    }
+  ]
+}

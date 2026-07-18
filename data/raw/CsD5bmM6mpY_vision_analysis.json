@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "First, we identify and map all 8 entities from the World Model to our JSON node list, using the exact names and service types. Next, we construct the connections based on the visual_connections list. We map the event-driven healing sequence: EC2 App generates infrastructure events to CW Events, which then triggers SNS. SNS notifies external channels (Mail/ITSM) and triggers the healing Lambda function. The Lambda function coordinates recovery actions via Systems Manager (SSM) and performs healing on the EC2 Application instance. Finally, we model CloudWatch continuously monitoring the EC2 App.",
+  "graph": {
+    "name": "Linke SAP Auto-Healing Architecture",
+    "link": "https://www.youtube.com/watch?v=CsD5bmM6mpY",
+    "categories": "control, other",
+    "graph_usable": true,
+    "notes": "An auto-healing framework developed by Linke for SAP environments on AWS. It leverages serverless monitoring via CloudWatch and CloudWatch Events to automatically detect application or infrastructure level failures, triggering an automated Lambda-driven recovery workflow utilizing AWS Systems Manager (SSM)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Amazon EC2",
+      "name": "EC2 App",
+      "notes": "Hosts the SAP application server instance."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "SAP DB",
+      "notes": "Database layer of the SAP system (such as SAP HANA or other supported DBs)."
+    },
+    {
+      "id": "2",
+      "service": "Amazon CloudWatch",
+      "name": "CLOUDWATCH",
+      "notes": "Monitors the performance and health metrics of the SAP application."
+    },
+    {
+      "id": "3",
+      "service": "Amazon EventBridge",
+      "name": "CW EVENTS",
+      "notes": "Captures infrastructure state changes and triggers notifications or remediation."
+    },
+    {
+      "id": "4",
+      "service": "Amazon Simple Notification Service",
+      "name": "SNS",
+      "notes": "Fans out alerts and healing requests to notification services and automated Lambda routines."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Mail / ITSM",
+      "notes": "Notification channels such as email or IT Service Management platforms."
+    },
+    {
+      "id": "6",
+      "service": "AWS Lambda",
+      "name": "LAMBDA",
+      "notes": "A serverless healing function triggered to recover the failed SAP application elements."
+    },
+    {
+      "id": "7",
+      "service": "AWS Systems Manager",
+      "name": "SSM",
+      "notes": "Performs automated Run Command actions directly inside the guest operating system."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch monitors the EC2 Application instance for performance issues and service availability."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Infrastructure events are emitted from the EC2 instance to CloudWatch Events upon failure or critical status changes."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudWatch Events routes the failure event to an SNS topic."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "SNS notifies operators and logs issues in the Mail/ITSM ticketing systems."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "SNS triggers the designated healing Lambda function."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "The healing Lambda invokes Systems Manager (SSM) to run commands on the affected server."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "control",
+      "notes": "The Lambda recovery flow initiates programmatic restoration actions directly affecting the EC2 instance."
+    }
+  ]
+}

@@ -87,16 +87,26 @@ def create_graph_from_cloudscape_json(
         service_lower = service.lower()
         service_clean = service_lower.replace(" ", "").replace("-", "").replace("_", "")
         
-        if "cloudwatch" in service_clean:
+        # Strip common AWS/Amazon prefixes
+        if service_clean.startswith("amazon") and len(service_clean) > 6:
+            service_clean_stripped = service_clean[6:]
+        elif service_clean.startswith("aws") and len(service_clean) > 3:
+            service_clean_stripped = service_clean[3:]
+        else:
+            service_clean_stripped = service_clean
+
+        if "cloudwatch" in service_clean_stripped:
             service = "CloudWatch"
-        elif "stepfunction" in service_clean:
+        elif "stepfunction" in service_clean_stripped:
             service = "StepFunctions"
-        elif "apigateway" in service_clean:
+        elif "apigateway" in service_clean_stripped:
             service = "ApiGateway"
-        elif "renderingengine" in service_clean or "spotinstance" in service_clean:
+        elif "renderingengine" in service_clean_stripped or "spotinstance" in service_clean_stripped:
             service = "EC2"
-        elif service_clean in valid_services:
-            service = valid_services[service_clean]
+        elif service_clean_stripped == "user":
+            service = "UserConsumerWeb"
+        elif service_clean_stripped in valid_services:
+            service = valid_services[service_clean_stripped]
         elif service_lower == "database":
             # Map generic Database to ThirdParty (or RDS/DynamoDB if specified in name/notes)
             if "dynamodb" in name.lower() or "dynamodb" in notes.lower():

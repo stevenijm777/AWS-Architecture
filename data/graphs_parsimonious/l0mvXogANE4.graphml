@@ -1,0 +1,133 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Web/App Users</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">Initiates ad requests and interacts with ads.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Bidding Servers (Spot)</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Handles 1M/sec bid requests within 100ms latency budget.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Tracking Servers (Spot)</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Tracks post-bid user interactions using unique IDs.</data>
+    </node>
+    <node id="3">
+      <data key="d5">ElastiCache Redis</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">In-memory cache holding hot bid events (1-hour TTL).</data>
+    </node>
+    <node id="4">
+      <data key="d5">Amazon S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Raw and optimized historical bid data storage.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Lambda Parquet Converter</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Transforms JSON data to Parquet format to optimize Athena query costs.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Amazon SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queues tracking events older than 1 hour for cold-path resolution.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Lambda Query Executor</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Triggered by SQS to invoke Athena queries.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Amazon Athena</data>
+      <data key="d6">Athena</data>
+      <data key="d7">Queries historical cold data in S3 using partitioned Parquet files.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Dispatches bid requests during web load.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Sends user interaction events with ID.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Writes bid ID to Redis with 1h TTL.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Flushes bid data every minute as JSON.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Looks up IDs for events &lt; 1 hour old.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Enqueues events older than 1 hour.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Triggers converter on new file arrival.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Saves optimized Parquet files.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Triggers query execution.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Runs search query.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="4" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Scans S3 bucket to match conversion IDs.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Smadex Programmatic Advertising Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=l0mvXogANE4</data>
+    <data key="d2">Hybrid hot/cold data storage architecture designed for low latency and cost optimization, processing 1 million requests per second.</data>
+    <data key="d3">data_ingestion, interactive, compute_intensive</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

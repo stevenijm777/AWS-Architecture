@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture is split into three main workflows: the fast bidding workflow, the log-archiving & conversion workflow, and the tracking workflow (hot and cold paths). In Flow 0 (Bidding), a user visits a site (www), initiating a 100ms subasta auction processed by EC2 Spot (Bidding) instances. Bid details are saved with an ID to ElastiCache (Redis). In Flow 1 (Archiving), EC2 Bidding flushes raw JSON logs to S3 every minute. S3 upload triggers a Lambda function to convert JSON to Parquet format and write it back. In Flow 2 (Tracking), user interaction triggers events on EC2 Spot (Tracking) instances. For hot events (< 1 hour), the tracking layer fetches data from ElastiCache. For older events, they are enqueued into SQS, triggering an Athena query over cold S3 logs to reconstruct the match.",
+  "graph": {
+    "name": "Smadex Real-Time Programmatic Ad Bidding and Tracking Architecture",
+    "link": "https://www.youtube.com/watch?v=l0mvXogANE4",
+    "categories": "data_ingestion, compute_intensive, other",
+    "graph_usable": true,
+    "notes": "Real-time programmatic bidding platform handling 1 million auctions/sec under 100ms constraint. Built on EC2 Spot Instances with a hot cache layer (ElastiCache Redis) and an SQS + Athena on S3 cold query layer to balance performance and storage cost optimization."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "User",
+      "name": "User",
+      "notes": "Represented by the green stick figure on the left."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "www",
+      "notes": "Web icon representing the external website/app visited by users."
+    },
+    {
+      "id": "2",
+      "service": "Amazon EC2",
+      "name": "EC2 SPOT (Bidding)",
+      "notes": "Top EC2 instance icon in the EC2 SPOT group representing the bidding layer."
+    },
+    {
+      "id": "3",
+      "service": "Amazon EC2",
+      "name": "EC2 SPOT (Tracking)",
+      "notes": "Bottom EC2 instance icon in the EC2 SPOT group representing the tracking layer."
+    },
+    {
+      "id": "4",
+      "service": "Amazon ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "ElastiCache (Redis) icon used as the fast hot-data memory cache layer."
+    },
+    {
+      "id": "5",
+      "service": "Amazon S3",
+      "name": "S3",
+      "notes": "S3 bucket icon representing the cold-data layer storage."
+    },
+    {
+      "id": "6",
+      "service": "AWS Lambda",
+      "name": "LAMBDA",
+      "notes": "Lambda icon at the top right representing the function that converts files to Parquet."
+    },
+    {
+      "id": "7",
+      "service": "Amazon SQS",
+      "name": "SQS",
+      "notes": "SQS queue icon used to buffer old tracking requests."
+    },
+    {
+      "id": "8",
+      "service": "Amazon Athena",
+      "name": "ATHENA",
+      "notes": "Athena query engine icon representing search over cold-storage."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User visits a website or application triggering an ad auction."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "The auction request is sent to the bidding layer (under a 100ms constraint)."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves the auction bid details in Redis with a unique ID."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Flushes raw JSON bid logs to S3 on a minute interval."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 file upload triggers the Lambda conversion function."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda saves the optimized Parquet format files back into S3."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "User interactions with ads are tracked by sending events to the tracking layer."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "The tracking layer reads matching bid information using the unique ID."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Enqueues event lookups older than one hour."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "control",
+      "notes": "Triggers a Lambda execution to run search queries in Athena."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Athena queries raw log data from S3 partitioned by minute."
+    }
+  ]
+}
