@@ -14,171 +14,160 @@
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
     <node id="0">
-      <data key="d5">Devices</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Client devices (mobile and PC) requesting and viewing personalized video content.</data>
+      <data key="d5">User Consumer Web/Mobile</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">Client player platform where users request personalized video bills and play back processed video streams.</data>
     </node>
     <node id="1">
       <data key="d5">API Gateway</data>
       <data key="d6">ApiGateway</data>
-      <data key="d7">Entry point for incoming rendering requests; controls load using API keys and usage plans.</data>
+      <data key="d7">Acts as the frontend link, managing client requests with usage plans and API keys to throttle and secure requests.</data>
     </node>
     <node id="2">
-      <data key="d5">Lambda (Frontend)</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Performs validations on rendering requests, pushes jobs to SQS, and returns playlist file links back to client devices.</data>
+      <data key="d5">Frontend Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Validates incoming rendering requests, pushes instructions to the SQS queue, and polls the response queue for playlist metadata.</data>
     </node>
     <node id="3">
-      <data key="d5">SQS (Request)</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Queue storing rendering instructions that rendering engines pull from when they have capacity.</data>
+      <data key="d5">Rendering SQS Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Decouples the frontend validation service from the backend rendering farm, holding scheduled rendering jobs.</data>
     </node>
     <node id="4">
-      <data key="d5">SQS (Response)</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Queue where rendering engines immediately publish task receipts to satisfy frontend polling.</data>
+      <data key="d5">Response SQS Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Receives immediate rendering engine status/metadata updates to allow fast delivery of playlist URLs to clients.</data>
     </node>
     <node id="5">
-      <data key="d5">EC2 Auto Scaling</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Diversified EC2 Spot Instances acting as rendering engines spread across multiple Availability Zones.</data>
+      <data key="d5">EC2 Auto Scaling Rendering Instances</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Diversified Spot Instances distributed across multiple AZs. Pulls tasks from the rendering queue and uploads segments to S3.</data>
     </node>
     <node id="6">
-      <data key="d5">S3</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Object storage where rendered video segments are uploaded by the EC2 engines.</data>
+      <data key="d5">S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores the individual processed video segments uploaded by the EC2 rendering engines.</data>
     </node>
     <node id="7">
-      <data key="d5">CloudFront</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Content Delivery Network (CDN) caching and serving video segments to the client devices.</data>
+      <data key="d5">CloudFront CDN</data>
+      <data key="d6">CloudFront</data>
+      <data key="d7">Caches and serves the generated video segments from S3 with low latency to players globally.</data>
     </node>
     <node id="8">
-      <data key="d5">Step Functions</data>
+      <data key="d5">Step Functions Scaling Orchestrator</data>
       <data key="d6">StepFunctions</data>
-      <data key="d7">Orchestrator that triggers the scaling Lambda function every 15 seconds.</data>
+      <data key="d7">Runs continuously, triggering the Scaling Lambda every 15 seconds to ensure highly responsive auto scaling.</data>
     </node>
     <node id="9">
-      <data key="d5">Lambda (Scaler)</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Custom scaling logic function calculating required capacity based on performance metrics and modifying the Auto Scaling group limits.</data>
+      <data key="d5">Scaling Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Calculates required rendering capacity based on CloudWatch metrics and dynamically updates the Auto Scaling Group size.</data>
     </node>
     <node id="10">
-      <data key="d5">CloudWatch</data>
+      <data key="d5">CloudWatch Events</data>
       <data key="d6">CloudWatch</data>
-      <data key="d7">Monitors the system, gathers metrics, and dispatches spot instance interruption events.</data>
+      <data key="d7">Monitors instance state changes, including the crucial 2-minute AWS Spot Instance interruption warnings.</data>
     </node>
     <node id="11">
-      <data key="d5">Lambda (Spot Handler)</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Processes spot interruption notices to safely stop engine tasks, drain active jobs, and detach EC2 instances.</data>
+      <data key="d5">Interruption Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Triggered by Spot interruption warnings; calls an API on the specific EC2 instance to drain active jobs and detaches it gracefully.</data>
     </node>
     <edge source="0" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9">Client requests a personalized video link via the API Gateway.</data>
+      <data key="d9">User initiates request for personalized video content.</data>
       <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
     <edge source="0" target="7" id="0">
-      <data key="d8">1</data>
-      <data key="d9">Device players request video segments from CloudFront CDN using the playlist links.</data>
-      <data key="d10">2</data>
+      <data key="d8">0</data>
+      <data key="d9">User consumer player fetches cached video segments from CloudFront CDN.</data>
+      <data key="d10">9</data>
       <data key="d11">data</data>
     </edge>
     <edge source="1" target="2" id="0">
       <data key="d8">0</data>
-      <data key="d9">API Gateway routes the request to the Frontend Lambda function.</data>
+      <data key="d9">API Gateway routes request to Frontend Lambda.</data>
       <data key="d10">1</data>
-      <data key="d11">control</data>
+      <data key="d11">data</data>
     </edge>
     <edge source="2" target="3" id="0">
       <data key="d8">0</data>
-      <data key="d9">Frontend Lambda pushes rendering instructions to the SQS Request queue.</data>
+      <data key="d9">Frontend Lambda pushes rendering instructions to queue.</data>
       <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
     <edge source="2" target="0" id="0">
       <data key="d8">0</data>
-      <data key="d9">Frontend Lambda returns a playlist file link containing references to video segments back to the device.</data>
+      <data key="d9">Returns compiled playlist file URL back to client player.</data>
       <data key="d10">6</data>
       <data key="d11">data</data>
     </edge>
     <edge source="3" target="5" id="0">
       <data key="d8">0</data>
-      <data key="d9">Rendering engines in the EC2 Auto Scaling group poll and pull jobs from SQS.</data>
+      <data key="d9">EC2 rendering instances poll tasks from the queue.</data>
       <data key="d10">3</data>
       <data key="d11">data</data>
     </edge>
     <edge source="4" target="2" id="0">
       <data key="d8">0</data>
-      <data key="d9">Frontend Lambda polls SQS Response queue to confirm the job was successfully scheduled.</data>
+      <data key="d9">Frontend Lambda polls metadata/playlist link from response queue.</data>
       <data key="d10">5</data>
-      <data key="d11">control</data>
+      <data key="d11">data</data>
     </edge>
     <edge source="5" target="4" id="0">
       <data key="d8">0</data>
-      <data key="d9">Rendering engines immediately push acknowledgement back to the SQS Response queue.</data>
+      <data key="d9">EC2 instances post early response details to the response queue.</data>
       <data key="d10">4</data>
-      <data key="d11">control</data>
-    </edge>
-    <edge source="5" target="6" id="0">
-      <data key="d8">1</data>
-      <data key="d9">Rendering engines upload processed video segments to S3.</data>
-      <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="5" target="9" id="0">
-      <data key="d8">2</data>
-      <data key="d9">Rendering engine performance and capacity metrics are pushed/made available to Scaler Lambda.</data>
-      <data key="d10">2</data>
+    <edge source="5" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EC2 rendering engines upload generated video segments directly to S3.</data>
+      <data key="d10">7</data>
       <data key="d11">data</data>
     </edge>
     <edge source="5" target="10" id="0">
-      <data key="d8">3</data>
-      <data key="d9">CloudWatch monitors the Auto Scaling Group and captures spot interruption events.</data>
+      <data key="d8">1</data>
+      <data key="d9">EC2 instances push capacity metrics to CloudWatch.</data>
       <data key="d10">0</data>
-      <data key="d11">control</data>
+      <data key="d11">data</data>
     </edge>
     <edge source="6" target="7" id="0">
-      <data key="d8">1</data>
-      <data key="d9">CloudFront pulls video segments from the S3 origin bucket.</data>
-      <data key="d10">1</data>
+      <data key="d8">0</data>
+      <data key="d9">CloudFront fetches original video segments from S3 bucket on demand.</data>
+      <data key="d10">8</data>
       <data key="d11">data</data>
     </edge>
     <edge source="8" target="9" id="0">
-      <data key="d8">2</data>
-      <data key="d9">Step Functions triggers the Scaler Lambda every 15 seconds.</data>
-      <data key="d10">0</data>
-      <data key="d11">control</data>
-    </edge>
-    <edge source="9" target="8" id="0">
-      <data key="d8">2</data>
-      <data key="d9">Scaler Lambda completes its evaluation and reports status back to Step Functions.</data>
+      <data key="d8">1</data>
+      <data key="d9">Triggers capacity evaluation function every 15 seconds.</data>
       <data key="d10">1</data>
       <data key="d11">control</data>
     </edge>
     <edge source="9" target="5" id="0">
-      <data key="d8">2</data>
-      <data key="d9">Scaler Lambda updates the capacity targets on the Auto Scaling Group based on calculated requirements.</data>
-      <data key="d10">3</data>
-      <data key="d11">control</data>
-    </edge>
-    <edge source="10" target="11" id="0">
-      <data key="d8">3</data>
-      <data key="d9">CloudWatch sends the 2-minute spot interruption notice to the Spot Handler Lambda.</data>
-      <data key="d10">1</data>
-      <data key="d11">control</data>
-    </edge>
-    <edge source="11" target="5" id="0">
-      <data key="d8">3</data>
-      <data key="d9">Spot Handler Lambda triggers API calls to the targeted EC2 instance to drain rendering tasks and detach it from the ASG.</data>
+      <data key="d8">1</data>
+      <data key="d9">Instructs the Auto Scaling Group to scale out/in based on metrics.</data>
       <data key="d10">2</data>
       <data key="d11">control</data>
     </edge>
-    <data key="d0">Sunday Sky Rendering as a Service (RaaS) Architecture</data>
-    <data key="d1">https://www.youtube.com/watch?v=6CgqEzyWpeA</data>
-    <data key="d2">Sunday Sky's rendering as a service (RaaS) architecture processes and generates personalized, dynamic video experiences (such as monthly video bills). The pipeline is fully scalable, cost-optimized using EC2 Spot Instances, and orchestrates scaling and spot interruption handling using Step Functions and Lambda handlers.</data>
-    <data key="d3">interactive, compute_intensive, control</data>
+    <edge source="10" target="11" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Notifies Lambda of an impending EC2 Spot Instance termination warning.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="11" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Triggers API call on targeted EC2 instance to stop fetching jobs and gracefully drain.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Sunday Sky Rendering as a Service RAS Architecture</data>
+    <data key="d1" />
+    <data key="d2">Sunday Sky's Rendering as a Service (RAS) ecosystem dynamically processes and delivers billions of personalized video experiences yearly, optimizing costs with diversified Spot Instances across multiple Availability Zones, and coordinating rapid automated scaling and graceful termination handling.</data>
+    <data key="d3">Media Processing, Scalable Systems, Spot Fleet Management</data>
     <data key="d4">True</data>
   </graph>
 </graphml>
+
