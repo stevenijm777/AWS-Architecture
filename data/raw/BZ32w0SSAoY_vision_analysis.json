@@ -1,54 +1,54 @@
 {
-  "step_by_step_reasoning": "First, we extract the nodes from the immutable entities in the World Model, mapping each to a specific AWS service or actor. Next, we construct the graph's connections based strictly on the visual_connections list. We map the user's web interaction to the Web Server / Job Manager as the first step of Workflow 0. For metadata retrieval, Lambda queries the S3 bucket, receives the data, and forwards it to the Web Server / Job Manager, which then caches it in the Database. In a separate parallel processing workflow (Workflow 1), the GPU-powered G3 instance writes the finalized outputs directly back to the S3 bucket. As IMF has no visual connections defined in the World Model, it remains an isolated node in the final representation.",
+  "step_by_step_reasoning": "The logical architecture represents Cinefilm's PixelStrings platform on AWS. First, a user connects via a Web Browser to the WEB SERVER / JOB MANAGER running on an Amazon EC2 instance. The user provides keys to their Amazon S3 bucket. To dynamically display metadata in the browser, the Job Manager invokes an AWS Lambda function which extracts metadata from media files in S3 and caches it in an Amazon RDS Database. For processing jobs, the Job Manager controls the G3 / A.M. (Asset Manager) EC2 instances. The Asset Manager copies files from the user's S3 bucket to local storage on G3 instances, which run GPU-accelerated video enhancement jobs (wormhole, spacetime, dark energy). Once complete, the Asset Manager copies the output back to S3. If IMF is chosen, the output is routed to an IMF EC2 instance for packaging before final upload to S3.",
   "graph": {
-    "name": "Cinefilm PixelStrings GPU-Accelerated Video Processing Architecture",
+    "name": "Cinefilm PixelStrings Media Processing Architecture",
     "link": "https://www.youtube.com/watch?v=BZ32w0SSAoY",
-    "categories": "compute_intensive, interactive, data_ingestion",
+    "categories": "Media Processing, GPU Acceleration, Serverless Metadata Extraction",
     "graph_usable": true,
-    "notes": "PixelStrings by Cinefilm uses a web-based portal to allow users to process video clips (retiming, de-interlacing, and noise reduction) using GPU-powered EC2 G3 instances, with automated metadata extraction powered by AWS Lambda and Amazon S3."
+    "notes": "PixelStrings is a cloud-based media conversion and optimization platform utilizing GPU-accelerated G3 EC2 instances, AWS Lambda for asynchronous metadata extraction, and Amazon RDS for caching."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "User",
+      "service": "ThirdParty",
       "name": "Web Browser",
-      "notes": "Allows the user to log in, configure S3 settings, select workflows, and monitor jobs."
+      "notes": "User interacts with the PixelStrings web interface, typically via Chrome, to log in and manage workflows."
     },
     {
       "id": "1",
-      "service": "Amazon EC2",
+      "service": "AmazonEC2",
       "name": "WEB SERVER / JOB MANAGER",
-      "notes": "Hosts the web portal front-end and coordinates parallel video processing jobs."
+      "notes": "EC2 instance running the web front-end and the core job manager that orchestrates metadata and processing workflows."
     },
     {
       "id": "2",
-      "service": "Amazon Database",
+      "service": "AmazonRDS",
       "name": "DATABASE",
-      "notes": "Caches the extracted video metadata and job configurations for the web UI."
+      "notes": "Relational database used to store and cache extracted media metadata so the Web Server can display it quickly."
     },
     {
       "id": "3",
-      "service": "Amazon S3",
+      "service": "AmazonS3",
       "name": "S3",
-      "notes": "User-managed storage bucket containing input video files and receiving the processed outputs."
+      "notes": "Customer's own S3 bucket containing the input raw video clips and receiving the processed outputs."
     },
     {
       "id": "4",
-      "service": "AWS Lambda",
+      "service": "AWSLambda",
       "name": "LAMBDA",
-      "notes": "An AWS Lambda function that retrieves technical metadata from video clips in the S3 bucket."
+      "notes": "AWS Lambda function used to asynchronously extract video and photo metadata directly from files in S3."
     },
     {
       "id": "5",
-      "service": "Amazon EC2",
-      "name": "G3",
-      "notes": "GPU-accelerated EC2 instances handling video processing (wormhole, spacetime, dark energy) and encoding."
+      "service": "AmazonEC2",
+      "name": "G3 / A.M.",
+      "notes": "GPU-accelerated EC2 cluster running Cinefilm processing tools and an Asset Manager (A.M.) to handle file transfers."
     },
     {
       "id": "6",
-      "service": "Amazon EC2",
+      "service": "AmazonEC2",
       "name": "IMF",
-      "notes": "An EC2 compute node that wraps processed outputs into Interoperable Master Format for delivery."
+      "notes": "Interoperable Master Format wrapping server running on EC2 to package video outputs specifically for distribution channels like Netflix."
     }
   ],
   "edges": [
@@ -58,39 +58,111 @@
       "flow_id": 0,
       "seq": "0",
       "type": "control",
-      "notes": "User connects via Web Browser to manage jobs and configure storage credentials."
+      "notes": "User logs into the Web Server and inputs S3 credentials/keys."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Job Manager triggers AWS Lambda to fetch file metadata from the user's S3 bucket."
     },
     {
       "source": "3",
       "target": "4",
       "flow_id": 0,
-      "seq": "1",
+      "seq": "2",
       "type": "data",
-      "notes": "AWS Lambda retrieves video clip metadata directly from the user's S3 bucket."
+      "notes": "Lambda reads file headers from the customer's S3 bucket to extract metadata."
     },
     {
       "source": "4",
       "target": "1",
       "flow_id": 0,
-      "seq": "2",
-      "type": "control",
-      "notes": "Lambda forwards the retrieved clip metadata back to the Job Manager."
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda returns the extracted media metadata to the Job Manager."
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 0,
-      "seq": "3",
+      "seq": "4",
       "type": "data",
-      "notes": "Job Manager stores and caches metadata in the database, allowing the Web Server to read and present it to the browser."
+      "notes": "Job Manager saves and caches the metadata in the database."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Web Server retrieves the cached metadata from the database to present to the user's browser."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Job Manager submits processing jobs to the G3 EC2 cluster and commands Asset Manager to copy clips."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Asset Manager copies the input video clip from the user's S3 bucket to the G3 instance's local storage."
+    },
+    {
+      "source": "5",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "G3 instance processes the video using GPU acceleration (e.g., retiming, de-interlacing)."
     },
     {
       "source": "5",
       "target": "3",
       "flow_id": 1,
-      "seq": "0",
+      "seq": "3",
       "type": "data",
-      "notes": "The GPU-enabled G3 instances write the processed output video clips back to the user's S3 bucket."
+      "notes": "Asset Manager copies the final processed output clip back to the user's S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Job Manager starts an IMF packaging workflow on the G3 cluster."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Asset Manager copies raw input files to the processing cluster."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Processed output is sent to the IMF wrapping component for standard-compliant packaging."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Asset Manager uploads the packaged IMF output package back to the user's S3 bucket."
     }
   ]
 }

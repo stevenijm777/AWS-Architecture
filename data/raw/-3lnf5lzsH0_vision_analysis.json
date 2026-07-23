@@ -1,218 +1,210 @@
 {
-  "step_by_step_reasoning": "We trace the architecture starting from the multiple log sources (on-premises syslog/Kafka, AWS S3, CloudTrail, GuardDuty, SQS, SNS) which are ingested by Apache NiFi (running on EC2). NiFi forwards these to Apache Metron (running on EC2) which serves as the core real-time security processing and profiling hub. From Metron, historical data is processed by an Amazon EMR job to be stored in the serverless Security Data Lake built on Amazon S3. Amazon Athena is used to run queries over this data lake, and there is a feedback loop from Athena back to Metron to refine the profiling models. For incident response, alerts from Metron go to 'Blitz', their custom SOAR orchestrator (on EC2), which alerts the SOC Analyst (UserCompanyAnalyst). The analyst can trigger mitigation actions back through Blitz, which communicates with AWS WAF to block threats.",
+  "step_by_step_reasoning": "First, the generic 'AWS' node from the visual World Model has been expanded based on the audio transcript into its specific constituents: S3 Logs, SNS, SQS, CloudTrail, and GuardDuty. Apache NiFi is added as the workflow/ingestion tool mentioned that pulls these telemetry events. Next, the on-premise infrastructure is preserved as a ThirdParty node. These feeds flow into Apache Metron for real-time parsing, enrichment, and profiling. For long-term data storage, a serverless Security Data Lake is configured where an EMR job picks up data from Metron's HDFS layer, transforms it, and writes it to an S3 Data Lake bucket. Athena is used to query S3, building analytical models that are fed back into Apache Metron. Finally, security alerts trigger the SOAR (Blitz) platform, displaying alerts to the SOC Analyst, who can block threats by executing controls on AWS WAF.",
   "graph": {
-    "name": "MakeMyTrip Next-Gen Security Operations Center (SOC)",
+    "name": "MakeMyTrip next-gen Security Operations Center (SOC) Architecture",
     "link": "https://www.youtube.com/watch?v=-3lnf5lzsH0",
-    "categories": "data_ingestion, compute_intensive",
+    "categories": "Security, Threat Detection, Data Lake",
     "graph_usable": true,
-    "notes": "Hybrid data ingestion handling 5,000 events/sec (250M events/day) leveraging Apache Metron, a serverless security data lake on S3, and automated threat mitigation via Blitz SOAR."
+    "notes": "An automated and semi-automated SOC platform processing ~5000 events per second and indexing over 250 million events per day in a security data lake."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserCompanyAnalyst",
-      "name": "SOC Analyst",
-      "notes": "Monitors alerts on mobile/Jira and takes triage action."
+      "service": "ThirdParty",
+      "name": "On-Premises",
+      "notes": "Generates and sends syslog or Kafka telemetry events."
     },
     {
       "id": "1",
-      "service": "S3",
-      "name": "S3 Source",
-      "notes": "Telemetry log source."
+      "service": "AmazonS3",
+      "name": "S3 Telemetry Logs",
+      "notes": "AWS telemetry log source stored in S3."
     },
     {
       "id": "2",
-      "service": "CloudTrail",
-      "name": "AWS CloudTrail",
-      "notes": "AWS log source."
+      "service": "AmazonSNS",
+      "name": "Amazon SNS",
+      "notes": "Notification service trigger for log notifications."
     },
     {
       "id": "3",
-      "service": "GuardDuty",
-      "name": "Amazon GuardDuty",
-      "notes": "AWS threat detection source."
+      "service": "AmazonSQS",
+      "name": "Amazon SQS",
+      "notes": "Buffers events for ingestion workflows."
     },
     {
       "id": "4",
-      "service": "SQS",
-      "name": "Amazon SQS",
-      "notes": "Message queue telemetry source."
+      "service": "AWSCloudTrail",
+      "name": "AWS CloudTrail",
+      "notes": "Records AWS API activities and events."
     },
     {
       "id": "5",
-      "service": "SNS",
-      "name": "Amazon SNS",
-      "notes": "Notification event source."
+      "service": "AmazonGuardDuty",
+      "name": "Amazon GuardDuty",
+      "notes": "Intelligent threat detection log source."
     },
     {
       "id": "6",
       "service": "ThirdParty",
-      "name": "On-Premises Logs",
-      "notes": "Syslog and Kafka streams from on-prem data centers."
+      "name": "Apache NiFi",
+      "notes": "Builds workflows to pull telemetry events from AWS."
     },
     {
       "id": "7",
-      "service": "EC2",
-      "name": "Apache NiFi",
-      "notes": "Ingestion engine to orchestrate log collection workflows."
+      "service": "ThirdParty",
+      "name": "Apache Metron",
+      "notes": "The heart of the SOC. Handles parsing, enrichment, and real-time profiling."
     },
     {
       "id": "8",
-      "service": "EC2",
-      "name": "Apache Metron",
-      "notes": "Heart of next-gen SOC. Performs real-time parsing, enrichment, and profiling."
+      "service": "AmazonEMR",
+      "name": "Amazon EMR",
+      "notes": "EMR jobs pick up persistent data from HDFS and transform it into S3 format."
     },
     {
       "id": "9",
-      "service": "EMR",
-      "name": "Amazon EMR",
-      "notes": "Picks up telemetry from Metron/HDFS and transforms it into S3 format."
+      "service": "AmazonS3",
+      "name": "Amazon S3 Data Lake",
+      "notes": "Serverless data lake holding months or years of long-term security telemetry."
     },
     {
       "id": "10",
-      "service": "S3",
-      "name": "Security Data Lake",
-      "notes": "Stores and indexes raw telemetry logs over months or years."
+      "service": "AmazonAthena",
+      "name": "Amazon Athena",
+      "notes": "Queries the data lake using SQL to build long-term models and forensics."
     },
     {
       "id": "11",
-      "service": "Athena",
-      "name": "Amazon Athena",
-      "notes": "Executes SQL queries and analytics for threat hunting and forensics."
+      "service": "ThirdParty",
+      "name": "SOAR (Blitz)",
+      "notes": "Security Orchestration, Automation, and Response platform (open source)."
     },
     {
       "id": "12",
-      "service": "EC2",
-      "name": "Blitz SOAR",
-      "notes": "Open-source Security Orchestration and Automation platform."
+      "service": "User",
+      "name": "SOC Analyst",
+      "notes": "Analyst who triages issues on a single pane of glass and triggers mitigation actions."
     },
     {
       "id": "13",
-      "service": "WAF",
+      "service": "AWSWAF",
       "name": "AWS WAF",
-      "notes": "Mitigates attacks by blocking malicious IPs or payload signatures."
+      "notes": "Web Application Firewall used to block malicious IP sources."
     }
   ],
   "edges": [
     {
-      "source": "1",
+      "source": "0",
       "target": "7",
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Ingests logs"
+      "notes": "Directly ingests syslog or Kafka events into Apache Metron."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "NiFi pulls log files from S3."
     },
     {
       "source": "2",
-      "target": "7",
+      "target": "6",
       "flow_id": 0,
-      "seq": "2",
+      "seq": "1'",
       "type": "data",
-      "notes": "Ingests logs"
+      "notes": "NiFi integrates with SNS events."
     },
     {
       "source": "3",
-      "target": "7",
+      "target": "6",
       "flow_id": 0,
-      "seq": "3",
+      "seq": "1'",
       "type": "data",
-      "notes": "Ingests logs"
+      "notes": "NiFi consumes events from SQS queue."
     },
     {
       "source": "4",
-      "target": "7",
+      "target": "6",
       "flow_id": 0,
-      "seq": "4",
+      "seq": "1'",
       "type": "data",
-      "notes": "Ingests logs"
+      "notes": "NiFi pulls CloudTrail audit logs."
     },
     {
       "source": "5",
-      "target": "7",
+      "target": "6",
       "flow_id": 0,
-      "seq": "5",
+      "seq": "1'",
       "type": "data",
-      "notes": "Ingests logs"
+      "notes": "NiFi ingests GuardDuty security findings."
     },
     {
       "source": "6",
       "target": "7",
       "flow_id": 0,
-      "seq": "6",
+      "seq": "2",
       "type": "data",
-      "notes": "Ingests logs"
+      "notes": "NiFi ingests aggregated AWS telemetry into Apache Metron."
     },
     {
       "source": "7",
       "target": "8",
-      "flow_id": 0,
-      "seq": "7",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "Forwards telemetry events to Apache Metron"
+      "notes": "Persistent HDFS telemetry data is picked up by EMR."
     },
     {
       "source": "8",
       "target": "9",
       "flow_id": 1,
-      "seq": "1",
+      "seq": "2",
       "type": "data",
-      "notes": "Pulls persistent log data"
+      "notes": "EMR writes transformed security logs into the long-term S3 Security Data Lake."
     },
     {
       "source": "9",
       "target": "10",
       "flow_id": 1,
-      "seq": "2",
+      "seq": "3",
       "type": "data",
-      "notes": "Transforms and writes to S3 Security Data Lake"
+      "notes": "Athena performs interactive SQL queries and log mining."
     },
     {
       "source": "10",
-      "target": "11",
+      "target": "7",
       "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Ad-hoc SQL queries and analytics"
+      "seq": "4",
+      "type": "control",
+      "notes": "Feeds model and profiling updates from Athena analytics back into Apache Metron."
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Apache Metron pushes security alerts to Blitz SOAR."
     },
     {
       "source": "11",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Feedback loop of long-term profiling models"
-    },
-    {
-      "source": "8",
       "target": "12",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Dispatches security alerts"
-    },
-    {
-      "source": "12",
-      "target": "0",
       "flow_id": 2,
       "seq": "2",
-      "type": "data",
-      "notes": "Presents alerts via Jira or Mobile client"
-    },
-    {
-      "source": "0",
-      "target": "12",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Analyst initiates remediation action"
+      "type": "control",
+      "notes": "Blitz orchestrates, enriches, and displays alerts to the SOC Analyst."
     },
     {
       "source": "12",
       "target": "13",
       "flow_id": 2,
-      "seq": "4",
-      "type": "data",
-      "notes": "Applies rules to block threats"
+      "seq": "3",
+      "type": "control",
+      "notes": "Analyst triggers block instructions on AWS WAF at the click of a button."
     }
   ]
 }

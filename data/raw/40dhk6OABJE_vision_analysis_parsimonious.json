@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "We identify three logical layers on the whiteboard: API, Metrics, and Analytics. EKS and ElastiCache form the core API layer, handling active A/B testing requests. Metrics are streamed from the API layer to Elasticsearch (OpenSearch) for real-time monitoring and to S3 for cold storage. Batch processing is orchestrated by Airflow on EKS, utilizing RDS and S3 as inputs to EMR, which writes processed results back to S3. Finally, Athena queries the S3 data lake, exposing results to a BI Dashboard.",
+  "graph": {
+    "name": "Mesh Korea A/B Testing Platform",
+    "link": "https://www.youtube.com/watch?v=40dhk6OABJE",
+    "categories": "interactive, data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "An A/B testing platform built in 3 weeks to handle up to 10,000 QPS, leveraging EKS, ElastiCache, EMR, and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Hosts the core Sixpack A/B testing engine and API service, as well as Apache Airflow for orchestration."
+    },
+    {
+      "id": "1",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "In-memory cache database ensuring low-latency access to active experiment configurations."
+    },
+    {
+      "id": "2",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Ingests real-time metrics for immediate visualization and monitoring in Kibana."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central data lake storing raw real-time metrics and final processed experiment results."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores transactional business and application data utilized during batch analysis."
+    },
+    {
+      "id": "5",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs periodic Spark batch jobs to clean, aggregate, and join RDS data with S3 metrics."
+    },
+    {
+      "id": "6",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Provides ad-hoc SQL query capability over the refined data stored in S3."
+    },
+    {
+      "id": "7",
+      "service": "QuickSight",
+      "name": "BI Dashboard",
+      "notes": "Visualizes the query results from Athena to measure experiment outcomes."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads and updates active experiment session states."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1a",
+      "type": "data",
+      "notes": "Streams real-time metrics to Elasticsearch for visualization."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1b",
+      "type": "data",
+      "notes": "Streams event metrics directly to S3 for persistent storage."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Feeds metadata and operational records to EMR."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "2b",
+      "type": "data",
+      "notes": "EMR pulls raw metrics data from S3 for processing."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Saves refined analytics and experiment datasets back to S3."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 4,
+      "seq": "4",
+      "type": "data",
+      "notes": "Athena queries structured analytics data."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "5",
+      "type": "data",
+      "notes": "Populates A/B test report dashboards."
+    }
+  ]
+}

@@ -154,7 +154,7 @@ Do NOT generate the final graph. Focus strictly on identifying the present entit
 MFR_STAGE_2_PROMPT_TEMPLATE = """
 You are an expert AWS Solutions Architect. Your task is to compile the final logical cloud architecture graph from the provided World Model and audio transcript.
 
-You must generalize your reasoning to deduce the true logical "Ground Truth" architecture based on standard AWS patterns, ignoring visual drawing errors but respecting the core system design.
+You must generalize your reasoning to deduce the true logical "Ground Truth" architecture based on standard AWS patterns.
 
 ## VALID VOCABULARY LISTS (CRITICAL):
 You may ONLY use exact values from these lists for the "service" field.
@@ -172,30 +172,19 @@ Translate all output text fields (notes, graph name, reasoning, etc.) into ENGLI
 Use this as your visual inventory.
 <WORLD_MODEL_PLACEHOLDER>
 
-## NODE RULES (PRUNING, FUSION, AND ROLE SEPARATION):
-1. **Strict Normalization (CRITICAL):** The "service" field MUST match exactly with an element from the VALID VOCABULARY LISTS. NEVER invent or hallucinate a name.
-   - Map Auto Scaling Groups (ASG) or compute clusters directly to "EC2". DO NOT use "AutoScaling".
-   - **Client Abstraction:** Map ALL external client entities (e.g., users, browsers, publisher websites, mobile devices) into a SINGLE combined node using the most appropriate actor from the list (e.g., "UserConsumerWeb"). DO NOT split the user and the website into two nodes.
+## NODE RULES (PRUNING, FUSION, AND AUDIO-DRIVEN EXPANSION):
+1. **Strict Normalization (CRITICAL):** The "service" field MUST match exactly with an element from the VALID VOCABULARY LISTS.
 2. **Numeric Identifiers:** The "id" field of each node MUST be strictly a sequential integer in string format (e.g., "0", "1", "2").
-3. **Logical Fusion vs. Separation (HEURISTIC):**
-   - **FUSE** related microservices (like multiple Lambda functions handling different triggers) into a single representative service node to keep the graph highly abstracted.
-   - **SEPARATE** massive compute infrastructure (like EC2 fleets) ONLY if they serve entirely distinct architectural roles (e.g., a "Bidding" EC2 cluster vs. a "Tracking" EC2 cluster).
-4. **Pruning:** Remove generic human actors or purely physical concepts. Keep system entry points.
-5. **Note Assimilation:** Extract specific constraints and metrics from the transcript (e.g., "1 million requests per second", "Spot instances") and inject them into the "notes" of the relevant nodes.
+3. **Audio-Driven Expansion (CRITICAL OVERRIDE):** If the visual World Model shows a generic abstraction (e.g., a single "AWS" cloud icon, or "On-Prem"), but the audio transcript explicitly lists specific services belonging to that group (e.g., S3, SNS, SQS, CloudTrail, GuardDuty), you MUST expand the generic visual node into separate, individual nodes for each explicitly mentioned service. DO NOT create the generic parent node; only create its specific children and route them to their logical destination.
+4. **Dynamic Logical Fusion:** Evaluate multiple icons of the same service dynamically. If they act as a single logical unit, FUSE them. If they perform distinct architectural steps at different stages, KEEP THEM SEPARATE.
+5. **Pruning:** Remove generic human actors or purely physical concepts. Keep system entry points.
+6. **Note Assimilation:** Extract specific constraints and metrics from the transcript and inject them into the "notes".
 
 ## EDGE AND FLOW RULES (LOGICAL ROUTING):
 1. **Strict Flow Segmentation (`flow_id`):** Group related architectural actions into distinct logical workflows using an integer `flow_id` (starting at 0).
-   - `0`: Usually the primary baseline, ingestion, or synchronous workflow.
-   - `1`, `2`, `3`, etc.: Subsequent, decoupled, or asynchronous workflows.
-2. **Chronological Sequence (`seq`):**
-   - Order events within a flow using string integers ("0", "1", "2").
-   - **Parallel Actions:** If a single component triggers MULTIPLE downstream actions simultaneously, use the prime character (e.g., "1" and "1'").
-   - **Bidirectionality:** Request/response cycles must be modeled as two edges (e.g., Request is "0", Response is "1").
-3. **Edge Types (`type`):**
-   - Use "data" for payload transfers, database reads/writes, or heavy data movement.
-   - Use "control" for events, triggers, or asynchronous invocations.
+2. **Chronological Sequence (`seq`):** Order events within a flow using string integers ("0", "1"). Use the prime character for parallel actions (e.g., "1" and "1'"). Model bidirectionality as two edges.
+3. **Edge Types (`type`):** Use "data" for payload transfers/reads/writes. Use "control" for events, triggers, or asynchronous invocations.
 """
-
 
 # ── Retry Logic ──────────────────────────────────────────────
 

@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "The whiteboard depicts two main pipelines: an image processing path and a model training path. First, clients upload images through API Gateway, routing via an Application Load Balancer to an ECS cluster. ECS determines the image category and directs it to an SQS queue. Processing instances (EC2) pull from SQS to run pre-processing, inference, and post-processing tasks. Second, the training pipeline uses SageMaker to load data from S3, train models, and save weights back to S3. On completion, SageMaker triggers a Lambda function to sync the new model weights to the Processing instances.",
+  "graph": {
+    "name": "Spine.ai Computer Vision Image Cataloging Architecture",
+    "link": "https://www.youtube.com/watch?v=0wnNlOg42dc",
+    "categories": "data_ingestion, compute_intensive",
+    "graph_usable": true,
+    "notes": "Serverless and containerized architecture for high-throughput automated image processing using AI models running on CPU/GPU instances."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Image Source",
+      "notes": "Clients uploading images via API, web, or SDK."
+    },
+    {
+      "id": "1",
+      "service": "APIGateway",
+      "name": "API Gateway",
+      "notes": "Ingests incoming image uploads."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Routes traffic to ECS tasks."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Analyzes parameters/metadata and routes tasks to queues."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers processing tasks for worker nodes."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Processing",
+      "notes": "Executes pre-processing (CPU), inference (GPU), and post-processing."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Runs training pipelines using EC2 Spot instances."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores training datasets and model weights."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Synchronizes new model weights to the processing instances."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Uploads catalog images."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forwards requests."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes based on image categories."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enqueues images for processing."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Workers poll for tasks."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fetches input training data."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves trained weights."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers weight sync function."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Updates models on the processing layer."
+    }
+  ]
+}

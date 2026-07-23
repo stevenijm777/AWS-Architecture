@@ -1,100 +1,100 @@
 {
-  "step_by_step_reasoning": "First, we list the nodes precisely corresponding to the 9 entities defined in the World Model. Next, we structure the edges chronologically based on the migration steps described in the video. We split these into two logical flows: Flow 0 for metadata/data replication initialization (populating DynamoDB, continuous replication from on-prem to hot replica, and App Discovery agent gathering metrics) and Flow 1 for the orchestrated cutover (triggered from Slack by the Migration Team, communicating with the EC2 Migration Factory, calling APIs on App Discovery and CloudEndure, and finally launching the Target EC2 instance in the target account).",
+  "step_by_step_reasoning": "The architecture details an automated migration factory designed to move on-premises servers to AWS. It operates in two main phases: Preparation and Automated Migration. During preparation, the Migration Team populates target configuration metadata (such as IPs, subnets, and tags) into DynamoDB. On-premises servers run the Application Discovery Service agent to collect network/performance metrics, and the CloudEndure agent to continuously replicate block-level data into an EC2 Hot Replica in AWS. When the migration is triggered, the Migration Team sends a Slack command that calls an API on the EC2 Migration Factory orchestrator. The EC2 orchestrator queries the Application Discovery Service and DynamoDB to fetch server configurations, commands CloudEndure to halt replication, bakes an AMI from the Hot Replica, and launches the final target EC2 instance in the target account with all custom tags and configurations applied.",
   "graph": {
-    "name": "Automated Migration Factory with CloudEndure",
+    "name": "Automated AWS Migration Factory Architecture",
     "link": "https://www.youtube.com/watch?v=-wLEkq21cvA",
-    "categories": "control, data_ingestion",
+    "categories": "Migration, Orchestration, Automation",
     "graph_usable": true,
-    "notes": "Versent's automated migration factory dramatically reduces migration time from 4 hours to 10 minutes. It automates the discovery of on-prem servers, configures replication targets via CloudEndure, and automates target instance launching inside of the target AWS accounts using metadata stored in DynamoDB, all driven via Slack commands."
+    "notes": "Automates the migration of on-premises servers to AWS in approximately 10 minutes per server by utilizing CloudEndure and AWS Application Discovery Service coordinated by an EC2-hosted Migration Factory."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "ThirdParty",
-      "name": "ON-PREM",
-      "notes": "On-premises servers represented by the stacked server icon labeled ON-PREM, running Discovery and CloudEndure agents."
+      "service": "User",
+      "name": "Migration Team",
+      "notes": "Initiates the automated migration process and sets up configurations."
     },
     {
       "id": "1",
       "service": "ThirdParty",
-      "name": "SLACK",
-      "notes": "Slack chat tool used by the migration team to trigger operations."
+      "name": "Slack",
+      "notes": "Receives chat commands to trigger the migration workflow via API call."
     },
     {
       "id": "2",
-      "service": "UserCompanyAgent",
-      "name": "MIGRATION TEAM",
-      "notes": "The migration team acting as the primary system operators."
+      "service": "ThirdParty",
+      "name": "On-Premises Server",
+      "notes": "The source servers running discovery and replication agents."
     },
     {
       "id": "3",
-      "service": "AppDiscovery",
-      "name": "APP DISCOVERY SERVICE",
-      "notes": "AWS Application Discovery Service collecting performance and connection metadata."
+      "service": "Application Discovery Service",
+      "name": "Application Discovery Service",
+      "notes": "Gathers TCP mapping, system metadata, and utilization metrics."
     },
     {
       "id": "4",
       "service": "DynamoDB",
-      "name": "DYNAMODB",
-      "notes": "Amazon DynamoDB storing target configuration metadata, RTOs, and RPOs."
+      "name": "DynamoDB",
+      "notes": "Stores migration metadata, target accounts, tags, IPs, and RTO/RPO requirements."
     },
     {
       "id": "5",
       "service": "EC2",
-      "name": "EC2",
-      "notes": "The central EC2 instance acting as the Migration Factory orchestrator."
+      "name": "EC2 (Migration Factory)",
+      "notes": "The orchestration server running scripts to automate the migration process."
     },
     {
       "id": "6",
       "service": "ThirdParty",
-      "name": "CLOUDENDURE",
-      "notes": "CloudEndure live migration tool managing volume replication."
+      "name": "CloudEndure",
+      "notes": "Manages block-level volume replication to the replication instance."
     },
     {
       "id": "7",
       "service": "EC2",
-      "name": "EC2 HOT REPLICA",
-      "notes": "The replication destination EC2 instance receiving continuously replicated block data."
+      "name": "EC2 Hot Replica",
+      "notes": "The replication instance receiving live updates from the on-premises server."
     },
     {
       "id": "8",
       "service": "EC2",
-      "name": "EC2 Target",
-      "notes": "The final launched EC2 instance on the target account side of the boundary."
+      "name": "Target EC2 Instance",
+      "notes": "The final launched server in the target AWS account."
     }
   ],
   "edges": [
     {
-      "source": "2",
+      "source": "0",
       "target": "4",
       "flow_id": 0,
       "seq": "0",
-      "type": "data",
-      "notes": "The migration team populates DynamoDB with metadata, RTOs, RPOs, target account details, and subnet configurations."
+      "type": "control",
+      "notes": "Migration team populates target configurations, tags, subnets, and IPs into DynamoDB."
     },
     {
-      "source": "0",
+      "source": "2",
       "target": "3",
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Application Discovery Service agent collects TCP connections and performance metrics from the on-premises servers."
+      "notes": "Application Discovery Service agent collects TCP dependencies and system resource usage."
     },
     {
-      "source": "0",
+      "source": "2",
       "target": "7",
       "flow_id": 0,
       "seq": "2",
       "type": "data",
-      "notes": "Continuous block-level data replication from the on-premises source to the AWS EC2 replica instance."
+      "notes": "On-prem data is replicated continuously block-by-block using CloudEndure agents."
     },
     {
-      "source": "2",
+      "source": "0",
       "target": "1",
       "flow_id": 1,
       "seq": "0",
       "type": "control",
-      "notes": "The migration team sends a command via Slack to trigger orchestration."
+      "notes": "Migration team triggers the migration using a Slack command."
     },
     {
       "source": "1",
@@ -102,23 +102,23 @@
       "flow_id": 1,
       "seq": "1",
       "type": "control",
-      "notes": "Slack integration triggers API calls on the EC2 Migration Factory orchestrator."
+      "notes": "Slack makes an API call to initiate execution on the EC2 Migration Factory orchestrator."
     },
     {
       "source": "5",
       "target": "3",
       "flow_id": 1,
       "seq": "2",
-      "type": "control",
-      "notes": "Migration factory requests performance and connection metadata from AWS Discovery Service."
+      "type": "data",
+      "notes": "EC2 Migration Factory queries Application Discovery Service for TCP connections and performance metrics."
     },
     {
-      "source": "3",
-      "target": "7",
+      "source": "5",
+      "target": "4",
       "flow_id": 1,
       "seq": "3",
-      "type": "control",
-      "notes": "App Discovery metadata influences configuration of the replica instance."
+      "type": "data",
+      "notes": "EC2 Migration Factory retrieves target metadata, instance sizes, and custom tags from DynamoDB."
     },
     {
       "source": "5",
@@ -126,7 +126,7 @@
       "flow_id": 1,
       "seq": "4",
       "type": "control",
-      "notes": "Migration factory issues API calls to CloudEndure to manage replication."
+      "notes": "EC2 Migration Factory requests CloudEndure to halt active block-level replication."
     },
     {
       "source": "6",
@@ -134,15 +134,23 @@
       "flow_id": 1,
       "seq": "5",
       "type": "control",
-      "notes": "CloudEndure manages the replication process and final cutover on the replica instance."
+      "notes": "CloudEndure agent pauses the continuous replication to prepare for AMI creation."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "control",
+      "notes": "EC2 Migration Factory creates (bakes) an Amazon Machine Image (AMI) from the EC2 Hot Replica volumes."
     },
     {
       "source": "5",
       "target": "8",
       "flow_id": 1,
-      "seq": "6",
+      "seq": "7",
       "type": "control",
-      "notes": "The migration factory launches and configures the target instance across the account boundary."
+      "notes": "EC2 Migration Factory shares the baked AMI with the target account and launches the final target EC2 instance with custom tagging and network configurations."
     }
   ]
 }

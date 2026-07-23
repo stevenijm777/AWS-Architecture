@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "First, we identify the main actors: public users requesting HTML content, and developer/newsroom users managing templates and code. Public requests hit an ECS-based origin proxy, which either fetches static/pre-rendered content from S3 buckets, or triggers dynamic rendering via AWS Lambda on cache misses. Newsroom users define web templates stored in DynamoDB, which Lambda reads during execution. During rendering, Lambda fetches content through a secondary ECS-based CMS proxy that queries external CMS platforms and stores raw content in ElastiCache to speed up subsequent requests.",
+  "graph": {
+    "name": "Washington Post Arc Publishing Web Rendering Platform",
+    "link": "https://www.youtube.com/watch?v=0JxJpNjI9Y0",
+    "categories": "interactive, compute_intensive",
+    "graph_usable": true,
+    "notes": "A web rendering system leveraging layered caching and serverless rendering to deliver news content dynamically with high availability."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Public Users",
+      "notes": "End-users requesting HTML web pages."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer & Newsroom Users",
+      "notes": "Manage web page templates and deploy JavaScript rendering code."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "Origin Proxy ECS",
+      "notes": "Routes incoming public requests based on resource type."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Static Resources S3",
+      "notes": "Stores CSS and JavaScript assets."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Pre-Rendered Content S3",
+      "notes": "Stores pre-rendered HTML content for faster load times."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Rendering Lambda",
+      "notes": "Dynamically renders web pages on cache misses."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "Content Proxy ECS",
+      "notes": "Proxies content queries to external CMS and APIs."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Page Builder DynamoDB",
+      "notes": "Stores web page templates constructed by newsroom users."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "Content Cache",
+      "notes": "Caches raw JSON objects from CMS with a TTL."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "External CMS",
+      "notes": "External CMS services hosting stories, images, and video feeds."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Requests web content."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches static web assets."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves pre-rendered pages."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Invokes Lambda for dynamic rendering."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Deploys site rendering code."
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Configures page templates."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Loads active templates to structure the page."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries raw content payload."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Caches raw JSON data."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Retrieves story/media data from external CMS."
+    }
+  ]
+}

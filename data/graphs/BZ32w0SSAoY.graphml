@@ -16,72 +16,126 @@
     <node id="0">
       <data key="d5">Web Browser</data>
       <data key="d6">ThirdParty</data>
-      <data key="d7">Allows the user to log in, configure S3 settings, select workflows, and monitor jobs.</data>
+      <data key="d7">User interacts with the PixelStrings web interface, typically via Chrome, to log in and manage workflows.</data>
     </node>
     <node id="1">
       <data key="d5">WEB SERVER / JOB MANAGER</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Hosts the web portal front-end and coordinates parallel video processing jobs.</data>
+      <data key="d6">EC2</data>
+      <data key="d7">EC2 instance running the web front-end and the core job manager that orchestrates metadata and processing workflows.</data>
     </node>
     <node id="2">
       <data key="d5">DATABASE</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Caches the extracted video metadata and job configurations for the web UI.</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Relational database used to store and cache extracted media metadata so the Web Server can display it quickly.</data>
     </node>
     <node id="3">
       <data key="d5">S3</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">User-managed storage bucket containing input video files and receiving the processed outputs.</data>
+      <data key="d6">S3</data>
+      <data key="d7">Customer's own S3 bucket containing the input raw video clips and receiving the processed outputs.</data>
     </node>
     <node id="4">
       <data key="d5">LAMBDA</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">An AWS Lambda function that retrieves technical metadata from video clips in the S3 bucket.</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">AWS Lambda function used to asynchronously extract video and photo metadata directly from files in S3.</data>
     </node>
     <node id="5">
-      <data key="d5">G3</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">GPU-accelerated EC2 instances handling video processing (wormhole, spacetime, dark energy) and encoding.</data>
+      <data key="d5">G3 / A.M.</data>
+      <data key="d6">EC2</data>
+      <data key="d7">GPU-accelerated EC2 cluster running Cinefilm processing tools and an Asset Manager (A.M.) to handle file transfers.</data>
     </node>
     <node id="6">
       <data key="d5">IMF</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">An EC2 compute node that wraps processed outputs into Interoperable Master Format for delivery.</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Interoperable Master Format wrapping server running on EC2 to package video outputs specifically for distribution channels like Netflix.</data>
     </node>
     <edge source="0" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9">User connects via Web Browser to manage jobs and configure storage credentials.</data>
+      <data key="d9">User logs into the Web Server and inputs S3 credentials/keys.</data>
       <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Job Manager triggers AWS Lambda to fetch file metadata from the user's S3 bucket.</data>
+      <data key="d10">1</data>
       <data key="d11">control</data>
     </edge>
     <edge source="1" target="2" id="0">
       <data key="d8">0</data>
-      <data key="d9">Job Manager stores and caches metadata in the database, allowing the Web Server to read and present it to the browser.</data>
-      <data key="d10">3</data>
+      <data key="d9">Job Manager saves and caches the metadata in the database.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Job Manager submits processing jobs to the G3 EC2 cluster and commands Asset Manager to copy clips.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="5" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Job Manager starts an IMF packaging workflow on the G3 cluster.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Web Server retrieves the cached metadata from the database to present to the user's browser.</data>
+      <data key="d10">5</data>
       <data key="d11">data</data>
     </edge>
     <edge source="3" target="4" id="0">
       <data key="d8">0</data>
-      <data key="d9">AWS Lambda retrieves video clip metadata directly from the user's S3 bucket.</data>
+      <data key="d9">Lambda reads file headers from the customer's S3 bucket to extract metadata.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Asset Manager copies the input video clip from the user's S3 bucket to the G3 instance's local storage.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Asset Manager copies raw input files to the processing cluster.</data>
       <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
     <edge source="4" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9">Lambda forwards the retrieved clip metadata back to the Job Manager.</data>
+      <data key="d9">Lambda returns the extracted media metadata to the Job Manager.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">G3 instance processes the video using GPU acceleration (e.g., retiming, de-interlacing).</data>
       <data key="d10">2</data>
-      <data key="d11">control</data>
+      <data key="d11">data</data>
     </edge>
     <edge source="5" target="3" id="0">
       <data key="d8">1</data>
-      <data key="d9">The GPU-enabled G3 instances write the processed output video clips back to the user's S3 bucket.</data>
-      <data key="d10">0</data>
+      <data key="d9">Asset Manager copies the final processed output clip back to the user's S3 bucket.</data>
+      <data key="d10">3</data>
       <data key="d11">data</data>
     </edge>
-    <data key="d0">Cinefilm PixelStrings GPU-Accelerated Video Processing Architecture</data>
+    <edge source="5" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Processed output is sent to the IMF wrapping component for standard-compliant packaging.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="3" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Asset Manager uploads the packaged IMF output package back to the user's S3 bucket.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Cinefilm PixelStrings Media Processing Architecture</data>
     <data key="d1">https://www.youtube.com/watch?v=BZ32w0SSAoY</data>
-    <data key="d2">PixelStrings by Cinefilm uses a web-based portal to allow users to process video clips (retiming, de-interlacing, and noise reduction) using GPU-powered EC2 G3 instances, with automated metadata extraction powered by AWS Lambda and Amazon S3.</data>
-    <data key="d3">compute_intensive, interactive, data_ingestion</data>
+    <data key="d2">PixelStrings is a cloud-based media conversion and optimization platform utilizing GPU-accelerated G3 EC2 instances, AWS Lambda for asynchronous metadata extraction, and Amazon RDS for caching.</data>
+    <data key="d3">Media Processing, GPU Acceleration, Serverless Metadata Extraction</data>
     <data key="d4">True</data>
   </graph>
 </graphml>
