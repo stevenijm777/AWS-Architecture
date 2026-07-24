@@ -6,8 +6,8 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 
 | Video ID | Título | F1 Parsimonious | F1 Standard | Diagnóstico / Observaciones |
 |---|---|---|---|---|
-| `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | **73.7%** | 95.7% | Standard supera a Parsimonious por 21.7%. El simplificado omitió detalles menores. |
-| `-kA0ahrhX3I` | Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie | **85.7%** | 85.7% | Parsimonious supera a Standard por 0.3%. El clásico alucina nodos por ruidos de la transcripción. |
+| `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | **95.7%** | 95.7% | Rendimiento equivalente en servicios. Parsimonious supera en aristas (53.3% vs 38.7%). |
+| `-kA0ahrhX3I` | Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie | **100.0%** | 85.7% | Parsimonious supera a Standard por 14.3%. Alineación perfecta de servicios (100% F1). |
 | `-wLEkq21cvA` | Versent: The Migration Factory | **100.0%** | 100.0% | Rendimiento equivalente en detección de servicios. |
 | `07lfvavMdfU` | Levels Beyond: Digital Content Orchestration | **100.0%** | 90.0% | Parsimonious supera a Standard por 4.8%. El clásico alucina nodos por ruidos de la transcripción. |
 | `0F7KDLz-kIQ` | Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK | **87.0%** | 81.8% | Parsimonious supera a Standard por 5.2%. El clásico alucina nodos por ruidos de la transcripción. |

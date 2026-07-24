@@ -15,8 +15,10 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const INPUT_DIR = path.join(__dirname, 'graphs_input');
 const RENDER_SCRIPT = path.join(__dirname, 'render_graph.mjs');

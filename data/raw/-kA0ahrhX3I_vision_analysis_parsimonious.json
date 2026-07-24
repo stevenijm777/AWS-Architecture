@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows a multi-account AWS setup. The left box represents the main Security/Admin account, containing S3 (Findings Bucket), Amazon Macie, Amazon Athena, Amazon QuickSight, MySQL, AWS Glue, and a Security Engineers actor icon. The right boxes show two production AWS accounts, each with Amazon Macie and Amazon S3. We map each of these physical components to nodes. Edges represent the Macie discovery scans, findings centralization to S3, Athena queries, QuickSight visualizations, and MySQL data lake loads.",
+  "graph": {
+    "name": "Automated Sensitive Data Discovery with Amazon Macie",
+    "link": "https://www.youtube.com/watch?v=-kA0ahrhX3I",
+    "categories": "data_ingestion, control",
+    "graph_usable": true,
+    "notes": "Architected a DSPM solution to scan and discover PII across multiple production S3 buckets using Amazon Macie, centralizing metadata findings into an S3 bucket for SQL querying via Athena and reporting with QuickSight."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAnalyst",
+      "name": "Security Engineers",
+      "notes": "Reviews dashboards to identify bucket owners and remediate sensitive data exposures."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 Findings Bucket",
+      "notes": "DATA_PEEK: Stores central metadata of Macie findings (no raw PII)."
+    },
+    {
+      "id": "2",
+      "service": "Macie",
+      "name": "Amazon Macie (Central)",
+      "notes": "Scans S3 buckets within the central security account."
+    },
+    {
+      "id": "3",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Enables SQL querying over the S3 findings metadata."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "MySQL Data Lake",
+      "notes": "Stores aggregated findings data for custom reporting."
+    },
+    {
+      "id": "5",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "WORKLOAD_PEEK: Automates ETL pipelines to load and aggregate findings into MySQL."
+    },
+    {
+      "id": "6",
+      "service": "QuickSight",
+      "name": "Amazon QuickSight",
+      "notes": "Visualizes findings to show top risky S3 buckets by PII type."
+    },
+    {
+      "id": "7",
+      "service": "Macie",
+      "name": "Amazon Macie (Prod 1)",
+      "notes": "Discovers sensitive data (SSNs, IDs) in production account 1."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3 (Prod 1)",
+      "notes": "DATA_PEEK: Production storage containing members' sensitive financial details."
+    },
+    {
+      "id": "9",
+      "service": "Macie",
+      "name": "Amazon Macie (Prod 2)",
+      "notes": "Discovers sensitive data in production account 2."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Amazon S3 (Prod 2)",
+      "notes": "DATA_PEEK: Production S3 bucket in a separate account."
+    }
+  ],
+  "edges": [
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Scans S3 bucket for sensitive data."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Scans S3 bucket for sensitive data."
+    },
+    {
+      "source": "7",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sends metadata findings to central S3 bucket."
+    },
+    {
+      "source": "9",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Sends metadata findings to central S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends local findings to central S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries findings metadata."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Returns query results."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "QuickSight queries findings directly from S3 via Athena."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Loads processed data into MySQL."
+    },
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Analyzes dashboards for remediation."
+    }
+  ]
+}

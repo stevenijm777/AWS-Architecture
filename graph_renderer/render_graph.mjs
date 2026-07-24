@@ -11,12 +11,14 @@
 
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { createCanvas, loadImage } from 'canvas';
 import { XMLParser } from 'fast-xml-parser';
 import { parse as csvParse } from 'csv-parse/sync';
 
 // ─── Configuration ───────────────────────────────────────────────────────────
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const ICONS_DIR = path.join(__dirname, 'icons');
 const INPUT_DIR = path.join(__dirname, 'graphs_input');
 const OUTPUT_DIR = path.join(__dirname, 'graphs_output');
