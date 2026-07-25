@@ -312,6 +312,7 @@ def estimate_occlusion_fast(img: np.ndarray, debug_save_path: Path | str | None 
 def select_best_frame(
         video_id: str,
         frames_dir: Path | None = None,
+        output_dir: Path | None = None,
         debug: bool = False,
         min_area_icono: int = 2000,
 ) -> dict:
@@ -462,7 +463,7 @@ def select_best_frame(
         # --- CÁLCULO DE PESOS REBALANCEADO ---
         puntos_iconos = num_iconos * 5
         puntos_tiza = capped_density * 50
-        penalizacion_oclusion = occlusion * 40
+        penalizacion_oclusion = occlusion * 700
         
         # Bono de piel capeado al 10% (Máximo 5 puntos, equivalente a 1 ícono)
         bono_piel = min(skin_pct, 0.10) * 50 
@@ -516,6 +517,60 @@ def select_best_frame(
     shutil.copy(best["path"], dest)
     console.print(f"  [green]✓[/] Saved → {dest}")
 
+    # ==========================================
+    # ACTUALIZADO: LÓGICA DE GUARDADO
+    # ==========================================
+    # Si nos pasan un output_dir, guardamos todo ahí directamente.
+    # Si no, usamos el comportamiento por defecto.
+    if output_dir:
+        pizarra_dir = Path(output_dir)
+    else:
+        pizarra_dir = video_frames_dir.parent / f"{video_id}_pizarra"
+
+    pizarra_dir.mkdir(parents=True, exist_ok=True)
+    dest = pizarra_dir / "best_whiteboard.jpg"
+
+    shutil.copy(best["path"], dest)
+    console.print(f"  [green]✓[/] Saved → {dest}")
+
+    # Guardar TOP 10
+    top10_dir = pizarra_dir / "top10"
+
+    # Limpiamos la carpeta si ya existe para evitar imágenes duplicadas
+    if top10_dir.exists():
+        shutil.rmtree(top10_dir)
+    top10_dir.mkdir(parents=True, exist_ok=True)
+
+    top10_info = []
+    for rank, sf in enumerate(scored_frames[:10], start=1):
+        top10_dest = top10_dir / f"rank_{rank:02d}_{sf['path'].name}"
+        shutil.copy(sf["path"], top10_dest)
+        top10_info.append({
+            "rank": rank,
+            "path": top10_dest,
+            "source_path": sf["path"],
+            "score": sf["score"]
+        })
+    console.print(f"  [green]✓[/] Top 10 frames guardados en → {top10_dir}")
+    # ==========================================
+    # NUEVO: GUARDAR TOP 10 FRAMES
+    # ==========================================
+    top10_dir = pizarra_dir / "top10"
+    top10_dir.mkdir(parents=True, exist_ok=True)
+
+    top10_info = []
+    for rank, sf in enumerate(scored_frames[:10], start=1):
+        # Guardar copia con prefijo de rango para identificarlos fácilmente (ej: rank_01_frame_123.jpg)
+        top10_dest = top10_dir / f"rank_{rank:02d}_{sf['path'].name}"
+        shutil.copy(sf["path"], top10_dest)
+        top10_info.append({
+            "rank": rank,
+            "path": top10_dest,
+            "source_path": sf["path"],
+            "score": sf["score"]
+        })
+    console.print(f"  [green]✓[/] Top 10 frames guardados en → {top10_dir}")
+
     # Copy to bad_whiteboard for manual review
     bad_wb_dir = video_frames_dir.parent.parent / "bad_whiteboard"
     if bad_wb_dir.exists():
@@ -554,7 +609,8 @@ def select_best_frame(
         "content_score": best["edge_density"],
         "occlusion_pct": best["occlusion"] * 100,
         "discarded_count": discarded_count,
-        "skin_bonus": best["skin_bonus"]
+        "skin_bonus": best["skin_bonus"],
+        "top10_frames": top10_info
     }
 
 # ── CLI ─────────────────────────────────────────────────────────

@@ -1,0 +1,249 @@
+{
+  "graph": {
+    "name": "Alert Logic: Scaling Storage and Delivery of Petabytes of Search Data",
+    "link": "https://www.youtube.com/watch?v=PoYiSKUy8sE",
+    "categories": "data_ingestion, interactive",
+    "graph_usable": true,
+    "notes": "Storage service to consumers and provide a search functionality through it.\n    System has two parts -- data ingestion and search.\n    Total data in store 25 petabytes. Each search query typically looks at 100s of terrabytes of data.\n    Search Engine -- MapReduce system based on Lambdas. Rich SQL syntax.\n    Search is a spiky workload. On certain gameday, the Lambda fleet scaled from 0 to 55k in an hour and back to 0 when demand went down (saving money).\n    Interestingly they use 'Erlang' in writing their Lambda logic.\n    The DynamoDB is not connected in the graph. It is likely connected to ECS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": ""
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "StepFunctions",
+      "notes": "WORKLOAD_PEEK: orchestration and holds state"
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "WORKLOAD_PEEK: preprocessing incoming data"
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "WORKLOAD_PEEK: search engine frontend, query validation and planning"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "SCALE_RANGE: 0 to 50k in an hour\nWORKLOAD_PEEK: job shadowing based on data volume, triggers filter lambdas"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "SCALE_RANGE: 0 to 50k in an hour\nWORKLOAD_PEEK: filtering"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "SCALE_RANGE: 0 to 50k in an hour\nWORKLOAD_PEEK: result aggregation"
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": ""
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3",
+      "notes": ""
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3",
+      "notes": ""
+    },
+    {
+      "id": "10",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": ""
+    },
+    {
+      "id": "11",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": ""
+    },
+    {
+      "id": "12",
+      "service": "UserConsumerAPI",
+      "name": "UserConsumerAPI",
+      "notes": ""
+    },
+    {
+      "id": "13",
+      "service": "UserConsumerEdge",
+      "name": "UserConsumerEdge",
+      "notes": ""
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "3",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "12",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "5",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "9",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "11",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "10",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "11",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "12",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "13",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": ""
+    }
+  ]
+}

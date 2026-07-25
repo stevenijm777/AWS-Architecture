@@ -1,0 +1,155 @@
+{
+  "graph": {
+    "name": "Vanguard: A Modern Network TAP Solution for The Cloud",
+    "link": "https://www.youtube.com/watch?v=EW4X5z7m-0U",
+    "categories": "data_ingestion",
+    "graph_usable": true,
+    "notes": "Video is about network taps and related security.\n    Tap: capture network traffic and send it somewhere else to use for analytics.\n    Capture all the AWS traffic and send it to the legacy on-premise system.\n    This video is a lot more detailed compared to other videos in the series.\n    Multiple accounts are being used in this architecture.\n    (ELB, EC2) represent an application account. There are many such applications.\n    (Kinesis, DynamoDB) are in the security account. The two accounts interact via PrivateLink.\n    Lambda@Edge is used to extract the layer 3 network info of a packet, because in later hops this info gets lost. This info is key for analytics.\n    2 EC2 servers. First terminates the encrypted connection.\n    Second makes Use of loopback intf. The traffic is therefore not leaving the EC2. An agent sniffs the loopback data and captures data unencrypted.\n    Agent batches all data and sends to Kinesis over a PrivateLink (cross account communication through PrivateLink).\n    Scaling is manual. They configure number of shards in Kinesis based on observed traffic volume.\n    Handling ordering of traffic in Kinesis. All packets representing a single session must stay on a single shard. Same session - same port, so use port as hashkey for kinesis stream!\n    Legacy consumers spread across mutliple datacenters. (Primary-Backup kind)\n    DynamoDB is being used as sort of a locking mechanism for graceful failover. Legacy systems stay in sync with DynamoDB, so failures can be detected and failovers can be done easily."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": ""
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "WORKLOAD_PEEK: networking agents, data sniffing"
+    },
+    {
+      "id": "2",
+      "service": "PrivateLink",
+      "name": "PrivateLink",
+      "notes": ""
+    },
+    {
+      "id": "3",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": ""
+    },
+    {
+      "id": "4",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": ""
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DATA_PEEK: locking mechanism for failure detection and graceful failover"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "WORKLOAD_PEEK: Lambda@Edge extracts and saves layer 3 header (source ip) from packets"
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Legacy On-premise System",
+      "notes": "NAME: Legacy On-premise System"
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWeb",
+      "name": "UserConsumerWeb",
+      "notes": ""
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": ""
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": ""
+    }
+  ]
+}
