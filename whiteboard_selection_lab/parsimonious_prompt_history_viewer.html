@@ -1,4 +1,271 @@
-# Historial de Prompts y Rendimiento - Modelo Parsimonioso
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Prompts - Parsimonioso</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Marked.js (Markdown parser) -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- CSS Styles -->
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --sidebar-bg: #111827;
+            --card-bg: #1f2937;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --border-color: #374151;
+            --code-bg: #111827;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar styling */
+        .sidebar {
+            width: 320px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            margin-bottom: 32px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+        }
+
+        .sidebar-header p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .nav-item {
+            padding: 12px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-item:hover {
+            color: #ffffff;
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+
+        .nav-item.active {
+            color: #ffffff;
+            background-color: var(--accent-color);
+            border-color: var(--accent-hover);
+        }
+
+        /* Main Content styling */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Markdown styling overrides */
+        .markdown-body h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .markdown-body h2 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            color: #ffffff;
+            scroll-margin-top: 40px;
+        }
+
+        .markdown-body h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            color: #e5e7eb;
+        }
+
+        .markdown-body p {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        .markdown-body ul {
+            margin-bottom: 16px;
+            padding-left: 20px;
+            color: var(--text-secondary);
+        }
+
+        .markdown-body li {
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 6px;
+        }
+
+        .markdown-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .markdown-body th, .markdown-body td {
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+        }
+
+        .markdown-body th {
+            background-color: rgba(99, 102, 241, 0.15);
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .markdown-body td {
+            color: var(--text-primary);
+        }
+
+        .markdown-body pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .markdown-body code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13.5px;
+            color: #f3f4f6;
+        }
+
+        .markdown-body :not(pre) > code {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ff79c6;
+        }
+
+        .markdown-body hr {
+            border: 0;
+            height: 1px;
+            background: var(--border-color);
+            margin: 40px 0;
+        }
+
+        /* Highlight box/alerts */
+        .markdown-body blockquote {
+            border-left: 4px solid var(--accent-color);
+            padding: 12px 20px;
+            background-color: rgba(99, 102, 241, 0.05);
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .markdown-body blockquote p {
+            margin-bottom: 0;
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        /* Scrollbar customizing */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar navigation -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>Prompt History</h1>
+            <p>Laboratorio Simplificado</p>
+        </div>
+        <ul class="nav-list" id="navList">
+            <!-- Navigation items populated dynamically -->
+        </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content" id="mainContent">
+        <div class="container markdown-body" id="renderArea">
+            <!-- Rendered Markdown goes here -->
+        </div>
+    </div>
+
+    <!-- Markdown source content -->
+    <script id="markdown-source" type="text/plain"># Historial de Prompts y Rendimiento - Modelo Parsimonioso
 
 Este documento actúa como un registro histórico de los prompts de parsimonia y el rendimiento de las evaluaciones en el laboratorio. Su propósito es trackear los experimentos y modificaciones del prompt parsimonioso para optimizar las métricas (Service F1, Edge F1, etc.) frente al Ground Truth.
 
@@ -416,3 +683,69 @@ Return ONLY valid JSON (no markdown fences):
 * **Comparación cualitativa y mejoras:**
   * **Visual-First y Conexiones de Entrada (Edge F1: 25.0% -> 40.0%):** Al guiar el flujo mediante flechas físicas de la pizarra y pedir explícitamente aristas de entrada (Regla 5), se logró estructurar conexiones más reales e integradas de las fuentes externas hacia los servicios AWS, incrementando significativamente la precisión de las conexiones frente a la prueba anterior.
   * **Cero Alucinaciones:** Se logró eliminar por completo cualquier servicio fantasma como `RDS` o `UserCompanyAnalyst` gracias a las reglas estrictas de deduplicación visual y evitación de asunciones.
+</script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get raw markdown from text/plain element
+            const rawMarkdown = document.getElementById('markdown-source').textContent;
+
+            // Render Markdown
+            const htmlContent = marked.parse(rawMarkdown);
+            const renderArea = document.getElementById('renderArea');
+            renderArea.innerHTML = htmlContent;
+
+            // Find all headers (to create navigation entries)
+            const headings = renderArea.querySelectorAll('h2');
+            const navList = document.getElementById('navList');
+
+            headings.forEach((heading, index) => {
+                // Set id for scrolling anchor
+                const id = 'section-' + index;
+                heading.setAttribute('id', id);
+
+                // Create sidebar menu element
+                const li = document.createElement('li');
+                li.className = 'nav-item' + (index === 0 ? ' active' : '');
+                
+                // Clean heading text to display in sidebar
+                let cleanText = heading.textContent;
+                cleanText = cleanText.replace(/^\[(.*?)\] - /, '');
+                li.textContent = cleanText;
+
+                li.addEventListener('click', () => {
+                    // Update active styling
+                    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+                    li.classList.add('active');
+
+                    // Scroll to target heading
+                    heading.scrollIntoView({ behavior: 'smooth' });
+                });
+
+                navList.appendChild(li);
+            });
+
+            // Update active menu item based on current scroll position
+            const mainContent = document.getElementById('mainContent');
+            mainContent.addEventListener('scroll', () => {
+                let currentActiveIndex = 0;
+                headings.forEach((heading, index) => {
+                    const rect = heading.getBoundingClientRect();
+                    if (rect.top < 100) {
+                        currentActiveIndex = index;
+                    }
+                });
+
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach((item, index) => {
+                    if (index === currentActiveIndex) {
+                        item.classList.add('active');
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
