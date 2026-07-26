@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔬 Reporte Detallado de Ablación de Prompts - AWS Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0b0f19;
+    --card-bg: #151c2c;
+    --card-border: #232f48;
+    --accent-blue: #38bdf8;
+    --accent-green: #34d399;
+    --accent-purple: #c084fc;
+    --accent-amber: #fbbf24;
+    --accent-red: #f87171;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    line-height: 1.5;
+    padding: 24px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+    padding: 24px;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  /* Summary Metrics Cards */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .metric-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .metric-card .title {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .metric-card .value {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .metric-card .subtext {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Search & Controls */
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 280px;
+    padding: 12px 16px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    outline: none;
+  }
+  .search-input:focus { border-color: var(--accent-blue); }
+
+  /* Video Accordion/Cards */
+  .video-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .video-card:hover {
+    border-color: #3b82f6;
+  }
+
+  .video-header {
+    padding: 20px 24px;
+    background-color: #1e293b;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--card-border);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .video-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .video-title h2 {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: #e2e8f0;
+  }
+
+  .video-body {
+    padding: 24px;
+  }
+
+  /* Version Table inside Video Card */
+  .version-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+
+  .version-table th, .version-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #1e293b;
+    font-size: 13px;
+  }
+
+  .version-table th {
+    background-color: #0f172a;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  .version-table td {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+  .badge-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+  .badge-green { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+  .badge-amber { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+  .badge-red { background: rgba(248, 113, 113, 0.15); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.3); }
+  .badge-purple { background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+
+  /* Explanation section */
+  .analysis-box {
+    background-color: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-size: 13px;
+    color: #cbd5e1;
+  }
+
+  .analysis-box h4 {
+    font-size: 13px;
+    color: var(--accent-blue);
+    margin-bottom: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .delta-pos { color: var(--accent-green); font-weight: bold; }
+  .delta-neg { color: var(--accent-red); font-weight: bold; }
+  .delta-neu { color: var(--text-muted); font-weight: bold; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔬 Reporte Detallado de Ablación e Impacto por Video</h1>
+  <p>Análisis cualitativo y cuantitativo del efecto de cada regla de prompt en los 14 videos de Cloudscape Reports</p>
+</div>
+
+<!-- Summary Metrics Bar -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="title">Baseline V0 (Edge F1)</div>
+    <div class="value" style="color: var(--accent-blue);">62.7%</div>
+    <div class="subtext">Permisivo: 76.3%</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">v1_monitoring (Tóxico)</div>
+    <div class="value" style="color: var(--accent-red);">54.8%</div>
+    <div class="subtext">caída de -7.9% en Edge F1</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">v1_stage2_strict (Regla Stage 2)</div>
+    <div class="value" style="color: var(--accent-green);">58.8%</div>
+    <div class="subtext">Permisivo: 74.4% (Recuperación topológica)</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">Total Videos Analizados</div>
+    <div class="value" style="color: var(--accent-purple);">14</div>
+    <div class="subtext">Dataset Cloudscape Ground Truth</div>
+  </div>
+</div>
+
+<div class="controls">
+  <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar por Video ID (ej. 6EUknQqaV1w, 1aYoIZvabbk)..." onkeyup="filterVideos()">
+</div>
+
+<div id="videoContainer">
+
+
+  <div class="video-card" id="video--3lnf5lzsH0">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>-3lnf5lzsH0</h2>
+        <a href="https://www.youtube.com/watch?v=-3lnf5lzsH0" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>81.8%</td>
+            <td><strong>53.3%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>66.7%</td>
+            <td>14</td>
+            <td>14</td>
+            <td><span class="badge badge-red">EC2</span> <span class="badge badge-red">OnPremDC</span> <span class="badge badge-red">UserCompanyAnalyst</span></td>
+            <td><span class="badge badge-purple">UserConsumerMobile</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>95.7%</td>
+            <td><strong>69.0%</strong></td>
+            <td><span class="delta-pos">+15.6%</span></td>
+            <td>76.9%</td>
+            <td>13</td>
+            <td>13</td>
+            <td><span class="badge badge-red">EC2</span></td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>70.0%</td>
+            <td><strong>46.2%</strong></td>
+            <td><span class="delta-neg">-7.2%</span></td>
+            <td>54.5%</td>
+            <td>10</td>
+            <td>10</td>
+            <td><span class="badge badge-red">EC2</span> <span class="badge badge-red">GuardDuty</span> <span class="badge badge-red">SNS</span> <span class="badge badge-red">SQS</span> <span class="badge badge-red">UserCompanyAnalyst</span></td>
+            <td><span class="badge badge-purple">UserConsumerMobile</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 10 a 9 entidades. En Stage 2 alucinó 0 servicios (ninguno).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 10 y se logró un Edge F1 Permisivo de 54.5%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video--kA0ahrhX3I">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>-kA0ahrhX3I</h2>
+        <a href="https://www.youtube.com/watch?v=-kA0ahrhX3I" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>85.7%</td>
+            <td><strong>45.5%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>50.0%</td>
+            <td>11</td>
+            <td>14</td>
+            <td><span class="badge badge-red">UserCompanyDeveloper</span></td>
+            <td><span class="badge badge-purple">UserCompanyDomainExpert</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>85.7%</td>
+            <td><strong>33.3%</strong></td>
+            <td><span class="delta-neg">-12.1%</span></td>
+            <td>30.8%</td>
+            <td>9</td>
+            <td>10</td>
+            <td><span class="badge badge-red">UserCompanyDeveloper</span></td>
+            <td><span class="badge badge-purple">UserCompanyAnalyst</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>85.7%</td>
+            <td><strong>45.5%</strong></td>
+            <td><span class="delta-neu">0%</span></td>
+            <td>50.0%</td>
+            <td>11</td>
+            <td>14</td>
+            <td><span class="badge badge-red">UserCompanyDeveloper</span></td>
+            <td><span class="badge badge-purple">UserCompanyAnalyst</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 14 a 0 entidades. En Stage 2 alucinó 1 servicios (UserCompanyAnalyst).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 14 y se logró un Edge F1 Permisivo de 50.0%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video--wLEkq21cvA">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>-wLEkq21cvA</h2>
+        <a href="https://www.youtube.com/watch?v=-wLEkq21cvA" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>76.9%</td>
+            <td><strong>51.9%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>62.5%</td>
+            <td>11</td>
+            <td>17</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">AMI</span> <span class="badge badge-purple">CloudWatch</span> <span class="badge badge-purple">OnPremDC</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>83.3%</td>
+            <td><strong>63.6%</strong></td>
+            <td><span class="delta-pos">+11.8%</span></td>
+            <td>57.1%</td>
+            <td>10</td>
+            <td>12</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">AMI</span> <span class="badge badge-purple">OnPremDC</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>66.7%</td>
+            <td><strong>36.4%</strong></td>
+            <td><span class="delta-neg">-15.5%</span></td>
+            <td>57.1%</td>
+            <td>10</td>
+            <td>12</td>
+            <td><span class="badge badge-red">UserCompanyAgent</span></td>
+            <td><span class="badge badge-purple">AMI</span> <span class="badge badge-purple">OnPremDC</span> <span class="badge badge-purple">UserCompanyDeveloper</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 10 a 9 entidades. En Stage 2 alucinó 2 servicios (AMI, OnPremDC).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 12 y se logró un Edge F1 Permisivo de 57.1%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-07lfvavMdfU">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>07lfvavMdfU</h2>
+        <a href="https://www.youtube.com/watch?v=07lfvavMdfU" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>95.2%</td>
+            <td><strong>66.7%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>72.0%</td>
+            <td>11</td>
+            <td>13</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">Lambda</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>85.7%</td>
+            <td><strong>60.0%</strong></td>
+            <td><span class="delta-neg">-6.7%</span></td>
+            <td>69.2%</td>
+            <td>11</td>
+            <td>16</td>
+            <td><span class="badge badge-red">MediaConvert</span></td>
+            <td><span class="badge badge-purple">Lambda</span> <span class="badge badge-purple">ThirdParty</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>94.7%</td>
+            <td><strong>66.7%</strong></td>
+            <td><span class="delta-neu">0%</span></td>
+            <td>76.2%</td>
+            <td>9</td>
+            <td>10</td>
+            <td><span class="badge badge-red">UserConsumerWeb</span></td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 9 a 10 entidades. En Stage 2 alucinó 2 servicios (Lambda, ThirdParty).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 10 y se logró un Edge F1 Permisivo de 76.2%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-1aYoIZvabbk">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>1aYoIZvabbk</h2>
+        <a href="https://www.youtube.com/watch?v=1aYoIZvabbk" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>92.3%</td>
+            <td><strong>71.4%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>83.3%</td>
+            <td>7</td>
+            <td>9</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">EC2</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>71.4%</td>
+            <td><strong>30.8%</strong></td>
+            <td><span class="delta-neg">-40.7%</span></td>
+            <td>46.2%</td>
+            <td>8</td>
+            <td>8</td>
+            <td><span class="badge badge-red">UserCompanyDeveloper</span></td>
+            <td><span class="badge badge-purple">EC2</span> <span class="badge badge-purple">ThirdParty</span> <span class="badge badge-purple">UserConsumerWeb</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>76.9%</td>
+            <td><strong>50.0%</strong></td>
+            <td><span class="delta-neg">-21.4%</span></td>
+            <td>66.7%</td>
+            <td>7</td>
+            <td>7</td>
+            <td><span class="badge badge-red">UserCompanyDeveloper</span></td>
+            <td><span class="badge badge-purple">EC2</span> <span class="badge badge-purple">UserConsumerWeb</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 7 a 8 entidades. En Stage 2 alucinó 3 servicios (EC2, ThirdParty, UserConsumerWeb).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 7 y se logró un Edge F1 Permisivo de 66.7%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-2L0m28ZLmtE">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>2L0m28ZLmtE</h2>
+        <a href="https://www.youtube.com/watch?v=2L0m28ZLmtE" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>96.0%</td>
+            <td><strong>64.0%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>83.3%</td>
+            <td>14</td>
+            <td>14</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">UserCompanyAnalyst</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>87.0%</td>
+            <td><strong>45.7%</strong></td>
+            <td><span class="delta-neg">-18.3%</span></td>
+            <td>61.5%</td>
+            <td>14</td>
+            <td>24</td>
+            <td><span class="badge badge-red">Comprehend</span> <span class="badge badge-red">EC2</span></td>
+            <td><span class="badge badge-purple">UserConsumerWeb</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>96.0%</td>
+            <td><strong>78.3%</strong></td>
+            <td><span class="delta-pos">+14.3%</span></td>
+            <td>90.9%</td>
+            <td>14</td>
+            <td>12</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">UserCompanyAnalyst</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 14 a 14 entidades. En Stage 2 alucinó 1 servicios (UserConsumerWeb).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 12 y se logró un Edge F1 Permisivo de 90.9%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-2e3vOxsHekE">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>2e3vOxsHekE</h2>
+        <a href="https://www.youtube.com/watch?v=2e3vOxsHekE" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>83.3%</td>
+            <td><strong>72.7%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>100.0%</td>
+            <td>6</td>
+            <td>5</td>
+            <td><span class="badge badge-red">UserConsumerEdge</span></td>
+            <td><span class="badge badge-purple">UserConsumerIOT</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>83.3%</td>
+            <td><strong>83.3%</strong></td>
+            <td><span class="delta-pos">+10.6%</span></td>
+            <td>80.0%</td>
+            <td>6</td>
+            <td>6</td>
+            <td><span class="badge badge-red">UserConsumerEdge</span></td>
+            <td><span class="badge badge-purple">ThirdParty</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>83.3%</td>
+            <td><strong>60.0%</strong></td>
+            <td><span class="delta-neg">-12.7%</span></td>
+            <td>66.7%</td>
+            <td>6</td>
+            <td>4</td>
+            <td><span class="badge badge-red">UserConsumerEdge</span></td>
+            <td><span class="badge badge-purple">ThirdParty</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 6 a 6 entidades. En Stage 2 alucinó 1 servicios (ThirdParty).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 4 y se logró un Edge F1 Permisivo de 66.7%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-6CgqEzyWpeA">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>6CgqEzyWpeA</h2>
+        <a href="https://www.youtube.com/watch?v=6CgqEzyWpeA" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>94.7%</td>
+            <td><strong>74.3%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>91.7%</td>
+            <td>13</td>
+            <td>16</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">AutoScaling</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>90.0%</td>
+            <td><strong>66.7%</strong></td>
+            <td><span class="delta-neg">-7.6%</span></td>
+            <td>80.0%</td>
+            <td>14</td>
+            <td>20</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">AutoScaling</span> <span class="badge badge-purple">UserConsumerMobile</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>94.7%</td>
+            <td><strong>74.3%</strong></td>
+            <td><span class="delta-neu">0%</span></td>
+            <td>91.7%</td>
+            <td>13</td>
+            <td>16</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">AutoScaling</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 13 a 16 entidades. En Stage 2 alucinó 2 servicios (AutoScaling, UserConsumerMobile).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 16 y se logró un Edge F1 Permisivo de 91.7%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-6EUknQqaV1w">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>6EUknQqaV1w</h2>
+        <a href="https://www.youtube.com/watch?v=6EUknQqaV1w" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>93.3%</td>
+            <td><strong>88.0%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>90.9%</td>
+            <td>10</td>
+            <td>14</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">SES</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>75.0%</td>
+            <td><strong>38.7%</strong></td>
+            <td><span class="delta-neg">-49.3%</span></td>
+            <td>50.0%</td>
+            <td>16</td>
+            <td>20</td>
+            <td><span class="badge badge-red">UserCompanyDataStream</span></td>
+            <td><span class="badge badge-purple">DynamoDBStream</span> <span class="badge badge-purple">Lambda</span> <span class="badge badge-purple">SNS</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>85.7%</td>
+            <td><strong>83.3%</strong></td>
+            <td><span class="delta-neg">-4.7%</span></td>
+            <td>85.7%</td>
+            <td>9</td>
+            <td>13</td>
+            <td><span class="badge badge-red">UserCompanyDataStream</span></td>
+            <td><span class="badge badge-purple">SES</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 9 a 10 entidades. En Stage 2 alucinó 3 servicios (DynamoDBStream, Lambda, SNS).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 13 y se logró un Edge F1 Permisivo de 85.7%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-6YkguepAQuQ">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>6YkguepAQuQ</h2>
+        <a href="https://www.youtube.com/watch?v=6YkguepAQuQ" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>100.0%</td>
+            <td><strong>30.0%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>40.0%</td>
+            <td>10</td>
+            <td>10</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>100.0%</td>
+            <td><strong>38.1%</strong></td>
+            <td><span class="delta-pos">+8.1%</span></td>
+            <td>53.3%</td>
+            <td>10</td>
+            <td>11</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>100.0%</td>
+            <td><strong>57.1%</strong></td>
+            <td><span class="delta-pos">+27.1%</span></td>
+            <td>88.9%</td>
+            <td>10</td>
+            <td>4</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 10 a 10 entidades. En Stage 2 alucinó 0 servicios (ninguno).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 4 y se logró un Edge F1 Permisivo de 88.9%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-BZ32w0SSAoY">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>BZ32w0SSAoY</h2>
+        <a href="https://www.youtube.com/watch?v=BZ32w0SSAoY" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>80.0%</td>
+            <td><strong>66.7%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>76.9%</td>
+            <td>7</td>
+            <td>14</td>
+            <td><span class="badge badge-red">ThirdParty</span></td>
+            <td><span class="badge badge-purple">RDS</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>80.0%</td>
+            <td><strong>63.8%</strong></td>
+            <td><span class="delta-neg">-2.8%</span></td>
+            <td>85.7%</td>
+            <td>7</td>
+            <td>28</td>
+            <td><span class="badge badge-red">ThirdParty</span></td>
+            <td><span class="badge badge-purple">Aurora</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>80.0%</td>
+            <td><strong>53.3%</strong></td>
+            <td><span class="delta-neg">-13.3%</span></td>
+            <td>76.9%</td>
+            <td>7</td>
+            <td>11</td>
+            <td><span class="badge badge-red">UserConsumerWeb</span></td>
+            <td><span class="badge badge-purple">RDS</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 7 a 7 entidades. En Stage 2 alucinó 1 servicios (Aurora).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 11 y se logró un Edge F1 Permisivo de 76.9%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-Cgv0kfp_6xQ">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>Cgv0kfp_6xQ</h2>
+        <a href="https://www.youtube.com/watch?v=Cgv0kfp_6xQ" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>100.0%</td>
+            <td><strong>80.0%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>92.3%</td>
+            <td>11</td>
+            <td>11</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>100.0%</td>
+            <td><strong>64.7%</strong></td>
+            <td><span class="delta-neg">-15.3%</span></td>
+            <td>85.7%</td>
+            <td>11</td>
+            <td>20</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>100.0%</td>
+            <td><strong>83.3%</strong></td>
+            <td><span class="delta-pos">+3.3%</span></td>
+            <td>100.0%</td>
+            <td>11</td>
+            <td>10</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 11 a 12 entidades. En Stage 2 alucinó 0 servicios (ninguno).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 10 y se logró un Edge F1 Permisivo de 100.0%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-wjtSHyENv0I">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>wjtSHyENv0I</h2>
+        <a href="https://www.youtube.com/watch?v=wjtSHyENv0I" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>85.7%</td>
+            <td><strong>62.1%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>83.3%</td>
+            <td>8</td>
+            <td>15</td>
+            <td><span class="badge badge-red">UserConsumerWeb</span></td>
+            <td><span class="badge badge-purple">UserCompanyAgent</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>0.0%</td>
+            <td><strong>0.0%</strong></td>
+            <td>-</td>
+            <td>0.0%</td>
+            <td>0</td>
+            <td>0</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>85.7%</td>
+            <td><strong>54.5%</strong></td>
+            <td><span class="delta-neg">-7.5%</span></td>
+            <td>83.3%</td>
+            <td>8</td>
+            <td>8</td>
+            <td><span class="badge badge-red">UserConsumerWeb</span></td>
+            <td><span class="badge badge-purple">UserCompanyAgent</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 8 a 0 entidades. En Stage 2 alucinó 0 servicios (ninguno).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 8 y se logró un Edge F1 Permisivo de 83.3%.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <div class="video-card" id="video-ww5fiygF6eg">
+    <div class="video-header">
+      <div class="video-title">
+        <span>📹</span>
+        <h2>ww5fiygF6eg</h2>
+        <a href="https://www.youtube.com/watch?v=ww5fiygF6eg" target="_blank" style="color: var(--accent-blue); font-size: 12px; text-decoration: none;">Ver en YouTube ↗</a>
+      </div>
+    </div>
+    <div class="video-body">
+      <table class="version-table">
+        <thead>
+          <tr>
+            <th>Versión del Prompt</th>
+            <th>Service F1 (Estándar)</th>
+            <th>Edge F1 (Estándar)</th>
+            <th>Delta Edge vs V0</th>
+            <th>Edge F1 (Permisivo)</th>
+            <th>Nodos</th>
+            <th>Aristas</th>
+            <th>Servicios Faltantes</th>
+            <th>Servicios Alucinados</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color: var(--accent-blue);">V0 (Baseline)</strong></td>
+            <td>93.3%</td>
+            <td><strong>51.6%</strong></td>
+            <td><span class="delta-neu">Base</span></td>
+            <td>75.0%</td>
+            <td>9</td>
+            <td>11</td>
+            <td>—</td>
+            <td><span class="badge badge-purple">OnPremDC</span></td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-red);">v1_monitoring</strong></td>
+            <td>0.0%</td>
+            <td><strong>0.0%</strong></td>
+            <td>-</td>
+            <td>0.0%</td>
+            <td>0</td>
+            <td>0</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td><strong style="color: var(--accent-green);">v1_stage2_strict</strong></td>
+            <td>85.7%</td>
+            <td><strong>34.5%</strong></td>
+            <td><span class="delta-neg">-17.1%</span></td>
+            <td>53.3%</td>
+            <td>9</td>
+            <td>9</td>
+            <td><span class="badge badge-red">UserCompanyDrone</span></td>
+            <td><span class="badge badge-purple">OnPremDC</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="analysis-box">
+        <h4>💡 Diagnóstico Cualitativo de Cambios</h4>
+        <p><strong>Impacto de v1_monitoring (Prompt 1):</strong> Al agregar la regla negativa de monitoreo en Stage 1, la extracción visual de entidades cambió de 9 a 0 entidades. En Stage 2 alucinó 0 servicios (ninguno).</p>
+        <p style="margin-top: 6px;"><strong>Impacto de v1_stage2_strict (Prompt 2):</strong> Al revertir Stage 1 al World Model base y aplicar conservación estricta en Stage 2, las aristas se ajustaron a 9 y se logró un Edge F1 Permisivo de 53.3%.</p>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+<script>
+function filterVideos() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const cards = document.querySelectorAll('.video-card');
+  cards.forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.display = text.includes(q) ? 'block' : 'none';
+  });
+}
+</script>
+</body>
+</html>
