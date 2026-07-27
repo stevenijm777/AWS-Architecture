@@ -1,154 +1,140 @@
 {
-  "step_by_step_reasoning": "Analyze the transcript chronologically to identify core components and data flows. \n1. **Identify Data Sources**: The transcript explicitly mentions 'public cloud' (AWS, including S3, SNS, SQS, CloudTrail, GuardDuty) and 'on-premise data sources' (syslog, Kafka). Map these to 'AWS Services' and 'OnPremDC' nodes.\n2. **Identify Ingestion/Processing Layer**: Apache Metron is described as the 'heart of the next-gen SOC' where parsing, enrichment, and profiling happen. Apache NIFI is explicitly mentioned for pulling data from AWS services into Metron, thus becoming an intermediate node.\n3. **Identify Security Data Lake**: The 'serverless security data lake' consists of S3 for storage and Athena for analytics. EMR is used to 'transform persistent data in HDFS into S3'. The diagram shows EMR connecting Metron to S3. The transcript details a feedback loop from the data lake (specifically S3) back to Apache Metron for more accurate profiling.\n4. **Identify Response Layer**: The 'security orchestration and response platform' (SOAR, called 'Blitz') takes alerts from Metron. These alerts are presented to 'SOC analysts' (represented by the 'Alerts' icon in the drawing, and described as analysts in the transcript). The analysts then initiate responses, for example, blocking sources via WAF or other integrations. WAF is shown on the diagram and mentioned in the transcript as a target for automated response.\n5. **Create Nodes**: Based on the identified components, create nodes with appropriate service names and descriptive notes from the transcript. For AWS-specific sources, group them under a single 'AWS Services' node as per the rules.\n6. **Create Edges**: Map the data flow and control flow as described. Ensure strict unidirectional edges. For example, 'AWS Services' -> 'NIFI' -> 'Apache Metron' for cloud data ingestion. 'OnPremDC' -> 'Apache Metron' for on-prem data ingestion. 'Apache Metron' -> 'EMR' -> 'S3' for data lake population. 'S3' -> 'Athena' for queries. The 'feedback loop' is 'S3' -> 'Apache Metron'. For response, 'Apache Metron' -> 'SOAR' -> 'SOC Analysts' -> 'WAF'.\n7. **Validate Rules**: Check against all provided rules: short service names, user actor normalization, non-cloud/on-prem normalization, inclusion of hidden core services (NIFI), unidirectional edges, core connectivity, notes, and parsimony.",
+  "step_by_step_reasoning": "The architecture describes MakeMyTrip's next-gen SOC system. Data is ingested from hybrid sources: AWS cloud services and on-premise data centers. This raw data flows into Apache Metron for parsing, enrichment, and profiling. A security data lake, consisting of EMR, S3, and Athena, stores historical telemetry events. EMR jobs transform data from Metron's persistent storage (HDFS) into S3. Athena is used for querying and analytics on this data lake. A critical feedback loop exists from the security data lake (S3) back to Apache Metron to enhance profiling and model generation. Apache Metron also sends alerts to a SOAR platform, which then orchestrates incident response, notifies SOC analysts, and triggers mitigation actions on services like WAF. The graph visually represents these data flows and components, with the transcript providing context on the purpose and specific interactions.",
   "graph": {
-    "name": "Next-Gen Security Operations Center (SOC) at MakeMyTrip",
-    "link": "https://www.youtube.com/watch?v=-3lnf5lzsH0",
-    "categories": "data_ingestion, interactive, compute_intensive, control",
+    "name": "MakeMyTrip Next-Gen SOC Architecture",
+    "link": "https://www.youtube.com/watch?v=xxxxxxxx",
+    "categories": "Security, Data Lake, Observability",
     "graph_usable": true,
-    "notes": "MakeMyTrip's Next-Gen SOC system detects and responds to advanced security threats by analyzing hybrid data from AWS cloud and on-premise sources. It leverages Apache Metron for real-time processing and enrichment, a serverless security data lake (S3, EMR, Athena) for long-term storage and advanced profiling, and a SOAR platform for automated and semi-automated incident response actions."
+    "notes": "Architecture for MakeMyTrip's next-generation Security Operations Center (SOC) system, built to detect and respond to advanced attacks using abnormal behavior detection. It integrates hybrid data sources, leverages Apache Metron for real-time processing, a serverless security data lake for long-term storage and analytics, and a SOAR platform for automated incident response."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "AWS",
-      "name": "AWS Services",
-      "notes": "Various AWS public cloud services (S3, SNS, SQS, CloudTrail, GuardDuty) generating telemetry events for security analysis."
+      "service": "ExternalUser",
+      "name": "AWS Log Sources",
+      "notes": "Represents various AWS services (e.g., S3, SNS, SQS, CloudTrail, GuardDuty) generating telemetry events which are pulled into the SOC system. Treated as an external log source for this architecture."
     },
     {
       "id": "1",
       "service": "OnPremDC",
-      "name": "On-Premise Data Sources",
-      "notes": "On-premise ecosystem generating telemetry events, integrated via standard syslog or Kafka."
+      "name": "On-Premise Data Center",
+      "notes": "Represents on-premise log sources integrated via standard syslog or Kafka into the SOC system."
     },
     {
       "id": "2",
-      "service": "Apache Metron",
+      "service": "ThirdParty",
       "name": "Apache Metron",
-      "notes": "The heart of the next-gen SOC, performing real-time parsing, enrichment, and profiling of telemetry data from hybrid sources. Converts logs into a standardized JSON format."
+      "notes": "The heart of the next-gen SOC, responsible for data ingest, parsing, enrichment (adding contextual intelligence like geolocation, AS numbers), and profiling telemetry events in real-time. It also generates alerts."
     },
     {
       "id": "3",
       "service": "EMR",
-      "name": "EMR",
-      "notes": "Used to transform persistent data, initially from Apache Metron's HDFS backbone, into S3 for the security data lake."
+      "name": "Amazon EMR",
+      "notes": "Used to pick up persistent data from Apache Metron's HDFS backbone and transform it for storage in Amazon S3 as part of the Security Data Lake."
     },
     {
       "id": "4",
       "service": "S3",
-      "name": "Security Data Lake S3",
-      "notes": "Serverless security data lake housing telemetry events for months or years, supporting horizontally scalable storage. Also feeds data back to Metron for profile generation."
+      "name": "Amazon S3",
+      "notes": "The primary storage for the serverless Security Data Lake, housing telemetry events indexed over a long period (months to years). Enables large-scale, horizontally scalable storage for security forensics and analytics."
     },
     {
       "id": "5",
       "service": "Athena",
-      "name": "Athena",
-      "notes": "Leveraged on S3 data for SQL queries, analytics, log mining, and forensics."
+      "name": "Amazon Athena",
+      "notes": "Leveraged to build SQL queries and perform analytics, log mining, and forensics on the telemetry data stored in Amazon S3."
     },
     {
       "id": "6",
-      "service": "SOAR",
-      "name": "Blitz SOAR Platform",
-      "notes": "Security orchestration and response platform ('Blitz') dealing with incident response and automation. Takes alerts from Metron, adds contextual info, and presents them to analysts."
+      "service": "ThirdParty",
+      "name": "SOAR Platform",
+      "notes": "A Security Orchestration, Automation, and Response platform (internally called 'Blitz'). It receives alerts from Apache Metron, enriches them with further contextual information, presents them to SOC analysts, and orchestrates automated or semi-automated responses."
     },
     {
       "id": "7",
-      "service": "User",
-      "name": "SOC Analysts",
-      "notes": "Security Operations Center analysts who receive alerts and take automated or semi-automated actions to mitigate threats, via a single pane of glass or integrations like Jira."
+      "service": "InternalUser",
+      "name": "SOC Analysts/Alerts",
+      "notes": "Represents the human SOC analysts who receive alerts from the SOAR platform (e.g., via mobile or Jira integration) and interact with the system to investigate and respond to incidents. This node also encapsulates the alerting mechanism itself."
     },
     {
       "id": "8",
       "service": "WAF",
-      "name": "WAF / Firewall",
-      "notes": "Target for automated response actions initiated by SOC analysts or the SOAR platform, e.g., blocking malicious source IPs."
-    },
-    {
-      "id": "9",
-      "service": "Apache NIFI",
-      "name": "Apache NIFI",
-      "notes": "Used to build workflows and pull telemetry events from various AWS services into Apache Metron."
+      "name": "AWS WAF",
+      "notes": "A target for mitigation actions from the SOAR platform, allowing analysts to block malicious sources or implement other security controls at the edge."
     }
   ],
   "edges": [
     {
       "source": "0",
-      "target": "9",
+      "target": "2",
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Telemetry events from AWS services are pulled by NIFI."
-    },
-    {
-      "source": "9",
-      "target": "2",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "NIFI pulls telemetry events into Apache Metron."
+      "notes": "Telemetry events and logs from various AWS services (S3, SNS, SQS, CloudTrail, GuardDuty) are ingested into Apache Metron."
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 2,
-      "seq": "2",
+      "flow_id": 0,
+      "seq": "1",
       "type": "data",
-      "notes": "On-prem events are ingested into Apache Metron via syslog or Kafka."
+      "notes": "Syslog or Kafka integrated telemetry events from on-premise data centers are ingested into Apache Metron."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 3,
-      "seq": "3",
+      "flow_id": 1,
+      "seq": "0",
       "type": "data",
-      "notes": "Persistent data from Apache Metron (originally HDFS) is picked up by EMR."
+      "notes": "Persistent data from Apache Metron's HDFS backbone is picked up by an EMR job for further processing."
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 4,
-      "seq": "4",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "EMR transforms and stores processed data into S3 for the security data lake."
+      "notes": "EMR transforms and stores the processed telemetry data into Amazon S3, forming the Security Data Lake."
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 5,
-      "seq": "5",
+      "flow_id": 2,
+      "seq": "0",
       "type": "data",
-      "notes": "Athena queries and analyzes the data residing in S3."
+      "notes": "Amazon Athena leverages data in S3 to build SQL queries, perform analytics, log mining, and forensics."
     },
     {
       "source": "4",
       "target": "2",
-      "flow_id": 6,
-      "seq": "6",
+      "flow_id": 3,
+      "seq": "0",
       "type": "data",
-      "notes": "A feedback loop from the security data lake (S3) to Apache Metron to generate more accurate profiles/models over long periods."
+      "notes": "Feedback loop: Security Data Lake (S3) provides long-term telemetry information to Apache Metron for generating more accurate profiles and models, enhancing real-time enrichment."
     },
     {
       "source": "2",
       "target": "6",
-      "flow_id": 7,
-      "seq": "7",
+      "flow_id": 4,
+      "seq": "0",
       "type": "data",
-      "notes": "Alerts generated by Apache Metron are sent to the SOAR platform."
+      "notes": "Alerts generated by Apache Metron (after parsing, enrichment, and profiling) are fed into the SOAR platform for incident response."
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 8,
-      "seq": "8",
-      "type": "data",
-      "notes": "SOAR presents alerts and contextual information to SOC analysts."
+      "flow_id": 4,
+      "seq": "1",
+      "type": "meta",
+      "notes": "The SOAR platform presents enriched alerts and incident details to SOC analysts (e.g., via mobile or Jira integration) for investigation and triage."
     },
     {
-      "source": "7",
+      "source": "6",
       "target": "8",
-      "flow_id": 9,
-      "seq": "9",
-      "type": "data",
-      "notes": "SOC analysts initiate response actions (e.g., blocking threats) via integrations like WAF or firewalls."
+      "flow_id": 4,
+      "seq": "2",
+      "type": "meta",
+      "notes": "The SOAR platform triggers automated or semi-automated mitigation actions (e.g., blocking source IPs) on AWS WAF in response to detected threats."
     }
   ]
 }

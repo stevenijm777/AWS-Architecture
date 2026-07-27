@@ -416,3 +416,70 @@ Return ONLY valid JSON (no markdown fences):
 * **Comparación cualitativa y mejoras:**
   * **Visual-First y Conexiones de Entrada (Edge F1: 25.0% -> 40.0%):** Al guiar el flujo mediante flechas físicas de la pizarra y pedir explícitamente aristas de entrada (Regla 5), se logró estructurar conexiones más reales e integradas de las fuentes externas hacia los servicios AWS, incrementando significativamente la precisión de las conexiones frente a la prueba anterior.
   * **Cero Alucinaciones:** Se logró eliminar por completo cualquier servicio fantasma como `RDS` o `UserCompanyAnalyst` gracias a las reglas estrictas de deduplicación visual y evitación de asunciones.
+
+
+---
+
+## [Registro 6] - 2026-07-26 (Evaluación por Lotes de 7 Videos en Prompt Visual-First)
+* **Videos Evaluados:** `-3lnf5lzsH0`, `-wLEkq21cvA`, `1aYoIZvabbk`, `2e3vOxsHekE`, `2L0m28ZLmtE`, `6CgqEzyWpeA`, `6EUknQqaV1w`
+* **Modelo utilizado:** `gemini-2.5-flash`
+* **Modo:** Parsimonioso (1 sola fase)
+
+### Prompt Utilizado:
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram, supplemented by the transcript for context.
+
+## RULES:
+1. AWS SERVICES: Use SHORT canonical AWS service names for the `service` field (e.g., "S3", "Lambda", "EC2", "DynamoDB").
+
+2. EXTERNAL/INTERNAL ACTORS (BOUNDARY FOCUS): You are not restricted to strict Cloudscape user labels. Focus on identifying what comes from "outside" the architecture. Use these simplified categories:
+   - `ExternalUser`: For any end-user, customer, or client application connecting from the outside.
+   - `InternalUser`: For any company staff (developers, security, operations) interacting with the system.
+   - `ThirdParty`: For external SaaS, public APIs, or non-AWS open-source services not hosted on EC2.
+   - `OnPremDC`: For corporate physical datacenters or on-prem networks.
+
+3. COMPUTE NORMALIZATION: Map rendering engines, ASGs, or custom apps running on EC2 directly to "EC2", keeping the specific context in the `notes`.
+
+4. AVOID TRANSIENT ARTIFACTS: Do NOT create nodes for transient items (machine images, zip files, config templates). Represent these as edge descriptions.
+
+5. VISUAL-FIRST EDGES & ENTRY POINTS: 
+   - Base your connections primarily on the PHYSICAL arrows drawn on the whiteboard. 
+   - You MUST include "entry" edges: connections where data or triggers arrive from the outside (ExternalUser, InternalUser, OnPremDC, ThirdParty) into the AWS architecture.
+   - Do not hallucinate complex, invisible API return paths (bidirectional loops) unless they are explicitly drawn on the board or form a distinct, major architectural stage.
+
+6. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step (e.g., merge 3 drawn EC2 instances into 1).
+   - Only include services that are either drawn on the whiteboard OR are undeniably the core entry/exit points of the data flow mentioned in the transcript.
+
+7. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string (e.g., "0", "1").
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and entry points...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados Obtenidos de la Evaluación:
+
+| Video ID | Título del Video / Arquitectura | Nodos (Gen/GT) | Aristas (Gen/GT) | Service F1 | Edge F1 |
+|---|---|:---:|:---:|:---:|:---:|
+| `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | 9/13 | 9/16 | 66.7% | 40.0% |
+| `-wLEkq21cvA` | Versent: The Migration Factory | 9/13 | 11/17 | 66.7% | 38.1% |
+| `1aYoIZvabbk` | Video 1aYoIZvabbk | 7/8 | 7/7 | 76.9% | 66.7% |
+| `2e3vOxsHekE` | Video 2e3vOxsHekE | 6/6 | 6/6 | 72.7% | 50.0% |
+| `2L0m28ZLmtE` | Video 2L0m28ZLmtE | 14/10 | 21/14 | 100.0% | 50.0% |
+| `6CgqEzyWpeA` | SundaySky: Create Personalized Videos... | 13/10 | 16/11 | 82.4% | 34.3% |
+| `6EUknQqaV1w` | Video 6EUknQqaV1w | 10/11 | 15/15 | 76.9% | 38.5% |
+
+### Observaciones del Lote:
+* **Service F1 Promedio:** **77.4%** (con picos del **100%** en `2L0m28ZLmtE` y del **82.4%** en `6CgqEzyWpeA`).
+* **Edge F1 Promedio:** **45.4%** (con pico del **66.7%** en `1aYoIZvabbk`).
+* **Mapeo de Actores y Servicios Genéricos:** El nuevo prompt visual-first centrado en la frontera externa redujo significativamente las alucinaciones de servicios intermedios no dibujados en la pizarra. La unificación de flujos complejos simplificó adecuadamente la estructura general.

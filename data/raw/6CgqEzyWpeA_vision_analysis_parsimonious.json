@@ -1,84 +1,90 @@
 {
-  "step_by_step_reasoning": "We identify the client devices (UserConsumerWeb) sending requests to API Gateway. This initiates a Lambda function which enqueues jobs in a top SQS queue. Spot-instance rendering engines running in an EC2 Auto Scaling Group consume jobs, upload video segments to S3, and push completion data to a bottom SQS queue. The frontend Lambda retrieves these playlist links for playback via CloudFront. Spot interruptions are handled using CloudWatch Events and a drainage Lambda, while custom scaling is managed by Step Functions triggering a metric-evaluation Lambda.",
+  "step_by_step_reasoning": "The architecture describes Sunday Sky's 'Rendering as a Service' (RAS) for personalized video. The data flow begins with external users requesting personalized video via API Gateway, which triggers a frontend Lambda function. This Lambda enqueues rendering jobs into an SQS queue. EC2 Auto Scaling groups with rendering engines pull jobs from this SQS queue. Once rendering is complete, a response is sent to another SQS queue, which the frontend Lambda monitors. The rendering engines upload video segments to S3, and the frontend Lambda provides a CloudFront URL for a playlist to the user's device. CloudFront then serves the video segments from S3. The system also includes two control planes: one for spot instance interruption handling using CloudWatch Events and a Lambda function, and another for auto-scaling based on EC2 metrics monitored by CloudWatch, triggered by Step Functions, and managed by another Lambda function that interacts with the EC2 Auto Scaling group.",
   "graph": {
-    "name": "SundaySky Personalized Video Rendering Architecture",
-    "link": "https://www.youtube.com/watch?v=6CgqEzyWpeA",
-    "categories": "compute_intensive, interactive",
+    "name": "Sunday Sky: Rendering as a Service (RAS)",
+    "link": "https://www.youtube.com/watch?v=EXAMPLE_LINK",
+    "categories": "Media & Entertainment, Serverless, Compute, Storage, CDN",
     "graph_usable": true,
-    "notes": "A scalable video rendering architecture (Rendering as a Service - RAS) utilizing cost-efficient spot instances on EC2 managed via custom Step Functions scaling and automated Spot Interruption workflows."
+    "notes": "Sunday Sky's personalized video rendering ecosystem, named 'RAS', leveraging spot instances for cost efficiency and high availability."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerWeb",
-      "name": "Client Devices",
-      "notes": "Web and mobile clients requesting personalized video content."
+      "service": "ExternalUser",
+      "name": "Mobile/PC Device",
+      "notes": "End-user devices (mobile, PC) requesting personalized video content. Represented visually by a mobile phone and laptop."
     },
     {
       "id": "1",
-      "service": "APIGateway",
-      "name": "API Gateway",
-      "notes": "Handles incoming requests, managing usage plans and API keys."
+      "service": "API Gateway",
+      "name": "RAS API Gateway",
+      "notes": "Frontend for the RAS ecosystem, handling incoming rendering requests, usage plans, and API keys."
     },
     {
       "id": "2",
       "service": "Lambda",
-      "name": "Frontend Lambda",
-      "notes": "Validates requests and manages queue interaction."
+      "name": "RAS Service Frontend",
+      "notes": "Performs validations on rendering requests, pushes instructions to SQS, and pulls responses from another SQS queue. Also generates playlist links for CloudFront."
     },
     {
       "id": "3",
       "service": "SQS",
-      "name": "Jobs SQS Queue",
-      "notes": "Buffers incoming video rendering jobs."
+      "name": "Rendering Instruction Queue",
+      "notes": "Queue for rendering jobs pushed by the Lambda frontend, to be pulled by rendering engines."
     },
     {
       "id": "4",
-      "service": "SQS",
-      "name": "Response SQS Queue",
-      "notes": "Holds completed rendering results and playlists."
+      "service": "EC2 Auto Scaling",
+      "name": "Rendering Engines ASG",
+      "notes": "Auto Scaling Group managing EC2 instances that act as rendering engines. Uses spot instances across multiple AZs and diversified instance types for high availability and cost efficiency."
     },
     {
       "id": "5",
-      "service": "EC2",
-      "name": "Rendering ASG",
-      "notes": "Auto-scaling spot instances processing rendering jobs."
+      "service": "SQS",
+      "name": "Rendering Response Queue",
+      "notes": "Queue where rendering engines push responses upon job completion, consumed by the Lambda frontend."
     },
     {
       "id": "6",
       "service": "S3",
-      "name": "Video S3 Bucket",
-      "notes": "Stores rendered video segments and playlists."
+      "name": "Video Segments Storage",
+      "notes": "Stores video segments uploaded by the rendering engines, acting as the origin for CloudFront."
     },
     {
       "id": "7",
       "service": "CloudFront",
-      "name": "CloudFront CDN",
-      "notes": "Caches and streams video segments to end users."
+      "name": "Video CDN",
+      "notes": "Content Delivery Network pulling video segments from S3 and serving them to end-user devices for playback."
     },
     {
       "id": "8",
-      "service": "CloudWatch",
-      "name": "CloudWatch Events",
-      "notes": "Monitors spot instances and collects custom queue metrics."
+      "service": "CloudWatch Events",
+      "name": "Spot Interruption Events",
+      "notes": "Notifies about impending spot instance interruptions (2-minute notice)."
     },
     {
       "id": "9",
       "service": "Lambda",
-      "name": "Interruption Lambda",
-      "notes": "Drains active jobs from spot instances marked for termination."
+      "name": "Spot Interruption Handler",
+      "notes": "Triggered by CloudWatch Events, interacts with the EC2 instance to stop pulling jobs and drain current tasks before termination."
     },
     {
       "id": "10",
-      "service": "StepFunctions",
-      "name": "Scaling Orchestrator",
-      "notes": "Triggers scaling logic checks every 15 seconds."
+      "service": "CloudWatch",
+      "name": "Scaling Metrics",
+      "notes": "Collects metrics from rendering instances, used by the scaling mechanism."
     },
     {
       "id": "11",
+      "service": "Step Functions",
+      "name": "Scaling State Machine",
+      "notes": "Triggers the scaling Lambda function periodically (every 15 seconds) to evaluate scaling needs."
+    },
+    {
+      "id": "12",
       "service": "Lambda",
-      "name": "Scaling Calculator",
-      "notes": "Calculates required rendering capacity and updates ASG."
+      "name": "Scaling Handler",
+      "notes": "Triggered by Step Functions, consumes CloudWatch metrics, calculates required capacity, and adjusts the EC2 Auto Scaling group."
     }
   ],
   "edges": [
@@ -86,105 +92,129 @@
       "source": "0",
       "target": "1",
       "flow_id": 0,
-      "seq": "1",
+      "seq": "0",
       "type": "data",
-      "notes": "Sends rendering request"
+      "notes": "User requests personalized video content."
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 0,
-      "seq": "2",
+      "seq": "1",
       "type": "data",
-      "notes": "Invokes validation handler"
+      "notes": "API Gateway forwards rendering requests to the RAS service frontend."
     },
     {
       "source": "2",
       "target": "3",
       "flow_id": 0,
-      "seq": "3",
+      "seq": "2",
       "type": "data",
-      "notes": "Pushes rendering parameters"
+      "notes": "Frontend Lambda validates requests and pushes rendering instructions to the SQS queue."
     },
     {
       "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Rendering engines in the EC2 Auto Scaling group pull jobs from the instruction queue."
+    },
+    {
+      "source": "4",
       "target": "5",
-      "flow_id": 0,
-      "seq": "4",
-      "type": "data",
-      "notes": "Engines pull jobs when free"
-    },
-    {
-      "source": "5",
-      "target": "4",
-      "flow_id": 0,
-      "seq": "5",
-      "type": "data",
-      "notes": "Pushes playlist information"
-    },
-    {
-      "source": "2",
-      "target": "4",
-      "flow_id": 0,
-      "seq": "6",
-      "type": "data",
-      "notes": "Pulls and returns playlist URL to client"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 0,
-      "seq": "7",
-      "type": "data",
-      "notes": "Uploads completed MP4 segments"
-    },
-    {
-      "source": "0",
-      "target": "7",
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Requests video stream"
+      "notes": "Rendering engines push job completion responses to the response queue."
     },
     {
-      "source": "7",
-      "target": "6",
+      "source": "5",
+      "target": "2",
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Fetches segments from S3 origin"
+      "notes": "Frontend Lambda pulls rendering responses from the response queue."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Frontend Lambda provides the user with a CloudFront URL to the personalized video playlist."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Rendering engines upload processed video segments to S3."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront pulls video segments from S3 as its origin."
+    },
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "CloudFront delivers personalized video segments to the user's device for playback."
     },
     {
       "source": "8",
       "target": "9",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Triggers 2-min termination warning"
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "CloudWatch Events notifies the Lambda function of an impending spot instance interruption."
     },
     {
       "source": "9",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Instructs targeted instance to drain and detach"
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Lambda handler interacts with the instance in the ASG to drain current jobs before termination."
+    },
+    {
+      "source": "4",
+      "target": "10",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Rendering instances push metrics to CloudWatch for monitoring."
     },
     {
       "source": "10",
       "target": "11",
-      "flow_id": 3,
+      "flow_id": 4,
       "seq": "1",
-      "type": "data",
-      "notes": "Runs scaling evaluation loop"
+      "type": "meta",
+      "notes": "CloudWatch metrics trigger the Step Functions state machine (implicitly via rules/alarms not fully drawn, but implied for scaling)."
     },
     {
       "source": "11",
-      "target": "5",
-      "flow_id": 3,
+      "target": "12",
+      "flow_id": 4,
       "seq": "2",
-      "type": "data",
-      "notes": "Modifies desired capacity of ASG"
+      "type": "meta",
+      "notes": "Step Functions triggers the scaling Lambda function periodically."
+    },
+    {
+      "source": "12",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Scaling Lambda adjusts the desired capacity of the EC2 Auto Scaling group based on metrics."
     }
   ]
 }

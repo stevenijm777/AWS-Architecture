@@ -14,114 +14,120 @@
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
     <node id="0">
-      <data key="d5">Migration Team</data>
-      <data key="d6">UserCompanyAgent</data>
-      <data key="d7">Triggers migration workflow and populates metadata.</data>
+      <data key="d5">On-Premises Data Center</data>
+      <data key="d6">OnPremDC</data>
+      <data key="d7">Source on-premises servers where applications reside and from which data is migrated to AWS.</data>
     </node>
     <node id="1">
-      <data key="d5">Slack</data>
+      <data key="d5">AWS Application Discovery Service</data>
       <data key="d6">ThirdParty</data>
-      <data key="d7">Chatops interface used to trigger the migration factory via API.</data>
+      <data key="d7">Installed with agents on on-premises servers, it gathers inbound/outbound TCP connections and performance utilization metrics to inform instance sizing in AWS.</data>
     </node>
     <node id="2">
-      <data key="d5">Migration Metadata</data>
+      <data key="d5">Migration Metadata Database</data>
       <data key="d6">DynamoDB</data>
-      <data key="d7">Stores target account IDs, IPs, subnets, and instance tags.</data>
+      <data key="d7">Stores operational metadata for migrations, including RTOs, RPOs, infrastructure/business owners, target AWS account details, subnet, IP addresses, and tags for EC2 instances.</data>
     </node>
     <node id="3">
-      <data key="d5">Migration Factory Orchestrator</data>
+      <data key="d5">Migration Factory EC2</data>
       <data key="d6">EC2</data>
-      <data key="d7">Orchestrates API calls, stops replication, and bakes/shares AMIs.</data>
+      <data key="d7">An EC2 instance acting as the central orchestration engine (migration factory). It integrates with various services via APIs to automate the migration workflow, triggered by Slack commands.</data>
     </node>
     <node id="4">
-      <data key="d5">On-Premises Servers</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Source servers being migrated.</data>
+      <data key="d5">CloudEndure Replication Target EC2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">An EC2 instance in AWS where CloudEndure continuously replicates block-by-block data from the on-premises servers, acting as a 'hot replica'.</data>
     </node>
     <node id="5">
-      <data key="d5">Application Discovery Service</data>
-      <data key="d6">AppDiscovery</data>
-      <data key="d7">Gathers on-prem TCP connections and performance metrics.</data>
+      <data key="d5">CloudEndure Live Migration Service</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">A service (acquired by AWS) that provides continuous, block-level data replication from on-premises source servers to an AWS EC2 target.</data>
     </node>
     <node id="6">
-      <data key="d5">CloudEndure</data>
-      <data key="d6">ThirdParty</data>
-      <data key="d7">Manages continuous block-level replication.</data>
-    </node>
-    <node id="7">
-      <data key="d5">EC2 Hot Replica</data>
-      <data key="d6">EC2</data>
-      <data key="d7">Replicated server volumes in the staging environment.</data>
-    </node>
-    <node id="8">
       <data key="d5">Target EC2 Instance</data>
       <data key="d6">EC2</data>
-      <data key="d7">Final server instance launched in the target account.</data>
+      <data key="d7">The final migrated EC2 instance launched in the specified target AWS account from the baked and shared AMI, configured with parameters from DynamoDB.</data>
     </node>
-    <edge source="0" target="2" id="0">
-      <data key="d8">0</data>
-      <data key="d9">Saves target migration metadata and server tags.</data>
-      <data key="d10">1</data>
-      <data key="d11">data</data>
-    </edge>
+    <node id="7">
+      <data key="d5">Slack</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">An external communication platform used by the migration team to issue commands that trigger the migration factory.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Migration Team</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Internal staff responsible for initiating and managing the cloud migration process, inputting metadata and triggering workflows.</data>
+    </node>
     <edge source="0" target="1" id="0">
-      <data key="d8">1</data>
-      <data key="d9">Triggers migration command.</data>
-      <data key="d10">1</data>
+      <data key="d8">0</data>
+      <data key="d9">On-premises servers send metadata (TCP connections, performance) via installed agents to AWS Application Discovery Service.</data>
+      <data key="d10">0.1</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="1" target="3" id="0">
-      <data key="d8">1</data>
-      <data key="d9">API call to initiate orchestrator flow.</data>
-      <data key="d10">2</data>
+    <edge source="0" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudEndure agents on on-premises servers initiate continuous block-level data replication to the CloudEndure service.</data>
+      <data key="d10">0.2</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="3" target="2" id="0">
+    <edge source="3" target="1" id="0">
       <data key="d8">1</data>
-      <data key="d9">Retrieves target migration specifications.</data>
-      <data key="d10">3</data>
-      <data key="d11">data</data>
+      <data key="d9">Migration Factory EC2 calls the Application Discovery Service API to retrieve TCP connection data for the server being migrated.</data>
+      <data key="d10">1.2</data>
+      <data key="d11">meta</data>
     </edge>
     <edge source="3" target="5" id="0">
       <data key="d8">1</data>
-      <data key="d9">Collects on-prem discovery metadata.</data>
-      <data key="d10">4</data>
+      <data key="d9">Migration Factory EC2 calls the CloudEndure API to stop the continuous data replication for the target server.</data>
+      <data key="d10">1.3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Migration Factory EC2 orchestrates the baking of an AMI from the EC2 Hot Replica data.</data>
+      <data key="d10">1.4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="3" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Migration Factory EC2 retrieves migration metadata (instance type, IP, tags, target account) from DynamoDB.</data>
+      <data key="d10">1.5</data>
       <data key="d11">data</data>
     </edge>
     <edge source="3" target="6" id="0">
       <data key="d8">1</data>
-      <data key="d9">Instructs CloudEndure to finalize replication.</data>
-      <data key="d10">5</data>
+      <data key="d9">Migration Factory EC2 shares the baked AMI to the target account and launches the Target EC2 Instance using the retrieved metadata.</data>
+      <data key="d10">1.6</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudEndure service continuously replicates data to the EC2 Hot Replica instance in AWS.</data>
+      <data key="d10">0.3</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="3" target="8" id="0">
+    <edge source="7" target="3" id="0">
       <data key="d8">1</data>
-      <data key="d9">Bakes AMI from hot replica, shares to target account, and launches target EC2.</data>
-      <data key="d10">6</data>
-      <data key="d11">data</data>
+      <data key="d9">Slack command triggers an API call to the Migration Factory EC2 instance.</data>
+      <data key="d10">1.1</data>
+      <data key="d11">meta</data>
     </edge>
-    <edge source="4" target="5" id="0">
+    <edge source="8" target="2" id="0">
       <data key="d8">0</data>
-      <data key="d9">Sends server performance and TCP dependency metadata.</data>
-      <data key="d10">2</data>
+      <data key="d9">Migration Team populates DynamoDB with operational and configuration metadata for target EC2 instances.</data>
+      <data key="d10">0.4</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="4" target="6" id="0">
-      <data key="d8">0</data>
-      <data key="d9">Performs block-by-block volume replication.</data>
-      <data key="d10">3</data>
-      <data key="d11">data</data>
+    <edge source="8" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Migration Team issues a command (e.g., 'migrate server X') via Slack.</data>
+      <data key="d10">1.0</data>
+      <data key="d11">meta</data>
     </edge>
-    <edge source="6" target="7" id="0">
-      <data key="d8">0</data>
-      <data key="d9">Continuously replicates data to the staging target.</data>
-      <data key="d10">4</data>
-      <data key="d11">data</data>
-    </edge>
-    <data key="d0">Automated Cloud Migration Factory</data>
-    <data key="d1">https://www.youtube.com/watch?v=0hK2C_64-Ww</data>
-    <data key="d2">Automated migration pipeline reducing manual server migration time from 4 hours to 10 minutes.</data>
-    <data key="d3">compute_intensive, control</data>
+    <data key="d0">Versant's Automated Cloud Migration Factory</data>
+    <data key="d1">https://www.youtube.com/watch?v=VIDEO_ID_HERE</data>
+    <data key="d2">This architecture illustrates Versant's automated process for migrating on-premises servers to AWS, significantly reducing migration time from hours to minutes. It leverages AWS services like Application Discovery Service and DynamoDB, alongside CloudEndure for continuous replication and an EC2-based migration factory for orchestration.</data>
+    <data key="d3">Migration, Automation, DevOps</data>
     <data key="d4">True</data>
   </graph>
 </graphml>
