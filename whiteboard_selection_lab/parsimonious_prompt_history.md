@@ -483,3 +483,73 @@ Return ONLY valid JSON (no markdown fences):
 * **Service F1 Promedio:** **77.4%** (con picos del **100%** en `2L0m28ZLmtE` y del **82.4%** en `6CgqEzyWpeA`).
 * **Edge F1 Promedio:** **45.4%** (con pico del **66.7%** en `1aYoIZvabbk`).
 * **Mapeo de Actores y Servicios Genéricos:** El nuevo prompt visual-first centrado en la frontera externa redujo significativamente las alucinaciones de servicios intermedios no dibujados en la pizarra. La unificación de flujos complejos simplificó adecuadamente la estructura general.
+
+
+---
+
+## [Registro 7] - 2026-07-27 (Prompt Estrictamente Parsimonioso Visual-First)
+* **Video Evaluado:** `2e3vOxsHekE`
+* **Modelo utilizado:** `gemini-2.5-flash`
+* **Modo:** Parsimonioso (1 sola fase)
+
+### Prompt Utilizado:
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. AWS SERVICES: Use SHORT canonical AWS service names for the `service` field.
+
+2. EXTERNAL/INTERNAL ACTORS: Identify what comes from "outside" the core AWS architecture based on the visual drawing. Use ONLY these canonical labels:
+   - `UserConsumerWeb` / `UserConsumerMobile`: For external customers or end-users.
+   - `UserCompanyDeveloper`: Default label for ANY internal company staff (engineers, security, operations) interacting with the system. Do NOT use UserCompanyAnalyst or UserCompanyAgent unless explicitly written.
+   - `ThirdParty`: For external SaaS, public APIs, or non-AWS open-source services.
+   - `OnPremDC`: For corporate physical datacenters.
+
+3. COMPUTE NORMALIZATION: Map rendering engines, ASGs, or custom apps running on EC2 directly to "EC2".
+
+4. VISUAL-FIRST SERVICES (NO AUDIO EXPANSION): Base your nodes strictly on the physical boxes drawn. If the presenter draws a single generic box (e.g., labeled "AWS" or "Log Sources") but mentions multiple underlying services in the audio, DO NOT expand them. Create a single node representing that visual block.
+
+5. VISUAL-FIRST EDGES & ENTRY POINTS: 
+   - Base your connections primarily on the PHYSICAL arrows drawn on the whiteboard. 
+   - You MUST include "entry" edges: connections where data or triggers arrive from the outside into the AWS architecture.
+   - Do not hallucinate complex, invisible API return paths (bidirectional loops) unless they are explicitly drawn on the board.
+
+6. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step (e.g., merge 3 drawn EC2 instances into 1).
+
+7. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Test con Prompt 7) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 11 | 11 | **6** |
+| **Número de Aristas** | 6 | 4 | 10 | **5** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **66.7%** |
+| **Service Precision** | — | 85.7% | 85.7% | **66.7%** |
+| **Service Recall** | — | 85.7% | 85.7% | **66.7%** |
+| **Edge F1 (Connections)** | — | 66.7% | 55.6% | **54.5%** |
+| **Edge Precision** | — | 100.0% | 50.0% | **60.0%** |
+| **Edge Recall** | — | 50.0% | 62.5% | **50.0%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst', 'UserConsumerEdge']`
+  * *Observación:* El modelo omitió estas etiquetas debido a las restricciones impuestas por las reglas estrictas de actores.
+* **Servicios Alucinados (Inventados):** `['ThirdParty', 'UserCompanyDeveloper']`
+  * *Observación:* Se generó `UserCompanyDeveloper` por defecto y se catalogó `ThirdParty` por la interfaz externa de red.
+* **Comparación cualitativa y mejoras:**
+  * El nuevo prompt redujo efectivamente el tamaño del grafo a **6 nodos** (idéntico al tamaño del Ground Truth), comparado con los 11 nodos del pipeline estándar y parsimonioso original, lo cual cumple el principio de parsimonia.
