@@ -1,0 +1,272 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.0,
+    "text": "Welcome to This is My Architecture. My name is Peter. I'm here with Serv from Zalando. Good to have you here."
+  },
+  {
+    "start": 12.0,
+    "end": 16.0,
+    "text": "Good to be here. All right, so before we talk about this, tell us what Zalando does."
+  },
+  {
+    "start": 16.0,
+    "end": 23.0,
+    "text": "Yes, so Zalando is an online retail fashion platform for connecting brands, partners and customers."
+  },
+  {
+    "start": 23.0,
+    "end": 28.0,
+    "text": "We have presence in around 17 countries with over 28 million active users per month."
+  },
+  {
+    "start": 28.0,
+    "end": 31.0,
+    "text": "All right, so what's the problem you want to talk us through?"
+  },
+  {
+    "start": 31.0,
+    "end": 39.0,
+    "text": "So today we are going to talk about how we build our data lake with just nine people and serving around 100 teams inside Zalando."
+  },
+  {
+    "start": 39.0,
+    "end": 42.0,
+    "text": "All right, sounds like quite a challenge. So let's get straight into it."
+  },
+  {
+    "start": 42.0,
+    "end": 46.0,
+    "text": "Yes, so let me just talk about Nakadi which is our event source."
+  },
+  {
+    "start": 46.0,
+    "end": 54.0,
+    "text": "So Nakadi is an open source distributed event bus that is an abstraction, API abstraction over Kafka queues."
+  },
+  {
+    "start": 54.0,
+    "end": 61.0,
+    "text": "So all the microservices in Zalando, they talk to Nakadi, they're authenticated and they are pushing events to Nakadi."
+  },
+  {
+    "start": 61.0,
+    "end": 70.0,
+    "text": "Then what Nakadi does is that it batches those events because different events have different throughputs, checkouts and search events have different throughputs."
+  },
+  {
+    "start": 70.0,
+    "end": 76.0,
+    "text": "So it batches them into five minutes of 50 MB and writes to this Nakadi archival bucket."
+  },
+  {
+    "start": 76.0,
+    "end": 82.0,
+    "text": "All right, so Nakadi's output is being persisted right there. Now I see a Lambda with SQS right underneath."
+  },
+  {
+    "start": 82.0,
+    "end": 85.0,
+    "text": "It looks like a pattern. So what's going on in there?"
+  },
+  {
+    "start": 85.0,
+    "end": 96.0,
+    "text": "So we came up with this pattern in Zalando that we always associate a Lambda with an incoming source SQS and a DLQ so that if something fails, we have a failover and we can reprocess the messages."
+  },
+  {
+    "start": 96.0,
+    "end": 107.0,
+    "text": "When the files are written in the archival bucket and object notification is generated and pushed to the SQS here."
+  },
+  {
+    "start": 107.0,
+    "end": 119.0,
+    "text": "This SQS messages then invokes the Lambda which then partitions it into a fashion and writes it to the raw bucket."
+  },
+  {
+    "start": 119.0,
+    "end": 125.0,
+    "text": "All right, so it's sort of raw but partitioned or reorganized not in content but in structure."
+  },
+  {
+    "start": 125.0,
+    "end": 128.0,
+    "text": "All right, what about those next steps?"
+  },
+  {
+    "start": 128.0,
+    "end": 135.0,
+    "text": "Yes, so here what we do once it has been written to the raw bucket, we still have to process for different streaming and batch applications."
+  },
+  {
+    "start": 135.0,
+    "end": 144.0,
+    "text": "So we have a Lambda here which again is populated or called by the object creation that happens in the raw bucket."
+  },
+  {
+    "start": 144.0,
+    "end": 149.0,
+    "text": "This creates a message here and it generates this Lambda."
+  },
+  {
+    "start": 149.0,
+    "end": 152.0,
+    "text": "This Lambda has a different purpose from the first Lambda."
+  },
+  {
+    "start": 152.0,
+    "end": 164.0,
+    "text": "It enriches the message attributes with the event type names and also with the attributes like partitions of that particular event type."
+  },
+  {
+    "start": 164.0,
+    "end": 169.0,
+    "text": "And then it is pushed to the SNS where it has all these attributes."
+  },
+  {
+    "start": 169.0,
+    "end": 171.0,
+    "text": "Understood. So it's pushed right here."
+  },
+  {
+    "start": 171.0,
+    "end": 175.0,
+    "text": "And so it's published and there's multiple subscribers."
+  },
+  {
+    "start": 175.0,
+    "end": 177.0,
+    "text": "It's a fan out approach."
+  },
+  {
+    "start": 177.0,
+    "end": 179.0,
+    "text": "So what happens in this area?"
+  },
+  {
+    "start": 179.0,
+    "end": 181.0,
+    "text": "Yes, so you said correctly."
+  },
+  {
+    "start": 181.0,
+    "end": 183.0,
+    "text": "We use SNS for the fan out."
+  },
+  {
+    "start": 183.0,
+    "end": 187.0,
+    "text": "When this is fanned out, you can see that there are multiple SQS queues."
+  },
+  {
+    "start": 187.0,
+    "end": 194.0,
+    "text": "So these SQS queues are subscribed on the SNS, but they are filtering on the event type which we have enriched in the message attributes."
+  },
+  {
+    "start": 194.0,
+    "end": 199.0,
+    "text": "So each SQS queue is for one particular event."
+  },
+  {
+    "start": 199.0,
+    "end": 212.0,
+    "text": "And this SQS queues are then later on used by our downstream Spark jobs for binary conversion in Parquet format or Delta format or just doing a stream stream join."
+  },
+  {
+    "start": 212.0,
+    "end": 220.0,
+    "text": "All right, I see. So you basically already decide on message level which final consumption will happen by filtering based on those attributes."
+  },
+  {
+    "start": 220.0,
+    "end": 221.0,
+    "text": "Absolutely."
+  },
+  {
+    "start": 221.0,
+    "end": 223.0,
+    "text": "Now what's about this part right here?"
+  },
+  {
+    "start": 223.0,
+    "end": 228.0,
+    "text": "Yes. So here this is no filter because this is still part of the data lake."
+  },
+  {
+    "start": 228.0,
+    "end": 235.0,
+    "text": "Whatever we have in raw bucket, we take all of the messages, but then we reformat it for different partition."
+  },
+  {
+    "start": 235.0,
+    "end": 240.0,
+    "text": "And the partition level changes from hourly partition to the daily partition and we write it."
+  },
+  {
+    "start": 240.0,
+    "end": 248.0,
+    "text": "We use it because we have different serving layers for ad hoc queries which analysts use, Presto, and which is built on this main bucket."
+  },
+  {
+    "start": 248.0,
+    "end": 251.0,
+    "text": "Understood. So this is the outcome of any of those areas."
+  },
+  {
+    "start": 251.0,
+    "end": 258.0,
+    "text": "Now a question I need to add, when you talk about Nakadi, you talk about the load that Nakadi at least is consuming."
+  },
+  {
+    "start": 258.0,
+    "end": 259.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 259.0,
+    "end": 262.0,
+    "text": "But how about the entire solution here? How much load can it cope with?"
+  },
+  {
+    "start": 262.0,
+    "end": 269.0,
+    "text": "So after the events are coming in, obviously it's badged, but we have a lot of metrics built around it."
+  },
+  {
+    "start": 269.0,
+    "end": 274.0,
+    "text": "We have a number of Lambda invocation that happens per second or per day."
+  },
+  {
+    "start": 274.0,
+    "end": 278.0,
+    "text": "And we look at different metrics that are created."
+  },
+  {
+    "start": 278.0,
+    "end": 283.0,
+    "text": "So using that, we can say that we have around 2 million Lambda invocations that happen per day."
+  },
+  {
+    "start": 283.0,
+    "end": 287.0,
+    "text": "And this is just for this pipeline. We have different pipelines for that."
+  },
+  {
+    "start": 287.0,
+    "end": 291.0,
+    "text": "And it can go up to 6 million also."
+  },
+  {
+    "start": 291.0,
+    "end": 294.0,
+    "text": "Oh, wow. Okay. So thank you very much for this amazing solution."
+  },
+  {
+    "start": 294.0,
+    "end": 296.0,
+    "text": "And thanks for watching. This is my architecture."
+  }
+]

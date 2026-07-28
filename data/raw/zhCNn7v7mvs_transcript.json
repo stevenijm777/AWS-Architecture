@@ -1,0 +1,332 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.76,
+    "text": "Hi, welcome to This is My Architecture. My name is Andrea and I'm here with Mark from CM Group."
+  },
+  {
+    "start": 11.76,
+    "end": 13.26,
+    "text": "Hi Mark, welcome to the show."
+  },
+  {
+    "start": 13.26,
+    "end": 14.040000000000001,
+    "text": "Hi, glad to be here."
+  },
+  {
+    "start": 14.040000000000001,
+    "end": 15.72,
+    "text": "What does CM Group do?"
+  },
+  {
+    "start": 15.72,
+    "end": 21.06,
+    "text": "CM Group is a family of email marketing brands that allow businesses and nonprofits the world"
+  },
+  {
+    "start": 21.06,
+    "end": 24.36,
+    "text": "over to send email campaigns to their customers or constituents."
+  },
+  {
+    "start": 24.36,
+    "end": 28.68,
+    "text": "Wonderful. So today we're going to talk about email delivery subsystem. What is that?"
+  },
+  {
+    "start": 28.68,
+    "end": 38.68,
+    "text": "It's the part of our application that allows customers to send the messages and for us to be able to report back to them the status of those messages, whether they were delivered or balanced."
+  },
+  {
+    "start": 38.68,
+    "end": 43.68,
+    "text": "I see. So we all send emails, right? So what does this architecture bring?"
+  },
+  {
+    "start": 43.68,
+    "end": 50.68,
+    "text": "This architecture allows us to send billions of messages a year. At peak, we're doing probably 8 to 10 million messages an hour."
+  },
+  {
+    "start": 50.68,
+    "end": 51.68,
+    "text": "Wow."
+  },
+  {
+    "start": 51.68,
+    "end": 52.68,
+    "text": "We need a high scalability for that."
+  },
+  {
+    "start": 52.68,
+    "end": 57.68,
+    "text": "Wow. That's billions sounds like a lot and I know email systems can be tricky."
+  },
+  {
+    "start": 57.68,
+    "end": 63.68,
+    "text": "Let's dive straight to it. Let's figure out where does this originate?"
+  },
+  {
+    "start": 63.68,
+    "end": 69.68,
+    "text": "Sure. The email campaigns originate from an application that customers are using. It's just a SaaS based application."
+  },
+  {
+    "start": 69.68,
+    "end": 79.68,
+    "text": "They'll go in, they'll create the campaign that they want to send. They'll specify the list of recipients that it should be sent to and metadata that should go with that campaign for the mail merge process."
+  },
+  {
+    "start": 79.68,
+    "end": 85.68,
+    "text": "So it's like first name, last name, any other specific data that they're interested in sending as part of that campaign."
+  },
+  {
+    "start": 85.68,
+    "end": 94.68,
+    "text": "Wonderful. So you have different campaigns. Say for example, you have a handful of campaigns. What happens in this architecture? I see a bunch of AWS services."
+  },
+  {
+    "start": 94.68,
+    "end": 95.68,
+    "text": "Yep."
+  },
+  {
+    "start": 95.68,
+    "end": 96.68,
+    "text": "It's running on AWS."
+  },
+  {
+    "start": 96.68,
+    "end": 97.68,
+    "text": "Yep."
+  },
+  {
+    "start": 97.68,
+    "end": 98.68,
+    "text": "Walk us through the workflow."
+  },
+  {
+    "start": 98.68,
+    "end": 108.68,
+    "text": "Sure. When customers in our application send a message, we do two things at that point. We take the list of recipients that they're sending to."
+  },
+  {
+    "start": 108.68,
+    "end": 118.68,
+    "text": "Mm-hm. We grab data out of Aurora Postgres, create a CSV file of the email address, metadata about the first name, last name."
+  },
+  {
+    "start": 118.68,
+    "end": 133.68,
+    "text": "Create a CSV and push that into S3. We then queue a job in our remote data center region to actually process that job. And that goes into a custom queue in ElastiCache for us."
+  },
+  {
+    "start": 133.68,
+    "end": 139.68,
+    "text": "I see. Now, there are different campaigns. Would you be storing that all in one CSV or multiple?"
+  },
+  {
+    "start": 139.68,
+    "end": 148.68,
+    "text": "Sure. Each CSV is specific to a single customer and a single campaign. So we'll have several of these being generated in any given time."
+  },
+  {
+    "start": 148.68,
+    "end": 149.68,
+    "text": "Gotcha."
+  },
+  {
+    "start": 149.68,
+    "end": 150.68,
+    "text": "As customers use your application in parallel."
+  },
+  {
+    "start": 150.68,
+    "end": 154.68,
+    "text": "Gotcha. What does this line represent here? Is it different accounts?"
+  },
+  {
+    "start": 154.68,
+    "end": 161.68,
+    "text": "Different accounts in different regions, actually. Our main account hosts the application and the microservices that make up that application."
+  },
+  {
+    "start": 161.68,
+    "end": 166.68,
+    "text": "Okay. But the sending infrastructure is containerized so that it can be in multiple regions."
+  },
+  {
+    "start": 166.68,
+    "end": 171.68,
+    "text": "Okay. We can take this architecture that we've built and distribute it to as many regions as we want."
+  },
+  {
+    "start": 171.68,
+    "end": 172.68,
+    "text": "I see. Like a cell."
+  },
+  {
+    "start": 172.68,
+    "end": 176.68,
+    "text": "So using ElastiCache for a queueing system, why not SQS?"
+  },
+  {
+    "start": 176.68,
+    "end": 182.68,
+    "text": "Yeah. This is a legacy fact. A long time ago, we built our own job queue system."
+  },
+  {
+    "start": 182.68,
+    "end": 186.68,
+    "text": "Okay. Our intent is to change that to SQS."
+  },
+  {
+    "start": 186.68,
+    "end": 191.68,
+    "text": "So once you have submitted a job, what happens next? What are you doing with that email?"
+  },
+  {
+    "start": 191.68,
+    "end": 199.68,
+    "text": "Sure. Once we have a job in queue in ElastiCache Redis, we have a fleet of EC2 instances that are behind an auto scaling group that pick up those jobs."
+  },
+  {
+    "start": 199.68,
+    "end": 211.68,
+    "text": "They also grab the file from S3 and they do a mail merge. They merge with the template they've retrieved from Aurora Postgres."
+  },
+  {
+    "start": 211.68,
+    "end": 215.68,
+    "text": "Okay. So this is again, just a simple mail merge, first name, last name, based on tags."
+  },
+  {
+    "start": 215.68,
+    "end": 216.68,
+    "text": "Yeah."
+  },
+  {
+    "start": 216.68,
+    "end": 223.68,
+    "text": "They'll then communicate via a network load balancer to our fleet of sending boxes, MTAs."
+  },
+  {
+    "start": 223.68,
+    "end": 224.68,
+    "text": "Okay."
+  },
+  {
+    "start": 224.68,
+    "end": 229.68,
+    "text": "Mail transfer agents. These are behind BYOP or BYOIP."
+  },
+  {
+    "start": 229.68,
+    "end": 234.68,
+    "text": "Okay. So that's BYOIP. Bring your own IP."
+  },
+  {
+    "start": 234.68,
+    "end": 243.68,
+    "text": "Correct. This is one of the core features that allowed us to move in because as an email sender, the reputation of your sending IPs is critical."
+  },
+  {
+    "start": 243.68,
+    "end": 254.68,
+    "text": "And so we wanted to be able to maintain that reputation on our own IPs and have them portable between regions without having to go with specific AWS IPs."
+  },
+  {
+    "start": 254.68,
+    "end": 260.68,
+    "text": "Okay. So you have an email merger, email delivery system on EC2s."
+  },
+  {
+    "start": 260.68,
+    "end": 261.68,
+    "text": "Yeah."
+  },
+  {
+    "start": 261.68,
+    "end": 262.68,
+    "text": "Auto scaling, I suspect."
+  },
+  {
+    "start": 262.68,
+    "end": 265.68,
+    "text": "Not auto scaling, but we can scale them out on demand."
+  },
+  {
+    "start": 265.68,
+    "end": 271.68,
+    "text": "Okay. So why did you use a fleet of EC2s and not, say, container surveys or lambdas?"
+  },
+  {
+    "start": 271.68,
+    "end": 276.68,
+    "text": "Sure. Delivering an email stream is a very critical component of our service, right?"
+  },
+  {
+    "start": 276.68,
+    "end": 283.68,
+    "text": "And we need to have extreme reliability in doing that. We need to make sure that recipients receive an email once and only once."
+  },
+  {
+    "start": 283.68,
+    "end": 296.68,
+    "text": "We would tend to use spot instances in our fleets, but because we don't want that interruption in the mail stream for reliability and performance, we stick with reserved instances."
+  },
+  {
+    "start": 296.68,
+    "end": 300.68,
+    "text": "Wonderful. Now, how do you ensure that that delivery was successful?"
+  },
+  {
+    "start": 300.68,
+    "end": 308.68,
+    "text": "Sure. The MTA, when it delivers to the internet recipient out here in the cloud, creates a log entry in its own files."
+  },
+  {
+    "start": 308.68,
+    "end": 309.68,
+    "text": "Okay."
+  },
+  {
+    "start": 309.68,
+    "end": 319.68,
+    "text": "So we have Amazon Kinesis agent here that sends it to Firehose, whether it was delivered or balanced in any metadata that we received from the remote server about why."
+  },
+  {
+    "start": 319.68,
+    "end": 326.68,
+    "text": "And then that gets back over to our main account here for processing storage in Aurora and then back up to our customers."
+  },
+  {
+    "start": 326.68,
+    "end": 335.68,
+    "text": "Oh, this is fantastic. This is handling billions of different emails from the campaigns to successful delivery and you're tracking sort of how this is progressing through the chain."
+  },
+  {
+    "start": 335.68,
+    "end": 336.68,
+    "text": "Yep."
+  },
+  {
+    "start": 336.68,
+    "end": 338.68,
+    "text": "Thank you so much for walking us through this architecture."
+  },
+  {
+    "start": 338.68,
+    "end": 339.68,
+    "text": "You're welcome."
+  },
+  {
+    "start": 339.68,
+    "end": 341.68,
+    "text": "And thank you for watching. This is my architecture."
+  }
+]

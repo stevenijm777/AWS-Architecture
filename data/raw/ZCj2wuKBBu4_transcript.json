@@ -1,0 +1,337 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.72,
+    "text": "Hello and welcome to another episode of This is My Architecture. Today we'll be talking about how"
+  },
+  {
+    "start": 12.72,
+    "end": 18.240000000000002,
+    "text": "Nike powers a number of its applications using a social graph that they built with Amazon Neptune."
+  },
+  {
+    "start": 18.240000000000002,
+    "end": 24.0,
+    "text": "I'm joined by Mark from Nike. Mark, welcome. Thanks for having me. Can you tell us a little"
+  },
+  {
+    "start": 24.0,
+    "end": 29.76,
+    "text": "bit more about what your engineering team does at Nike? Yeah, of course. I own the Nike social"
+  },
+  {
+    "start": 29.76,
+    "end": 35.68,
+    "text": "team and we're responsible for the social graph within the Nike ecosystem. It has wide-ranging"
+  },
+  {
+    "start": 35.68,
+    "end": 41.28,
+    "text": "applications all the way from the front-end side of the house like the Nike app as well as the NRC"
+  },
+  {
+    "start": 41.28,
+    "end": 47.44,
+    "text": "and NTC. People might be familiar with that as well as the analytics side which is basically happening"
+  },
+  {
+    "start": 47.44,
+    "end": 53.84,
+    "text": "in the data lake. So your team is chartered with building the relationships of the users and the"
+  },
+  {
+    "start": 53.84,
+    "end": 59.120000000000005,
+    "text": "interests that link to them. Yeah, so why don't we talk about an example. So in the Nike app for example,"
+  },
+  {
+    "start": 59.76,
+    "end": 65.12,
+    "text": "as the user on boards, they will be presented with a bunch of tiles that have different sports."
+  },
+  {
+    "start": 66.16,
+    "end": 76.0,
+    "text": "Let's say basketball, tennis, and then they select from those as many as they like,"
+  },
+  {
+    "start": 76.0,
+    "end": 82.64,
+    "text": "whatever they're interested in. And then we collect this data. This data basically flows into our API"
+  },
+  {
+    "start": 82.64,
+    "end": 89.84,
+    "text": "gateway. And then from there we use a Lambda to siphon the data off. And then it's really just our"
+  },
+  {
+    "start": 89.84,
+    "end": 96.08,
+    "text": "intake funnel. There isn't a lot of business logic that's happening at that layer. From there we then"
+  },
+  {
+    "start": 96.08,
+    "end": 105.36,
+    "text": "go into our ELB load balancer. And because we need resiliency and high availability, Nike's a global brand,"
+  },
+  {
+    "start": 105.36,
+    "end": 115.36,
+    "text": "lots of users simultaneously. We then use auto balanced, sorry, auto scaled ELB, sorry, EC2s."
+  },
+  {
+    "start": 116.8,
+    "end": 125.52,
+    "text": "And then the data store, obviously what we're talking about is Neptune. So everything is basically an ARB model"
+  },
+  {
+    "start": 127.6,
+    "end": 132.4,
+    "text": "where A can be any sort of entity having a relationship with another entity B."
+  },
+  {
+    "start": 132.4,
+    "end": 139.76000000000002,
+    "text": "In this case, it's, you know, Mark has an interest in tennis, but this also has other applications like"
+  },
+  {
+    "start": 140.4,
+    "end": 145.20000000000002,
+    "text": "Mark wants to be friends with another person within the ecosystem, right? The same model applies."
+  },
+  {
+    "start": 145.20000000000002,
+    "end": 151.68,
+    "text": "Okay. So let's, let's double click down on kind of the EC2 auto scaling instances here. Are they in"
+  },
+  {
+    "start": 151.68,
+    "end": 157.28,
+    "text": "charge with actually writing to the graph databases themselves? Yeah, that's exactly what happens."
+  },
+  {
+    "start": 157.28,
+    "end": 162.08,
+    "text": "Okay. And this, are these synchronous and asynchronous writes that are happening to a cluster,"
+  },
+  {
+    "start": 162.08,
+    "end": 166.56,
+    "text": "a couple clusters of Amazon Neptune? Yeah, we do have a couple of clusters again,"
+  },
+  {
+    "start": 166.56,
+    "end": 173.44,
+    "text": "just because of the load that we need to, uh, need to bear. Uh, we have one writer node and then two"
+  },
+  {
+    "start": 173.44,
+    "end": 180.16,
+    "text": "reader nodes and that basically keeps everything running smoothly. Okay, great. Now it sounds like we have,"
+  },
+  {
+    "start": 180.16,
+    "end": 185.44,
+    "text": "uh, simple notification service that's sitting here. So I'm assuming that there's some type of"
+  },
+  {
+    "start": 185.44,
+    "end": 190.0,
+    "text": "teams maybe internally that are subscribing to some tacos. Can you tell us a little bit about"
+  },
+  {
+    "start": 190.0,
+    "end": 195.28,
+    "text": "when a write happens, uh, to Amazon Neptune based on the user's preferences or the profile you're"
+  },
+  {
+    "start": 195.28,
+    "end": 200.8,
+    "text": "building out of their interests? Who's seeing that? Sure. Absolutely. Yeah, we have multiple internal"
+  },
+  {
+    "start": 200.8,
+    "end": 207.28,
+    "text": "consumers, other NECI teams that need to know about these signals as users are, uh, uh, basically telling"
+  },
+  {
+    "start": 207.28,
+    "end": 214.4,
+    "text": "us that they're interested in a particular, uh, sport. So the way we do that is that, um, we call"
+  },
+  {
+    "start": 215.76,
+    "end": 223.12,
+    "text": "SNS and then SNS has multiple subscribers. One of them is the data lake right here, but then we also"
+  },
+  {
+    "start": 223.12,
+    "end": 230.96,
+    "text": "call CDS, which is essentially our internal, excuse my handwriting, CDS, which is our internal, uh, notification"
+  },
+  {
+    "start": 230.96,
+    "end": 236.96,
+    "text": "system. Okay. Uh, because they act upon all these signals and SNS is a nice way to do that because you"
+  },
+  {
+    "start": 236.96,
+    "end": 241.68,
+    "text": "can have multiple subscribers all listening to the same topic. So the teams are being notified"
+  },
+  {
+    "start": 241.68,
+    "end": 246.72,
+    "text": "via a topic of any types of changes that are being made and then they're going ahead and taking action"
+  },
+  {
+    "start": 246.72,
+    "end": 252.48000000000002,
+    "text": "to help curate the content that the end user would essentially see. Yeah. So this is all about"
+  },
+  {
+    "start": 252.48000000000002,
+    "end": 259.04,
+    "text": "personalization, uh, essentially, uh, if you're interested, you know, in tennis, then, uh, what you"
+  },
+  {
+    "start": 259.04,
+    "end": 264.32,
+    "text": "should see in the feed is more tennis related content. So it's really personalized to you. So the more the"
+  },
+  {
+    "start": 264.32,
+    "end": 269.2,
+    "text": "end consumer tells us about, Hey, this is what I'm interested in. That's not so much kind of thing."
+  },
+  {
+    "start": 269.2,
+    "end": 273.28,
+    "text": "Uh, we can really gear the content towards what they really want to see when they come back and"
+  },
+  {
+    "start": 273.28,
+    "end": 278.56,
+    "text": "give them a better experience. I love the, the, you know, enhancing the experience overall. And when I"
+  },
+  {
+    "start": 278.56,
+    "end": 283.6,
+    "text": "think of Nike, I think of a global brand and application usage probably everywhere. Talk to us a"
+  },
+  {
+    "start": 283.6,
+    "end": 289.2,
+    "text": "little bit about the scale. Yeah. Scale is a quite large, uh, as you mentioned, Nike is a global brand."
+  },
+  {
+    "start": 289.2,
+    "end": 297.12,
+    "text": "Uh, we have hundreds of millions of users around the globe, uh, all using the system. Uh, we have 125"
+  },
+  {
+    "start": 297.12,
+    "end": 302.96,
+    "text": "million user relationships stored for about 25 million users because they're interested in more"
+  },
+  {
+    "start": 302.96,
+    "end": 309.03999999999996,
+    "text": "than one thing. Right. Um, so that's sort of the scale that we're talking about and it needs to be a 24"
+  },
+  {
+    "start": 309.03999999999996,
+    "end": 314.15999999999997,
+    "text": "by seven system. There's really no good downtime because it's used around the globe 24 seven. Sure."
+  },
+  {
+    "start": 314.16,
+    "end": 320.32000000000005,
+    "text": "So highly available, secure application that's built out at scale on top of AWS infrastructure."
+  },
+  {
+    "start": 320.88000000000005,
+    "end": 326.48,
+    "text": "One last thing I'd like to touch on is just the overall social graph aspect of it. Um, being able to"
+  },
+  {
+    "start": 326.48,
+    "end": 331.76000000000005,
+    "text": "really have the ability to, uh, understand the relationships, leveraging a purpose-built database"
+  },
+  {
+    "start": 331.76000000000005,
+    "end": 337.20000000000005,
+    "text": "versus a key value store. Can you tell us a little bit about how, uh, you guys have evolved the"
+  },
+  {
+    "start": 337.20000000000005,
+    "end": 343.20000000000005,
+    "text": "architecture over time? Absolutely. Yeah. When we first built the system, it was really, uh, the data store"
+  },
+  {
+    "start": 343.2,
+    "end": 349.03999999999996,
+    "text": "with Apache Cassandra and, uh, while we made that work, it's not really geared towards this domain"
+  },
+  {
+    "start": 349.03999999999996,
+    "end": 357.36,
+    "text": "particularly. Uh, we made ARB work, but, um, the, the Neptune, uh, graph was really the right solution."
+  },
+  {
+    "start": 357.76,
+    "end": 364.48,
+    "text": "Uh, secondarily, when we used, uh, Cassandra, we had a lot of, um, maintenance overhead just because"
+  },
+  {
+    "start": 364.48,
+    "end": 368.64,
+    "text": "it was easy to base and every time we needed to roll containers, you can only do one at a time."
+  },
+  {
+    "start": 368.64,
+    "end": 372.48,
+    "text": "Right. If you have a large ring, uh, that becomes very maintenance heavy."
+  },
+  {
+    "start": 372.48,
+    "end": 376.96000000000004,
+    "text": "So we were looking for a solution that was managed for us so we can just worry about the business"
+  },
+  {
+    "start": 376.96000000000004,
+    "end": 381.44,
+    "text": "logic and not so much the mechanics of the database itself. And I think another technical"
+  },
+  {
+    "start": 381.44,
+    "end": 386.96000000000004,
+    "text": "benefit was the ability to just query once versus using a key value store where you really have,"
+  },
+  {
+    "start": 386.96000000000004,
+    "end": 391.36,
+    "text": "if the relationship's not directly stored, so you have to query multiple tables at the same time."
+  },
+  {
+    "start": 391.36,
+    "end": 397.04,
+    "text": "Yeah. The, uh, the model was slightly more complicated on the Cassandra side, so we were able to"
+  },
+  {
+    "start": 397.04,
+    "end": 402.48,
+    "text": "simplify it. And again, the engine of the graph really helps with those types of queries just"
+  },
+  {
+    "start": 402.48,
+    "end": 408.56,
+    "text": "because that's exactly what it's built for. Very cool. Nike's social graph at scale. Thanks a lot,"
+  },
+  {
+    "start": 408.56,
+    "end": 421.04,
+    "text": "Mark. You're very welcome. And thank you for joining us on This Is My Architecture."
+  }
+]

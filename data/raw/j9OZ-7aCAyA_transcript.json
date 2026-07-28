@@ -1,0 +1,392 @@
+[
+  {
+    "start": 0.0,
+    "end": 14.280000000000001,
+    "text": "Welcome to This is My Architecture. I'm Tom from AWS and today I'm joined by Mike from"
+  },
+  {
+    "start": 14.280000000000001,
+    "end": 20.28,
+    "text": "HomeSite Insurance. Hi Tom. Welcome Mike. Thanks. Thanks for joining us. I know you have a company"
+  },
+  {
+    "start": 20.28,
+    "end": 25.44,
+    "text": "policy where you can't endorse any specific vendor so I thank you for joining us today."
+  },
+  {
+    "start": 25.44,
+    "end": 31.14,
+    "text": "Yeah that's correct Tom. Thank you. So tell us a little bit about HomeSite Insurance."
+  },
+  {
+    "start": 31.14,
+    "end": 39.04,
+    "text": "HomeSite was founded in 97 around the business model of providing the best online experience for"
+  },
+  {
+    "start": 39.04,
+    "end": 48.0,
+    "text": "purchasing home insurance and a large part of that model is bringing in leads from major auto"
+  },
+  {
+    "start": 48.0,
+    "end": 55.42,
+    "text": "insurance and other insurance providers for whom we then bundle home insurance and other products."
+  },
+  {
+    "start": 55.44,
+    "end": 60.42,
+    "text": "And you white label that service for all of these different companies?"
+  },
+  {
+    "start": 60.42,
+    "end": 66.17999999999999,
+    "text": "That's correct. We call them our partners and we provide a seamless experience from their UI to ours."
+  },
+  {
+    "start": 66.17999999999999,
+    "end": 72.12,
+    "text": "Interesting. So we're going to talk about your architecture today. Where does the data start?"
+  },
+  {
+    "start": 72.12,
+    "end": 80.03999999999999,
+    "text": "Yeah okay so we have these UX's, these user experiences that we provide to bring in these"
+  },
+  {
+    "start": 80.04,
+    "end": 88.68,
+    "text": "leads and to you know move towards a quote. So first of all there are many experiences that have to be"
+  },
+  {
+    "start": 88.68,
+    "end": 94.68,
+    "text": "designed around the specific requirements of the different partners. Then on top of that we also have"
+  },
+  {
+    "start": 94.68,
+    "end": 100.02000000000001,
+    "text": "many layers of the solution that are generating data at different granularities with different schemas."
+  },
+  {
+    "start": 100.02,
+    "end": 113.02,
+    "text": "And what we wanted to do is to provide one cohesive vision of this data that would enable us to improve our service and also to understand better what works and what doesn't."
+  },
+  {
+    "start": 113.02,
+    "end": 123.02,
+    "text": "Fantastic. And so you're really trying to build a comprehensive model of a user that could be coming from any of those white labeled sites at different times."
+  },
+  {
+    "start": 123.02,
+    "end": 129.01999999999998,
+    "text": "Yeah that's exactly right Tom. Cool. All right well let's jump into it. Where do we start?"
+  },
+  {
+    "start": 129.01999999999998,
+    "end": 137.01999999999998,
+    "text": "Okay so we start actually to the left of this whole thing with serverless data pipelines based on glue that are coming in."
+  },
+  {
+    "start": 137.01999999999998,
+    "end": 147.01999999999998,
+    "text": "And when they complete processing what's happening is they're writing events to our SQS which we use for orchestration between our stages."
+  },
+  {
+    "start": 147.02,
+    "end": 158.02,
+    "text": "So the nice thing is that SQS will then natively can trigger Lambda. So we're triggering what we call our job initiator Lambda."
+  },
+  {
+    "start": 158.02,
+    "end": 166.02,
+    "text": "And what's happening then is the first thing it does is it reads a pipeline definition from our DynamoDB."
+  },
+  {
+    "start": 166.02,
+    "end": 176.02,
+    "text": "Now we do two things mainly with Dynamo in this architecture. One is we store our pipeline configurations here so that these stages can be reusable on the other side."
+  },
+  {
+    "start": 176.02,
+    "end": 181.02,
+    "text": "And these can be easily deployed by just writing new records to Dynamo."
+  },
+  {
+    "start": 181.02,
+    "end": 190.02,
+    "text": "Nice. And the nice thing is because it's a NoSQL database we can have those defined as JSON which means that our schema is easily adaptable."
+  },
+  {
+    "start": 190.02,
+    "end": 198.02,
+    "text": "We also use Dynamo to write exit status of jobs to help with the orchestration and reporting on the whole pipelines and their health."
+  },
+  {
+    "start": 198.02,
+    "end": 202.02,
+    "text": "Nice. So what is the pipeline actually kick off?"
+  },
+  {
+    "start": 202.02,
+    "end": 218.02,
+    "text": "Okay. So when this Lambda has read not only the pipeline definition but also the exit status of all of these other pipelines that happened over here to the left of the board, it will kick off a step function."
+  },
+  {
+    "start": 218.02,
+    "end": 229.02,
+    "text": "The step function is at the core of then the coordination of the detailed steps that execute to load the data to Neptune and do the other operations that we're talking about here."
+  },
+  {
+    "start": 229.02,
+    "end": 235.02,
+    "text": "And you need to use step functions because you need to save state or what's the driving?"
+  },
+  {
+    "start": 235.02,
+    "end": 246.02,
+    "text": "Yeah. Well because as you'll see when we get to these other steps there are a lot of detailed actions some of which may take a period of time that would exceed a Lambda execution window and that really need tight coordination."
+  },
+  {
+    "start": 246.02,
+    "end": 275.02,
+    "text": "So what we did here is in order to achieve the mission that we set out to in taking this web of data which really is a kind of a web of data where you have a customer, they may have multiple quotes that they initiated on different channels, they may hit a call center, they may have actually touched multiple partners UXs and also all of those layers that I talked about of logging, the Google Analytics, all of that stuff."
+  },
+  {
+    "start": 275.02,
+    "end": 276.02,
+    "text": "Right."
+  },
+  {
+    "start": 276.02,
+    "end": 282.02,
+    "text": "So what we determined is we really couldn't manage that in a traditional relational database."
+  },
+  {
+    "start": 282.02,
+    "end": 288.02,
+    "text": "So a property graph in a graph database was the answer to the business problem."
+  },
+  {
+    "start": 288.02,
+    "end": 289.02,
+    "text": "Okay, cool."
+  },
+  {
+    "start": 289.02,
+    "end": 292.02,
+    "text": "And so what happens next?"
+  },
+  {
+    "start": 292.02,
+    "end": 303.02,
+    "text": "Well, so we load vertices and edges to Neptune but before we do we need that cluster to be powerful."
+  },
+  {
+    "start": 303.02,
+    "end": 309.02,
+    "text": "We need it to have all the resources that it needs to manage a fairly large volume of data going in."
+  },
+  {
+    "start": 309.02,
+    "end": 310.02,
+    "text": "So..."
+  },
+  {
+    "start": 310.02,
+    "end": 315.02,
+    "text": "And I'm guessing because you don't know at any one time how much data is going to be coming through the pipeline."
+  },
+  {
+    "start": 315.02,
+    "end": 322.02,
+    "text": "Well, yeah, and we'll get to more sophisticated orchestration for now based on our understanding of the data coming in."
+  },
+  {
+    "start": 322.02,
+    "end": 334.02,
+    "text": "We're using a BOTO3 call from the step function to actually scale up our instance from an R5 x large to an R5 4 x large."
+  },
+  {
+    "start": 334.02,
+    "end": 335.02,
+    "text": "Okay."
+  },
+  {
+    "start": 335.02,
+    "end": 344.02,
+    "text": "And the reason that we do that is because while Neptune solves this business problem very neatly, we don't want to keep that huge instance running all the time."
+  },
+  {
+    "start": 344.02,
+    "end": 349.02,
+    "text": "And the cost differential is over 50% if we scale it up only when we're doing ETL."
+  },
+  {
+    "start": 349.02,
+    "end": 350.02,
+    "text": "Right."
+  },
+  {
+    "start": 350.02,
+    "end": 353.02,
+    "text": "What happens once after you scale it up?"
+  },
+  {
+    "start": 353.02,
+    "end": 354.02,
+    "text": "Okay."
+  },
+  {
+    "start": 354.02,
+    "end": 355.02,
+    "text": "So we scale it up."
+  },
+  {
+    "start": 355.02,
+    "end": 357.02,
+    "text": "Now we've got all the horsepower we need."
+  },
+  {
+    "start": 357.02,
+    "end": 359.02,
+    "text": "We load our vertices and edges."
+  },
+  {
+    "start": 359.02,
+    "end": 365.02,
+    "text": "But now we also need to manage broad-based data access."
+  },
+  {
+    "start": 365.02,
+    "end": 366.02,
+    "text": "Okay."
+  },
+  {
+    "start": 366.02,
+    "end": 374.02,
+    "text": "So this is an excellent tool for the data scientist to go in now using Tom Sawyer or other graphical UIs, explore the data."
+  },
+  {
+    "start": 374.02,
+    "end": 383.02,
+    "text": "And then they create Gremlin queries which allow us to traverse this model and export data to S3."
+  },
+  {
+    "start": 383.02,
+    "end": 394.02,
+    "text": "So from here, Gremlin is actually outputting data to S3 based on these queries the data scientists have developed."
+  },
+  {
+    "start": 394.02,
+    "end": 399.02,
+    "text": "So we catalog that in Glue and expose it through Athena."
+  },
+  {
+    "start": 399.02,
+    "end": 403.02,
+    "text": "And now we have the broad-based data access that we need in a really cost efficient way."
+  },
+  {
+    "start": 403.02,
+    "end": 413.02,
+    "text": "That's a really cool solution for getting that visibility to a complex scenario of a user."
+  },
+  {
+    "start": 413.02,
+    "end": 423.02,
+    "text": "So you're using the power of the graph database and then exporting that visibility to a very cost-effective solution in S3."
+  },
+  {
+    "start": 423.02,
+    "end": 427.02,
+    "text": "And then you're doing the queries in a serverless way using Athena."
+  },
+  {
+    "start": 427.02,
+    "end": 428.02,
+    "text": "That's right."
+  },
+  {
+    "start": 428.02,
+    "end": 429.02,
+    "text": "Very smart."
+  },
+  {
+    "start": 429.02,
+    "end": 430.02,
+    "text": "Thanks."
+  },
+  {
+    "start": 430.02,
+    "end": 432.02,
+    "text": "Thanks for sharing your architecture with us today."
+  },
+  {
+    "start": 432.02,
+    "end": 433.02,
+    "text": "I enjoyed it."
+  },
+  {
+    "start": 433.02,
+    "end": 434.02,
+    "text": "And thanks for watching."
+  },
+  {
+    "start": 434.02,
+    "end": 436.02,
+    "text": "This is my architecture."
+  },
+  {
+    "start": 436.02,
+    "end": 440.02,
+    "text": "This is my architecture."
+  },
+  {
+    "start": 440.02,
+    "end": 441.02,
+    "text": "This is my architecture."
+  },
+  {
+    "start": 441.02,
+    "end": 442.02,
+    "text": "I wanted to promote engineering success."
+  },
+  {
+    "start": 442.02,
+    "end": 445.02,
+    "text": "I need to connect the technology to VsthPacey."
+  },
+  {
+    "start": 445.02,
+    "end": 446.02,
+    "text": "I'm a new architecture."
+  },
+  {
+    "start": 446.02,
+    "end": 447.02,
+    "text": "And I can just see it in theat candle."
+  },
+  {
+    "start": 447.02,
+    "end": 449.02,
+    "text": "Now the digital skills is high."
+  },
+  {
+    "start": 449.02,
+    "end": 450.02,
+    "text": "This is my architecture."
+  },
+  {
+    "start": 450.02,
+    "end": 451.02,
+    "text": "That's my architecture."
+  },
+  {
+    "start": 451.02,
+    "end": 451.96,
+    "text": "I can even monetize myself in Transform."
+  }
+]
