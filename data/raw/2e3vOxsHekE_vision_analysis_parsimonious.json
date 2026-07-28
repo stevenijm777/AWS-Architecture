@@ -1,48 +1,48 @@
 {
-  "step_by_step_reasoning": "The architecture processes acoustic data from IoT devices to detect water leaks. First, IoT devices (e.g., smart fire hydrants) send daily acoustic signals to an API Gateway for secure ingestion. The API Gateway then persists these files in an S3 bucket. A daily batch process running on ECS consumes these files from S3 to perform processor-intensive acoustic correlation algorithms. The persistent correlations found by ECS are then fed to an AWS SageMaker ML endpoint, which classifies them and assigns a leak probability score. Finally, these leak scores are provided to human analysts who further qualify the leaks and may initiate field investigations. A feedback loop exists where analysts' input is used to retrain the SageMaker model every six weeks to improve accuracy.",
+  "step_by_step_reasoning": "The architecture was derived by first identifying all visible components on the whiteboard diagram. These include a fire hydrant icon, API Gateway, S3, ECS, SageMaker, and an Analyst icon. Each component was then mapped to its corresponding AWS service or external actor type based on the visual and the transcript. The connections (arrows) drawn on the whiteboard dictated the edges. The transcript provided further context for the function and purpose of each node and edge, which was used to populate the 'notes' fields and define the data flow. The fire hydrant, an external IoT device, was classified as 'ThirdParty' as it's an external data source not fitting 'User' or 'OnPremDC'. The 'Analyst' was classified as 'UserCompanyDeveloper' as per the rule for internal company staff. No invisible return paths or services not explicitly drawn were added, adhering strictly to the visual-first principle.",
   "graph": {
     "name": "Muller Water Products - Water Intelligent Platform",
-    "link": "https://www.youtube.com/watch?v=XXXX",
-    "categories": "IoT, Analytics, Machine Learning, Data Processing",
+    "link": "",
+    "categories": "IoT, Analytics, Machine Learning",
     "graph_usable": true,
-    "notes": "This architecture describes Muller Water Products' intelligent platform for ingesting and analyzing IoT acoustic data to detect water leaks in distribution infrastructure, leveraging AWS services for data ingestion, processing, and machine learning."
+    "notes": "Architecture for ingesting acoustic data from IoT smart fire hydrants, processing it to find correlations, applying machine learning for leak detection probability, and presenting results to human analysts."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "ExternalUser",
-      "name": "IoT Device",
-      "notes": "Smart fire hydrants, meters, and other IoT devices collecting acoustic, pressure, and water quality data from the pipe network."
+      "service": "ThirdParty",
+      "name": "Smart Fire Hydrant",
+      "notes": "IoT device collecting acoustic data from the pipe network daily."
     },
     {
       "id": "1",
-      "service": "API Gateway",
+      "service": "APIGateway",
       "name": "API Gateway",
-      "notes": "Receives daily acoustic signals from IoT devices, providing authentication and security before passing data to S3."
+      "notes": "Ingests daily acoustic data files from IoT devices, providing authentication and security."
     },
     {
       "id": "2",
       "service": "S3",
-      "name": "Data Lake S3",
-      "notes": "Bucket for persisting raw acoustic signal files received via API Gateway."
+      "name": "S3 Bucket",
+      "notes": "Persists raw acoustic data files after ingestion via API Gateway."
     },
     {
       "id": "3",
       "service": "ECS",
-      "name": "Batch Processing ECS",
-      "notes": "Containerized service running daily batch processes with processor-intensive acoustic algorithms to find correlations in the S3 data."
+      "name": "ECS Batch Processor",
+      "notes": "Performs daily batch processing of S3 files to apply processor-intensive acoustic algorithms, finding correlations in signals."
     },
     {
       "id": "4",
       "service": "SageMaker",
-      "name": "ML Endpoint SageMaker",
-      "notes": "Machine learning endpoint that classifies persistent correlations received from ECS, assigning a probability (leak score)."
+      "name": "SageMaker ML Endpoint",
+      "notes": "Classifies persistent correlations identified by ECS, assigning a leak probability score using an ML model."
     },
     {
       "id": "5",
-      "service": "InternalUser",
+      "service": "UserCompanyDeveloper",
       "name": "Human Analyst",
-      "notes": "Company analysts who receive leak scores from SageMaker, further qualify potential leaks, and provide feedback for model retraining."
+      "notes": "Receives leak probability scores from SageMaker to further classify potential leaks and initiate field investigations. Provides feedback for model retraining."
     }
   ],
   "edges": [
@@ -52,7 +52,7 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Daily acoustic signals pushed from IoT devices."
+      "notes": "IoT device pushes daily acoustic data files to API Gateway."
     },
     {
       "source": "1",
@@ -60,39 +60,31 @@
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Authenticated acoustic files persisted in S3."
+      "notes": "API Gateway persists authenticated data files into S3."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "2",
+      "flow_id": 1,
+      "seq": "0",
       "type": "data",
-      "notes": "ECS batch process consumes files daily for correlation analysis."
+      "notes": "New files in S3 trigger a daily batch process in ECS for acoustic signal correlation."
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 0,
-      "seq": "3",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "Persistent correlations sent to SageMaker for classification."
+      "notes": "ECS sends persistent correlations to SageMaker for ML classification and probability assignment."
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 0,
-      "seq": "4",
-      "type": "data",
-      "notes": "Leak probability scores provided to human analysts."
-    },
-    {
-      "source": "5",
-      "target": "4",
       "flow_id": 1,
-      "seq": "0",
-      "type": "meta",
-      "notes": "Feedback from field analysts used for model retraining (every six weeks)."
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker endpoint feeds leak probability scores to the human analyst team."
     }
   ]
 }
