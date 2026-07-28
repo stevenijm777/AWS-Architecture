@@ -244,11 +244,13 @@ def _call_gemini_with_retry(client, full_prompt, mime, image_b64, response_schem
 
     if response_schema is not None:
         config = types.GenerateContentConfig(
+            temperature=0.0,
             response_mime_type="application/json",
             response_schema=response_schema,
         )
     else:
         config = types.GenerateContentConfig(
+            temperature=0.0,
             response_mime_type="application/json",
         )
 
