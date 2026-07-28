@@ -510,33 +510,24 @@ def select_best_frame(
     console.print(f"  [bold green]✓ Selected:[/] {best['path'].name} "
                   f"(score={best['score']:.3f}, edge={best['edge_density']:.3f}, occ={best['occlusion']:.1%}, bonus={best['skin_bonus']:.2f}, iconos={best.get('num_iconos', 0)})")
 
-    # Save best_whiteboard.jpg inside _pizarra/
-    pizarra_dir = video_frames_dir.parent / f"{video_id}_pizarra"
-    pizarra_dir.mkdir(parents=True, exist_ok=True)
-    dest = pizarra_dir / "best_whiteboard.jpg"
-    shutil.copy(best["path"], dest)
-    console.print(f"  [green]✓[/] Saved → {dest}")
-
-    # ==========================================
-    # ACTUALIZADO: LÓGICA DE GUARDADO
-    # ==========================================
-    # Si nos pasan un output_dir, guardamos todo ahí directamente.
-    # Si no, usamos el comportamiento por defecto.
-    if output_dir:
-        pizarra_dir = Path(output_dir)
-    else:
-        pizarra_dir = video_frames_dir.parent / f"{video_id}_pizarra"
-
+    # Determine target directory
+    pizarra_dir = Path(output_dir) if output_dir else video_frames_dir.parent / f"{video_id}_pizarra"
     pizarra_dir.mkdir(parents=True, exist_ok=True)
     dest = pizarra_dir / "best_whiteboard.jpg"
 
     shutil.copy(best["path"], dest)
-    console.print(f"  [green]✓[/] Saved → {dest}")
+    console.print(f"  [green]✓[/] Saved best whiteboard → {dest}")
 
-    # Guardar TOP 10
+    # Run Adaptive Whiteboard Detection & Information Highlighting
+    try:
+        from scripts.core.adaptive_whiteboard_detector import procesar_y_resaltar_conclusiones_pizarra
+        symbols_list, proc_img_path = procesar_y_resaltar_conclusiones_pizarra(dest, pizarra_dir)
+        console.print(f"  [green]✓[/] Information Highlighting applied → {proc_img_path.name}")
+    except Exception as e:
+        console.print(f"  [yellow]⚠ Adaptive detection on frame selection skipped: {e}[/]")
+
+    # Save Top 10 Candidate Frames
     top10_dir = pizarra_dir / "top10"
-
-    # Limpiamos la carpeta si ya existe para evitar imágenes duplicadas
     if top10_dir.exists():
         shutil.rmtree(top10_dir)
     top10_dir.mkdir(parents=True, exist_ok=True)
@@ -551,25 +542,7 @@ def select_best_frame(
             "source_path": sf["path"],
             "score": sf["score"]
         })
-    console.print(f"  [green]✓[/] Top 10 frames guardados en → {top10_dir}")
-    # ==========================================
-    # NUEVO: GUARDAR TOP 10 FRAMES
-    # ==========================================
-    top10_dir = pizarra_dir / "top10"
-    top10_dir.mkdir(parents=True, exist_ok=True)
-
-    top10_info = []
-    for rank, sf in enumerate(scored_frames[:10], start=1):
-        # Guardar copia con prefijo de rango para identificarlos fácilmente (ej: rank_01_frame_123.jpg)
-        top10_dest = top10_dir / f"rank_{rank:02d}_{sf['path'].name}"
-        shutil.copy(sf["path"], top10_dest)
-        top10_info.append({
-            "rank": rank,
-            "path": top10_dest,
-            "source_path": sf["path"],
-            "score": sf["score"]
-        })
-    console.print(f"  [green]✓[/] Top 10 frames guardados en → {top10_dir}")
+    console.print(f"  [green]✓[/] Top 10 frames saved → {top10_dir}")
 
     # Copy to bad_whiteboard for manual review
     bad_wb_dir = video_frames_dir.parent.parent / "bad_whiteboard"

@@ -256,17 +256,34 @@ def analyze_frame(
 ) -> dict[str, Any]:
     """
     Send a single keyframe + transcript + detected symbols to Gemini for architecture extraction.
-    Uses the Double-Model (Modeler + Planner) technique with Pydantic schemas
-    for guaranteed JSON structure.
+    Uses adaptive whiteboard detection & information highlighting + Pydantic schemas.
     """
     client = _get_client()
 
-    # Read and encode image
-    image_bytes = frame_path.read_bytes()
+    # ── Run Adaptive Whiteboard Detection & Information Highlighting ──
+    symbols_prompt_section = ""
+    target_image_path = frame_path
+
+    try:
+        from scripts.core.adaptive_whiteboard_detector import (
+            procesar_y_resaltar_conclusiones_pizarra,
+            format_symbols_for_prompt,
+        )
+        symbols_list, processed_img_path = procesar_y_resaltar_conclusiones_pizarra(
+            frame_path, frame_path.parent, delta_contraste_min=25.0
+        )
+        symbols_prompt_section = format_symbols_for_prompt(symbols_list)
+        if processed_img_path and processed_img_path.exists():
+            target_image_path = processed_img_path
+    except Exception as e:
+        console.print(f"  [yellow]⚠ Adaptive detection skipped: {e}[/]")
+
+    # Read and encode image (highlighted image with connection lines and bounding tags)
+    image_bytes = target_image_path.read_bytes()
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
     # Determine MIME type
-    suffix = frame_path.suffix.lower()
+    suffix = target_image_path.suffix.lower()
     mime = {"jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png"}.get(
         suffix.lstrip("."), "image/jpeg"
     )
@@ -281,6 +298,8 @@ def analyze_frame(
     )
 
     prompt_parts_1 = [formatted_prompt_1]
+    if symbols_prompt_section:
+        prompt_parts_1.append(symbols_prompt_section)
     if video_url:
         prompt_parts_1.append(f"\n## VIDEO URL:\n{video_url}")
     if transcript:
