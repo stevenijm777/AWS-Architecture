@@ -236,14 +236,21 @@ def _get_client():
 
 
 def _call_gemini_with_retry(client, full_prompt, mime, image_b64, response_schema=None):
-    """Call Gemini with retry logic for transient API errors."""
+    """Call Gemini with retry logic for transient API errors using Pydantic structured output."""
+    from google.genai import types
     max_retries = 5
     retry_delay = 10
     response = None
 
-    config = {"response_mime_type": "application/json"}
     if response_schema is not None:
-        config["response_schema"] = response_schema
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=response_schema,
+        )
+    else:
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+        )
 
     for attempt in range(max_retries):
         try:

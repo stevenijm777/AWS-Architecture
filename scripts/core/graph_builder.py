@@ -62,9 +62,46 @@ def create_graph_from_cloudscape_json(
     nx.MultiDiGraph
         Graph compatible with Cloudscape dataset.
     """
-    graph_meta = analysis_result.get("graph", {})
-    nodes_data = analysis_result.get("nodes", [])
-    edges_data = analysis_result.get("edges", [])
+    # Flexible extraction handling dictionary vs list structure
+    graph_meta = {}
+    nodes_data = []
+    edges_data = []
+
+    if isinstance(analysis_result, list):
+        for item in analysis_result:
+            if isinstance(item, dict):
+                if any(k in item for k in ("source", "target", "from", "to", "source_id", "target_id")):
+                    edges_data.append(item)
+                elif any(k in item for k in ("id", "service", "name")):
+                    nodes_data.append(item)
+    elif isinstance(analysis_result, dict):
+        graph_meta = analysis_result.get("graph", {})
+        if not isinstance(graph_meta, dict):
+            graph_meta = {}
+
+        # Extract nodes (try 'nodes', 'entities', 'components')
+        nodes_data = (
+            analysis_result.get("nodes")
+            or analysis_result.get("entities")
+            or analysis_result.get("components")
+            or []
+        )
+        if not isinstance(nodes_data, list):
+            nodes_data = []
+
+        # Extract edges (try 'edges' or nested inside 'flows')
+        edges_raw = analysis_result.get("edges")
+        if isinstance(edges_raw, list) and len(edges_raw) > 0:
+            edges_data = edges_raw
+        elif "flows" in analysis_result and isinstance(analysis_result["flows"], list):
+            for flow in analysis_result["flows"]:
+                if isinstance(flow, dict) and "edges" in flow and isinstance(flow["edges"], list):
+                    flow_id = flow.get("flow_id", 0)
+                    for e in flow["edges"]:
+                        if isinstance(e, dict):
+                            e_copy = dict(e)
+                            e_copy.setdefault("flow_id", flow_id)
+                            edges_data.append(e_copy)
 
     # Create graph with Cloudscape-standard attributes
     G = nx.MultiDiGraph()
@@ -77,16 +114,21 @@ def create_graph_from_cloudscape_json(
     valid_services = load_valid_services()
 
     # ── Add Nodes ────────────────────────────────────────────
-    for node in nodes_data:
-        node_id = str(node.get("id", ""))
-        service = str(node.get("service", "")).strip()
-        name = str(node.get("name", "")).strip()
-        notes = str(node.get("notes", "")).strip()
+    for idx, node in enumerate(nodes_data):
+        if not isinstance(node, dict):
+            continue
+
+        raw_id = node.get("id") if node.get("id") is not None else node.get("node_id") if node.get("node_id") is not None else str(idx)
+        node_id = str(raw_id)
+
+        service = str(node.get("service") or node.get("type") or "").strip()
+        name = str(node.get("name") or node.get("label") or "").strip()
+        notes = str(node.get("notes") or node.get("description") or node.get("rationale") or "").strip()
 
         # Normalize service name casing and resolve generic services
         service_lower = service.lower()
         service_clean = service_lower.replace(" ", "").replace("-", "").replace("_", "")
-        
+
         # Strip common AWS/Amazon prefixes
         if service_clean.startswith("amazon") and len(service_clean) > 6:
             service_clean_stripped = service_clean[6:]
@@ -117,7 +159,7 @@ def create_graph_from_cloudscape_json(
                 service = "ThirdParty"
                 if not name:
                     name = "unspecified AWS database services"
-        
+
         # Final validation against valid_services
         if service.lower() not in valid_services and service:
             console.print(f"[yellow]⚠[/] Unknown service '{service}' normalized to 'ThirdParty'")
@@ -134,8 +176,17 @@ def create_graph_from_cloudscape_json(
 
     # ── Add Edges ────────────────────────────────────────────
     for edge in edges_data:
-        src = str(edge.get("source", ""))
-        tgt = str(edge.get("target", ""))
+        if not isinstance(edge, dict):
+            continue
+
+        src_val = edge.get("source") if edge.get("source") is not None else edge.get("from") if edge.get("from") is not None else edge.get("source_id") if edge.get("source_id") is not None else edge.get("src")
+        tgt_val = edge.get("target") if edge.get("target") is not None else edge.get("to") if edge.get("to") is not None else edge.get("target_id") if edge.get("target_id") is not None else edge.get("dst")
+
+        if src_val is None or tgt_val is None:
+            continue
+
+        src = str(src_val).strip()
+        tgt = str(tgt_val).strip()
         if not src or not tgt:
             continue
 
@@ -144,13 +195,15 @@ def create_graph_from_cloudscape_json(
             if not G.has_node(nid):
                 G.add_node(nid, name="", service="unknown", notes="")
 
+        notes_val = edge.get("notes") if edge.get("notes") is not None else edge.get("description") if edge.get("description") is not None else edge.get("label") or ""
+
         G.add_edge(
             src,
             tgt,
             flow_id=int(edge.get("flow_id", 0)),
-            notes=edge.get("notes", ""),
+            notes=str(notes_val).strip(),
             seq=str(edge.get("seq", "0")),
-            type=edge.get("type", "data"),
+            type=str(edge.get("type", "data")),
         )
 
     console.print(

@@ -197,16 +197,23 @@ def _call_gemini_with_retry(
 ):
     """Call Gemini with retry logic for transient API errors.
     
-    When response_schema is provided, uses Pydantic-enforced structured output.
+    When response_schema is provided, uses Pydantic-enforced structured output via types.GenerateContentConfig.
     """
+    from google.genai import types
     import time
     max_retries = 5
     retry_delay = 10
     response = None
 
-    config = {"response_mime_type": "application/json"}
     if response_schema is not None:
-        config["response_schema"] = response_schema
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            response_schema=response_schema,
+        )
+    else:
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+        )
 
     for attempt in range(max_retries):
         try:
