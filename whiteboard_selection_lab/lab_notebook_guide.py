@@ -6,7 +6,9 @@ from pathlib import Path
 import cv2
 import matplotlib.pyplot as plt
 
-# Add algorithms folder to path to import modules
+# Add project root and algorithms folder to path to import modules
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.append(str(PROJECT_ROOT))
 sys.path.append(str(Path(__file__).resolve().parent / "algorithms"))
 
 # Example importing filters

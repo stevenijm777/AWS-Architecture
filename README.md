@@ -120,6 +120,31 @@ python main.py --url "https://www.youtube.com/watch?v=5hjkSczrke4" --mode parsim
 
 ---
 
+### **2. Procesamiento por Lote (Batch Processing)**
+
+El repositorio cuenta con **dos ejecutores unificados en `scripts/batch/`**:
+
+#### **A. Preprocesamiento Local (Sin API)**
+Preprocesa nuevos videos descargando contenido, extrayendo audio/keyframes y seleccionando la mejor pizarra localmente sin consumir cuota de API:
+```bash
+python scripts/batch/bulk_preprocess_local.py
+```
+
+#### **B. Extracción en Lote con Visión Gemini (API)**
+Procesa los videos faltantes usando la API de visión de Gemini:
+```bash
+# Procesar 10 videos faltantes en modo Standard (defecto)
+GEMINI_MODEL=gemini-3-flash-preview python scripts/batch/process_batch_vision.py --mode standard --limit 10
+
+# Procesar 10 videos faltantes en modo Parsimonious
+GEMINI_MODEL=gemini-3-flash-preview python scripts/batch/process_batch_vision.py --mode parsimonious --limit 10
+
+# Procesar continuamente hasta completar o agotar la cuota de la API (HTTP 429)
+GEMINI_MODEL=gemini-3-flash-preview python scripts/batch/process_batch_vision.py --mode standard --until-quota
+```
+
+---
+
 ## Visualizadores Streamlit (Explorador Interactivo)
 
 El proyecto incluye una suite interactiva de exploradores en [cloudscape_explorer/](file:///home/stemjara/Projects/AWS-Architecture/cloudscape_explorer) para navegar visualmente por las arquitecturas generadas y compararlas contra las referencias manuales.

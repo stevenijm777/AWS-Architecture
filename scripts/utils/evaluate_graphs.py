@@ -984,8 +984,8 @@ if __name__ == "__main__":
         help="Directory with ground truth .graphml files (default: data/cloudscape_gt)",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=Path("cloudscape_reports"),
-        help="Directory for output reports (default: cloudscape_reports)",
+        "--output-dir", type=Path, default=Path("data/reports"),
+        help="Directory for output reports (default: data/reports)",
     )
     args = parser.parse_args()
 
