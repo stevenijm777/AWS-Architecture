@@ -16,7 +16,7 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `1xLjtJnfZes` | MATTR: Building Digital Trust at Scale | **80.0%** | 80.0% | Rendimiento equivalente en detección de servicios. |
 | `2L0m28ZLmtE` | Sanofi with TeamWork: OnDemand Data Science Environment | **100.0%** | 91.7% | Parsimonious supera a Standard por 8.3%. F1 de conexiones del 50.0%. |
 | `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis | **71.4%** | 71.4% | Standard supera a Parsimonious por 0.4%. El simplificado omitió detalles menores. |
-| `2e3vOxsHekE` | Mueller Water Products: A Water Intelligent Platform | **66.7%** | 83.3% | Standard supera a Parsimonious por 16.7%. F1 de conexiones del 60.0%. |
+| `2e3vOxsHekE` | Mueller Water Products: A Water Intelligent Platform | **83.3%** | 83.3% | Rendimiento equivalente en servicios. F1 de conexiones del 60.0%. |
 | `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League Gaming Platform on AWS | **70.6%** | 70.6% | Parsimonious supera a Standard por 0.4%. El clásico alucina nodos por ruidos de la transcripción. |
 | `3yJZ6rPoZfg` | Hexagon HxDR: Cloud-Based Visualization of Spatial Data | **50.0%** | 50.0% | Rendimiento equivalente en detección de servicios. |
 | `4-teOQ_dJvY` | SBB Cargo: Data Collection and Processing with Serverless Analytics Services | **71.4%** | 57.1% | Parsimonious supera a Standard por 13.9%. El clásico alucina nodos por ruidos de la transcripción. |
