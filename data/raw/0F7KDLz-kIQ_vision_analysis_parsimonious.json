@@ -1,234 +1,226 @@
 {
-  "step_by_step_reasoning": "The architecture diagram shows an incoming request routed through an edge/routing tier (Route 53, CloudFront, internal Route 53) to split traffic between two backend compute paths (ECS on Fargate vs. API Gateway with Lambda). CloudWatch monitors performance and triggers a Lambda function (labeled AWS SDK) that updates routing weights back in the internal Route 53. Both compute tiers interact with a suite of databases: ElastiCache, DocumentDB, RDS, and OpenSearch (labeled ElasticSearch). AWS CDK is drawn as an infrastructure-as-code deployment block without direct runtime data flow lines.",
+  "step_by_step_reasoning": "The architecture shows a dual-path request processing flow managed by Route 53 and CloudFront. Incoming requests pass through an edge Route 53 to CloudFront and then to an internal Route 53 for dynamic weighted traffic routing between an ECS/Fargate container path and an API Gateway/Lambda serverless path. Both compute backends interact with four data stores: ElastiCache, DocumentDB, RDS, and ElasticSearch (OpenSearch). An AWS SDK/CloudWatch loop provides dynamic weight management. Infrastructure is provisioned via CDK.",
   "graph": {
-    "name": "Zigbang Hybrid Architecture with Duplexing Method",
+    "name": "Zigbang Hybrid Architecture with Dynamic Traffic Balancing",
     "link": "",
-    "categories": "Web & Mobile Infrastructure",
+    "categories": "Web & Mobile Backends",
     "graph_usable": true,
-    "notes": "The architecture uses dynamic DNS weight adjustment via Route 53, CloudWatch, and Lambda (AWS SDK) to balance high traffic across ECS Fargate and API Gateway Lambda backends."
+    "notes": "Hybrid architecture using ECS/Fargate and API Gateway/Lambda with dynamic weight distribution via Route 53."
   },
   "nodes": [
     {
       "id": "0",
       "service": "Route53",
-      "name": "Route 53 (Public)",
-      "notes": "External DNS entry point"
+      "name": "Route 53 (DNS)",
+      "notes": "Edge DNS entry point"
     },
     {
       "id": "1",
       "service": "CloudFront",
       "name": "CloudFront",
-      "notes": "Content delivery network caching traffic"
+      "notes": "CDN distribution"
     },
     {
       "id": "2",
       "service": "Route53",
-      "name": "Route 53 (Internal)",
-      "notes": "Internal DNS used for dynamic weight-based traffic distribution"
+      "name": "Route 53 (Internal Routing)",
+      "notes": "Internal weighted traffic distribution"
     },
     {
       "id": "3",
       "service": "ECS",
       "name": "ECS",
-      "notes": "Elastic Container Service container orchestration"
+      "notes": "Container orchestration"
     },
     {
       "id": "4",
       "service": "Fargate",
       "name": "Fargate",
-      "notes": "Serverless compute engine for ECS containers"
+      "notes": "Serverless compute for containers"
     },
     {
       "id": "5",
       "service": "ApiGateway",
       "name": "API GW",
-      "notes": "REST API entry point for serverless path"
+      "notes": "API management for serverless path"
     },
     {
       "id": "6",
       "service": "Lambda",
       "name": "Lambda",
-      "notes": "Serverless compute running business logic"
+      "notes": "Serverless execution backend"
     },
     {
       "id": "7",
       "service": "Lambda",
-      "name": "AWS SDK (Lambda)",
-      "notes": "Lambda function executing SDK calls to update Route 53 weights dynamically"
+      "name": "AWS SDK",
+      "notes": "Custom weight adjustment logic"
     },
     {
       "id": "8",
       "service": "CloudWatch",
       "name": "CloudWatch",
-      "notes": "Monitors compute utilization"
+      "notes": "Monitoring and metric collection"
     },
     {
       "id": "9",
       "service": "ElastiCache",
       "name": "ElastiCache",
-      "notes": "In-memory caching store"
+      "notes": "In-memory caching layer"
     },
     {
       "id": "10",
       "service": "DocumentDB",
       "name": "Document DB",
-      "notes": "Document database for unstructured/high-read data"
+      "notes": "Unstructured/NoSQL data store"
     },
     {
       "id": "11",
       "service": "RDS",
       "name": "RDS",
-      "notes": "Relational database for relational CRUD operations"
+      "notes": "Relational database for CRUD operations"
     },
     {
       "id": "12",
       "service": "OpenSearch",
       "name": "ElasticSearch",
-      "notes": "Search engine and application logging"
+      "notes": "Search engine and application log storage"
     },
     {
       "id": "13",
       "service": "CloudFormation",
       "name": "CDK",
-      "notes": "Infrastructure as code framework used to manage deployment"
+      "notes": "Infrastructure as Code"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 0,
-      "seq": "0",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "Public Route 53 resolves traffic to CloudFront"
+      "notes": "Routes initial external traffic to CloudFront"
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 0,
-      "seq": "1",
+      "flow_id": 1,
+      "seq": "2",
       "type": "data",
-      "notes": "CloudFront forwards requests to internal Route 53"
+      "notes": "Forwards request to internal Route 53"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "2a",
+      "flow_id": 1,
+      "seq": "3a",
       "type": "data",
-      "notes": "Internal Route 53 routes weighted traffic to ECS"
+      "notes": "Weighted routing to ECS container path"
     },
     {
       "source": "2",
       "target": "5",
-      "flow_id": 0,
-      "seq": "2b",
+      "flow_id": 1,
+      "seq": "3b",
       "type": "data",
-      "notes": "Internal Route 53 routes weighted traffic to API Gateway"
+      "notes": "Weighted routing to API Gateway path during traffic spikes"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 0,
-      "seq": "3a",
+      "flow_id": 1,
+      "seq": "4a",
       "type": "data",
-      "notes": "ECS runs tasks on Fargate"
+      "notes": "Executes workload on Fargate"
     },
     {
       "source": "5",
       "target": "6",
-      "flow_id": 0,
-      "seq": "3b",
+      "flow_id": 1,
+      "seq": "4b",
       "type": "data",
-      "notes": "API Gateway triggers Lambda function"
+      "notes": "Triggers serverless Lambda execution"
     },
     {
-      "source": "3",
-      "target": "8",
+      "source": "4",
+      "target": "9",
       "flow_id": 1,
-      "seq": "0",
-      "type": "meta",
-      "notes": "ECS metrics are sent to CloudWatch"
+      "seq": "5a",
+      "type": "data",
+      "notes": "Queries volatile cache"
     },
     {
-      "source": "8",
-      "target": "7",
+      "source": "4",
+      "target": "10",
       "flow_id": 1,
-      "seq": "1",
-      "type": "meta",
-      "notes": "CloudWatch triggers Lambda (AWS SDK) on alarm or metric update"
+      "seq": "5b",
+      "type": "data",
+      "notes": "Queries unstructured data"
+    },
+    {
+      "source": "4",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "5c",
+      "type": "data",
+      "notes": "Performs relational CRUD operations"
+    },
+    {
+      "source": "4",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "5d",
+      "type": "data",
+      "notes": "Search operations and logging"
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "5e",
+      "type": "data",
+      "notes": "Queries volatile cache"
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5f",
+      "type": "data",
+      "notes": "Queries unstructured data"
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "5g",
+      "type": "data",
+      "notes": "Performs relational CRUD operations"
+    },
+    {
+      "source": "6",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "5h",
+      "type": "data",
+      "notes": "Search operations and logging"
     },
     {
       "source": "7",
-      "target": "2",
-      "flow_id": 1,
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Sends custom metrics to CloudWatch"
+    },
+    {
+      "source": "8",
+      "target": "1",
+      "flow_id": 2,
       "seq": "2",
       "type": "meta",
-      "notes": "Lambda (AWS SDK) dynamically updates internal Route 53 record weights"
-    },
-    {
-      "source": "4",
-      "target": "9",
-      "flow_id": 0,
-      "seq": "4a",
-      "type": "data",
-      "notes": "Fargate queries ElastiCache"
-    },
-    {
-      "source": "4",
-      "target": "10",
-      "flow_id": 0,
-      "seq": "4b",
-      "type": "data",
-      "notes": "Fargate queries DocumentDB"
-    },
-    {
-      "source": "4",
-      "target": "11",
-      "flow_id": 0,
-      "seq": "4c",
-      "type": "data",
-      "notes": "Fargate queries RDS"
-    },
-    {
-      "source": "4",
-      "target": "12",
-      "flow_id": 0,
-      "seq": "4d",
-      "type": "data",
-      "notes": "Fargate queries OpenSearch"
-    },
-    {
-      "source": "6",
-      "target": "9",
-      "flow_id": 0,
-      "seq": "4e",
-      "type": "data",
-      "notes": "Lambda queries ElastiCache"
-    },
-    {
-      "source": "6",
-      "target": "10",
-      "flow_id": 0,
-      "seq": "4f",
-      "type": "data",
-      "notes": "Lambda queries DocumentDB"
-    },
-    {
-      "source": "6",
-      "target": "11",
-      "flow_id": 0,
-      "seq": "4g",
-      "type": "data",
-      "notes": "Lambda queries RDS"
-    },
-    {
-      "source": "6",
-      "target": "12",
-      "flow_id": 0,
-      "seq": "4h",
-      "type": "data",
-      "notes": "Lambda queries OpenSearch"
+      "notes": "Adjusts traffic weighting dynamically based on metrics"
     }
   ]
 }

@@ -7,23 +7,23 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | Video ID | Título | F1 Parsimonious | F1 Standard | Diagnóstico / Observaciones |
 |---|---|---|---|---|
 | `6CgqEzyWpeA` | SundaySky: Create Personalized Videos in Real Time on GPU-based Spot Instance... | **82.4%** | 84.2% | Standard supera a Parsimonious por 1.9%. F1 de conexiones del 34.3%. |
-| `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | **70.0%** | 95.7% | Standard supera a Parsimonious por 25.7%. F1 de conexiones del 24.0%. |
+| `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | **95.7%** | 95.7% | Rendimiento equivalente en servicios. F1 de conexiones del 64.3%. |
 | `-kA0ahrhX3I` | Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie | **100.0%** | 85.7% | Parsimonious supera a Standard por 14.3%. F1 de conexiones del 52.6%. |
 | `-wLEkq21cvA` | Versent: The Migration Factory | **66.7%** | 72.7% | Standard supera a Parsimonious por 6.1%. F1 de conexiones del 47.6%. |
 | `07lfvavMdfU` | Levels Beyond: Digital Content Orchestration | **100.0%** | 90.0% | Parsimonious supera a Standard por 4.8%. El clásico alucina nodos por ruidos de la transcripción. |
-| `0F7KDLz-kIQ` | Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK | **87.0%** | 81.8% | Parsimonious supera a Standard por 5.1%. F1 de conexiones del 62.2%. |
+| `0F7KDLz-kIQ` | Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK | **87.0%** | 81.8% | Parsimonious supera a Standard por 5.1%. F1 de conexiones del 54.5%. |
 | `1aYoIZvabbk` | OLX Autos: Building Developer Platform for Rapid Global Expansion | **92.3%** | 92.3% | Rendimiento equivalente en servicios. F1 de conexiones del 83.3%. |
 | `1xLjtJnfZes` | MATTR: Building Digital Trust at Scale | **80.0%** | 80.0% | Rendimiento equivalente en detección de servicios. |
 | `2L0m28ZLmtE` | Sanofi with TeamWork: OnDemand Data Science Environment | **100.0%** | 91.7% | Parsimonious supera a Standard por 8.3%. F1 de conexiones del 50.0%. |
 | `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis | **71.4%** | 71.4% | Standard supera a Parsimonious por 0.4%. El simplificado omitió detalles menores. |
 | `2e3vOxsHekE` | Mueller Water Products: A Water Intelligent Platform | **83.3%** | 83.3% | Rendimiento equivalente en servicios. F1 de conexiones del 60.0%. |
-| `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League Gaming Platform on AWS | **66.7%** | 70.6% | Standard supera a Parsimonious por 3.9%. F1 de conexiones del 36.4%. |
+| `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League Gaming Platform on AWS | **66.7%** | 70.6% | Standard supera a Parsimonious por 3.9%. F1 de conexiones del 43.5%. |
 | `3yJZ6rPoZfg` | Hexagon HxDR: Cloud-Based Visualization of Spatial Data | **50.0%** | 50.0% | Rendimiento equivalente en detección de servicios. |
 | `4-teOQ_dJvY` | SBB Cargo: Data Collection and Processing with Serverless Analytics Services | **71.4%** | 57.1% | Parsimonious supera a Standard por 13.9%. El clásico alucina nodos por ruidos de la transcripción. |
 | `5EmA67lSJEs` | Extreme Reach: The AdBridge Platform on AWS Handles 80%+ of all Commercials in the US | **80.0%** | 80.0% | Rendimiento equivalente en detección de servicios. |
 | `5f3z1Z_9BJA` | Capgemini: Refactoring a Data Warehouse to Amazon Redshift | **85.7%** | 80.0% | Parsimonious supera a Standard por 6.0%. El clásico alucina nodos por ruidos de la transcripción. |
 | `5vR5aN_xdI0` | Splunk: Data at Scale by Decoupling Compute and Storage LIVE | **92.3%** | 76.9% | Parsimonious supera a Standard por 15.1%. El clásico alucina nodos por ruidos de la transcripción. |
-| `6EUknQqaV1w` | CloudHealth by VMware: Secure State. Manages Over 50M Assets from Billions of... | **76.9%** | 72.7% | Parsimonious supera a Standard por 4.2%. F1 de conexiones del 38.5%. |
+| `6EUknQqaV1w` | CloudHealth by VMware: Secure State. Manages Over 50M Assets from Billions of... | **93.3%** | 93.3% | Rendimiento equivalente en servicios. F1 de conexiones del 69.6%. |
 | `6LcSv9XocTY` | Intuit: Serving 7 Million Customers Using Amazon Connect | **82.3%** | 76.2% | Parsimonious supera a Standard por 5.8%. El clásico alucina nodos por ruidos de la transcripción. |
 | `6YkguepAQuQ` | Aetion: Deploy Applications  Provision Cloud Resources with AWS Developer Tools | **100.0%** | 100.0% | Parsimonious supera a Standard por 5.3%. El clásico alucina nodos por ruidos de la transcripción. |
 | `6iK4WNj6QqI` | Ticketmaster: Active-Active Multi-Region Checkout for Ticket Purchases | **76.9%** | N/A | Comparación no disponible. |
@@ -98,3 +98,4 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `t8JCvcnFX10` | Age of Learning: Highly Scalable Continuous Integration Platform with Amazon EKS and Amazon EC2-Spot | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
 | `vQgUkn3rAMY` | AssemblyAI: Building a Scalable Machine Learning Platform for Voice Data Transcription and Analysis | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
 | `ym_Gz_zH7w8` | Peloton: Improved Customer Satisfaction and Engagement Powered by Real-Time Recommendations | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
+| `ww5fiygF6eg` | Marathon Oil: Automating Drone Image Processing to Monitor Equipment Health | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 29.6%. |

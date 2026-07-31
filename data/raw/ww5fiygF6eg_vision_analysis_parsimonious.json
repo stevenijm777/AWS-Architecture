@@ -1,126 +1,112 @@
 {
-  "step_by_step_reasoning": "A scheduled CloudWatch Event kicks off an AWS Step Functions state machine. This workflow coordinates three Lambda functions: first, querying the 3rd-party drone image API; second, copying new imagery from the 3rd-party platform into an S3 bucket; and third, generating raster proxy files registered in the on-premises database. The on-premises server accesses the physical image files in S3 through AWS Storage Gateway. Finally, internal operations users query the on-premises mapping server to view the well pad images.",
+  "step_by_step_reasoning": "CloudWatch Events trigger a Step Functions workflow on a schedule. Step Functions coordinate three Lambda functions: the first checks for new drone images on a third-party server via an API; the second downloads these images and saves them to Amazon S3; the third creates raster proxies pointing to S3 and writes them to the local database of an on-premises mapping server. The on-premises server subsequently accesses the image files in S3 transparently via AWS Storage Gateway.",
   "graph": {
-    "name": "Marathon Oil Serverless Drone Imagery Ingestion and Mapping Pipeline",
-    "link": "https://www.youtube.com/watch?v=ww5fiygF6eg",
-    "categories": "data_ingestion, compute_intensive",
+    "name": "Marathon Oil Drone Imagery Pipeline",
+    "link": "https://www.youtube.com/watch?v=sI91X0E9p0E",
+    "categories": "Media & Serverless Pipelines",
     "graph_usable": true,
-    "notes": "Automates ingestion of drone-captured well pad imagery from a third-party platform into AWS S3, utilizing Lambda to create raster proxies for on-premises GIS systems accessing files via Storage Gateway."
+    "notes": "Serverless pipeline automating drone imagery processing and local integration using AWS Storage Gateway."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "EventBridge",
-      "name": "CloudWatch Event",
-      "notes": "Triggers the Step Functions workflow on a scheduled basis."
+      "service": "ThirdParty",
+      "name": "Third-Party Drone Software",
+      "notes": "Captures and processes drone images on a third-party server."
     },
     {
       "id": "1",
-      "service": "Step Functions",
-      "name": "Image Ingestion Orchestrator",
-      "notes": "Orchestrates the sequence of Lambda functions to process new flight images."
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Triggers the Step Functions on a scheduled basis."
     },
     {
       "id": "2",
-      "service": "Lambda",
-      "name": "Processing Lambdas",
-      "notes": "Three Lambda functions to poll API, transfer images to S3, and write raster proxies to the local server database."
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates Lambda functions to ingest and process images."
     },
     {
       "id": "3",
-      "service": "S3",
-      "name": "Drone Image Bucket",
-      "notes": "Stores high-resolution ortho mosaics, digital terrain models, and digital elevation models."
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Executes API calls, saves images to S3, and writes raster proxies to DB."
     },
     {
       "id": "4",
-      "service": "Storage Gateway",
-      "name": "File Gateway",
-      "notes": "Enables the on-premises mapping software to mount and read files directly from the S3 bucket."
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores drone image files."
     },
     {
       "id": "5",
-      "service": "ThirdParty",
-      "name": "3rd Party Drone Software",
-      "notes": "Processes raw drone imagery and stores processed flights."
+      "service": "StorageGateway",
+      "name": "AWS Storage Gateway",
+      "notes": "Provides on-premises server with file-based access to S3."
     },
     {
       "id": "6",
       "service": "OnPremDC",
-      "name": "On-Prem Mapping Server & DB",
-      "notes": "Hosts the legacy GIS/mapping software and database storing image raster proxies."
-    },
-    {
-      "id": "7",
-      "service": "UserCompanyAgent",
-      "name": "Operations & Maintenance Teams",
-      "notes": "Internal users accessing the GIS platform to perform equipment health checks and preventive maintenance."
+      "name": "On-Premises Mapping Server",
+      "notes": "Hosts mapping software and local database for raster proxies."
     }
   ],
   "edges": [
     {
-      "source": "0",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "0",
-      "type": "data",
-      "notes": "Triggers orchestration workflow on a schedule."
-    },
-    {
       "source": "1",
       "target": "2",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Executes Lambdas sequentially."
+      "notes": "Scheduled trigger initiates Step Functions."
     },
     {
       "source": "2",
-      "target": "5",
-      "flow_id": 0,
+      "target": "3",
+      "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Queries API for new flights and initiates transfer."
+      "notes": "Orchestrates execution of the three Lambda functions."
     },
     {
-      "source": "5",
-      "target": "3",
-      "flow_id": 0,
+      "source": "3",
+      "target": "0",
+      "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Copies drone image files into S3 bucket."
+      "notes": "Queries third-party API for new images."
     },
     {
-      "source": "2",
-      "target": "6",
-      "flow_id": 0,
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "Writes raster proxy URLs to the local on-premises database."
+      "notes": "Downloads drone files and stores them in S3."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Stores created raster proxies in the local database."
     },
     {
       "source": "6",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "On-prem server requests image files from Storage Gateway mount."
-    },
-    {
-      "source": "4",
-      "target": "3",
-      "flow_id": 1,
+      "target": "5",
+      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Reads image data from S3 bucket."
+      "notes": "Accesses image files via Storage Gateway mount."
     },
     {
-      "source": "7",
-      "target": "6",
+      "source": "5",
+      "target": "4",
       "flow_id": 2,
-      "seq": "0",
+      "seq": "2",
       "type": "data",
-      "notes": "Internal users query the mapping software to view imagery."
+      "notes": "Retrieves actual drone images stored in Amazon S3."
     }
   ]
 }

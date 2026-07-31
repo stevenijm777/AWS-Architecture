@@ -852,12 +852,18 @@ Return ONLY valid JSON (no markdown fences):
 
 ---
 
-## [Registro 11] - 2026-07-31 (Evaluación en Lote de 5 Videos con Gemini 3.6 Flash y Carga Dinámica Pandas)
+---
+
+---
+
+---
+
+---
+
+## [Registro 11] - 2026-07-31 (Evaluación Real En Vivo para 5 Videos con Gemini 3.6 Flash)
 * **Videos Evaluados (5):** `3WgTBTDlQN8, -3lnf5lzsH0, -wLEkq21cvA, 0F7KDLz-kIQ, 1aYoIZvabbk`
-* **Modelo utilizado:** `gemini-3.6-flash`
-* **Modo:** Parsimonioso (1 sola fase)
-* **Promedio Service F1 (Test):** **76.5%** (vs Standard: 82.6%)
-* **Promedio Edge F1 (Test):** **50.7%**
+* **Modelo utilizado:** `gemini-3.6-flash` (Llamadas en vivo a API, caché eliminada)
+* **Modo:** Parsimonioso (1 sola fase con prompt dinámico Pandas)
 
 ### Prompt Utilizado:
 ```text
@@ -905,13 +911,610 @@ Return ONLY valid JSON (no markdown fences):
 }
 ```
 
-### Tabla Resumen Comparativa por Video:
+## Resultados Detallados de Evaluación Real por Video:
 
-| Video ID | GT Nodos | GT Aristas | F1 Standard | F1 Parsimonious Test | Edge F1 Test | Servicios Faltantes | Servicios Alucinados |
-| :--- | :---: | :---: | :---: | :---: | :---: | :--- | :--- |
-| `3WgTBTDlQN8` | 9 | 14 | 70.6% | **66.7%** | 36.4% | ['EC2', 'UserCompanyAPI', 'UserConsumerMobile'] | ['MongoDBAtlas', 'ThirdParty', 'UserConsumerWebMobile'] |
-| `-3lnf5lzsH0` | 13 | 16 | 95.7% | **70.0%** | 24.0% | ['CloudTrail', 'GuardDuty', 'SNS', 'SQS', 'ThirdParty'] | ['VPC'] |
-| `-wLEkq21cvA` | 9 | 10 | 72.7% | **66.7%** | 47.6% | ['UserCompanyAgent'] | ['AMI', 'OnPremDC', 'UserCompanyDeveloper'] |
-| `0F7KDLz-kIQ` | 13 | 28 | 81.8% | **87.0%** | 62.2% | ['UserConsumerWeb'] | ['CloudFormation', 'ECS'] |
-| `1aYoIZvabbk` | 6 | 5 | 92.3% | **92.3%** | 83.3% | [] | ['EC2'] |
+### 🎥 Video: `3WgTBTDlQN8` — FanFight: Building a Realtime Fantasy League Gaming Platform on AWS
 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Gemini 3.6 Flash EN VIVO) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 11 | 9 | **9** |
+| **Número de Aristas** | 14 | 14 | 9 | **9** |
+| **Service F1 (Unique)** | — | 70.6% | 66.7% | **66.7%** |
+| **Service Precision** | — | 75.0% | 66.7% | **66.7%** |
+| **Service Recall** | — | 66.7% | 66.7% | **66.7%** |
+| **Edge F1 (Connections)** | — | 42.9% | 43.5% | **43.5%** |
+| **Edge Precision** | — | 42.9% | 55.6% | **55.6%** |
+| **Edge Recall** | — | 42.9% | 35.7% | **35.7%** |
+
+* **Servicios Faltantes (Omitidos):** `['EC2', 'UserCompanyAPI', 'UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `['MongoDBAtlas', 'ThirdParty', 'UserConsumerWebMobile']`
+
+
+### 🎥 Video: `-3lnf5lzsH0` — MakeMyTrip: Building Next Generation SOC
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Gemini 3.6 Flash EN VIVO) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 13 | 9 | **9** |
+| **Número de Aristas** | 16 | 13 | 9 | **9** |
+| **Service F1 (Unique)** | — | 95.7% | 73.7% | **73.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 91.7% | 58.3% | **58.3%** |
+| **Edge F1 (Connections)** | — | 20.7% | 40.0% | **40.0%** |
+| **Edge Precision** | — | 23.1% | 55.6% | **55.6%** |
+| **Edge Recall** | — | 18.8% | 31.2% | **31.2%** |
+
+* **Servicios Faltantes (Omitidos):** `['CloudTrail', 'EC2', 'GuardDuty', 'SNS', 'SQS']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+
+### 🎥 Video: `-wLEkq21cvA` — Versent: The Migration Factory
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Gemini 3.6 Flash EN VIVO) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 10 | 11 | **11** |
+| **Número de Aristas** | 10 | 10 | 11 | **11** |
+| **Service F1 (Unique)** | — | 72.7% | 66.7% | **66.7%** |
+| **Service Precision** | — | 66.7% | 57.1% | **57.1%** |
+| **Service Recall** | — | 80.0% | 80.0% | **80.0%** |
+| **Edge F1 (Connections)** | — | 50.0% | 47.6% | **47.6%** |
+| **Edge Precision** | — | 50.0% | 45.5% | **45.5%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **50.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAgent']`
+* **Servicios Alucinados (Inventados):** `['AMI', 'OnPremDC', 'UserCompanyDeveloper']`
+
+
+### 🎥 Video: `0F7KDLz-kIQ` — Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Gemini 3.6 Flash EN VIVO) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 12 | 14 | **14** |
+| **Número de Aristas** | 28 | 20 | 16 | **16** |
+| **Service F1 (Unique)** | — | 81.8% | 87.0% | **87.0%** |
+| **Service Precision** | — | 81.8% | 83.3% | **83.3%** |
+| **Service Recall** | — | 81.8% | 90.9% | **90.9%** |
+| **Edge F1 (Connections)** | — | 37.5% | 54.5% | **54.5%** |
+| **Edge Precision** | — | 45.0% | 75.0% | **75.0%** |
+| **Edge Recall** | — | 32.1% | 42.9% | **42.9%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserConsumerWeb']`
+* **Servicios Alucinados (Inventados):** `['CloudFormation', 'ECS']`
+
+
+### 🎥 Video: `1aYoIZvabbk` — OLX Autos: Building Developer Platform for Rapid Global Expansion
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Gemini 3.6 Flash EN VIVO) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 7 | 7 | **7** |
+| **Número de Aristas** | 5 | 7 | 7 | **7** |
+| **Service F1 (Unique)** | — | 92.3% | 92.3% | **92.3%** |
+| **Service Precision** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 83.3% | 83.3% | **83.3%** |
+| **Edge Precision** | — | 71.4% | 71.4% | **71.4%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **100.0%** |
+
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['EC2']`
+
+
+
+
+---
+
+## [Registro 12] - 2026-07-31 (Evaluación con Prompt v6: 4 Reglas Avanzadas)
+* **Video Evaluado:** `6EUknQqaV1w` (CloudHealth by VMware: Secure State. Manages Over 50M Assets from Billions of Events on AWS)
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v6)
+
+### Prompt Utilizado (Prompt v6):
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes strictly on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+   - If a single generic box is drawn (e.g., labeled "AWS") but the audio mentions multiple underlying services, DO NOT expand them. Create a single node for that visual block.
+
+4. CONTAINER & NESTED BOX ROUTING: When an arrow points to the edge/boundary of a large container box (like a VPC, AWS Account, or Region), assume the connection routes directly to the primary service(s) drawn inside that boundary, rather than connecting to the container box itself.
+
+5. STRICT VISUAL EDGES (NO OVER-CONNECTING): 
+   - Base your connections ONLY on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - IGNORE circular scribbles, highlights, or bounding boxes drawn solely for emphasis. 
+   - DO NOT mass-connect external actors to all services. Only draw an entry connection if a clear arrow originates from the actor.
+   - Do not hallucinate invisible API return paths unless explicitly drawn.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Prompt v6 Gemini 3.6) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 10 | 9 | **9** |
+| **Número de Aristas** | 11 | 14 | 12 | **12** |
+| **Service F1 (Unique)** | — | 93.3% | 93.3% | **93.3%** |
+| **Service Precision** | — | 87.5% | 87.5% | **87.5%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 88.0% | 69.6% | **69.6%** |
+| **Edge Precision** | — | 78.6% | 66.7% | **66.7%** |
+| **Edge Recall** | — | 100.0% | 72.7% | **72.7%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['UserCompanyInternalPlatform']`
+* **Observaciones:**
+  * Evaluación en vivo ejecutada con el Prompt v6 incorporando las 4 nuevas reglas (nombres sin acortar, ruteo de cajas de contenedor, orden lógico de flechas y omisión de texto flotante).
+
+
+---
+
+## [Registro 13] - 2026-07-31 (Evaluación con Carga en lab_workspace y Prompt v6)
+* **Video Evaluado:** `ww5fiygF6eg` (Marathon Oil: Automating Drone Image Processing to Monitor Equipment Health)
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v6)
+
+### Prompt Utilizado (Prompt v6):
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes strictly on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+   - If a single generic box is drawn (e.g., labeled "AWS") but the audio mentions multiple underlying services, DO NOT expand them. Create a single node for that visual block.
+
+4. CONTAINER & NESTED BOX ROUTING: When an arrow points to the edge/boundary of a large container box (like a VPC, AWS Account, or Region), assume the connection routes directly to the primary service(s) drawn inside that boundary, rather than connecting to the container box itself.
+
+5. STRICT VISUAL EDGES (NO OVER-CONNECTING): 
+   - Base your connections ONLY on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - IGNORE circular scribbles, highlights, or bounding boxes drawn solely for emphasis. 
+   - DO NOT mass-connect external actors to all services. Only draw an entry connection if a clear arrow originates from the actor.
+   - Do not hallucinate invisible API return paths unless explicitly drawn.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Prompt v6 Gemini 3.6) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 8 | 8 | **8** |
+| **Número de Aristas** | 20 | 8 | 8 | **8** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Precision** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Recall** | — | 85.7% | 85.7% | **85.7%** |
+| **Edge F1 (Connections)** | — | 35.7% | 35.7% | **35.7%** |
+| **Edge Precision** | — | 62.5% | 62.5% | **62.5%** |
+| **Edge Recall** | — | 25.0% | 25.0% | **25.0%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDrone']`
+* **Servicios Alucinados (Inventados):** `['OnPremDC']`
+* **Observaciones:**
+  * Video cargado en la estructura de trabajo local `whiteboard_selection_lab/lab_workspace/ww5fiygF6eg/`.
+  * Evaluación en vivo ejecutada con Gemini 3.6 Flash y Prompt v6.
+
+
+---
+
+## [Registro 14] - 2026-07-31 (Evaluación con Prompt v7: Regla de Conexiones Balanceadas)
+* **Video Evaluado:** `ww5fiygF6eg` (Marathon Oil: Automating Drone Image Processing to Monitor Equipment Health)
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v7)
+
+### Prompt Utilizado (Prompt v7 - Conexiones Balanceadas):
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes strictly on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+   - If a single generic box is drawn (e.g., labeled "AWS") but the audio mentions multiple underlying services, DO NOT expand them. Create a single node for that visual block.
+
+4. CONTAINER & NESTED BOX ROUTING: When an arrow points to the edge/boundary of a large container box (like a VPC, AWS Account, or Region), assume the connection routes directly to the primary service(s) drawn inside that boundary, rather than connecting to the container box itself.
+
+5. STRICT VISUAL & ESSENTIAL EDGES (BALANCED CONNECTIONS): 
+   - Base your connections primarily on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - Trace round-trip or return connections (<-) ONLY if they have a clear visual representation on the whiteboard (such as double arrowheads or explicit return line drawings) OR if they are indispensable to the primary synchronous execution flow drawn.
+   - DO NOT mass-connect external actors or services to all components. Only draw entry and return connections that have a clear visual origin or explicit primary flow path.
+   - Avoid generating speculative or decorative return paths that are not backed by visual line indicators.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Prompt v7 Gemini 3.6) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 8 | 8 | **8** |
+| **Número de Aristas** | 20 | 8 | 8 | **8** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Precision** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Recall** | — | 85.7% | 85.7% | **85.7%** |
+| **Edge F1 (Connections)** | — | 35.7% | 35.7% | **35.7%** |
+| **Edge Precision** | — | 62.5% | 62.5% | **62.5%** |
+| **Edge Recall** | — | 25.0% | 25.0% | **25.0%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDrone']`
+* **Servicios Alucinados (Inventados):** `['OnPremDC']`
+* **Observaciones:**
+  * Prueba ejecutada en vivo con el Prompt v7 incorporando la regla de conexiones balanceadas (Rule 5).
+
+
+---
+
+## [Registro 15] - 2026-07-31 (Evaluación con Prompt v7 en Video -3lnf5lzsH0)
+* **Video Evaluado:** `-3lnf5lzsH0` (MakeMyTrip: Building Next Generation SOC)
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v7: Regla de Conexiones Balanceadas)
+
+### Prompt Utilizado (Prompt v7):
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes strictly on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+   - If a single generic box is drawn (e.g., labeled "AWS") but the audio mentions multiple underlying services, DO NOT expand them. Create a single node for that visual block.
+
+4. CONTAINER & NESTED BOX ROUTING: When an arrow points to the edge/boundary of a large container box (like a VPC, AWS Account, or Region), assume the connection routes directly to the primary service(s) drawn inside that boundary, rather than connecting to the container box itself.
+
+5. STRICT VISUAL & ESSENTIAL EDGES (BALANCED CONNECTIONS): 
+   - Base your connections primarily on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - Trace round-trip or return connections (<-) ONLY if they have a clear visual representation on the whiteboard (such as double arrowheads or explicit return line drawings) OR if they are indispensable to the primary synchronous execution flow drawn.
+   - DO NOT mass-connect external actors or services to all components. Only draw entry and return connections that have a clear visual origin or explicit primary flow path.
+   - Avoid generating speculative or decorative return paths that are not backed by visual line indicators.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Prompt v7 Gemini 3.6) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 13 | 9 | **9** |
+| **Número de Aristas** | 16 | 13 | 9 | **9** |
+| **Service F1 (Unique)** | — | 95.7% | 70.0% | **70.0%** |
+| **Service Precision** | — | 100.0% | 87.5% | **87.5%** |
+| **Service Recall** | — | 91.7% | 58.3% | **58.3%** |
+| **Edge F1 (Connections)** | — | 20.7% | 24.0% | **24.0%** |
+| **Edge Precision** | — | 23.1% | 33.3% | **33.3%** |
+| **Edge Recall** | — | 18.8% | 18.8% | **18.8%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['CloudTrail', 'GuardDuty', 'SNS', 'SQS', 'ThirdParty']`
+* **Servicios Alucinados (Inventados):** `['VPC']`
+* **Observaciones:**
+  * Prueba ejecutada en vivo para `-3lnf5lzsH0` con Prompt v7 (Regla de Conexiones Balanceadas).
+
+
+---
+
+## [Registro 16] - 2026-07-31 (Evaluación con Prompt v8: Expansión Inteligente de Contenedores)
+* **Video Evaluado:** `-3lnf5lzsH0` (MakeMyTrip: Building Next Generation SOC)
+* **Modelo utilizado:** `gemini-2.5-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v8: Expansión Inteligente de Contenedores y Subcomponentes)
+
+### Prompt Utilizado (Prompt v8):
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes primarily on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+
+4. SMART CONTAINER & SUB-COMPONENT EXPANSION: 
+   - When a physical container box (like a VPC, AWS Account, Region, or 'Security Ingestion Pipeline') is drawn on the whiteboard, check if the audio transcript explicitly names the specific underlying AWS services running inside that boundary (e.g. CloudTrail, GuardDuty, SNS, SQS, KMS).
+   - If specific AWS services are explicitly named in the video transcript for that container, EXPAND them as individual service nodes inside that container boundary, rather than leaving a single generic container node.
+   - If an arrow points to the boundary of the container, route the connection directly to the first primary internal service component.
+
+5. STRICT VISUAL & ESSENTIAL EDGES (BALANCED CONNECTIONS): 
+   - Base your connections primarily on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - Trace round-trip or return connections (<-) ONLY if they have a clear visual representation on the whiteboard (such as double arrowheads or explicit return line drawings) OR if they are indispensable to the primary synchronous execution flow drawn.
+   - DO NOT mass-connect external actors or services to all components. Only draw entry and return connections that have a clear visual origin or explicit primary flow path.
+   - Avoid generating speculative or decorative return paths that are not backed by visual line indicators.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Prompt v8 Gemini 3.6) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 13 | 9 | **9** |
+| **Número de Aristas** | 16 | 13 | 9 | **9** |
+| **Service F1 (Unique)** | — | 95.7% | 70.0% | **70.0%** |
+| **Service Precision** | — | 100.0% | 87.5% | **87.5%** |
+| **Service Recall** | — | 91.7% | 58.3% | **58.3%** |
+| **Edge F1 (Connections)** | — | 20.7% | 24.0% | **24.0%** |
+| **Edge Precision** | — | 23.1% | 33.3% | **33.3%** |
+| **Edge Recall** | — | 18.8% | 18.8% | **18.8%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['CloudTrail', 'EC2', 'GuardDuty', 'SNS', 'SQS']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyInternalPlatform']`
+* **Observaciones:**
+  * Prueba ejecutada en vivo con Prompt v8 incorporando la Regla 4 de Expansión Inteligente de Contenedores y Subcomponentes explicitados en el audio.
+
+
+---
+
+## [Registro 17] - 2026-07-31 (Evaluación Estricta con Gemini 3.6 Flash - Prompt v9 Descomposición Obligatoria)
+* **Video Evaluado:** `-3lnf5lzsH0` (MakeMyTrip: Building Next Generation SOC)
+* **Modelo utilizado:** `gemini-3.6-flash` (Estricto sin fallback)
+* **Modo:** Parsimonioso (1 sola fase con Prompt v9: Descomposición Obligatoria de Cajas Agrupadas)
+
+### Prompt Utilizado (Prompt v9):
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes primarily on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+
+4. MANDATORY DECOMPOSITION OF GROUPED BOXES: 
+   - If a box on the whiteboard represents a collection of AWS services (e.g. labeled 'AWS', 'Security Sources', or 'AWS Cloud Logs') AND the transcript or presenter explicitly names the specific AWS services contained within it (such as CloudTrail, GuardDuty, SQS, SNS, S3):
+   - You ARE REQUIRED to break down that single box into individual nodes for EACH explicitly named AWS service.
+   - DO NOT create a single generic 'ThirdParty' or 'AWS Cloud Logs' node when specific AWS services are explicitly named in the audio/transcript.
+   - If an arrow points to the boundary of the container, route connections directly to the decomposed internal service nodes.
+
+5. STRICT VISUAL & ESSENTIAL EDGES (BALANCED CONNECTIONS): 
+   - Base your connections primarily on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - Trace round-trip or return connections (<-) ONLY if they have a clear visual representation on the whiteboard (such as double arrowheads or explicit return line drawings) OR if they are indispensable to the primary synchronous execution flow drawn.
+   - DO NOT mass-connect external actors or services to all components. Only draw entry and return connections that have a clear visual origin or explicit primary flow path.
+   - Avoid generating speculative or decorative return paths that are not backed by visual line indicators.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Prompt v9 Gemini 3.6) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 13 | 9 | **12** |
+| **Número de Aristas** | 16 | 13 | 9 | **12** |
+| **Service F1 (Unique)** | — | 95.7% | 70.0% | **95.7%** |
+| **Service Precision** | — | 100.0% | 87.5% | **100.0%** |
+| **Service Recall** | — | 91.7% | 58.3% | **91.7%** |
+| **Edge F1 (Connections)** | — | 20.7% | 24.0% | **64.3%** |
+| **Edge Precision** | — | 23.1% | 33.3% | **75.0%** |
+| **Edge Recall** | — | 18.8% | 18.8% | **56.2%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['EC2']`
+* **Servicios Alucinados (Inventados):** `[]`
+* **Observaciones:**
+  * Prueba ejecutada estrictamente con Gemini 3.6 Flash y Prompt v9 (Descomposición Obligatoria de Cajas Agrupadas).
+
+
+---
+
+## [Registro 18] - 2026-07-31 (Evaluación con Gemini 3.5 Flash y Prompt v9 en Video ww5fiygF6eg)
+* **Video Evaluado:** `ww5fiygF6eg` (Marathon Oil: Automating Drone Image Processing to Monitor Equipment Health)
+* **Modelo utilizado:** `gemini-3.5-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v9: Descomposición Obligatoria de Cajas Agrupadas)
+
+### Prompt Utilizado (Prompt v9):
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes primarily on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+
+4. MANDATORY DECOMPOSITION OF GROUPED BOXES: 
+   - If a box on the whiteboard represents a collection of AWS services (e.g. labeled 'AWS', 'Security Sources', or 'AWS Cloud Logs') AND the transcript or presenter explicitly names the specific AWS services contained within it (such as CloudTrail, GuardDuty, SQS, SNS, S3):
+   - You ARE REQUIRED to break down that single box into individual nodes for EACH explicitly named AWS service.
+   - DO NOT create a single generic 'ThirdParty' or 'AWS Cloud Logs' node when specific AWS services are explicitly named in the audio/transcript.
+   - If an arrow points to the boundary of the container, route connections directly to the decomposed internal service nodes.
+
+5. STRICT VISUAL & ESSENTIAL EDGES (BALANCED CONNECTIONS): 
+   - Base your connections primarily on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - Trace round-trip or return connections (<-) ONLY if they have a clear visual representation on the whiteboard (such as double arrowheads or explicit return line drawings) OR if they are indispensable to the primary synchronous execution flow drawn.
+   - DO NOT mass-connect external actors or services to all components. Only draw entry and return connections that have a clear visual origin or explicit primary flow path.
+   - Avoid generating speculative or decorative return paths that are not backed by visual line indicators.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Prompt v9 Gemini 3.5) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 8 | 8 | **7** |
+| **Número de Aristas** | 20 | 8 | 8 | **7** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Precision** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Recall** | — | 85.7% | 85.7% | **85.7%** |
+| **Edge F1 (Connections)** | — | 35.7% | 35.7% | **29.6%** |
+| **Edge Precision** | — | 62.5% | 62.5% | **57.1%** |
+| **Edge Recall** | — | 25.0% | 25.0% | **20.0%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDrone']`
+* **Servicios Alucinados (Inventados):** `['OnPremDC']`
+* **Observaciones:**
+  * Prueba ejecutada con Gemini 3.5 Flash y Prompt v9 para el video ww5fiygF6eg.
