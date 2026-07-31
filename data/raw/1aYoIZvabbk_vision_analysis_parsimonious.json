@@ -1,112 +1,112 @@
 {
-  "step_by_step_reasoning": "The architecture describes OLX Autos' internal developer platform. It starts with an 'ExternalUser' accessing the 'Orion portal', which first resolves DNS via 'Route 53'. The request is then routed to an 'ALB' and subsequently to 'EKS', which orchestrates application pods running on 'EC2' spot instances. For resilient job processing, the application within 'EKS' sends events to 'SNS', which then publishes messages to 'SQS'. New or replaced application pods consume these messages from 'SQS' to ensure continuous processing and state consistency.",
+  "step_by_step_reasoning": "The whiteboard shows an architecture for an internal developer platform at OLX Autos. Key components visually drawn include: User (external actor), Route 53, ALB, EKS, Spot (EC2 Spot instances), SNS, and SQS. Connections originate from User to Route 53, resolving to ALB, which forwards traffic to EKS and Spot instances. EKS triggers events to SNS, which routes to SQS, and SQS feeds back to the Spot instance microservices flow.",
   "graph": {
-    "name": "OLX Autos Internal Developer Platform",
-    "link": "https://www.youtube.com/watch?v=EXAMPLE_VIDEO_ID",
-    "categories": "Developer Tools, Containerization, Cost Optimization, Messaging",
+    "name": "OLX Autos Internal Developer Platform Architecture",
+    "link": "",
+    "categories": "Developer Tools & Compute Orchestration",
     "graph_usable": true,
-    "notes": "This architecture describes the OLX Autos' internal developer platform, 'Orion portal'. It leverages AWS EKS running on 100% EC2 Spot Instances for cost optimization, with SNS and SQS for resilient job orchestration and handling of spot terminations. The specific video ID for 'This is My Architecture' is not provided, hence 'EXAMPLE_VIDEO_ID' is used as a placeholder in the link."
+    "notes": "Architecture showing how OLX Autos orchestrates dynamic environments using EKS on 100% EC2 Spot Instances with SNS/SQS state handling."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "ExternalUser",
+      "service": "UserCompanyDeveloper",
       "name": "User",
-      "notes": "End-user interacting with the Orion portal."
+      "notes": "Developer initiating platform environment creation requests."
     },
     {
       "id": "1",
-      "service": "Route 53",
+      "service": "Route53",
       "name": "Route 53",
-      "notes": "Used for DNS resolution for the Orion portal."
+      "notes": "Handles DNS resolution for the Orion portal."
     },
     {
       "id": "2",
       "service": "ALB",
       "name": "ALB",
-      "notes": "Application Load Balancer, routes incoming traffic to the EKS cluster."
+      "notes": "Routes incoming HTTP requests to Kubernetes workloads."
     },
     {
       "id": "3",
       "service": "EKS",
       "name": "EKS",
-      "notes": "Amazon Elastic Kubernetes Service, orchestrates the application pods. Manages workload and interacts with messaging services for job handling."
+      "notes": "Orchestrates Kubernetes pods and jobs."
     },
     {
       "id": "4",
       "service": "EC2",
       "name": "Spot Instances",
-      "notes": "Underlying compute resources for EKS, utilizing 100% EC2 Spot Instances for cost efficiency."
+      "notes": "Runs workload pods on 100% EC2 Spot instances."
     },
     {
       "id": "5",
       "service": "SNS",
       "name": "SNS",
-      "notes": "Amazon Simple Notification Service, receives events when microservice provisioning jobs are triggered."
+      "notes": "Receives events when microservice provisioning jobs are triggered."
     },
     {
       "id": "6",
       "service": "SQS",
       "name": "SQS",
-      "notes": "Amazon Simple Queue Service, stores messages for unfinished jobs, allowing new pods to pick up tasks after spot terminations."
+      "notes": "Buffers job state messages to allow recovery of interrupted Spot jobs."
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 0,
-      "seq": "0",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "User accesses Orion portal, triggering DNS resolution."
+      "notes": "User accesses portal via DNS endpoint."
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 0,
-      "seq": "1",
+      "flow_id": 1,
+      "seq": "2",
       "type": "data",
-      "notes": "Route 53 resolves DNS to the Application Load Balancer."
+      "notes": "Route 53 resolves DNS to Application Load Balancer."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "2",
+      "flow_id": 1,
+      "seq": "3",
       "type": "data",
-      "notes": "ALB forwards requests to the Kubernetes pods managed by EKS."
+      "notes": "ALB routes requests to EKS container control plane/pods."
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 0,
-      "seq": "3",
-      "type": "meta",
-      "notes": "EKS orchestrates and deploys application pods onto EC2 Spot Instances."
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EKS schedules microservice pods onto Spot worker nodes."
     },
     {
       "source": "3",
       "target": "5",
-      "flow_id": 1,
-      "seq": "0",
+      "flow_id": 2,
+      "seq": "1",
       "type": "data",
-      "notes": "Application (within EKS/EC2 context) sends an event to SNS when a microservice provisioning job is triggered."
+      "notes": "EKS job sends completion/status events to SNS."
     },
     {
       "source": "5",
       "target": "6",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 2,
+      "seq": "2",
       "type": "data",
-      "notes": "SNS publishes the job event message to SQS."
+      "notes": "SNS fanout to SQS queue."
     },
     {
       "source": "6",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
       "type": "data",
-      "notes": "New or replaced EKS pods (application) consume messages from SQS to resume or finish pending jobs."
+      "notes": "Replacement jobs poll SQS to recover unfinished microservice deployments."
     }
   ]
 }
