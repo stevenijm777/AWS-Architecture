@@ -553,3 +553,76 @@ Return ONLY valid JSON (no markdown fences):
   * *Observación:* Se generó `UserCompanyDeveloper` por defecto y se catalogó `ThirdParty` por la interfaz externa de red.
 * **Comparación cualitativa y mejoras:**
   * El nuevo prompt redujo efectivamente el tamaño del grafo a **6 nodos** (idéntico al tamaño del Ground Truth), comparado con los 11 nodos del pipeline estándar y parsimonioso original, lo cual cumple el principio de parsimonia.
+
+
+---
+
+## [Registro 8] - 2026-07-31 (Evaluación con Gemini 3.6 Flash y Prompt Estricto de Nombres de Catálogo)
+* **Video Evaluado:** `2e3vOxsHekE` (Mueller Water Products: A Water Intelligent Platform)
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase)
+
+### Prompt Utilizado:
+```text
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. EXACT AWS SERVICES: You MUST strictly use the exact string from the ACM, ALB, AMI, AWSConfig, AccessAnalyzer, AlexaForBusiness, AmazonML, AmazonMQ, Amplify, ApiGateway, AppDiscovery, AppStream, AppSync, Athena, Aurora, AutoScaling, Batch, BeanStalk, Chime, CloudFormation, CloudFront, CloudHSM, CloudTrail, CloudWatch, CodeBuild, CodeCommit, CodeDeploy, CodePipeline, Cognito, Comprehend, Connect, ControlTower, CouchBase, DMS, DataExchange, DataPipeline, DeepLens, Detective, DevTools, DirectConnect, DirectoryService, DocumentDB, DynamoDB, DynamoDBStream, EBS, EC2, ECR, ECS, EFS, EKS, ELB, EMR, ElastiCache, ElasticTranscoder, ElementalLive, EventBridge, FSX, Fargate, Firehose, GlobalAccelerator, Glue, Grafana, Greengrass, GuardDuty, IAM, Inspector, IoT1Click, IoTAnalytics, IoTCore, KMS, Kendra, Kinesis, KinesisAnalytics, KinesisDataStream, KinesisVideo, LakeFormation, Lambda, LambdaAtEdge, Lex, LookoutForVision, MAM, MSK, Macie, MediaConnect, MediaConvert, MediaLive, MediaPackage, MediaStore, MemoryDB, ModelRegistry, MongoDBAtlas, NAT, NLB, Neptune, OnPremDC, OpenSearch, Organizations, Outpost, Pinpoint, Polly, PrivateLink, QLDB, QuickSight, RAM, RDS, RedShift, Rekognition, RoboMaker, Route53, S2SVPN, S3, SAP, SES, SNS, SQS, STS, SageMaker, SageMakerGroundTruth, SecretsManager, SecurityHub, ServerlessApplicationRepository, ServiceCatalog, ServiceNow, Shield, ShieldAdvanced, StepFunctions, StorageGateway, SystemsManager, Textract, ThirdParty, Timestream, Transcribe, TransferFamily, TransitGateway, Translate, VPC, VPCPeering, VPN, WAF, WorkSpaces, XRay list for the `service` field. Do not truncate, split, or abbreviate names (e.g., use "KinesisDataStream", not "Kinesis") regardless of how the speaker pronounces it.
+
+2. EXTERNAL/INTERNAL ACTORS: Identify what comes from "outside" the core AWS architecture based on the visual drawing. Use ONLY these canonical labels:
+   - `UserConsumerWeb` / `UserConsumerMobile`: For external customers or end-users.
+   - `UserCompanyDeveloper`: Default label for ANY internal company staff (engineers, security, operations) interacting with the system. Do NOT use UserCompanyAnalyst or UserCompanyAgent.
+   - `ThirdParty`: For external SaaS, public APIs, or non-AWS open-source services.
+   - `OnPremDC`: For corporate physical datacenters.
+
+3. VISUAL-FIRST SERVICES (NO AUDIO EXPANSION): Base your nodes strictly on physical boxes or distinct icons drawn. 
+   - If a single generic box is drawn (e.g., labeled "AWS" or "Log Sources") but the audio mentions multiple underlying services, DO NOT expand them. Create a single node for that visual block.
+   - Ignore floating text or standalone words that do not have a bounding box or clear icon.
+
+4. BOUNDARY & NESTED BOX ROUTING: If an arrow points to the edge of a large container box (like a VPC, Subnet, or AWS Account boundary), assume the connection routes directly to the primary service(s) drawn inside that boundary, rather than the boundary itself.
+
+5. VISUAL-FIRST EDGES: 
+   - Base your connections primarily on the PHYSICAL arrows drawn on the whiteboard. 
+   - You MUST include "entry" edges: connections where data or triggers arrive from the outside into the AWS architecture.
+   - Do not hallucinate invisible API return paths (bidirectional loops) unless they are explicitly drawn.
+
+6. LOGICAL SEQUENCING: When assigning `flow_id` and `seq` to edges, attempt to trace the logical flow starting from the external actors (Users, ThirdParty, OnPremDC) moving inwards to the backend. Number them sequentially to match the chronological flow of data described in the audio.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step (e.g., merge 3 drawn EC2 instances into 1).
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and entry points...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
+```
+
+### Resultados de Evaluación Obtenidos:
+
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (Test con gemini-3.6-flash) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 6 | 6 | **6** |
+| **Número de Aristas** | 6 | 5 | 4 | **4** |
+| **Service F1 (Unique)** | — | 83.3% | 66.7% | **66.7%** |
+| **Service Precision** | — | 83.3% | 66.7% | **66.7%** |
+| **Service Recall** | — | 83.3% | 66.7% | **66.7%** |
+| **Edge F1 (Connections)** | — | 72.7% | 60.0% | **60.0%** |
+| **Edge Precision** | — | 80.0% | 75.0% | **75.0%** |
+| **Edge Recall** | — | 66.7% | 50.0% | **50.0%** |
+
+### Errores y Observaciones del Test:
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst', 'UserConsumerEdge']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty', 'UserCompanyDeveloper']`
+* **Observaciones:**
+  * Se ejecutó el test con `gemini-3.6-flash` imponiendo nombres exactos del catálogo Cloudscape y ruteo de bordes/contenedores.
+  * Service F1 alcanzado: **66.7%** | Edge F1 alcanzado: **60.0%**.
