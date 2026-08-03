@@ -10,12 +10,12 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | **95.7%** | 95.7% | Rendimiento equivalente en servicios. F1 de conexiones del 64.3%. |
 | `-kA0ahrhX3I` | Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie | **100.0%** | 85.7% | Parsimonious supera a Standard por 14.3%. F1 de conexiones del 52.6%. |
 | `-wLEkq21cvA` | Versent: The Migration Factory | **66.7%** | 72.7% | Standard supera a Parsimonious por 6.1%. F1 de conexiones del 47.6%. |
-| `07lfvavMdfU` | Levels Beyond: Digital Content Orchestration | **100.0%** | 90.0% | Parsimonious supera a Standard por 4.8%. El clásico alucina nodos por ruidos de la transcripción. |
+| `07lfvavMdfU` | Levels Beyond: Digital Content Orchestration | **90.0%** | 85.7% | Parsimonious supera a Standard por 4.3%. F1 de conexiones del 72.0%. |
 | `0F7KDLz-kIQ` | Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK | **87.0%** | 81.8% | Parsimonious supera a Standard por 5.1%. F1 de conexiones del 54.5%. |
 | `1aYoIZvabbk` | OLX Autos: Building Developer Platform for Rapid Global Expansion | **92.3%** | 92.3% | Rendimiento equivalente en servicios. F1 de conexiones del 83.3%. |
-| `1xLjtJnfZes` | MATTR: Building Digital Trust at Scale | **80.0%** | 80.0% | Rendimiento equivalente en detección de servicios. |
+| `1xLjtJnfZes` | MATTR: Building Digital Trust at Scale | **80.0%** | 80.0% | Rendimiento equivalente en servicios. F1 de conexiones del 54.5%. |
 | `2L0m28ZLmtE` | Sanofi with TeamWork: OnDemand Data Science Environment | **100.0%** | 91.7% | Parsimonious supera a Standard por 8.3%. F1 de conexiones del 50.0%. |
-| `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis | **71.4%** | 71.4% | Standard supera a Parsimonious por 0.4%. El simplificado omitió detalles menores. |
+| `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis | **71.4%** | 71.4% | Rendimiento equivalente en servicios. F1 de conexiones del 47.6%. |
 | `2e3vOxsHekE` | Mueller Water Products: A Water Intelligent Platform | **83.3%** | 83.3% | Rendimiento equivalente en servicios. F1 de conexiones del 60.0%. |
 | `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League Gaming Platform on AWS | **66.7%** | 70.6% | Standard supera a Parsimonious por 3.9%. F1 de conexiones del 43.5%. |
 | `3yJZ6rPoZfg` | Hexagon HxDR: Cloud-Based Visualization of Spatial Data | **50.0%** | 50.0% | Rendimiento equivalente en detección de servicios. |
@@ -99,3 +99,10 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `vQgUkn3rAMY` | AssemblyAI: Building a Scalable Machine Learning Platform for Voice Data Transcription and Analysis | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
 | `ym_Gz_zH7w8` | Peloton: Improved Customer Satisfaction and Engagement Powered by Real-Time Recommendations | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
 | `ww5fiygF6eg` | Marathon Oil: Automating Drone Image Processing to Monitor Equipment Health | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 29.6%. |
+| `-S-R7MWRpaI` | mimik: Hybrid Edge Cloud Leveraging AWS to Support Edge Microservice Mesh | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 33.3%. |
+| `-ahWdCysMYw` | Summit Technology Group: Building a Data Consumption Model for Multi-Tenant A... | **80.0%** | 80.0% | Rendimiento equivalente en servicios. F1 de conexiones del 28.6%. |
+| `0JxJpNjI9Y0` | The Washington Post: Building a Content Management Platform with Speed at its... | **80.0%** | 80.0% | Rendimiento equivalente en servicios. F1 de conexiones del 50.0%. |
+| `0gNMEyei-co` | Infor: Ingest and Analyze Millions of Application Events Daily for Compliance... | **70.6%** | 70.6% | Rendimiento equivalente en servicios. F1 de conexiones del 66.7%. |
+| `0wnNlOg42dc` | Spyne.AI: High-Quality Product Visuals at Scale with AI on AWS | **94.1%** | 94.1% | Rendimiento equivalente en servicios. F1 de conexiones del 76.2%. |
+| `1ZLiRT0C2Yo` | T-Mobile: Standardized Container-Based Architecture That can be Automatically... | **92.3%** | 92.3% | Rendimiento equivalente en servicios. F1 de conexiones del 0.0%. |
+| `1kWxymroGeE` | OutSystems: Decomposing a Data Monolith for Scale and MultiTenancy | **90.9%** | 90.9% | Rendimiento equivalente en servicios. F1 de conexiones del 66.7%. |

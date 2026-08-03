@@ -1,60 +1,54 @@
 {
-  "step_by_step_reasoning": "We identify the nodes directly from the whiteboard icons: Transit Gateway, ELB, EC2 (representing K8s worker nodes), CloudWatch, S3, and RDS. A handwritten OnPrem DC representing Texas/Washington data centers connects to Transit Gateway. Users access the applications via ELB. Standard flows route traffic from User -> ELB -> EC2, EC2 -> RDS for database operations, EC2 -> Transit Gateway -> On-Prem DC for datacenter connectivity, and EC2 -> CloudWatch for observability.",
+  "step_by_step_reasoning": "The architecture diagram shows an AWS infrastructure centered around containerized application workloads running in VPCs managed via Transit Gateway and integrated with on-premises Data Centers. On-premises Data Centers in Texas and Washington connect to AWS via Transit Gateway. The application VPC contains Elastic Load Balancing (ELB) routing traffic to Amazon EC2 nodes running Kubernetes containers. The applications utilize Amazon RDS for database persistence, Amazon S3 for object storage, and Amazon CloudWatch for observability and metrics monitoring.",
   "graph": {
-    "name": "T-Mobile Standardized Kubernetes Platform with Local Zones",
-    "link": "https://www.youtube.com/watch?v=1ZLiRT0C2Yo",
-    "categories": "compute_intensive,control",
+    "name": "T-Mobile Standardized Kubernetes and Immutable Infrastructure on AWS",
+    "link": "",
+    "categories": "Compute / Hybrid Cloud",
     "graph_usable": true,
-    "notes": "T-Mobile builds a standardized, GitOps-managed Kubernetes infrastructure across multiple regions and Local Zones, connected to on-premises data centers via Transit Gateway."
+    "notes": "T-Mobile uses automated GitOps workflows with Terraform and Ansible to deploy standardized Kubernetes clusters on EC2 and ELB across regions and local zones, connected via Transit Gateway to on-premises data centers."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerWeb",
-      "name": "End User",
-      "notes": "Accesses applications deployed on the Kubernetes platform, experiencing low latency via local zones."
+      "service": "OnPremDC",
+      "name": "Data Centers (TX, WA)",
+      "notes": "On-premises data centers located in Texas and Washington state"
     },
     {
       "id": "1",
-      "service": "ELB",
-      "name": "Elastic Load Balancing",
-      "notes": "Distributes incoming application traffic across Kubernetes compute clusters."
+      "service": "TransitGateway",
+      "name": "Transit Gateway",
+      "notes": "Connects multi-account VPCs with on-premises data centers"
     },
     {
       "id": "2",
-      "service": "EC2",
-      "name": "Kubernetes Clusters (EKS/EC2)",
-      "notes": "Immutable Kubernetes clusters hosting hundreds of T-Mobile applications."
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Elastic Load Balancing for incoming application traffic inside VPC"
     },
     {
       "id": "3",
-      "service": "Transit Gateway",
-      "name": "Transit Gateway",
-      "notes": "Interconnects VPCs and handles routing to on-premises environments."
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Runs Kubernetes clusters and application containers"
     },
     {
       "id": "4",
-      "service": "OnPremDC",
-      "name": "On-Premises Data Centers",
-      "notes": "Legacy backend systems located in Texas and Washington."
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database consumed by application workloads"
     },
     {
       "id": "5",
-      "service": "RDS",
-      "name": "Amazon RDS",
-      "notes": "Relational databases consumed by the application teams."
+      "service": "S3",
+      "name": "S3",
+      "notes": "Object storage for application data and deployment state"
     },
     {
       "id": "6",
       "service": "CloudWatch",
-      "name": "Amazon CloudWatch",
-      "notes": "Ingests metrics and logs from Prometheus and the infrastructure for observability."
-    },
-    {
-      "id": "7",
-      "service": "S3",
-      "name": "Amazon S3",
-      "notes": "Used for configuration storage and object persistence."
+      "name": "CloudWatch",
+      "notes": "Provides monitoring and metrics scraped by Prometheus"
     }
   ],
   "edges": [
@@ -62,49 +56,49 @@
       "source": "0",
       "target": "1",
       "flow_id": 0,
-      "seq": "1",
+      "seq": "0",
       "type": "data",
-      "notes": "Users send HTTPS requests to the application endpoints."
+      "notes": "Connects on-premises data centers to AWS Transit Gateway"
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "ELB forwards traffic to the Kubernetes containers running on EC2."
-    },
-    {
-      "source": "2",
-      "target": "5",
-      "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Applications run queries and store persistent state in RDS."
+      "notes": "Routes network traffic from Transit Gateway into application VPC load balancer"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 2,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "2",
       "type": "data",
-      "notes": "Clusters route cross-account or cross-VPC traffic."
+      "notes": "Distributes incoming traffic to EC2 Kubernetes nodes"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 2,
-      "seq": "2",
+      "flow_id": 0,
+      "seq": "3",
       "type": "data",
-      "notes": "Transit Gateway bridges AWS infrastructure to Texas/Washington data centers."
+      "notes": "EC2 application workloads query RDS database"
     },
     {
-      "source": "2",
-      "target": "6",
-      "flow_id": 3,
-      "seq": "1",
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
       "type": "data",
-      "notes": "Prometheus forwards telemetry, metrics, and alerts to CloudWatch."
+      "notes": "EC2 application workloads store data in S3"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Sends metrics and log data to CloudWatch for observability"
     }
   ]
 }

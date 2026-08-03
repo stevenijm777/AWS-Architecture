@@ -1,76 +1,70 @@
 {
-  "step_by_step_reasoning": "We identify the main components from the whiteboard: Edge nodes (N) connect to Supernodes (SN). Supernodes register with EKS, which coordinates the mesh. EKS persists cluster topology to MongoDB and metadata/profiles to DynamoDB. Separately, Supernodes stream logs to Kinesis Data Streams, flowing through Firehose to S3, which Snowflake queries for analytics.",
+  "step_by_step_reasoning": "The architecture displays edge nodes (Supernodes) communicating with Amazon EKS for discovery and service mesh management. EKS interacts with MongoDB and DynamoDB for metadata storage. For monitoring, Supernodes stream log data to Kinesis Data Streams, which passes through Kinesis Data Firehose into Amazon S3, where it is queried by Snowflake for analytics.",
   "graph": {
     "name": "Mimic Edge Engine Architecture",
-    "link": "https://www.youtube.com/watch?v=-S-R7MWRpaI",
-    "categories": "data_ingestion, compute_intensive",
+    "link": "",
+    "categories": "Edge Computing and Analytics",
     "graph_usable": true,
-    "notes": "Hybrid architecture combining on-device Edge Engine mesh networks with AWS cloud services for discovery, state persistence, and log analytics."
+    "notes": "Edge network architecture utilizing Amazon EKS, DynamoDB, MongoDB, Kinesis, S3, and Snowflake."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerMobile",
-      "name": "Edge Node (N)",
-      "notes": "An Android or iOS client node on the edge network."
+      "service": "UserCompanyEdge",
+      "name": "Edge Supernodes",
+      "notes": "Nodes running Edge Engine"
     },
     {
       "id": "1",
-      "service": "ThirdParty",
-      "name": "Supernode (SN)",
-      "notes": "First node that registers, acting as a gateway and reporting logs."
+      "service": "EKS",
+      "name": "Amazon EKS",
+      "notes": "Handles node registration and discovery"
     },
     {
       "id": "2",
-      "service": "EKS",
-      "name": "EKS",
-      "notes": "Runs the microservices discovery and registration services (MDS)."
+      "service": "MongoDBAtlas",
+      "name": "MongoDB",
+      "notes": "Stores proximity cluster metadata"
     },
     {
       "id": "3",
-      "service": "ThirdParty",
-      "name": "MongoDB",
-      "notes": "Document database storing cluster structure by proximity."
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores profiles and hierarchical associations"
     },
     {
       "id": "4",
-      "service": "DynamoDB",
-      "name": "DynamoDB",
-      "notes": "Stores profiles and hierarchical associations."
+      "service": "KinesisDataStream",
+      "name": "Amazon Kinesis Data Streams",
+      "notes": "Ingests logs and telemetry"
     },
     {
       "id": "5",
-      "service": "Kinesis Data Streams",
-      "name": "Kinesis Data Streams",
-      "notes": "Ingests API logs and operational data from supernodes."
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose",
+      "notes": "Buffers and transfers data to S3"
     },
     {
       "id": "6",
-      "service": "Kinesis Data Firehose",
-      "name": "Kinesis Data Firehose",
-      "notes": "Batches and streams data into S3."
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Archives long-term log data"
     },
     {
       "id": "7",
-      "service": "S3",
-      "name": "S3",
-      "notes": "Long-term data lake storage."
-    },
-    {
-      "id": "8",
       "service": "ThirdParty",
       "name": "Snowflake",
-      "notes": "Performs SQL queries against S3 data for analytics."
+      "notes": "Executes SQL analytics queries on S3 data"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "0",
       "type": "data",
-      "notes": "Edge node listens and registers with a nearby Supernode."
+      "notes": "Registers edge nodes"
     },
     {
       "source": "1",
@@ -78,55 +72,47 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Supernode registers metadata with MDS running on EKS."
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Saves proximity-based clusters and metadata."
-    },
-    {
-      "source": "2",
-      "target": "4",
-      "flow_id": 3,
-      "seq": "3",
-      "type": "data",
-      "notes": "Saves user profile and peer association data."
+      "notes": "Writes proximity cluster info"
     },
     {
       "source": "1",
-      "target": "5",
-      "flow_id": 4,
-      "seq": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
       "type": "data",
-      "notes": "Streams real-time metrics and API logs."
+      "notes": "Reads/writes profile data"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends API and execution logs"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams data payload"
     },
     {
       "source": "5",
       "target": "6",
-      "flow_id": 4,
-      "seq": "5",
+      "flow_id": 2,
+      "seq": "2",
       "type": "data",
-      "notes": "Buffers incoming data stream."
+      "notes": "Delivers log archives"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 4,
-      "seq": "6",
+      "flow_id": 2,
+      "seq": "3",
       "type": "data",
-      "notes": "Stores partitioned raw data."
-    },
-    {
-      "source": "7",
-      "target": "8",
-      "flow_id": 5,
-      "seq": "7",
-      "type": "data",
-      "notes": "Queries data on-demand for analytics."
+      "notes": "Queries data for analytics"
     }
   ]
 }

@@ -1,54 +1,54 @@
 {
-  "step_by_step_reasoning": "First, analyze the whiteboard to identify the main components: EKS for the multi-tenant app, Aurora for data storage, Transit Gateway for networking, Control Tower for account orchestration, and QuickSight and VPN within the provisioned tenant accounts, which connect to On-Prem Customer Data (ThirdParty). We then map the active connections: EKS connects to Aurora; QuickSight connects to Aurora via Transit Gateway; and QuickSight connects to On-Prem Customer Data via VPN.",
+  "step_by_step_reasoning": "The whiteboard shows a multi-tenant application on AWS EKS interacting with Amazon Aurora. A single-tenant customer AWS account created by AWS Control Tower contains Amazon QuickSight and an AWS VPN connection. QuickSight connects to Aurora via AWS Transit Gateway and ingests external customer data from On-Premises via VPN.",
   "graph": {
-    "name": "Summit Technology Group Loan Origination System",
-    "link": "https://www.youtube.com/watch?v=-ahWdCysMYw",
-    "categories": "compute_intensive, interactive",
+    "name": "Summit Technology Group - Single Tenant Data Consumption Architecture",
+    "link": "",
+    "categories": "Analytics & Database",
     "graph_usable": true,
-    "notes": "A multi-tenant loan origination system leveraging EKS and Aurora, which provisions single-tenant AWS accounts via Control Tower for secure, isolated QuickSight data visualization combined with on-premises customer data."
+    "notes": "Architecture for single-tenant data consumption using EKS, Aurora, Transit Gateway, Control Tower, QuickSight, and VPN to connect on-premises customer data."
   },
   "nodes": [
     {
       "id": "0",
       "service": "EKS",
-      "name": "EKS",
-      "notes": "Runs multi-tenant SaaS application with isolated pods per tenant."
+      "name": "EKS Cluster",
+      "notes": "Runs multi-tenant application pods per tenant."
     },
     {
       "id": "1",
       "service": "Aurora",
       "name": "Postgres Aurora",
-      "notes": "Stores tenant application data using separate schemas."
+      "notes": "Stores application schemas separated per tenant."
     },
     {
       "id": "2",
-      "service": "Transit Gateway",
+      "service": "TransitGateway",
       "name": "Transit Gateway",
-      "notes": "Routes traffic from tenant QuickSight accounts to the central database."
+      "notes": "Routes traffic between QuickSight tenant VPC and Aurora VPC."
     },
     {
       "id": "3",
-      "service": "Control Tower",
+      "service": "ControlTower",
       "name": "Control Tower",
-      "notes": "Automates provisioning of isolated tenant accounts via Account Factory."
+      "notes": "Provisions isolated per-tenant AWS accounts."
     },
     {
       "id": "4",
       "service": "QuickSight",
       "name": "QuickSight",
-      "notes": "Enables tenant data visualization in isolated single-tenant environments."
+      "notes": "Visualizes combined loan origination and customer data."
     },
     {
       "id": "5",
       "service": "VPN",
       "name": "VPN",
-      "notes": "Establish connection from QuickSight to customer on-premises data sources."
+      "notes": "Connects tenant AWS account to customer on-premises network."
     },
     {
       "id": "6",
-      "service": "ThirdParty",
-      "name": "Customer On-Prem Data",
-      "notes": "On-premises database containing additional community bank data."
+      "service": "OnPremDC",
+      "name": "Cust Data",
+      "notes": "On-premises customer data source."
     }
   ],
   "edges": [
@@ -58,39 +58,39 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "EKS pods write data to tenant database schemas."
+      "notes": "EKS pods write and read loan data to/from Aurora."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "On-premises data sent via VPN."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "VPN delivers customer on-prem data to QuickSight."
     },
     {
       "source": "4",
       "target": "2",
       "flow_id": 1,
-      "seq": "0",
+      "seq": "2",
       "type": "data",
-      "notes": "QuickSight initiates queries through Transit Gateway."
+      "notes": "QuickSight queries Aurora data through Transit Gateway."
     },
     {
       "source": "2",
       "target": "1",
       "flow_id": 1,
-      "seq": "1",
+      "seq": "3",
       "type": "data",
-      "notes": "Transit Gateway routes queries to Aurora."
-    },
-    {
-      "source": "4",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "QuickSight requests access to local data."
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "VPN tunnel routes queries to customer on-prem database."
+      "notes": "Transit Gateway forwards queries to Postgres Aurora database."
     }
   ]
 }

@@ -1,156 +1,156 @@
 {
-  "step_by_step_reasoning": "The whiteboard depicts two main pipelines: ingestion and analysis. Ingestion starts with external Applications streaming data to Kinesis, which is parsed by Fargate and saved to Aurora and S3. Analysis is triggered by Scheduler on Fargate, starting an EMR job that retrieves data from Aurora and S3. Violation results are sent via EventBridge and SQS back to Fargate for decoration and final reporting.",
+  "step_by_step_reasoning": "Applications send streaming data to Kinesis Data Streams, which feeds into Fargate for initial parsing. Parsed data is persisted into Aurora and S3. A scheduled trigger (Scheduler) prompts Fargate to launch analysis jobs on EMR. EMR queries data from Aurora and S3, then emits violation events to EventBridge. EventBridge forwards notifications to SQS, which Fargate processes to notify users.",
   "graph": {
     "name": "Infor Governance Risk and Compliance Architecture",
-    "link": "https://www.youtube.com/watch?v=0gNMEyei-co",
-    "categories": "data_ingestion, compute_intensive",
+    "link": "",
+    "categories": "Data Analytics & Streaming",
     "graph_usable": true,
-    "notes": "Serverless ingestion and batch analytics engine using Fargate, EMR, Aurora, and S3 to audit and detect compliance violations."
+    "notes": "Architecture for Infor GRC processing security and transactional data via Kinesis, Fargate, EMR, and EventBridge."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "ThirdParty",
+      "service": "UserCompanyInternalPlatform",
       "name": "Applications",
-      "notes": "External customer applications generating security and transactional data."
+      "notes": "Source applications generating security and transactional data"
     },
     {
       "id": "1",
-      "service": "Kinesis",
+      "service": "KinesisDataStream",
       "name": "Kinesis",
-      "notes": "Streams real-time logs and transactional data."
+      "notes": "Ingests data stream from applications"
     },
     {
       "id": "2",
       "service": "Fargate",
       "name": "Fargate",
-      "notes": "Runs containers for data parsing, scoping EMR jobs, and processing SQS alerts."
+      "notes": "Parses ingestion data and runs scoping analysis service"
     },
     {
       "id": "3",
       "service": "Aurora",
       "name": "Aurora",
-      "notes": "Stores transactional data for analysis."
+      "notes": "Stores structured application data"
     },
     {
       "id": "4",
       "service": "S3",
       "name": "S3",
-      "notes": "Stores historical and raw compliance logs."
+      "notes": "Stores raw and transformed data"
     },
     {
       "id": "5",
       "service": "EventBridge",
       "name": "Scheduler",
-      "notes": "Triggers schedule-based auditing workflows."
+      "notes": "Triggers scheduled analysis jobs"
     },
     {
       "id": "6",
       "service": "EMR",
       "name": "EMR",
-      "notes": "Spark cluster executing validation rules on stored data."
+      "notes": "Executes Spark rules analysis over stored data"
     },
     {
       "id": "7",
       "service": "EventBridge",
       "name": "EventBridge",
-      "notes": "Dispatches audit violation events."
+      "notes": "Receives violation events from EMR"
     },
     {
       "id": "8",
       "service": "SQS",
       "name": "SQS",
-      "notes": "Buffers violation events for processing."
+      "notes": "Buffers violation event messages"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 0,
-      "seq": "0",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "Stream data ingestion."
+      "notes": "Streams data to Kinesis"
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 0,
-      "seq": "1",
+      "flow_id": 1,
+      "seq": "2",
       "type": "data",
-      "notes": "Fargate processes Kinesis stream."
+      "notes": "Routes stream to parsing service on Fargate"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "2",
+      "flow_id": 1,
+      "seq": "3",
       "type": "data",
-      "notes": "Writes data to Aurora."
+      "notes": "Persists parsed data to Aurora"
     },
     {
       "source": "2",
       "target": "4",
-      "flow_id": 0,
-      "seq": "3",
+      "flow_id": 1,
+      "seq": "4",
       "type": "data",
-      "notes": "Writes data to S3."
+      "notes": "Persists parsed data to S3"
     },
     {
       "source": "5",
       "target": "2",
-      "flow_id": 1,
-      "seq": "0",
+      "flow_id": 2,
+      "seq": "1",
       "type": "data",
-      "notes": "Triggers audit analysis."
+      "notes": "Triggers analysis schedule on Fargate"
     },
     {
       "source": "2",
       "target": "6",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 2,
+      "seq": "2",
       "type": "data",
-      "notes": "Starts EMR job."
+      "notes": "Triggers EMR analysis job"
     },
     {
       "source": "3",
       "target": "6",
-      "flow_id": 1,
-      "seq": "2",
+      "flow_id": 2,
+      "seq": "3",
       "type": "data",
-      "notes": "Retrieves Aurora data."
+      "notes": "Reads data for analysis"
     },
     {
       "source": "4",
       "target": "6",
-      "flow_id": 1,
-      "seq": "3",
+      "flow_id": 2,
+      "seq": "4",
       "type": "data",
-      "notes": "Retrieves S3 data."
+      "notes": "Reads data for analysis"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 1,
-      "seq": "4",
+      "flow_id": 2,
+      "seq": "5",
       "type": "data",
-      "notes": "Publishes violations."
+      "notes": "Sends violation events to EventBridge"
     },
     {
       "source": "7",
       "target": "8",
-      "flow_id": 1,
-      "seq": "5",
+      "flow_id": 2,
+      "seq": "6",
       "type": "data",
-      "notes": "Routes alerts to SQS."
+      "notes": "Forwards violation message to SQS queue"
     },
     {
       "source": "8",
       "target": "2",
-      "flow_id": 1,
-      "seq": "6",
+      "flow_id": 2,
+      "seq": "7",
       "type": "data",
-      "notes": "Pulls violations to process and alert."
+      "notes": "Reads violation messages for customer notification processing"
     }
   ]
 }
