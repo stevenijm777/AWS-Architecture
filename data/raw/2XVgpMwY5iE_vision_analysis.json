@@ -1,60 +1,60 @@
 {
-  "step_by_step_reasoning": "We trace the architecture chronologically based on the whiteboard and the transcript. 1. Hospitals (UserConsumerHospital) upload clinical images to a raw storage S3 bucket. 2. Pathologists (UserCompanyDomainExpert) use an EKS-based platform to label and annotate these images. 3. SageMaker pulls raw data from S3, orchestrates training with FSx for Lustre for high-speed I/O and IAM for stringent security (HDS compliance). 4. The final model is saved to a separate output S3 bucket. 5. EKS pulls the model for pathologists to validate, then hosts it for real-time clinical inference accessed by hospitals.",
+  "step_by_step_reasoning": "The architecture diagram and transcript depict Kinaï's medical imaging AI platform. Hospital actors upload medical images (~5TB per project) to an input S3 bucket. Pathologists and hospitals access a labeling product running on AWS EKS to annotate and label the images. The labeled data in S3 and control triggers from EKS feed into AWS SageMaker for machine learning model training. SageMaker uses FSx for high I/O performance during training and IAM for access control and HDS certification compliance. Trained model artifacts are exported to a model storage S3 bucket and loaded back into EKS for pathologist validation and active inference.",
   "graph": {
-    "name": "Kinaï Medical Image Analysis and Annotation Pipeline",
+    "name": "Kinai Medical Image Machine Learning Architecture",
     "link": "https://www.youtube.com/watch?v=2XVgpMwY5iE",
-    "categories": "compute_intensive, interactive",
+    "categories": "Healthcare ML AI Infrastructure",
     "graph_usable": true,
-    "notes": "Transitioned to SageMaker with FSx for Lustre, accelerating training by 30x and saving 30% on infrastructure costs. Compliant with HDS certification for sensitive health data."
+    "notes": "Architecture for medical image labeling and model training utilizing EKS, SageMaker, FSx, and S3 with HDS compliance."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerHospital",
-      "name": "Hospital / Clinicians",
-      "notes": "Upload raw medical images and request inference."
+      "name": "Hospital",
+      "notes": "Client hospital providing medical imaging data"
     },
     {
       "id": "1",
       "service": "UserCompanyDomainExpert",
-      "name": "Pathologists",
-      "notes": "Perform data labeling, annotations, and final model validation."
+      "name": "Pathologist",
+      "notes": "Medical expert who annotates images and validates trained models"
     },
     {
       "id": "2",
       "service": "S3",
-      "name": "Raw Medical Images",
-      "notes": "DATA_PEEK: Stores around 5TB of raw medical images per project."
+      "name": "S3 (Input Data)",
+      "notes": "Stores around 5TB of input medical image data per project"
     },
     {
       "id": "3",
       "service": "EKS",
-      "name": "Kubernetes labeling & inference platform",
-      "notes": "Hosts labeling UI for pathologists and performs final model inference."
+      "name": "EKS",
+      "notes": "Kubernetes cluster hosting the labeling application and running inference"
     },
     {
       "id": "4",
       "service": "SageMaker",
-      "name": "SageMaker Training",
-      "notes": "Orchestrates parallel training pipelines containerized in Docker."
+      "name": "SAGEMAKER",
+      "notes": "Trains machine learning models in Docker containers"
     },
     {
       "id": "5",
-      "service": "FSx",
-      "name": "FSx for Lustre",
-      "notes": "WORKLOAD_PEEK: High performance storage layer for accelerated training."
+      "service": "S3",
+      "name": "S3 (Model Storage)",
+      "notes": "Stores trained model artifacts"
     },
     {
       "id": "6",
-      "service": "IAM",
-      "name": "AWS IAM",
-      "notes": "Ensures data access control to comply with HDS certification."
+      "service": "FSX",
+      "name": "FSx",
+      "notes": "High performance file system for SageMaker training I/O"
     },
     {
       "id": "7",
-      "service": "S3",
-      "name": "Model & Results Storage",
-      "notes": "Stores exported models and pipeline execution results."
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "Provides data security, access control, and compliance governance"
     }
   ],
   "edges": [
@@ -62,17 +62,25 @@
       "source": "0",
       "target": "2",
       "flow_id": 0,
-      "seq": "1",
+      "seq": "0",
       "type": "data",
-      "notes": "Hospitals upload raw medical images to S3."
+      "notes": "Hospital uploads medical images into S3 input bucket"
     },
     {
       "source": "1",
       "target": "3",
       "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Pathologist accesses labeling application hosted on EKS"
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
       "seq": "2",
-      "type": "data",
-      "notes": "Pathologists access the labeling application."
+      "type": "control",
+      "notes": "Hospital connects to the platform on EKS"
     },
     {
       "source": "2",
@@ -80,95 +88,55 @@
       "flow_id": 0,
       "seq": "3",
       "type": "data",
-      "notes": "Images are fetched from S3 for labeling."
+      "notes": "Images are retrieved from S3 into EKS for labeling"
     },
     {
-      "source": "3",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "4",
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
       "type": "data",
-      "notes": "Interactive labeling session returns results to pathologists."
+      "notes": "Annotated data is fed into SageMaker for model training"
     },
     {
       "source": "3",
       "target": "4",
       "flow_id": 1,
       "seq": "1",
-      "type": "data",
-      "notes": "Labeling platform triggers a new SageMaker training pipeline."
-    },
-    {
-      "source": "2",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "SageMaker streams training dataset from raw S3."
-    },
-    {
-      "source": "4",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Uses FSx for fast I/O caching."
+      "type": "control",
+      "notes": "EKS triggers or manages training pipeline jobs in SageMaker"
     },
     {
       "source": "4",
       "target": "6",
       "flow_id": 1,
-      "seq": "4",
+      "seq": "2",
       "type": "meta",
-      "notes": "Verifies data access and compliance policies."
+      "notes": "SageMaker integrates with FSx for fast training I/O"
     },
     {
       "source": "4",
       "target": "7",
       "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Saves trained model and output metrics."
+      "seq": "3",
+      "type": "meta",
+      "notes": "SageMaker utilizes IAM roles for access control and compliance"
     },
     {
-      "source": "7",
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "SageMaker exports trained model artifacts to model S3 bucket"
+    },
+    {
+      "source": "5",
       "target": "3",
-      "flow_id": 1,
-      "seq": "6",
+      "flow_id": 2,
+      "seq": "1",
       "type": "data",
-      "notes": "Model results are loaded back to Kubernetes."
-    },
-    {
-      "source": "1",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "7",
-      "type": "data",
-      "notes": "Pathologist views results to validate or reject the model."
-    },
-    {
-      "source": "3",
-      "target": "1",
-      "flow_id": 1,
-      "seq": "8",
-      "type": "data",
-      "notes": "Sends model validation approval back to platform."
-    },
-    {
-      "source": "0",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "9",
-      "type": "data",
-      "notes": "Hospitals query EKS for inferences using the validated model."
-    },
-    {
-      "source": "3",
-      "target": "0",
-      "flow_id": 1,
-      "seq": "10",
-      "type": "data",
-      "notes": "Returns clinical analytics and prediction data back to the hospital."
+      "notes": "Model artifacts are exported back into EKS for inference and validation"
     }
   ]
 }

@@ -1,84 +1,90 @@
 {
-  "step_by_step_reasoning": "We analyze the architecture based on the transcript chronologically: 1. User traffic arrives via Route 53 / CloudFront to an internal Route 53 instance. 2. The internal Route 53 serves as a dynamic weight distributor to split traffic between two paths: Serverless (API Gateway + Lambda) and Containerized (ECS on Fargate). 3. ECS handles standard steady-state load but has scaling latency. Lambda absorbs rapid spikes (e.g., push notifications). 4. Both compute paths perform CRUD operations against 4 backend datastores: ElastiCache, DocumentDB, RDS, and OpenSearch (Elasticsearch). 5. To enable dynamic routing, CloudWatch monitors ECS load, triggering a weight-adjusting Lambda function that updates the internal Route 53 weights via the AWS SDK.",
+  "step_by_step_reasoning": "The architecture represents Zigbang's hybrid compute and database infrastructure on AWS. Incoming client traffic is resolved via external Route 53 and routed to CloudFront. CloudFront forwards traffic to an internal Route 53 DNS instance, which performs real-time weighted traffic splitting between an ECS on Fargate path and an API Gateway with Lambda path. A monitoring feedback loop reads ECS metrics via CloudWatch, triggering an AWS SDK logic component (represented via Lambda) to dynamically adjust internal Route 53 weights based on real-time traffic spikes and scaling needs. Both compute backends (Fargate and Lambda) interact with four database/storage systems: ElastiCache (caching), DocumentDB (unstructured/high-read data), RDS (relational CRUD), and OpenSearch/ElasticSearch (search and logging). CDK is used for infrastructure management.",
   "graph": {
-    "name": "Zigbang Hybrid Auto-scaling Architecture with Dynamic Weighted Routing",
+    "name": "Zigbang Hybrid Traffic Routing and Multi-Database Architecture",
     "link": "https://www.youtube.com/watch?v=0F7KDLz-kIQ",
-    "categories": "interactive, control",
+    "categories": "Hybrid Compute, Weighted Routing, Dynamic Scaling, Multi-Database",
     "graph_usable": true,
-    "notes": "Hybrid architecture using ECS on Fargate and AWS Lambda to balance cost, performance, and scaling limits. Real-time weighted routing is managed dynamically by CloudWatch and Lambda based on active compute load."
+    "notes": "Features an internal Route 53 dynamic weighted routing system governed by CloudWatch and AWS SDK feedback to balance load between ECS/Fargate and API Gateway/Lambda."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerWebMobile",
-      "name": "Zigbang App Users",
-      "notes": "End users accessing real-estate information, search, and push alerts."
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "External DNS service handling initial domain resolution."
     },
     {
       "id": "1",
       "service": "CloudFront",
-      "name": "Global CDN",
-      "notes": "Caches static assets and handles global request entry."
+      "name": "CloudFront",
+      "notes": "CDN distribution layer delivering content and caching requests."
     },
     {
       "id": "2",
       "service": "Route53",
-      "name": "Internal Route 53",
-      "notes": "Used for dynamic weighted traffic routing between ECS and Serverless paths."
+      "name": "Route 53 (Internal)",
+      "notes": "Internal DNS used for real-time weighted traffic distribution between ECS and API Gateway."
     },
     {
       "id": "3",
-      "service": "ApiGateway",
-      "name": "API Gateway",
-      "notes": "Exposes endpoints for the serverless compute path."
+      "service": "Lambda",
+      "name": "AWS SDK",
+      "notes": "Logic component executing AWS SDK commands to dynamically adjust Route 53 weight parameters based on load."
     },
     {
       "id": "4",
-      "service": "Lambda",
-      "name": "Application Lambda",
-      "notes": "Scales instantly to absorb rapid traffic spikes during marketing events."
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Monitors system load and metrics to inform real-time weight adjustment."
     },
     {
       "id": "5",
       "service": "ECS",
-      "name": "ECS Fargate Cluster",
-      "notes": "Handles main steady-state application load cost-effectively."
+      "name": "ECS",
+      "notes": "Elastic Container Service managing containerized workload orchestration."
     },
     {
       "id": "6",
-      "service": "ElastiCache",
-      "name": "ElastiCache (Redis)",
-      "notes": "Caches transient/volatile data for high-speed query response."
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Serverless compute engine executing ECS container tasks."
     },
     {
       "id": "7",
-      "service": "DocumentDB",
-      "name": "DocumentDB",
-      "notes": "Stores highly read or unstructured document data."
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "API Gateway serving as entry point for serverless API endpoints."
     },
     {
       "id": "8",
-      "service": "RDS",
-      "name": "RDS Database",
-      "notes": "Handles standard relational transactional CRUD workloads."
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless compute functions handling API requests during burst capacity."
     },
     {
       "id": "9",
-      "service": "OpenSearch",
-      "name": "Elasticsearch Service",
-      "notes": "Powers apartment address searches and stores application troubleshooting logs."
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "In-memory caching layer for fast response times and volatile data."
     },
     {
       "id": "10",
-      "service": "CloudWatch",
-      "name": "CloudWatch Monitoring",
-      "notes": "Tracks ECS load metrics to evaluate scaling conditions."
+      "service": "DocumentDB",
+      "name": "Document DB",
+      "notes": "Document database stored for unstructured and high-read volume data."
     },
     {
       "id": "11",
-      "service": "Lambda",
-      "name": "Route 53 Weight Updater",
-      "notes": "Triggered by metrics to dynamically update Route 53 weighted record sets via SDK."
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database service handling primary transactional CRUD operations."
+    },
+    {
+      "id": "12",
+      "service": "OpenSearch",
+      "name": "ElasticSearch",
+      "notes": "Search engine for apartment address searches and application logging/troubleshooting."
     }
   ],
   "edges": [
@@ -88,7 +94,7 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "User requests route through CloudFront."
+      "notes": "External DNS routes user traffic to CloudFront."
     },
     {
       "source": "1",
@@ -96,151 +102,119 @@
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Requests directed to internal dynamic weight router."
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 0,
-      "seq": "2a",
-      "type": "data",
-      "notes": "Routes spike traffic to API Gateway."
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 0,
-      "seq": "3a",
-      "type": "data",
-      "notes": "Triggers serverless app logic."
+      "notes": "CloudFront passes traffic to internal Route 53 for weighted routing."
     },
     {
       "source": "2",
       "target": "5",
       "flow_id": 0,
-      "seq": "2b",
+      "seq": "2",
       "type": "data",
-      "notes": "Routes steady-state traffic directly to container fleet."
+      "notes": "Internal Route 53 splits a portion of weighted traffic to ECS."
     },
     {
-      "source": "4",
-      "target": "6",
-      "flow_id": 0,
-      "seq": "4a",
-      "type": "data",
-      "notes": "Queries/writes transient cache data."
-    },
-    {
-      "source": "4",
+      "source": "2",
       "target": "7",
       "flow_id": 0,
-      "seq": "4b",
+      "seq": "2'",
       "type": "data",
-      "notes": "Queries/writes unstructured data."
-    },
-    {
-      "source": "4",
-      "target": "8",
-      "flow_id": 0,
-      "seq": "4c",
-      "type": "data",
-      "notes": "Relational transactions."
-    },
-    {
-      "source": "4",
-      "target": "9",
-      "flow_id": 0,
-      "seq": "4d",
-      "type": "data",
-      "notes": "Performs search or writes application logs."
+      "notes": "Internal Route 53 splits a portion of weighted traffic to API Gateway."
     },
     {
       "source": "5",
       "target": "6",
       "flow_id": 0,
-      "seq": "3b_1",
-      "type": "data",
-      "notes": "Queries/writes transient cache data."
+      "seq": "3",
+      "type": "control",
+      "notes": "ECS runs tasks on Fargate."
     },
     {
-      "source": "5",
-      "target": "7",
-      "flow_id": 0,
-      "seq": "3b_2",
-      "type": "data",
-      "notes": "Queries/writes unstructured data."
-    },
-    {
-      "source": "5",
+      "source": "7",
       "target": "8",
       "flow_id": 0,
-      "seq": "3b_3",
-      "type": "data",
-      "notes": "Relational transactions."
+      "seq": "3'",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda functions."
     },
     {
-      "source": "5",
+      "source": "6",
       "target": "9",
       "flow_id": 0,
-      "seq": "3b_4",
+      "seq": "4",
       "type": "data",
-      "notes": "Performs search or writes application logs."
+      "notes": "Fargate tasks access ElastiCache."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "data",
+      "notes": "Fargate tasks access DocumentDB."
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "4''",
+      "type": "data",
+      "notes": "Fargate tasks access RDS."
+    },
+    {
+      "source": "6",
+      "target": "12",
+      "flow_id": 0,
+      "seq": "4'''",
+      "type": "data",
+      "notes": "Fargate tasks interact with ElasticSearch."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "4''''",
+      "type": "data",
+      "notes": "Lambda functions access ElastiCache."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "4'''''",
+      "type": "data",
+      "notes": "Lambda functions access DocumentDB."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "4''''''",
+      "type": "data",
+      "notes": "Lambda functions access RDS."
+    },
+    {
+      "source": "8",
+      "target": "12",
+      "flow_id": 0,
+      "seq": "4'''''''",
+      "type": "data",
+      "notes": "Lambda functions interact with ElasticSearch."
     },
     {
       "source": "4",
       "target": "3",
-      "flow_id": 0,
-      "seq": "5a",
-      "type": "data",
-      "notes": "Returns response payload."
-    },
-    {
-      "source": "3",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "6a",
-      "type": "data",
-      "notes": "Relays response to CDN."
-    },
-    {
-      "source": "5",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "4b_resp",
-      "type": "data",
-      "notes": "Returns response payload directly to CDN."
-    },
-    {
-      "source": "1",
-      "target": "0",
-      "flow_id": 0,
-      "seq": "7",
-      "type": "data",
-      "notes": "Delivers final response back to mobile/web clients."
-    },
-    {
-      "source": "5",
-      "target": "10",
       "flow_id": 1,
       "seq": "0",
       "type": "meta",
-      "notes": "Emits CPU/memory utilization metrics."
+      "notes": "CloudWatch collects monitoring metrics and feeds them to the SDK logic."
     },
     {
-      "source": "10",
-      "target": "11",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "meta",
-      "notes": "Triggers Route 53 controller when threshold bounds are exceeded."
-    },
-    {
-      "source": "11",
+      "source": "3",
       "target": "2",
       "flow_id": 1,
-      "seq": "2",
-      "type": "meta",
-      "notes": "Dynamically shifts weighted routing rules to shield ECS during peak spikes."
+      "seq": "1",
+      "type": "control",
+      "notes": "AWS SDK dynamically updates internal Route 53 weighted routing parameters."
     }
   ]
 }

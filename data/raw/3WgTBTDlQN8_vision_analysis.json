@@ -1,78 +1,66 @@
 {
-  "step_by_step_reasoning": "We trace the architecture chronologically. 1. Web/mobile clients access the platform through API Gateway, triggering a Lambda that reads/writes to MongoDB (external software). 2. For scheduled match initialization, CloudWatch triggers a second Lambda that moves match data from MongoDB to S3. 3. External Game APIs push real-time score changes to a third Lambda, which updates S3. 4. EMR runs Spark jobs to read data from S3, compute rankings, and update MongoDB for real-time leaderboard access. 5. S3 data is loaded into Redshift for historical analytics and coupon targeting.",
+  "step_by_step_reasoning": "1. Visual & Audio Transcription: FanFight architecture uses Mobile & Web Users connecting via API Gateway to AWS Lambda functions, which interact with MongoDBAtlas as the operational database. External Game APIs push score/point changes to trigger Lambda functions that write change data into Amazon S3. Post-match events are triggered by CloudWatch to export MongoDB match data into S3. From S3, Amazon EMR runs Spark jobs to process leaderboard ranks and estimated winnings, writing results back to MongoDBAtlas. Data from S3 is also loaded into Amazon Redshift for analytics on promotions, free entries, and couponing.\n2. Node Identification: Standardized to allowed vocabulary (UserConsumerWebMobile, ApiGateway, CloudWatch, ThirdParty, Lambda, MongoDBAtlas, S3, EMR, RedShift).\n3. Flow Construction: Segregated into user API requests (flow 0), live score updates (flow 1), post-match export (flow 2), EMR leaderboard calculation (flow 3), and Redshift analytics (flow 4).",
   "graph": {
     "name": "FanFight Daily Fantasy Sports Architecture",
     "link": "https://www.youtube.com/watch?v=3WgTBTDlQN8",
-    "categories": "data_ingestion,interactive,compute_intensive",
+    "categories": "Gaming, Data Processing, Analytics",
     "graph_usable": true,
-    "notes": "Handles 1.5M registered users, recalculating rankings in near real-time post match starts using Spark on EMR."
+    "notes": "Architecture handles 1.5M new monthly registered users and 500k active users per match. Features real-time score ingestion, serverless API execution, batch leaderboard processing with EMR Spark, and analytics with Redshift."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWebMobile",
-      "name": "Web and Mobile Users",
-      "notes": "Active gamers viewing boards and joining contests."
+      "name": "Mobile & Web Users",
+      "notes": "Over 1.5M registered users, around 500k active team creators per match."
     },
     {
       "id": "1",
       "service": "ApiGateway",
-      "name": "API Gateway",
-      "notes": "Handles user ingress requests."
+      "name": "API",
+      "notes": "Receives user requests from mobile apps and web frontend."
     },
     {
       "id": "2",
-      "service": "Lambda",
-      "name": "User Request Handler",
-      "notes": "Executes transaction and query logic."
+      "service": "CloudWatch",
+      "name": "CW",
+      "notes": "Provides automated triggers (events) after match starts to ingest data."
     },
     {
       "id": "3",
       "service": "ThirdParty",
-      "name": "MongoDB",
-      "notes": "Primary transactional store."
+      "name": "GAME APIs",
+      "notes": "External sports score APIs sending real-time point and score updates."
     },
     {
       "id": "4",
-      "service": "CloudWatch",
-      "name": "Event Rule Trigger",
-      "notes": "Schedules match start extraction."
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless backend functions processing API requests and score events."
     },
     {
       "id": "5",
-      "service": "Lambda",
-      "name": "Match Data Extractor",
-      "notes": "Copies starting match details to S3."
+      "service": "MongoDBAtlas",
+      "name": "MongoDB",
+      "notes": "Primary database storing user teams, match details, and computed leaderboards."
     },
     {
       "id": "6",
-      "service": "ThirdParty",
-      "name": "Game APIs",
-      "notes": "External sport feed provider."
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central storage/data lake storing score changes and match historical data."
     },
     {
       "id": "7",
-      "service": "Lambda",
-      "name": "Score Update Processor",
-      "notes": "Ingests real-time score feeds."
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Executes Spark jobs to compute ranks and estimated winnings."
     },
     {
       "id": "8",
-      "service": "S3",
-      "name": "Raw Data Store",
-      "notes": "Central data lake for processing."
-    },
-    {
-      "id": "9",
-      "service": "EMR",
-      "name": "Spark Processing",
-      "notes": "Generates leaderboard scores."
-    },
-    {
-      "id": "10",
-      "service": "Redshift",
-      "name": "Redshift Warehouse",
-      "notes": "Used for analytical operations."
+      "service": "RedShift",
+      "name": "REDSHIFT",
+      "notes": "Data warehouse for analytics on free entries and coupon targeting."
     }
   ],
   "edges": [
@@ -82,111 +70,79 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "User actions"
+      "notes": "Users send API requests to API Gateway."
     },
     {
       "source": "1",
-      "target": "2",
+      "target": "4",
       "flow_id": 0,
       "seq": "1",
-      "type": "data",
-      "notes": "Proxy request"
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "Get/Set state"
-    },
-    {
-      "source": "3",
-      "target": "2",
-      "flow_id": 0,
-      "seq": "3",
-      "type": "data",
-      "notes": "Return data"
-    },
-    {
-      "source": "2",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "4",
-      "type": "data",
-      "notes": "Format reply"
-    },
-    {
-      "source": "1",
-      "target": "0",
-      "flow_id": 0,
-      "seq": "5",
-      "type": "data",
-      "notes": "Render in app"
+      "type": "control",
+      "notes": "API Gateway triggers backend Lambda functions."
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "meta",
-      "notes": "Match start trigger"
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda reads and writes user team data to MongoDB."
     },
     {
-      "source": "5",
-      "target": "3",
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Game APIs trigger Lambda whenever scores or points change."
+    },
+    {
+      "source": "4",
+      "target": "6",
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Pull match details"
+      "notes": "Lambda stores detected score changes directly into S3."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch triggers Lambda after a match starts."
     },
     {
       "source": "5",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
       "type": "data",
-      "notes": "Write raw data to lake"
+      "notes": "Match-related data from MongoDB is backed up and stored in S3."
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 2,
+      "flow_id": 3,
       "seq": "0",
       "type": "data",
-      "notes": "Webhooks for live play score"
+      "notes": "EMR Spark jobs read raw match data from S3."
     },
     {
       "source": "7",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR writes computed user rankings and winnings back into MongoDB."
+    },
+    {
+      "source": "6",
       "target": "8",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Append score update"
-    },
-    {
-      "source": "8",
-      "target": "9",
-      "flow_id": 3,
-      "seq": "0",
-      "type": "data",
-      "notes": "Batch data load"
-    },
-    {
-      "source": "9",
-      "target": "3",
-      "flow_id": 3,
-      "seq": "1",
-      "type": "data",
-      "notes": "Save computed rankings"
-    },
-    {
-      "source": "8",
-      "target": "10",
       "flow_id": 4,
       "seq": "0",
       "type": "data",
-      "notes": "Load data for analytics"
+      "notes": "Data from S3 is loaded into Redshift for business analytics."
     }
   ]
 }

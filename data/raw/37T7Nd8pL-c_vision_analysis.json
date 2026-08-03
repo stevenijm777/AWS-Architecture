@@ -1,0 +1,106 @@
+{
+  "step_by_step_reasoning": "1. Identifies core services from visual and transcript sources: S3 bucket for file uploads, EventBridge for event routing, Step Functions for workflow orchestration, Lambda for step execution, SageMaker for real-time model inference, and Managed Textract for text extraction.\n2. Establishes document flow: Uploaded files in S3 send events through EventBridge, triggering Step Functions.\n3. Step Functions coordinates Lambda function execution, invoking SageMaker for custom image analysis and Textract for text extraction.\n4. Once post-processing finishes, Step Functions emits completion events back to EventBridge.",
+  "graph": {
+    "name": "Docebo AI Powered Document Processing Pipeline",
+    "link": "https://www.youtube.com/watch?v=37T7Nd8pL-c",
+    "categories": "machine_learning, orchestration, serverless",
+    "graph_usable": true,
+    "notes": "Docebo uses this serverless architecture to process 10-20 documents per day (30-50 pages per minute) and reduce document noise by about 80%. Uploaded PDFs stored in S3 send events through EventBridge to trigger a Step Functions workflow powered by Lambda. The pipeline uses a custom ML model on SageMaker real-time endpoints for image analysis and Managed Textract for text extraction, returning completion notifications to EventBridge."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores uploaded PDF documents containing text and images."
+    },
+    {
+      "id": "1",
+      "service": "EventBridge",
+      "name": "EVENTBRIDGE",
+      "notes": "Main event bus that triggers processing workflows and receives completion notifications."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "Orchestrates multi-stage document processing workflow."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Powers Step Functions steps, converting pages to images and conducting semantic post-processing."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SAGEMAKER",
+      "notes": "Real-time endpoint hosting custom machine learning model for page image analysis."
+    },
+    {
+      "id": "5",
+      "service": "Textract",
+      "name": "MANAGED TEXTRACT",
+      "notes": "Managed API used for extracting text from document pages."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Provides document reference payload stored in S3 to processing workflow."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "EventBridge triggers Step Functions execution upon document upload event."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda passes converted page images to SageMaker endpoint for visual model analysis."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "SageMaker returns ML inference analysis results back to Lambda."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Step Functions invokes Managed Textract for document text extraction."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Textract returns extracted text to Step Functions workflow."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step Functions sends completion notification events back to EventBridge."
+    }
+  ]
+}

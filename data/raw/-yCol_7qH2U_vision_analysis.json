@@ -1,84 +1,78 @@
 {
-  "step_by_step_reasoning": "Data scientists upload models via a UI Portal connected to a Platform API (EC2). The API stores metadata in OpenSearch, files in S3, and publishes build tasks to MSK (Kafka). A build runner (EC2) pulls these resources, gets dependencies from Artifactory, builds Docker images, stores them in ECR, and deploys to SageMaker. Status updates trigger EventBridge, Lambda, MSK, and a Fargate consumer, which updates OpenSearch and sends the final status back to the user.",
+  "step_by_step_reasoning": "The architecture illustrates Experian's automated custom ML model onboarding platform. 1. A data scientist uses the UI Portal (ThirdParty) to upload model artifacts (pickle files, dependencies, attributes). 2. UI Portal passes requests to a Platform API running on AWS Fargate (Top). 3. Fargate (Top) creates a entry in OpenSearch (Model Registry), saves artifacts to S3, and emits a build event to MSK. 4. An EC2 instance acting as a build machine consumes the event from MSK, retrieves artifacts from S3, builds a SageMaker-compatible Docker image, pushes it to ECR, and creates/deploys the SageMaker endpoint. 5. SageMaker status events trigger EventBridge, which invokes Lambda to push status notifications back to MSK. 6. A Consumer App running on AWS Fargate (Bottom) consumes the completion event, updates OpenSearch with the endpoint metadata, and notifies the UI Portal.",
   "graph": {
-    "name": "Experian Automated Model Ingestion and Deployment",
+    "name": "Experian Custom Model Onboarding Platform",
     "link": "https://www.youtube.com/watch?v=-yCol_7qH2U",
-    "categories": "compute_intensive, data_ingestion",
+    "categories": "Machine Learning, Event-Driven Architecture",
     "graph_usable": true,
-    "notes": "Automates onboarding of custom Python models from months to days using containerized pipelines and SageMaker endpoints."
+    "notes": "Architecture for rapidly onboarding custom client machine learning models at Experian, taking build-to-production time from months to days using MSK, SageMaker, EC2, and Fargate."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserCompanyDeveloper",
-      "name": "Data Scientists",
-      "notes": "DATA_PEEK: Uploads Python serialized (.pkl) files and attributes.py via UI Portal."
+      "service": "ThirdParty",
+      "name": "UI Portal",
+      "notes": "Frontend portal where data scientists upload model artifacts, library dependencies, and attribute files."
     },
     {
       "id": "1",
-      "service": "EC2",
-      "name": "Platform API",
-      "notes": "Handles incoming model upload and registration requests."
+      "service": "Fargate",
+      "name": "AWS Fargate (Platform API)",
+      "notes": "Platform API backend that handles initial upload requests, registers models, stores artifacts, and initiates builds."
     },
     {
       "id": "2",
       "service": "OpenSearch",
-      "name": "Model Registry",
-      "notes": "Metadata store tracking model status, versions, and endpoint URLs."
+      "name": "Amazon OpenSearch Service",
+      "notes": "Serves as the model registry datastore for tracking model entries and endpoint metadata."
     },
     {
       "id": "3",
       "service": "S3",
-      "name": "Artifact Store",
-      "notes": "Stores uploaded raw model artifacts and attributes."
+      "name": "Amazon S3",
+      "notes": "Stores uploaded raw model artifacts, pickle files, and code dependencies."
     },
     {
       "id": "4",
       "service": "MSK",
-      "name": "Kafka Event Bus",
-      "notes": "Asynchronous event broker managing pipeline stages."
+      "name": "Amazon MSK",
+      "notes": "Managed Streaming for Apache Kafka, orchestrates asynchronous build triggers and deployment status updates."
     },
     {
       "id": "5",
       "service": "EC2",
-      "name": "Build Machine",
-      "notes": "WORKLOAD_PEEK: Runs Docker to containerize SageMaker-compatible images."
+      "name": "Amazon EC2",
+      "notes": "Build machine running Docker that compiles artifacts into SageMaker-compatible container images."
     },
     {
       "id": "6",
-      "service": "ThirdParty",
-      "name": "Artifactory",
-      "notes": "Hosts required code and model library dependencies."
+      "service": "ECR",
+      "name": "Amazon ECR",
+      "notes": "Container registry storing built Docker images for SageMaker deployment."
     },
     {
       "id": "7",
-      "service": "ECR",
-      "name": "Container Registry",
-      "notes": "Stores built SageMaker-compatible Docker images."
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "Provisions managed endpoints, applies auto-scaling policies, and performs ML model inferencing."
     },
     {
       "id": "8",
-      "service": "SageMaker",
-      "name": "Model Endpoint",
-      "notes": "Hosts model for scalable auto-scaling inference."
+      "service": "EventBridge",
+      "name": "Amazon EventBridge",
+      "notes": "Monitors SageMaker state changes and emits endpoint status events."
     },
     {
       "id": "9",
-      "service": "EventBridge",
-      "name": "Event Router",
-      "notes": "Monitors SageMaker endpoint change events."
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Processes EventBridge status events and posts updates back to Kafka."
     },
     {
       "id": "10",
-      "service": "Lambda",
-      "name": "Status Handler",
-      "notes": "Triggers on EventBridge signals to publish status changes back to MSK."
-    },
-    {
-      "id": "11",
       "service": "Fargate",
-      "name": "Status Consumer",
-      "notes": "Consumes status updates, writes back to the UI portal and registry."
+      "name": "AWS Fargate (Consumer App)",
+      "notes": "Consumer application processing completion events to update OpenSearch and return deployment status to the UI Portal."
     }
   ],
   "edges": [
@@ -88,7 +82,7 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Uploads artifacts and triggers pipeline"
+      "notes": "User submits upload request via UI Portal to the Platform API."
     },
     {
       "source": "1",
@@ -96,31 +90,31 @@
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Creates registry entry"
+      "notes": "Platform API creates an initial entry in the OpenSearch model registry."
     },
     {
       "source": "1",
       "target": "3",
       "flow_id": 0,
-      "seq": "2",
+      "seq": "1'",
       "type": "data",
-      "notes": "Saves artifacts"
+      "notes": "Platform API writes uploaded model artifacts to S3."
     },
     {
       "source": "1",
       "target": "4",
       "flow_id": 0,
-      "seq": "3",
-      "type": "data",
-      "notes": "Publishes build event"
+      "seq": "1''",
+      "type": "control",
+      "notes": "Platform API emits a build initiation event to an MSK Kafka topic."
     },
     {
       "source": "4",
       "target": "5",
       "flow_id": 1,
       "seq": "0",
-      "type": "data",
-      "notes": "Triggers build process"
+      "type": "control",
+      "notes": "MSK event triggers the build process on the EC2 build machine."
     },
     {
       "source": "5",
@@ -128,7 +122,7 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Downloads model artifacts"
+      "notes": "EC2 build machine fetches model artifacts from S3."
     },
     {
       "source": "5",
@@ -136,71 +130,63 @@
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Pulls internal dependency libraries"
+      "notes": "EC2 builds Docker container image and pushes it to Amazon ECR."
     },
     {
       "source": "5",
       "target": "7",
       "flow_id": 1,
       "seq": "3",
-      "type": "data",
-      "notes": "Pushes built container image"
+      "type": "control",
+      "notes": "EC2 creates SageMaker endpoint configuration and deploys the model endpoint."
     },
     {
-      "source": "5",
+      "source": "7",
       "target": "8",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Deploys container and endpoint configuration"
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "SageMaker emits endpoint status change events to EventBridge."
     },
     {
       "source": "8",
       "target": "9",
       "flow_id": 2,
-      "seq": "0",
-      "type": "meta",
-      "notes": "Emits status events"
+      "seq": "1",
+      "type": "control",
+      "notes": "EventBridge triggers AWS Lambda function upon endpoint state change."
     },
     {
       "source": "9",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "meta",
-      "notes": "Triggers handler on change"
-    },
-    {
-      "source": "10",
       "target": "4",
       "flow_id": 2,
       "seq": "2",
-      "type": "data",
-      "notes": "Publishes change status back to topic"
+      "type": "control",
+      "notes": "Lambda function writes deployment status notification event to Kafka topic."
     },
     {
       "source": "4",
-      "target": "11",
+      "target": "10",
       "flow_id": 2,
       "seq": "3",
-      "type": "data",
-      "notes": "Pulls message update"
+      "type": "control",
+      "notes": "MSK triggers the consumer application running on AWS Fargate."
     },
     {
-      "source": "11",
-      "target": "2",
-      "flow_id": 2,
-      "seq": "4",
-      "type": "data",
-      "notes": "Updates endpoint details in registry"
-    },
-    {
-      "source": "11",
+      "source": "10",
       "target": "0",
       "flow_id": 2,
-      "seq": "5",
+      "seq": "4",
+      "type": "meta",
+      "notes": "Consumer app updates UI Portal with deployment success/failure status."
+    },
+    {
+      "source": "10",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "4'",
       "type": "data",
-      "notes": "Pushes build completion status to UI"
+      "notes": "Consumer app updates endpoint details in OpenSearch model registry."
     }
   ]
 }

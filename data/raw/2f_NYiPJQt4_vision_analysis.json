@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "1. Identified core management components: AWS Control Tower and AWS Organizations. Control Tower manages governance policies applied to Organizations.\n2. Identified DevOps automation components: S3 (hosting a management single-page web application), API Gateway, and AWS Lambda functions for infrastructure tasks.\n3. Identified runtime cluster components: Application Load Balancer (ALB) routing incoming web requests to Amazon EC2 instances running Appway multi-node cluster, which store central shared data on EFS.\n4. Identified identity and network components: Client browser authenticates with Amazon Cognito and connects to EC2; EC2 integrates with Cognito via OpenID Connect and connects to on-premises resources via Site-to-Site VPN.\n5. Standardized node service names using valid AWS vocabulary (e.g. UserConsumerWeb for client, ControlTower, Organizations, S3, ApiGateway, Lambda, Cognito, ALB, EC2, EFS, S2SVPN).\n6. Formatted sequence flows cleanly into logical groups: Flow 0 (Management Governance), Flow 1 (Application Traffic & Storage/Auth), Flow 2 (DevOps Automation).",
+  "graph": {
+    "name": "Appway Cloud Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=2f_NYiPJQt4",
+    "categories": "SaaS Multi-tenant Enterprise Architecture",
+    "graph_usable": true,
+    "notes": "Appway's cloud deployment architecture features dedicated customer accounts managed via Organizations and Control Tower, a multi-node cluster on EC2 with ALB and EFS, Cognito authentication, S2S VPN for enterprise integration, and a serverless DevOps toolchain."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ControlTower",
+      "name": "CONTROL TOWER",
+      "notes": "Uses guardrails to manage and enforce security/compliance policies across accounts."
+    },
+    {
+      "id": "1",
+      "service": "Organizations",
+      "name": "ORGANIZATIONS",
+      "notes": "Provides account isolation with dedicated AWS accounts for each customer."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Hosts React-based single-page application for cloud automation management."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Entry point REST API for management application requests."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Executes account management, cluster provisioning, and update tasks."
+    },
+    {
+      "id": "5",
+      "service": "Cognito",
+      "name": "COGNITO",
+      "notes": "Handles user authentication using OpenID Connect, integrating with external IdPs."
+    },
+    {
+      "id": "6",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Performs request routing and SSL offloading for the Appway cluster."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "Client",
+      "notes": "Client browser running React frontend application."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Runs Appway Java/Tomcat cluster nodes with Hazelcast across multi-AZs."
+    },
+    {
+      "id": "9",
+      "service": "EFS",
+      "name": "EFS",
+      "notes": "Shared central storage for all Appway cluster nodes."
+    },
+    {
+      "id": "10",
+      "service": "S2SVPN",
+      "name": "S2S VPN",
+      "notes": "Dedicated VPN connection to customer in-house data centers and core banking systems."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Control Tower applies compliance guardrails to AWS Organizations."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "ALB routes web application requests to EC2 cluster nodes."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Client authenticates directly with Cognito."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Client sends application requests to EC2."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Appway EC2 cluster validates user authentication via Cognito OIDC."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EC2 cluster instances store and access data on EFS."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "EC2 cluster accesses customer internal systems via S2S VPN."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Management SPA hosted on S3 interacts with API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda functions for management operations."
+    }
+  ]
+}

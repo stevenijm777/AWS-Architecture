@@ -19,24 +19,42 @@ from google import genai
 from pydantic import BaseModel
 from rich.console import Console
 
-from config.settings import GEMINI_API_KEY, GEMINI_MODEL
+from config.settings import GEMINI_API_KEY, GEMINI_API_KEYS, GEMINI_MODEL
 
 console = Console()
 
-# ── Gemini Client (lazy init) ────────────────────────────────
+# ── Gemini Client (lazy init & multi-key rotation) ────────────
 _client: genai.Client | None = None
+_current_key_idx: int = 0
 
 
 def _get_client() -> genai.Client:
-    global _client
+    global _client, _current_key_idx
     if _client is None:
-        if not GEMINI_API_KEY:
+        keys = GEMINI_API_KEYS if GEMINI_API_KEYS else ([GEMINI_API_KEY] if GEMINI_API_KEY else [])
+        if not keys:
             raise ValueError(
                 "GEMINI_API_KEY not set. Add it to your .env file."
             )
-        _client = genai.Client(api_key=GEMINI_API_KEY)
-        console.print("[green]✓[/] Gemini client initialised")
+        _current_key_idx = _current_key_idx % len(keys)
+        active_key = keys[_current_key_idx]
+        _client = genai.Client(api_key=active_key)
+        masked_key = active_key[:8] + "..." + active_key[-4:] if len(active_key) > 12 else "active_key"
+        console.print(f"[green]✓[/] Gemini client initialised (Key {_current_key_idx + 1}/{len(keys)}: {masked_key})")
     return _client
+
+
+def _rotate_client() -> genai.Client:
+    global _client, _current_key_idx
+    keys = GEMINI_API_KEYS if GEMINI_API_KEYS else ([GEMINI_API_KEY] if GEMINI_API_KEY else [])
+    if len(keys) > 1:
+        _current_key_idx = (_current_key_idx + 1) % len(keys)
+        active_key = keys[_current_key_idx]
+        _client = genai.Client(api_key=active_key)
+        masked_key = active_key[:8] + "..." + active_key[-4:] if len(active_key) > 12 else "rotated_key"
+        console.print(f"[bold yellow]🔄 Rotated Gemini API Key → Key {_current_key_idx + 1}/{len(keys)} ({masked_key})[/]")
+    return _get_client()
+
 
 
 # ── Services Catalog ─────────────────────────────────────────
@@ -45,7 +63,10 @@ def load_services_catalog() -> tuple[list[str], list[str]]:
     """
     Load valid AWS services and user actors from services.csv.
     """
-    csv_path = Path(__file__).resolve().parent.parent / "data" / "cloudscape_gt" / "services.csv"
+    project_root = Path(__file__).resolve().parent.parent.parent
+    csv_path = project_root / "data" / "cloudscape_gt" / "services.csv"
+    if not csv_path.exists():
+        csv_path = project_root / "data" / "services.csv"
     if not csv_path.exists():
         return [], []
 
@@ -66,6 +87,7 @@ def load_services_catalog() -> tuple[list[str], list[str]]:
     except Exception as e:
         console.print(f"[yellow]⚠ Failed to load services catalog: {e}[/]")
     return sorted(list(aws_services)), sorted(list(user_actors))
+
 
 
 AWS_SERVICES, USER_ACTORS = load_services_catalog()
@@ -152,16 +174,13 @@ Do NOT generate the final graph. Focus strictly on identifying the present entit
 """
 
 MFR_STAGE_2_PROMPT_TEMPLATE = """
-You are an expert AWS Solutions Architect. Your task is to compile the final logical cloud architecture graph from the provided World Model and audio transcript.
-
-You must generalize your reasoning to deduce the true logical "Ground Truth" architecture based on standard AWS patterns.
+You are an Expert Cloud Architecture Transcriber. Your task is to faithfully transcribe the architecture EXACTLY as it is drawn on the whiteboard and described in the audio transcript. You are RECORDING the architecture, not redesigning it.
+Do NOT invent unmentioned intermediate components or deployment layers unless they are explicitly present as active runtime participants.
 
 ## VALID VOCABULARY LISTS (CRITICAL):
 You may ONLY use exact values from these lists for the "service" field.
-
 AWS Services:
 <AWS_SERVICES_PLACEHOLDER>
-
 User and Client Actors:
 <USER_ACTORS_PLACEHOLDER>
 
@@ -173,17 +192,30 @@ Use this as your visual inventory.
 <WORLD_MODEL_PLACEHOLDER>
 
 ## NODE RULES (PRUNING, FUSION, AND AUDIO-DRIVEN EXPANSION):
-1. **Strict Normalization (CRITICAL):** The "service" field MUST match exactly with an element from the VALID VOCABULARY LISTS.
+1. **Strict Normalization & Third-Party Abstraction (CRITICAL):** The "service" field MUST match exactly with the VALID VOCABULARY LISTS. Non-native AWS services, databases, or external integrations MUST use the generic `ThirdParty` service type.
 2. **Numeric Identifiers:** The "id" field of each node MUST be strictly a sequential integer in string format (e.g., "0", "1", "2").
-3. **Audio-Driven Expansion (CRITICAL OVERRIDE):** If the visual World Model shows a generic abstraction (e.g., a single "AWS" cloud icon, or "On-Prem"), but the audio transcript explicitly lists specific services belonging to that group (e.g., S3, SNS, SQS, CloudTrail, GuardDuty), you MUST expand the generic visual node into separate, individual nodes for each explicitly mentioned service. DO NOT create the generic parent node; only create its specific children and route them to their logical destination.
-4. **Dynamic Logical Fusion:** Evaluate multiple icons of the same service dynamically. If they act as a single logical unit, FUSE them. If they perform distinct architectural steps at different stages, KEEP THEM SEPARATE.
+3. **Audio-Driven Expansion (CRITICAL OVERRIDE):** If the visual World Model shows a generic abstraction (e.g., a single "AWS" cloud icon), but the audio transcript explicitly lists specific services belonging to that group, you MUST expand the generic visual node into separate, individual nodes for each explicitly mentioned service.
+4. **Dynamic Logical Fusion:** Evaluate multiple icons of the same service dynamically. If they act as a single logical unit, FUSE them. If they perform distinct architectural steps (e.g., three Lambda functions doing different processing stages), KEEP THEM SEPARATE as distinct nodes.
 5. **Pruning:** Remove generic human actors or purely physical concepts. Keep system entry points.
 6. **Note Assimilation:** Extract specific constraints and metrics from the transcript and inject them into the "notes".
 
 ## EDGE AND FLOW RULES (LOGICAL ROUTING):
 1. **Strict Flow Segmentation (`flow_id`):** Group related architectural actions into distinct logical workflows using an integer `flow_id` (starting at 0).
-2. **Chronological Sequence (`seq`):** Order events within a flow using string integers ("0", "1"). Use the prime character for parallel actions (e.g., "1" and "1'"). Model bidirectionality as two edges.
-3. **Edge Types (`type`):** Use "data" for payload transfers/reads/writes. Use "control" for events, triggers, or asynchronous invocations.
+2. **Chronological Sequence (`seq`):** Order events within a flow using string integers ("0", "1"). Use the prime character for parallel actions.
+3. **Edge Types (`type`):** Use "data" for payload transfers/reads/writes. Use "control" for events, triggers, or asynchronous invocations. Use "meta" for feedback loops, acknowledgments, polling, or monitoring connections.
+
+## TOPOLOGY & CONTAINMENT RULES:
+- **Hosted Software & Substrates:** When third-party software (e.g., Kafka, Metron, Nginx) runs on top of compute hosts (EC2, ECS), preserve the host node if explicitly mentioned, but route logical application flows directly to/from the functional service entity.
+- **No Unused Deployment Layers:** Omit infrastructure management layers (e.g., CloudFormation) unless explicitly described as active runtime triggers.
+
+## EVIDENCE-BALANCED EDGE GENERATION:
+- **Visual & Verbal Grounding:** Primary evidence for edges must come from visual arrows or explicit verbal flow statements in the transcript (e.g., "sends to", "triggers", "stores in").
+- **Completeness:** Ensure that every active service node identified is connected to the graph if a logical flow is described in the audio, avoiding orphan nodes while preventing unmentioned canonical edge hallucinations.
+
+## STRICT EDGE ROUTING & DIRECTIONALITY:
+- **Unidirectional Default:** Treat data and control flows as strictly unidirectional unless a reverse flow is explicitly shown or stated.
+- **Exact Edge Type Mapping:** Accurately differentiate `data` (direct payloads), `control` (triggers, orchestration, events), and `meta` (monitoring, feedback).
+- **No Intermediate Shortcuts:** Preserve exact path routing. Do not bypass intermediate nodes.
 """
 
 # ── Retry Logic ──────────────────────────────────────────────
@@ -219,7 +251,8 @@ def _call_gemini_with_retry(
 
     for attempt in range(max_retries):
         try:
-            response = client.models.generate_content(
+            active_client = client or _get_client()
+            response = active_client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=[
                     {
@@ -240,12 +273,19 @@ def _call_gemini_with_retry(
         except Exception as e:
             err_msg = str(e)
             if attempt < max_retries - 1 and any(x in err_msg.upper() or y in err_msg for x in ["503", "429", "UNAVAILABLE", "LIMIT"] for y in ["demand", "ResourceExhausted", "quota"]):
-                delay = 65 if ("429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg.upper() or "quota" in err_msg.lower()) else retry_delay
-                console.print(f"  [yellow]⚠ Gemini API returned error: {err_msg}. Retrying in {delay}s... (Attempt {attempt+1}/{max_retries})[/]")
-                time.sleep(delay)
-                retry_delay *= 2
+                keys_count = len(GEMINI_API_KEYS) if GEMINI_API_KEYS else 1
+                if keys_count > 1:
+                    console.print(f"  [yellow]⚠ Gemini API quota/rate limit error: {err_msg}. Rotating key...[/]")
+                    client = _rotate_client()
+                    delay = 3
+                else:
+                    delay = 65 if ("429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg.upper() or "quota" in err_msg.lower()) else retry_delay
+                    console.print(f"  [yellow]⚠ Gemini API error: {err_msg}. Retrying in {delay}s... (Attempt {attempt+1}/{max_retries})[/]")
+                    time.sleep(delay)
+                    retry_delay *= 2
             else:
                 raise e
+
 
 
 # ── Public API ───────────────────────────────────────────────
@@ -272,16 +312,15 @@ def analyze_frame(
             format_symbols_for_prompt,
         )
         symbols_list, processed_img_path = procesar_y_resaltar_conclusiones_pizarra(
-            frame_path, frame_path.parent, delta_contraste_min=25.0
+            frame_path, frame_path.parent, delta_contraste_min=40.0
         )
         symbols_prompt_section = format_symbols_for_prompt(symbols_list)
-        if processed_img_path and processed_img_path.exists():
-            target_image_path = processed_img_path
     except Exception as e:
         console.print(f"  [yellow]⚠ Adaptive detection skipped: {e}[/]")
 
-    # Read and encode image (highlighted image with connection lines and bounding tags)
+    # Read and encode clean image (symbols prompt section provides detected bounding guidelines)
     image_bytes = target_image_path.read_bytes()
+
     image_b64 = base64.b64encode(image_bytes).decode("utf-8")
 
     # Determine MIME type

@@ -1,66 +1,66 @@
 {
-  "step_by_step_reasoning": "The transcript describes an IoT pipeline for train monitoring. Locomotives generate ~3 million data samples daily. This raw data is ingested via an initial Lambda function, put into a raw Kinesis stream, filtered via Kinesis Analytics, and routed to a normalized Kinesis stream. A second identical pipeline is mentioned for track-side sensors. From the unified Kinesis stream, a management Lambda inserts the normalized data into DynamoDB. Consumers (algorithms evaluating train condition) query the data through API Gateway, which triggers the same manager Lambda to retrieve and return records from DynamoDB.",
+  "step_by_step_reasoning": "The architecture diagram depicts SBB Cargo's digital twin telemetry processing pipeline for freight train inspection. Data from sensors on locomotives/tracks (Producer) is sent to an initial ingestion Lambda function that transforms raw input formats into a Kinesis Data Stream. Kinesis Analytics filters out millions of daily unneeded samples to retain only critical state data, routing it to a central normalized Kinesis Data Stream. A bottom Lambda function processes records from this normalized stream and writes them into DynamoDB, forming the digital twin state. On the query side, downstream algorithms (Consumer) request train condition data through API Gateway, which delegates to the bottom Lambda function to read state from DynamoDB and return the result.",
   "graph": {
-    "name": "SBB Cargo Train Sensor Ingestion and Digital Twin Platform",
+    "name": "SBB Cargo Freight Train Telemetry & Digital Twin Architecture",
     "link": "https://www.youtube.com/watch?v=4-teOQ_dJvY",
-    "categories": "data_ingestion, compute_intensive",
+    "categories": "IoT, Real-time Analytics, Serverless, Data Processing",
     "graph_usable": true,
-    "notes": "Low-maintenance serverless digital twin architecture. Filters high-volume IoT data (3M messages/day per train) down to critical indicators using Kinesis Analytics before storing in DynamoDB."
+    "notes": "Architecture designed for processing ~3 million samples daily per locomotive using modular serverless stream-processing pipelines defined as Infrastructure as Code."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserCompanyIOT",
-      "name": "Train & Track Sensors",
-      "notes": "DATA_PEEK: Produces ~3 million raw samples per train daily."
+      "service": "ThirdParty",
+      "name": "PRODUCER",
+      "notes": "Train sensors (locomotives, tracks) producing telemetry/sensor data (~3M samples/day per locomotive)."
     },
     {
       "id": "1",
       "service": "Lambda",
-      "name": "Ingestion Lambda",
-      "notes": "WORKLOAD_PEEK: Simple serverless function translating and forwarding variable-format raw IoT data."
+      "name": "LAMBDA (Top)",
+      "notes": "Ingests raw telemetry data in various formats and forwards it to Kinesis."
     },
     {
       "id": "2",
-      "service": "KinesisDataStream",
-      "name": "Raw Data Stream",
-      "notes": "Buffers the raw ingest data stream."
+      "service": "Kinesis",
+      "name": "KINESIS (Top)",
+      "notes": "Ingestion Kinesis Data Stream holding raw sensor telemetry."
     },
     {
       "id": "3",
       "service": "KinesisAnalytics",
-      "name": "Kinesis Data Analytics",
-      "notes": "Filters and reduces incoming sensor data to critical parameters."
+      "name": "KINESIS ANALYTICS",
+      "notes": "Filters raw data stream to retain only critical telemetry required for train inspection."
     },
     {
       "id": "4",
-      "service": "KinesisDataStream",
-      "name": "Normalized Stream",
-      "notes": "Aggregates filtered and structured digital twin data from multiple sources."
+      "service": "Kinesis",
+      "name": "KINESIS (Middle)",
+      "notes": "Centralized, normalized Kinesis Stream receiving harmonized data from ingestion pipelines."
     },
     {
       "id": "5",
       "service": "Lambda",
-      "name": "Data Manager Lambda",
-      "notes": "Manages writes to DynamoDB and handles read queries via API Gateway."
+      "name": "LAMBDA (Bottom)",
+      "notes": "Handles persistence of normalized telemetry into DynamoDB and executes API retrieval queries."
     },
     {
       "id": "6",
       "service": "DynamoDB",
-      "name": "Digital Twin Database",
-      "notes": "Stores current status and health history of train components."
+      "name": "DYNAMODB",
+      "notes": "Stores digital twin state and normalized sensor records."
     },
     {
       "id": "7",
       "service": "ApiGateway",
-      "name": "API Gateway",
-      "notes": "Exposes endpoints for algorithms to query train health status."
+      "name": "API GW",
+      "notes": "Exposes HTTP endpoints for analytical algorithms and downstream clients."
     },
     {
       "id": "8",
-      "service": "UserCompanyInternalPlatform",
-      "name": "Analysis Algorithms",
-      "notes": "Consuming system determining if trains need immediate maintenance."
+      "service": "ThirdParty",
+      "name": "CONSUMER",
+      "notes": "External client or algorithm assessing overall train condition and safety."
     }
   ],
   "edges": [
@@ -68,97 +68,73 @@
       "source": "0",
       "target": "1",
       "flow_id": 0,
-      "seq": "1",
+      "seq": "0",
       "type": "data",
-      "notes": "Sends sensor telemetry"
+      "notes": "Producer sends raw sensor telemetry in any format to the ingestion Lambda."
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 0,
-      "seq": "2",
+      "seq": "1",
       "type": "data",
-      "notes": "Writes raw telemetry"
+      "notes": "Ingestion Lambda forwards raw data into the top Kinesis Data Stream."
     },
     {
       "source": "2",
       "target": "3",
       "flow_id": 0,
-      "seq": "3",
+      "seq": "2",
       "type": "data",
-      "notes": "Streams data for real-time analytics"
+      "notes": "Raw Kinesis Data Stream feeds records into Kinesis Analytics for filtering."
     },
     {
       "source": "3",
       "target": "4",
       "flow_id": 0,
-      "seq": "4",
+      "seq": "3",
       "type": "data",
-      "notes": "Forwards filtered telemetry"
+      "notes": "Kinesis Analytics forwards filtered, high-value data to the middle normalized Kinesis Stream."
     },
     {
       "source": "4",
       "target": "5",
       "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "Triggers processing Lambda"
+      "seq": "0",
+      "type": "control",
+      "notes": "Normalized Kinesis Stream triggers the bottom processing Lambda function."
     },
     {
       "source": "5",
       "target": "6",
       "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "Persists digital twin record"
-    },
-    {
-      "source": "8",
-      "target": "7",
-      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Queries train condition metrics"
-    },
-    {
-      "source": "7",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Triggers query execution"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Reads train status history"
+      "notes": "Bottom Lambda formats and persists digital twin telemetry into DynamoDB."
     },
     {
       "source": "6",
       "target": "5",
       "flow_id": 2,
-      "seq": "4",
+      "seq": "0",
       "type": "data",
-      "notes": "Returns data record"
+      "notes": "Bottom Lambda queries digital twin data from DynamoDB upon request."
     },
     {
       "source": "5",
       "target": "7",
       "flow_id": 2,
-      "seq": "5",
+      "seq": "1",
       "type": "data",
-      "notes": "Responds with data payload"
+      "notes": "Bottom Lambda returns requested telemetry to API Gateway."
     },
     {
       "source": "7",
       "target": "8",
       "flow_id": 2,
-      "seq": "6",
+      "seq": "2",
       "type": "data",
-      "notes": "Delivers query results"
+      "notes": "API Gateway returns requested train data back to consumer algorithm."
     }
   ]
 }

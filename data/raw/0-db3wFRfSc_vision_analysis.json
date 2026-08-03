@@ -1,0 +1,222 @@
+{
+  "step_by_step_reasoning": "1. Identify system entry points and core actors: User (UserConsumerWebMobile) initiates photo animation requests. 2. Map AWS services present on the whiteboard and described in the transcript: API (EC2), S3 (S3), MySQL (RDS), CloudFront (CloudFront), Main SQS (SQS), Lambda (Lambda), GPU (EC2), Notification SQS (SQS), State Manager (EC2), Regional SQS (SQS), and Regional GPU (EC2). 3. Construct chronological flows: Flow 0 for presigned URL generation and photo upload to S3; Flow 1 for queueing, Lambda capacity-aware routing across 5+ AWS regions, GPU deep learning processing, and output artifact storage in S3; Flow 2 for completion notification, status updates via State Manager to MySQL and API; Flow 3 for user status polling and CloudFront artifact retrieval.",
+  "graph": {
+    "name": "MyHeritage - Deep Nostalgia Cross-Region GPU Architecture",
+    "link": "https://www.youtube.com/watch?v=0-db3wFRfSc",
+    "categories": "Compute, Queueing, Serverless, Machine Learning, Storage",
+    "graph_usable": true,
+    "notes": "Architecture for MyHeritage Deep Nostalgia processing over 50 million photo animations using cross-region EC2 GPU spot instances, SQS queues, Lambda routing, and CloudFront CDN delivery."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User",
+      "notes": "End user requesting photo animation and fetching generated video artifacts."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CloudFront CDN delivering generated animation artifacts with edge caching."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "API",
+      "notes": "API server running on EC2 handling user requests, generating presigned S3 URLs, and serving status updates."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "MySQL",
+      "notes": "MySQL database holding user metadata, animation task status, and execution state."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 bucket storing uploaded ancestor photos and output animation media files."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "Main SQS",
+      "notes": "Main queue holding incoming photo animation work requests in the primary region."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Lambda function dynamically routing animation tasks across AWS regions based on spot capacity."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "GPU",
+      "notes": "EC2 GPU instance fleet in main region executing deep learning photo animations."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "Notification SQS",
+      "notes": "SQS queue receiving completion status notifications from GPU worker instances."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "State Manager",
+      "notes": "EC2 State Manager instance consuming completion notifications and updating status in MySQL."
+    },
+    {
+      "id": "10",
+      "service": "SQS",
+      "name": "Regional SQS",
+      "notes": "Local SQS queue inside additional 5+ AWS regions receiving routed tasks."
+    },
+    {
+      "id": "11",
+      "service": "EC2",
+      "name": "Regional GPU",
+      "notes": "EC2 GPU instance fleet in additional 5+ AWS regions executing animation jobs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User initiates animation request to API server."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API server generates pre-signed S3 URL for upload."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "User directly uploads photo to S3 via pre-signed URL."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "API server records task state in MySQL database."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "API server enqueues animation task into Main SQS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Main SQS triggers Lambda function for cross-region distribution."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda routes tasks to Regional SQS in additional 5+ AWS regions."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Regional GPU instances poll tasks from Regional SQS."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "meta",
+      "notes": "Main region GPU worker fleet polls tasks from Main SQS."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "GPU worker stores generated animation output files directly into S3."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "GPU worker sends completion notification to Notification SQS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "State Manager consumes completion notification from Notification SQS."
+    },
+    {
+      "source": "9",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "State Manager updates task status and results in MySQL database."
+    },
+    {
+      "source": "9",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "control",
+      "notes": "State Manager notifies API server of task completion."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "User continuously polls API server for completion status."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "User downloads completed animation via CloudFront CDN."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront fetches media artifacts from S3 bucket origin."
+    }
+  ]
+}

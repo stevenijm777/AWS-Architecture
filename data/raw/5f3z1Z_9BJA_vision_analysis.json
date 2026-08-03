@@ -1,84 +1,78 @@
 {
-  "step_by_step_reasoning": "The transcript describes a migration from IBM Netezza on-premises to Amazon Redshift. The architecture involves an initial bulk seeding phase using AWS Snowball and daily incremental ingestion of 100 GB via AWS Storage Gateway and Direct Connect. Data lands in an S3 Landing Zone. Processing is managed by an ELT pipeline driven by Postgres RDS (storing metadata and scripts) and executed on EC2 instances. The cleansed data goes to S3 Transformation Zone, then loaded to Redshift. Redshift Spectrum publishes processed data to an S3 Publish Zone, which archives to S3 Glacier. Analysts access dashboards and run ad-hoc queries directly via Redshift or the Publish bucket.",
+  "step_by_step_reasoning": "The architecture illustrates a migration and ELT data pipeline from on-premises databases to Amazon Redshift for a life sciences client.\n1. **Data Ingestion (Flow 0):** On-premises databases transfer daily incremental data (around 100 GB/day) through an AWS Storage Gateway over an NFS interface. The data is transported across AWS Direct Connect (2x 10G links) into a Landing S3 bucket.\n2. **ELT Processing (Flow 1):** From the Landing S3 bucket, EC2 instances run Quality Cleansing scripts controlled by metadata and pipeline scripts stored in an RDS Postgres database. Cleansed data is written to a Transformation S3 bucket. Subsequent Transformation EC2 nodes execute script logic driven by RDS metadata to format facts and dimensions, loading them directly into Amazon Redshift.\n3. **Publishing & Archival (Flow 2):** Redshift Spectrum exports processed data to a Publish S3 bucket for daily dashboard reporting. S3 lifecycle policies automatically transition data from the Publish bucket to S3 Glacier for long-term archiving after 1 year and 1 month.",
   "graph": {
-    "name": "Netezza to Redshift Migration for Life Sciences",
+    "name": "Capgemini Life Sciences Netezza to Redshift Data Migration & Processing Architecture",
     "link": "https://www.youtube.com/watch?v=5f3z1Z_9BJA",
-    "categories": "data_ingestion, compute_intensive",
+    "categories": "Migration & Data Processing",
     "graph_usable": true,
-    "notes": "HIPAA-compliant data platform migrating legacy Netezza to Redshift. Processes 100GB/day with automated S3 lifecycle transitions to Glacier."
+    "notes": "This HIPAA-compliant architecture ingests 100 GB daily increments over a 2x 10G Direct Connect link. It replaces a legacy Netezza data warehouse with Amazon Redshift using an ELT model driven by RDS Postgres metadata."
   },
   "nodes": [
     {
       "id": "0",
       "service": "ThirdParty",
-      "name": "IBM Netezza",
-      "notes": "On-premises source database."
+      "name": "On-Prem Database",
+      "notes": "Hosts historical database source systems (~20 TB total)."
     },
     {
       "id": "1",
-      "service": "Snowball",
-      "name": "AWS Snowball",
-      "notes": "Used for initial 20 TB database seeding."
+      "service": "StorageGateway",
+      "name": "Storage Gateway",
+      "notes": "AWS Storage Gateway deployed on-premises using NFS volumes to ingest daily database increments (100 GB/day)."
     },
     {
       "id": "2",
-      "service": "StorageGateway",
-      "name": "AWS Storage Gateway",
-      "notes": "NFS volumes for daily 100 GB delta increments."
+      "service": "DirectConnect",
+      "name": "Direct Connect",
+      "notes": "Dual 10G AWS Direct Connect aggregated links with SSL encryption."
     },
     {
       "id": "3",
-      "service": "DirectConnect",
-      "name": "AWS Direct Connect",
-      "notes": "2x 10G link with SSL encryption."
+      "service": "S3",
+      "name": "Landing S3",
+      "notes": "Landing zone S3 bucket with 2-day retention period (1 active + 1 buffer day)."
     },
     {
       "id": "4",
-      "service": "S3",
-      "name": "S3 Landing Zone",
-      "notes": "Landing zone bucket with 2-day retention."
+      "service": "EC2",
+      "name": "Quality Cleansing",
+      "notes": "EC2 compute instances executing data quality and cleansing checks."
     },
     {
       "id": "5",
       "service": "RDS",
-      "name": "Amazon RDS PostgreSQL",
-      "notes": "Stores ELT metadata and transformation scripts."
+      "name": "RDS",
+      "notes": "PostgreSQL RDS storing all ELT metadata, pipeline controls, and transformation scripts."
     },
     {
       "id": "6",
-      "service": "EC2",
-      "name": "EC2 Processing Nodes",
-      "notes": "Executes quality cleansing and ELT transformations."
+      "service": "S3",
+      "name": "Transformation S3",
+      "notes": "Transformation zone S3 bucket with a 1-day retention period."
     },
     {
       "id": "7",
-      "service": "S3",
-      "name": "S3 Transformation Zone",
-      "notes": "Stores processed data. 1-day retention."
+      "service": "EC2",
+      "name": "Transformation",
+      "notes": "EC2 compute instances transforming cleansed data into facts and dimensions."
     },
     {
       "id": "8",
-      "service": "Redshift",
-      "name": "Amazon Redshift",
-      "notes": "Core data warehouse supporting Redshift Spectrum."
+      "service": "RedShift",
+      "name": "RedShift",
+      "notes": "Amazon Redshift cluster storing dimensional model data, queried via Redshift Spectrum."
     },
     {
       "id": "9",
       "service": "S3",
-      "name": "S3 Publish Zone",
-      "notes": "Stores finalized dashboard data. Retention: 1 year, 1 month."
+      "name": "Publish S3",
+      "notes": "Publish zone S3 bucket feeding daily reporting dashboards with a retention of 1 year and 1 month."
     },
     {
       "id": "10",
-      "service": "Glacier",
-      "name": "S3 Glacier",
-      "notes": "Long-term archive for compliance."
-    },
-    {
-      "id": "11",
-      "service": "UserCompanyAnalyst",
-      "name": "Business Analysts",
-      "notes": "Accesses reports and dashboards."
+      "service": "S3",
+      "name": "Glacier",
+      "notes": "S3 Glacier archive for long-term retention of historical data."
     }
   ],
   "edges": [
@@ -88,119 +82,87 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Initial seeding extract."
+      "notes": "On-prem database ingests daily changes into Storage Gateway via NFS volumes."
     },
     {
       "source": "1",
-      "target": "4",
+      "target": "2",
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Seeded data loaded into landing bucket."
-    },
-    {
-      "source": "0",
-      "target": "2",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "Daily delta extracted."
+      "notes": "Storage Gateway streams data over Direct Connect connection."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "2",
       "type": "data",
-      "notes": "Data sent via NFS over Direct Connect."
+      "notes": "Direct Connect delivers ingested datasets to the Landing S3 bucket."
     },
     {
       "source": "3",
       "target": "4",
       "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Quality Cleansing EC2 nodes pull raw files from Landing S3."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "RDS supplies metadata and cleansing scripts to Quality Cleansing EC2 instances."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Data written to S3 landing bucket."
+      "notes": "Quality Cleansing EC2 writes cleansed data into Transformation S3."
     },
     {
       "source": "6",
-      "target": "5",
+      "target": "7",
       "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "EC2 pulls transformation scripts."
+      "notes": "Transformation EC2 instances pull cleansed data from Transformation S3."
     },
     {
-      "source": "6",
-      "target": "4",
+      "source": "5",
+      "target": "7",
       "flow_id": 1,
       "seq": "4",
-      "type": "data",
-      "notes": "EC2 reads raw landing data."
+      "type": "meta",
+      "notes": "RDS provides metadata and ELT transformation logic to Transformation EC2 instances."
     },
     {
-      "source": "6",
-      "target": "7",
+      "source": "7",
+      "target": "8",
       "flow_id": 1,
       "seq": "5",
       "type": "data",
-      "notes": "EC2 writes cleansed data to transformation zone."
-    },
-    {
-      "source": "8",
-      "target": "7",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "Redshift loads facts and dimensions."
+      "notes": "Transformation EC2 loads transformed facts and dimension tables into Redshift."
     },
     {
       "source": "8",
       "target": "9",
-      "flow_id": 1,
-      "seq": "7",
+      "flow_id": 2,
+      "seq": "0",
       "type": "data",
-      "notes": "Redshift Spectrum publishes data to publish bucket."
+      "notes": "Redshift Spectrum publishes daily aggregated reporting datasets to Publish S3 bucket."
     },
     {
       "source": "9",
       "target": "10",
-      "flow_id": 1,
-      "seq": "8",
-      "type": "data",
-      "notes": "S3 Lifecycle policy archives data."
-    },
-    {
-      "source": "11",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "Ad-hoc query request."
-    },
-    {
-      "source": "8",
-      "target": "11",
       "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Query results returned."
-    },
-    {
-      "source": "11",
-      "target": "9",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Dashboard queries data."
-    },
-    {
-      "source": "9",
-      "target": "11",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Dashboard loads published data."
+      "notes": "Lifecycle rule transitions data from Publish S3 to S3 Glacier after 1 year and 1 month."
     }
   ]
 }

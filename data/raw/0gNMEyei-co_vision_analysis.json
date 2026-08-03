@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture illustrates Infor's Governance Risk and Compliance solution on AWS. First, customer applications stream security and transactional data into Kinesis Data Streams, which feeds Fargate for parsing, storing structured data into Aurora and unstructured/logs into S3 (Flow 0). Second, customer-managed scheduled events trigger analysis scoping on Fargate, which initiates EMR Spark jobs that read data from Aurora and S3 to run compliance rules. Identified violations are published to EventBridge, buffered in SQS, and read back by Fargate services to process, decorate, and send customer notifications (Flow 1).",
+  "graph": {
+    "name": "Infor Governance Risk and Compliance Architecture",
+    "link": "https://www.youtube.com/watch?v=0gNMEyei-co",
+    "categories": "Analytics, Security & Compliance, Serverless",
+    "graph_usable": true,
+    "notes": "Processes millions of records per day per customer across hundreds of customer applications for risk and compliance auditing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "APPLICATIONS",
+      "notes": "Customer applications generating security and transactional data streams."
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "KINESIS",
+      "notes": "Ingests real-time application data streams."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "FARGATE",
+      "notes": "Parses ingested streams, performs analysis scoping, and decorates/processes violation notifications."
+    },
+    {
+      "id": "3",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Stores parsed application data for relational querying."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores parsed log data and transformed ETL output."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "SCHEDULER",
+      "notes": "Triggers scheduled compliance analysis jobs (hourly or multi-minute basis)."
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs Spark jobs to analyze data from Aurora and S3 and execute compliance rules."
+    },
+    {
+      "id": "7",
+      "service": "EventBridge",
+      "name": "EVENTBRIDGE",
+      "notes": "Receives violation events emitted by EMR Spark analysis."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers violation event messages for Fargate processing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer applications stream transaction and security data to Kinesis."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis forwards data streams to Fargate for parsing."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fargate writes parsed structured data to Aurora."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Fargate writes parsed unstructured/log data to S3."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Scheduler triggers analysis scoping on Fargate."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Fargate initiates EMR Spark analysis job."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR job retrieves relational data from Aurora for analysis."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "EMR job retrieves log data from S3 for analysis."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "EMR publishes violation events to EventBridge."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "EventBridge routes violation messages to SQS queue."
+    },
+    {
+      "source": "8",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fargate reads violation messages from SQS to process, decorate, and trigger customer notifications."
+    }
+  ]
+}

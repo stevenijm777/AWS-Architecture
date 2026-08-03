@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture shows Arc Publishing's web rendering platform at The Washington Post. Public web traffic arrives at an origin router running on ECS. If static assets or pre-rendered HTML are not found in the respective S3 buckets, the request triggers a Lambda function for dynamic rendering (5-10% cache miss rate). A secondary ECS service acts as a content proxy, retrieving content from external CMS/APIs and caching raw JSON objects in ElastiCache with a TTL. Newsroom users create page templates saved to DynamoDB, while developers deploy rendering code updates directly to AWS Lambda.",
+  "graph": {
+    "name": "Arc Publishing Web Rendering Platform",
+    "link": "https://www.youtube.com/watch?v=0JxJpNjI9Y0",
+    "categories": "Media & Entertainment, Serverless, Content Delivery",
+    "graph_usable": true,
+    "notes": "Web rendering and content management architecture built by Arc Publishing at The Washington Post using ECS, Lambda, S3, DynamoDB, and ElastiCache."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Public",
+      "notes": "Public end-users requesting web pages like WashingtonPost.com."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer / Newsroom",
+      "notes": "Newsroom creators managing web templates and developers deploying rendering code."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS (Origin)",
+      "notes": "Origin traffic routing service running on Amazon ECS."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "STATIC RESOURCES",
+      "notes": "S3 bucket storing JavaScript, CSS, and other static web assets."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "PRE-RENDER CONTENT",
+      "notes": "S3 bucket caching pre-rendered HTML content for quick page loads."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "AWS Lambda function dynamically rendering pages upon cache misses."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "ECS (Content Proxy)",
+      "notes": "Secondary ECS service acting as a content proxy to fetch stories, galleries, and videos."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Amazon DynamoDB storing web page templates created via Page Builder Admin."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "Amazon ElastiCache caching raw content JSON payloads with a TTL."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "CMS",
+      "notes": "External CMS and third-party APIs (sports, weather, internal content sources)."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Public users send web requests to the origin ECS cluster."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Origin ECS fetches static JavaScript and CSS resources from S3."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Origin ECS checks S3 for pre-rendered HTML page content."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Cache misses trigger Lambda to dynamically render the requested web page."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda queries DynamoDB for page template layout definitions."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda writes rendered pages to the pre-rendered content S3 bucket."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Content proxy ECS fetches stories, galleries, and media from external CMS / APIs."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Content proxy stores raw content JSON objects into ElastiCache with a TTL."
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Newsroom users define and write web templates directly into DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "Developers deploy web rendering JavaScript code deployments into Lambda."
+    }
+  ]
+}

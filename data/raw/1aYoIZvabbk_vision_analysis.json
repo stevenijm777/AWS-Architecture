@@ -1,54 +1,48 @@
 {
-  "step_by_step_reasoning": "The architecture shows OLX Autos' developer platform (Orion) which enables global expansion across 11 countries. End-users access the portal via Route 53, which routes traffic through an Application Load Balancer (ALB) to an Amazon EKS cluster running the main application pods. To minimize costs, 100% of the workloads are executed on EC2 Spot Instances. To manage spot terminations and ensure state consistency during provisioning jobs, EKS deploys the AWS Node Termination Handler. In addition, when microservice provisioning jobs are launched on Spot instances, they register their progress by publishing events to Amazon SNS, which are then fanned out to Amazon SQS. If a Spot instance is terminated before completion, a newly scheduled replacement job polls SQS to pick up the unfinished tasks and resume gracefully.",
+  "step_by_step_reasoning": "The architecture diagram illustrates OLX Autos' internal developer platform ('Orion portal') architecture. First, DNS resolution for requests targeting the portal is handled by Amazon Route 53, which resolves to an Application Load Balancer (ALB). The ALB routes incoming requests to Kubernetes pods managed by Amazon EKS running on 100% EC2 Spot instances. When environment provisioning jobs are created for various microservices, EKS jobs publish status events to Amazon SNS. SNS fans out these messages to Amazon SQS. If a Spot instance is terminated mid-job, replacement jobs running on EC2 Spot instances watch SQS for unfinished job state events to resume and complete microservice deployment.",
   "graph": {
-    "name": "OLX Autos - Resilient Environment Provisioning on EKS with 100% Spot Instances",
+    "name": "OLX Autos Developer Platform Architecture",
     "link": "https://www.youtube.com/watch?v=1aYoIZvabbk",
-    "categories": "Compute, Containers, Application Integration",
+    "categories": "compute, containers, messaging, networking",
     "graph_usable": true,
-    "notes": "Main portal backend running on EKS orchestrates environment creation by triggering Kubernetes jobs on EC2 Spot Instances. By persisting state through SNS and SQS, replacement jobs can resume unfinished provisioning tasks when Spot nodes are terminated, achieving resilience with 100% Spot instances."
+    "notes": "OLX Autos architecture using 100% EC2 Spot instances managed by Amazon EKS, resiliently handling spot terminations using SNS and SQS for state tracking."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "User",
-      "name": "End User",
-      "notes": "Accesses the Orion portal to trigger environment creation requests."
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Handles DNS resolution for incoming requests to the Orion portal."
     },
     {
       "id": "1",
-      "service": "Route53",
-      "name": "Amazon Route 53",
-      "notes": "Resolves DNS requests for the Orion platform."
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer that routes web traffic to EKS pods."
     },
     {
       "id": "2",
-      "service": "ApplicationLoadBalancer",
-      "name": "Application Load Balancer",
-      "notes": "Distributes incoming traffic to the backend services on the Kubernetes cluster."
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Amazon EKS container orchestrator running over 10,000 pods to manage microservices."
     },
     {
       "id": "3",
-      "service": "ElasticKubernetesService",
-      "name": "Amazon EKS",
-      "notes": "Orchestrates microservices and Kubernetes jobs. Scaled from 100 pods to over 10,000 pods."
+      "service": "EC2",
+      "name": "SPOT",
+      "notes": "100% EC2 Spot instances hosting pods and microservices, monitored by AWS Node Termination Handler."
     },
     {
       "id": "4",
-      "service": "EC2Spot",
-      "name": "EC2 Spot Instances",
-      "notes": "Hosts 100% of the application and provisioning jobs to optimize costs. Employs AWS Node Termination Handler to drain nodes gracefully."
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Publishes events whenever microservice deployment jobs are triggered."
     },
     {
       "id": "5",
-      "service": "SimpleNotificationService",
-      "name": "Amazon SNS",
-      "notes": "Receives launch progress and state registration events from the microservice provisioning jobs."
-    },
-    {
-      "id": "6",
-      "service": "SimpleQueueService",
-      "name": "Amazon SQS",
-      "notes": "Holds persistent queue messages of unfinished provisioning tasks."
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Stores job state messages fanned out from SNS to track unfinished tasks."
     }
   ],
   "edges": [
@@ -58,55 +52,47 @@
       "flow_id": 0,
       "seq": "0",
       "type": "control",
-      "notes": "User requests Orion portal domain resolution."
+      "notes": "Route 53 resolves DNS domain to the Application Load Balancer."
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 0,
       "seq": "1",
-      "type": "control",
-      "notes": "Route 53 resolves traffic to the ALB."
+      "type": "data",
+      "notes": "ALB routes incoming user requests to EKS pods."
     },
     {
-      "source": "2",
+      "source": "1",
       "target": "3",
       "flow_id": 0,
       "seq": "2",
       "type": "data",
-      "notes": "ALB forwards the environment creation requests to the main application pod on EKS."
+      "notes": "ALB directs traffic to workloads on EC2 Spot instances."
     },
     {
-      "source": "3",
+      "source": "2",
       "target": "4",
       "flow_id": 1,
       "seq": "0",
       "type": "control",
-      "notes": "EKS schedules microservice provisioning jobs onto EC2 Spot Instances."
+      "notes": "EKS microservice provisioning jobs send execution events to SNS."
     },
     {
       "source": "4",
       "target": "5",
       "flow_id": 1,
       "seq": "1",
-      "type": "data",
-      "notes": "Provisioning jobs publish progress and initialization status to SNS."
+      "type": "control",
+      "notes": "SNS fans out state message events to the SQS queue."
     },
     {
       "source": "5",
-      "target": "6",
+      "target": "3",
       "flow_id": 1,
       "seq": "2",
-      "type": "data",
-      "notes": "SNS fans out execution state and status events to SQS."
-    },
-    {
-      "source": "6",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Newly scheduled replacement jobs on EC2 Spot watch SQS to fetch unfinished tasks and resume provisioning state."
+      "type": "meta",
+      "notes": "Replacement jobs running on Spot instances watch SQS for unfinished tasks and complete them."
     }
   ]
 }

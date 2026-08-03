@@ -1,96 +1,96 @@
 {
-  "step_by_step_reasoning": "The architecture is modeled according to the three distinct layers described in the transcript: Process, Store, and Consume. We map each node from the World Model's entities. For connections, we capture the data ingestion flow (from Car through REST API to S3, SQS, and EKS processing with Step Functions) as Flow 0, and the data delivery/consumption flow (from the Store layer databases S3, Elasticsearch, CockroachDB to the Consume layer EKS, API Gateway, Webapp, and ultimately the users) as Flow 1.",
+  "step_by_step_reasoning": "The architecture represents Mobileye's Dynamic RAM mobility intelligence platform. It processes sensor and visual inspection data collected from vehicles worldwide. The architecture has four major stages: Ingestion (Vehicles to REST API to Raw S3), Processing (Raw S3 triggers SQS, consumed by auto-scaling Process EKS workers which orchestrate algorithms via Step Functions and output data to Store S3, Elasticsearch, and CockroachDB), Storage, and Consumption (API Gateway for enterprise city planners/customers, and a Consume EKS backend serving a Web App to end users). All services use valid vocabulary entries, with CockroachDB mapped to ThirdParty and Elasticsearch mapped to OpenSearch.",
   "graph": {
-    "name": "Mobileye Dynamic RAM Cloud Architecture",
+    "name": "Mobileye Dynamic RAM Mobility Intelligence Architecture",
     "link": "https://www.youtube.com/watch?v=5hjkSczrke4",
-    "categories": "data_ingestion, interactive, compute_intensive",
+    "categories": "Automotive & Data Analytics",
     "graph_usable": true,
-    "notes": "Dynamic RAM is an evolutionary platform at Mobileye that processes vehicle sensor and visual inspection data to provide city planners and operators with mobility intelligence and live event data. It leverages an auto-scaling EKS processing layer, Step Functions for serverless algorithmic workflows, and a multi-tiered storage layer consisting of Amazon S3, Elasticsearch, and CockroachDB."
+    "notes": "Dynamic RAM processes 10M daily observations from vehicles using an auto-scaling EKS cluster (100 to 800 workers), Step Functions state machines, and dynamic storage across S3, Elasticsearch, and CockroachDB."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "ThirdParty",
-      "name": "Car",
-      "notes": "Vehicles collecting sensor and visual inspection data as they drive."
+      "service": "UserConsumerEdge",
+      "name": "Vehicles",
+      "notes": "Vehicles collecting anonymized sensor and visual inspection data on roads worldwide."
     },
     {
       "id": "1",
-      "service": "REST API",
+      "service": "ApiGateway",
       "name": "REST API",
-      "notes": "Ingestion REST API hosted in a separate AWS account to receive vehicle payloads."
+      "notes": "Ingestion REST API located in a separate AWS account to ingest raw data from vehicles."
     },
     {
       "id": "2",
-      "service": "Amazon S3",
-      "name": "S3 (Ingest)",
-      "notes": "S3 bucket storing raw vehicle ingestion data."
+      "service": "S3",
+      "name": "Raw S3 Bucket",
+      "notes": "Stores raw incoming vehicle observation data."
     },
     {
       "id": "3",
-      "service": "Amazon SQS",
+      "service": "SQS",
       "name": "SQS",
-      "notes": "Queue used to trigger processing workers based on incoming raw S3 files."
+      "notes": "Buffer queue that triggers and distributes processing workload to EKS workers."
     },
     {
       "id": "4",
-      "service": "Amazon EKS",
-      "name": "EKS (Process)",
-      "notes": "Auto-scaling EKS cluster executing workers that preprocess and format incoming telemetry data."
+      "service": "EKS",
+      "name": "Process EKS Workers",
+      "notes": "Scales automatically from 100 to 800 workers based on SQS queue size to process 10M daily observations."
     },
     {
       "id": "5",
-      "service": "AWS Step Functions",
+      "service": "StepFunctions",
       "name": "Step Functions",
-      "notes": "Orchestrates AWS Lambda functions running algorithms like potential construction zone extraction."
+      "notes": "Orchestrates complex algorithm execution flows (e.g., detecting construction zones, clustering, aggregation)."
     },
     {
       "id": "6",
-      "service": "Amazon S3",
-      "name": "S3 (Store)",
-      "notes": "Stores preprocessed and formatted intermediate datasets."
+      "service": "S3",
+      "name": "Store S3 Bucket",
+      "notes": "Stores preprocessed, formatted, and algorithm-calculated output data."
     },
     {
       "id": "7",
-      "service": "Amazon OpenSearch Service",
+      "service": "OpenSearch",
       "name": "Elasticsearch",
-      "notes": "Document database providing self-indexing for cost-effective event query capabilities."
+      "notes": "Document-based self-indexing search store for quick querying of mobility intelligence."
     },
     {
       "id": "8",
       "service": "ThirdParty",
-      "name": "Cockroach DB",
-      "notes": "Relational database used for frequent and high-volume data updates, deployed inside EKS."
+      "name": "CockroachDB",
+      "notes": "Distributed relational database hosted on EKS to support high-frequency updates to tables."
     },
     {
       "id": "9",
-      "service": "Amazon API Gateway",
-      "name": "API Gateway",
-      "notes": "Exposes secure REST API endpoints to city planners and operators."
+      "service": "ApiGateway",
+      "name": "Consume API Gateway",
+      "notes": "Exposes REST API endpoints for enterprise customers and city planners."
     },
     {
       "id": "10",
-      "service": "Amazon EKS",
-      "name": "EKS (Consume)",
-      "notes": "EKS cluster hosting application servers to serve processed insights to the web application and APIs."
+      "service": "EKS",
+      "name": "Consume EKS Cluster",
+      "notes": "Serves secured REST API backend and powers web application data access."
     },
     {
       "id": "11",
-      "service": "ThirdParty",
-      "name": "Webapp",
-      "notes": "Front-end web dashboard visualizing live event maps."
+      "service": "UserConsumerWeb",
+      "name": "Web App",
+      "notes": "Web application interface for visualizing mobility intelligence and live traffic events."
     },
     {
       "id": "12",
-      "service": "User",
-      "name": "Planners & Operators",
-      "notes": "Enterprise customers such as city and road planners who consume analytical reports."
+      "service": "UserCompanyAnalyst",
+      "name": "Enterprise Customers",
+      "notes": "City planners and road operators consuming traffic, pedestrian, and construction zone insights."
     },
     {
       "id": "13",
-      "service": "User",
-      "name": "Users",
-      "notes": "End-users utilizing the web application to visualize mapped events."
+      "service": "UserConsumerWebMobile",
+      "name": "End Users",
+      "notes": "End consumers accessing mobility services and real-time road insights."
     }
   ],
   "edges": [
@@ -100,7 +100,7 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Vehicles upload collected sensor and visual inspection data to the ingestion REST API."
+      "notes": "Vehicles send collected sensor data to the ingestion REST API."
     },
     {
       "source": "1",
@@ -108,119 +108,111 @@
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Ingestion REST API stores data payloads to S3."
+      "notes": "REST API writes incoming raw data to Raw S3 bucket."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "2",
+      "flow_id": 1,
+      "seq": "0",
       "type": "control",
-      "notes": "Triggers message creation in SQS to notify processors of new items."
+      "notes": "Raw S3 bucket triggers/enqueues work items into SQS."
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 0,
-      "seq": "3",
-      "type": "control",
-      "notes": "EKS workers pull jobs/tasks from the SQS queue."
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Process EKS workers pull messages from SQS and scale based on queue depth."
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 0,
-      "seq": "4",
+      "flow_id": 1,
+      "seq": "2",
       "type": "control",
-      "notes": "EKS workers invoke Step Functions to execute parallel algorithm execution and workflow orchestration."
+      "notes": "EKS workers trigger Step Functions for parallel algorithm flows."
     },
     {
       "source": "4",
       "target": "6",
-      "flow_id": 0,
-      "seq": "5",
+      "flow_id": 1,
+      "seq": "2'",
       "type": "data",
-      "notes": "EKS workers write formatted data to the S3 store."
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 0,
-      "seq": "6",
-      "type": "data",
-      "notes": "Algorithms run via Step Functions write their output results to S3."
+      "notes": "EKS workers directly format and store preprocessed data into Store S3."
     },
     {
       "source": "4",
       "target": "7",
-      "flow_id": 0,
-      "seq": "7",
+      "flow_id": 1,
+      "seq": "2''",
       "type": "data",
-      "notes": "EKS workers write insights and event documents into Elasticsearch."
+      "notes": "EKS workers store calculated observations and document indices in Elasticsearch."
     },
     {
       "source": "4",
       "target": "8",
-      "flow_id": 0,
-      "seq": "8",
+      "flow_id": 1,
+      "seq": "2'''",
       "type": "data",
-      "notes": "EKS workers execute frequent table updates in CockroachDB."
+      "notes": "EKS workers write high-frequency updates into CockroachDB."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Step Functions output algorithmic processing results into Store S3."
     },
     {
       "source": "6",
       "target": "9",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "0",
       "type": "data",
-      "notes": "S3 datasets are mapped or made accessible to the API Gateway."
+      "notes": "Store S3 data is exposed via API Gateway to enterprise users."
     },
     {
       "source": "7",
       "target": "10",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 2,
+      "seq": "0'",
       "type": "data",
-      "notes": "EKS cluster reads indexed event details from Elasticsearch."
+      "notes": "Elasticsearch provides indexed search data to Consume EKS Cluster."
     },
     {
       "source": "8",
       "target": "10",
-      "flow_id": 1,
-      "seq": "2",
+      "flow_id": 2,
+      "seq": "0''",
       "type": "data",
-      "notes": "EKS cluster reads operational data updates from CockroachDB."
-    },
-    {
-      "source": "10",
-      "target": "9",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "control",
-      "notes": "EKS acts as the upstream backend serving requests for API Gateway."
+      "notes": "CockroachDB provides relational state data to Consume EKS Cluster."
     },
     {
       "source": "9",
       "target": "12",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "control",
-      "notes": "City planners consume structured analytics and reports directly via the API."
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway provides mobility API access to enterprise customers."
     },
     {
       "source": "10",
       "target": "11",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "control",
-      "notes": "EKS cluster hosts and serves API payloads rendering on the web app."
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Consume EKS Cluster serves backend services for the Web App."
     },
     {
       "source": "11",
       "target": "13",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "control",
-      "notes": "End-users access the front-end dashboard to visualize live event maps."
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Web App delivers interactive mobility dashboards to end users."
     }
   ]
 }

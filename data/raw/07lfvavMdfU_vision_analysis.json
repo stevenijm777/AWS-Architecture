@@ -1,78 +1,66 @@
 {
-  "step_by_step_reasoning": "The architecture diagram illustrates Level Beyond's Media to Cloud ingest pipeline and metadata extraction architecture. A User uploads raw video files directly into an Amazon S3 bucket. This file creation event triggers AWS Step Functions, which acts as the orchestrator. In the first phase of the workflow, AWS Step Functions kicks off Amazon Elemental MediaConvert to generate browser-compatible video proxies. In parallel, Step Functions invokes AWS Lambda to compute checksums and capture basic media metadata. Both MediaConvert and Lambda store this initial technical metadata in Amazon DynamoDB. Concurrently, Step Functions triggers Amazon Rekognition to extract celebrity tracking, violence, and visual metadata indexed to video timecodes, storing it in DynamoDB. Step Functions also triggers Amazon Transcribe to translate audio into text. This text is processed by Amazon Comprehend to extract entities and detect profanity, which is saved in DynamoDB. Lastly, DynamoDB functions as a temporary datastore from which metadata is ingested into the Reach Engine platform running on Amazon EC2 and Amazon EKS environments for indexing, search, and video monetization workflows.",
+  "step_by_step_reasoning": "The architecture represents Levels Beyond's 'Media to Cloud' workflow powered by Reach Engine on AWS. Raw media uploaded to Amazon S3 triggers AWS Step Functions, which orchestrates multiple parallel workflows: video proxy generation via AWS Elemental MediaConvert, visual content and metadata tagging via Amazon Rekognition, and speech-to-text processing via Amazon Transcribe. Text output from Transcribe is analyzed for entities by Amazon Comprehend. Extracted metadata and analysis from MediaConvert, Rekognition, and Comprehend are consolidated into Amazon DynamoDB, which serves as a temporary data store before being ingested into Reach Engine running on Amazon EC2/EKS.",
   "graph": {
-    "name": "Levels Beyond Reach Engine - Media to Cloud Architecture",
+    "name": "Levels Beyond Reach Engine Media to Cloud Architecture",
     "link": "https://www.youtube.com/watch?v=07lfvavMdfU",
-    "categories": "Media & Entertainment, Serverless, Machine Learning, Container & Compute",
+    "categories": "Media & Entertainment, Machine Learning, Serverless Processing",
     "graph_usable": true,
-    "notes": "A scalable, event-driven video ingestion pipeline that utilizes managed AWS machine learning services (Rekognition, Transcribe, Comprehend) and serverless compute to process and enrich video metadata for ingestion into Levels Beyond's Reach Engine platform running on EC2 and EKS."
+    "notes": "Architecture converts camera card uploads to browser-playable media proxies with rich AI-extracted metadata stored temporarily in DynamoDB before ingestion into Reach Engine."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "User",
-      "name": "User",
-      "notes": "Uploads source video content from camera cards or remote devices."
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores user-uploaded raw media files."
     },
     {
       "id": "1",
-      "service": "S3",
-      "name": "Amazon S3",
-      "notes": "Secure raw video ingestion bucket."
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates media processing workflows."
     },
     {
       "id": "2",
-      "service": "Step Functions",
-      "name": "AWS Step Functions",
-      "notes": "Orchestrates video proxy creation, visual ML analysis, and audio translation workflows."
+      "service": "MediaConvert",
+      "name": "Elemental MediaConvert",
+      "notes": "Generates browser-playable video proxies."
     },
     {
       "id": "3",
-      "service": "Elemental MediaConvert",
-      "name": "AWS Elemental MediaConvert",
-      "notes": "Generates low-resolution browser-friendly video proxies for preview and visual verification."
+      "service": "Rekognition",
+      "name": "Rekognition",
+      "notes": "Analyzes video for celebrities, violence, nudity, and visual metadata."
     },
     {
       "id": "4",
-      "service": "Lambda",
-      "name": "AWS Lambda",
-      "notes": "Serverless function triggered by Step Functions to calculate video checksums and extract technical metadata."
+      "service": "Transcribe",
+      "name": "Transcribe",
+      "notes": "Converts audio from media files into text."
     },
     {
       "id": "5",
-      "service": "Rekognition",
-      "name": "Amazon Rekognition",
-      "notes": "Extracts timecoded visual metadata including celebrities, nudity, and safety tags."
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Extracts entities and analyzes sentiment/profanity from transcribed text."
     },
     {
       "id": "6",
-      "service": "Transcribe",
-      "name": "Amazon Transcribe",
-      "notes": "Converts the audio track from the media file into raw text transcripts."
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Temporary metadata database store."
     },
     {
       "id": "7",
-      "service": "Comprehend",
-      "name": "Amazon Comprehend",
-      "notes": "Performs Natural Language Processing to extract key entities and pinpoint occurrences of profanity."
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Compute instance hosting Reach Engine platform."
     },
     {
       "id": "8",
-      "service": "DynamoDB",
-      "name": "Amazon DynamoDB",
-      "notes": "A temporary NoSQL store holding aggregated visual, technical, and linguistic metadata until ingested into Reach Engine."
-    },
-    {
-      "id": "9",
-      "service": "EC2",
-      "name": "Amazon EC2",
-      "notes": "Part of the Reach Engine hosting platform, providing scalable virtual servers for media orchestration."
-    },
-    {
-      "id": "10",
       "service": "EKS",
-      "name": "Amazon EKS",
-      "notes": "Part of the Reach Engine hosting platform, orchestrating container workloads for video search, playback, and monetization UI."
+      "name": "EKS",
+      "notes": "Container platform hosting Reach Engine microservices."
     }
   ],
   "edges": [
@@ -81,8 +69,8 @@
       "target": "1",
       "flow_id": 0,
       "seq": "0",
-      "type": "data",
-      "notes": "User uploads raw media files directly to Amazon S3."
+      "type": "control",
+      "notes": "File upload to S3 triggers AWS Step Functions workflow."
     },
     {
       "source": "1",
@@ -90,95 +78,63 @@
       "flow_id": 0,
       "seq": "1",
       "type": "control",
-      "notes": "An S3 upload event triggers the Step Functions orchestration state machine."
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "control",
-      "notes": "Step Functions initiates proxy transcoding inside Elemental MediaConvert."
-    },
-    {
-      "source": "3",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "Saves transcoded low-resolution file information and frame rate details to DynamoDB."
-    },
-    {
-      "source": "2",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "control",
-      "notes": "Step Functions triggers Lambda functions to collect system-level metadata."
-    },
-    {
-      "source": "4",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Lambda stores checksums and standard media details into DynamoDB."
-    },
-    {
-      "source": "2",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "control",
-      "notes": "Step Functions triggers Amazon Rekognition to parse visual timeline markers."
-    },
-    {
-      "source": "5",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Stores visual metadata linked with timecodes inside DynamoDB."
+      "notes": "Step Functions kicks off proxy generation in MediaConvert."
     },
     {
       "source": "2",
       "target": "6",
-      "flow_id": 3,
-      "seq": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "MediaConvert writes proxy metadata to DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
       "type": "control",
-      "notes": "Step Functions kicks off audio-to-text transcription via Amazon Transcribe."
+      "notes": "Step Functions triggers video analysis in Rekognition."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Rekognition saves visual analysis tags and timestamps into DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1''",
+      "type": "control",
+      "notes": "Step Functions triggers speech-to-text conversion in Transcribe."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2''",
+      "type": "data",
+      "notes": "Transcribe passes transcript text to Comprehend for entity analysis."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3''",
+      "type": "data",
+      "notes": "Comprehend stores extracted text entities and analysis into DynamoDB."
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 3,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "4",
       "type": "data",
-      "notes": "Forwards transcription text directly to Amazon Comprehend for entity analysis."
-    },
-    {
-      "source": "7",
-      "target": "8",
-      "flow_id": 3,
-      "seq": "2",
-      "type": "data",
-      "notes": "Stores text entities, sentiments, and profanity flags inside DynamoDB."
-    },
-    {
-      "source": "8",
-      "target": "9",
-      "flow_id": 4,
-      "seq": "0",
-      "type": "data",
-      "notes": "Aggregated metadata is ingested from DynamoDB into the Reach Engine platform running on EC2."
-    },
-    {
-      "source": "8",
-      "target": "10",
-      "flow_id": 4,
-      "seq": "0'",
-      "type": "data",
-      "notes": "Aggregated metadata is ingested from DynamoDB into the Reach Engine platform running on EKS."
+      "notes": "DynamoDB triggers data ingest into Reach Engine on EC2."
     }
   ]
 }

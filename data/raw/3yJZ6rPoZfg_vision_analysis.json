@@ -1,60 +1,60 @@
 {
-  "step_by_step_reasoning": "First, we identify the two distinct environments: the AWS Data account on the left and the AWS User Experience & Processing account on the right. In the Data account, there is an S3 bucket and an EKS cluster. These connect via VPC Peering to the EKS cluster in the User/Processing account. On the processing side, users upload data directly to an S3 bucket using pre-signed URLs. S3 triggers events to an SQS queue, which is read by EKS. EKS triggers processing steps back through SQS to an Auto Scaling Group (ASG) of EC2 instances, which finally save the processed geospatial data back to S3.",
+  "step_by_step_reasoning": "The architecture diagram and transcript describe Hexagon Digital Reality's geospatial data processing platform across two AWS accounts/environments (AWS Data on the left, AWS User/Pro on the right).\n\n1. Visual & Audio Inventory:\n- User (Top Center): Representing end users, architects, and field devices uploading geospatial data.\n- AWS Data Account (Left):\n  - S3 Data: Centralized storage bucket holding primary geospatial data.\n  - EKS Data: Managed Kubernetes cluster handling streaming and data logic.\n- VPC Peering (Center): Enables cross-account, private communication between AWS Data and User/Pro environments.\n- AWS User/Pro Account (Right):\n  - EKS User/Pro: Managed Kubernetes cluster running containerized microservices that listen to queues and manage UI/processing workflows.\n  - SQS: Queue storing S3 event notifications and decoupled processing task messages.\n  - ASG (Auto Scaling Group): EC2 instances configured with templates pulling container images from ECR to execute pipeline processing stages.\n  - S3 User/Pro: Bucket where users directly upload raw data via pre-signed URLs and receive processed outputs.\n\n2. Flows & Sequence:\n- Flow 0 (Cross-Account Data Streaming): S3 Data -> EKS Data -> VPC Peering -> EKS User/Pro.\n- Flow 1 (Upload & Async Processing Pipeline):\n  - User uploads file directly to S3 User/Pro.\n  - S3 User/Pro triggers event message to SQS queue.\n  - EKS User/Pro container listens to SQS.\n  - Task info is dispatched from SQS to Auto Scaling Group (EC2 instances).\n  - ASG processing workers save final output back to S3 User/Pro.",
   "graph": {
-    "name": "Hexagon Digital Reality Processing Pipeline",
+    "name": "Hexagon Digital Reality Geospatial Data Processing Architecture",
     "link": "https://www.youtube.com/watch?v=3yJZ6rPoZfg",
-    "categories": "data_ingestion, compute_intensive",
+    "categories": "Data Analytics, Application Integration, Compute",
     "graph_usable": true,
-    "notes": "Handles high-precision geospatial data securely and privately across multiple AWS environments via VPC Peering. Uses Auto Scaling Groups on EC2 to process compute-heavy, variable-workload geospatial datasets."
+    "notes": "Architecture for Hexagon's cloud-based data store and processing pipeline for geospatial data using AWS EKS, S3, VPC Peering, SQS, and Auto Scaling groups."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWebMobile",
-      "name": "End User / Device",
-      "notes": "Uploads raw geospatial data from handheld devices or vehicle scanners."
+      "name": "User",
+      "notes": "End users including architects, city surveyors, and field devices uploading geospatial data."
     },
     {
       "id": "1",
       "service": "S3",
-      "name": "S3 (Data Account)",
-      "notes": "DATA_PEEK: Main store for licensed geospatial data."
+      "name": "S3 Data",
+      "notes": "Central data account S3 bucket storing all primary geospatial datasets."
     },
     {
       "id": "2",
       "service": "EKS",
-      "name": "EKS (Data Account)",
-      "notes": "WORKLOAD_PEEK: Exposes and serves the central geospatial data sets."
+      "name": "EKS Data",
+      "notes": "EKS cluster in the AWS Data account handling streaming data logic."
     },
     {
       "id": "3",
       "service": "VPCPeering",
       "name": "VPC Peering",
-      "notes": "Connects the central data account to development, QA, and production accounts using AWS backbone."
+      "notes": "Enables private, secure, low-latency VPC peering between the AWS Data account and AWS User/Pro accounts."
     },
     {
       "id": "4",
       "service": "EKS",
-      "name": "EKS (User Pro Account)",
-      "notes": "WORKLOAD_PEEK: Handles user experience, metadata logic, and coordinates job processing."
+      "name": "EKS User/Pro",
+      "notes": "EKS cluster hosting user experience logic and microservice containers listening to processing queues."
     },
     {
       "id": "5",
-      "service": "S3",
-      "name": "S3 (User/Upload Bucket)",
-      "notes": "DATA_PEEK: Multi-tenant bucket for raw user uploads and final processed outputs."
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue storing S3 event notifications and decoupling processing task messages."
     },
     {
       "id": "6",
-      "service": "SQS",
-      "name": "SQS Queue",
-      "notes": "Buffers upload notifications and processing job items."
+      "service": "AutoScaling",
+      "name": "ASG",
+      "notes": "Auto Scaling Group of EC2 instances pulling container images from ECR to execute pipeline processing steps."
     },
     {
       "id": "7",
-      "service": "AutoScaling",
-      "name": "ASG (EC2 Workers)",
-      "notes": "WORKLOAD_PEEK: Dynamic pool of customized EC2 instances pulling container templates from ECR."
+      "service": "S3",
+      "name": "S3 User/Pro",
+      "notes": "S3 bucket receiving direct uploads via pre-signed URLs and storing final processed geospatial artifacts."
     }
   ],
   "edges": [
@@ -64,7 +64,7 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "EKS queries the core geospatial S3 database."
+      "notes": "EKS Data accesses raw geospatial data stored in S3 Data bucket."
     },
     {
       "source": "2",
@@ -72,7 +72,7 @@
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Transfers data securely over AWS backbone."
+      "notes": "EKS Data routes data streams across account boundaries via VPC Peering."
     },
     {
       "source": "3",
@@ -80,39 +80,39 @@
       "flow_id": 0,
       "seq": "2",
       "type": "data",
-      "notes": "Reaches the User/Processing account."
+      "notes": "VPC Peering securely delivers data to EKS User/Pro across the AWS backbone network."
     },
     {
       "source": "0",
-      "target": "5",
+      "target": "7",
       "flow_id": 1,
       "seq": "0",
       "type": "data",
-      "notes": "Direct file uploads via S3 pre-signed URLs."
+      "notes": "User uploads file directly to S3 User/Pro bucket using a pre-signed URL."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 event notification triggers an upload event message into SQS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Container on EKS User/Pro listens to and polls SQS for incoming messages."
     },
     {
       "source": "5",
       "target": "6",
       "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "S3 event notification triggers on successful upload."
-    },
-    {
-      "source": "6",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "EKS microservice consumes S3 upload notification."
-    },
-    {
-      "source": "4",
-      "target": "6",
-      "flow_id": 1,
       "seq": "3",
-      "type": "data",
-      "notes": "EKS submits job back to queue for worker instances."
+      "type": "control",
+      "notes": "SQS messaging system dispatches task information to EC2 instances in the Auto Scaling Group."
     },
     {
       "source": "6",
@@ -120,15 +120,7 @@
       "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "EC2 processing instances poll jobs from SQS."
-    },
-    {
-      "source": "7",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Uploads the final processed output back to S3."
+      "notes": "Processed geospatial output files are written back from EC2 instances to S3 User/Pro."
     }
   ]
 }

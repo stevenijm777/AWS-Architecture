@@ -43,9 +43,13 @@ def load_services_catalog() -> tuple[list[str], list[str]]:
     """
     Load valid AWS services and user actors from services.csv.
     """
-    csv_path = Path(__file__).resolve().parent.parent / "graph_renderer" / "services.csv"
+    project_root = Path(__file__).resolve().parent.parent.parent
+    csv_path = project_root / "data" / "cloudscape_gt" / "services.csv"
+    if not csv_path.exists():
+        csv_path = project_root / "data" / "services.csv"
     if not csv_path.exists():
         return [], []
+
     
     aws_services = set()
     user_actors = set()

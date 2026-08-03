@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identify edge nodes and supernodes (SN Top, SN Middle, Node N) mapped to ThirdParty edge components based on the visual model and transcript.\n2. Identify central orchestration on Amazon EKS.\n3. Identify data storage layers connected to EKS: MongoDB Atlas for document discovery/proximity clustering and DynamoDB for profile/association metadata.\n4. Identify data analytics pipeline components: Amazon Kinesis Data Streams receiving logs, streaming to Amazon Kinesis Data Firehose, delivering to Amazon S3 bucket, and queried by Snowflake.\n5. Map sequence flows for registration (Nodes -> EKS -> MongoDB/DynamoDB) and data analytics (EKS -> Kinesis Data Streams -> Firehose -> S3 -> Snowflake).",
+  "graph": {
+    "name": "Mimic Edge Engine Architecture",
+    "link": "https://www.youtube.com/watch?v=-S-R7MWRpaI",
+    "categories": "Edge Computing, Analytics, Serverless & Data Mesh",
+    "graph_usable": true,
+    "notes": "Architecture for Mimic Edge Engine enabling edge microservices on mobile devices with central discovery on EKS and analytics pipeline via Kinesis, S3, and Snowflake."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Supernode (SN Top)",
+      "notes": "Edge supernode registered with EKS and discovery service."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Supernode (SN Middle)",
+      "notes": "Edge supernode listening to local edge nodes and registering them."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Node (N)",
+      "notes": "Standard edge device node (e.g., Android/iOS) connecting to a supernode."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Amazon EKS",
+      "notes": "Runs central discovery service (MDS) and orchestrates edge node registrations."
+    },
+    {
+      "id": "4",
+      "service": "MongoDBAtlas",
+      "name": "MongoDB",
+      "notes": "Document database used to define node clusters by proximity."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores profiles and hierarchical peer associations for microservice management."
+    },
+    {
+      "id": "6",
+      "service": "KinesisDataStream",
+      "name": "Amazon Kinesis Data Streams",
+      "notes": "Ingests API logs and operational metrics at high throughput."
+    },
+    {
+      "id": "7",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose",
+      "notes": "Streams incoming log data directly into S3 long-term storage."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Archive destination for raw telemetry and operational logs."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Snowflake",
+      "notes": "Data warehouse running SQL queries against archived data in S3 for real-time and historical analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "New edge node listens and connects to local supernode."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Supernode registers the newly discovered edge node with EKS."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Supernode registers directly with EKS discovery service."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS persists node discovery metadata into MongoDB."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "EKS updates profile and peer association details in DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "API logs and operational telemetry are forwarded to Kinesis Data Streams."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis Data Streams pushes continuous data stream to Kinesis Data Firehose."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis Data Firehose writes stream batches to Amazon S3."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Snowflake queries S3 directly for real-time and long-term analytics."
+    }
+  ]
+}
