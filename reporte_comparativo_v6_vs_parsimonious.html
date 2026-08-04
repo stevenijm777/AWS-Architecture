@@ -197,6 +197,42 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        th:hover {
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--accent-blue);
+        }
+
+        th:first-child, td:first-child {
+            padding-right: 36px;
+            min-width: 170px;
+            border-right: 2px solid var(--border);
+        }
+
+        th:nth-child(2), td:nth-child(2) {
+            padding-left: 28px;
+        }
+
+        .sort-icon {
+            display: inline-block;
+            margin-left: 6px;
+            font-size: 12px;
+            opacity: 0.5;
+            transition: opacity 0.2s ease;
+        }
+
+        th.sort-asc .sort-icon {
+            opacity: 1;
+            color: var(--accent-blue);
+        }
+
+        th.sort-desc .sort-icon {
+            opacity: 1;
+            color: var(--accent-purple);
         }
 
         td {
@@ -204,6 +240,7 @@
             border-bottom: 1px solid rgba(51, 65, 85, 0.5);
             font-size: 14px;
         }
+
 
         tr:hover {
             background: rgba(51, 65, 85, 0.3);
@@ -379,12 +416,12 @@
             <table id="strictTable">
                 <thead>
                     <tr>
-                        <th>Video ID</th>
-                        <th>v6 Standard (Node F1)</th>
-                        <th>v6 Standard (Edge F1)</th>
-                        <th class="highlight-col">Parsimonious (Node F1)</th>
-                        <th class="highlight-col">Parsimonious (Edge F1)</th>
-                        <th>Modelo Ganador</th>
+                        <th onclick="sortTable('strictTable', 0)">Video ID <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable('strictTable', 1)">v6 Standard (Node F1) <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable('strictTable', 2)">v6 Standard (Edge F1) <span class="sort-icon">↕</span></th>
+                        <th class="highlight-col" onclick="sortTable('strictTable', 3)">Parsimonious (Node F1) <span class="sort-icon">↕</span></th>
+                        <th class="highlight-col" onclick="sortTable('strictTable', 4)">Parsimonious (Edge F1) <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable('strictTable', 5)">Modelo Ganador <span class="sort-icon">↕</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -953,12 +990,12 @@
             <table id="permissiveTable">
                 <thead>
                     <tr>
-                        <th>Video ID</th>
-                        <th>v6 Standard (Node F1)</th>
-                        <th>v6 Standard (Edge F1)</th>
-                        <th class="highlight-col">Parsimonious (Node F1)</th>
-                        <th class="highlight-col">Parsimonious (Edge F1)</th>
-                        <th>Modelo Ganador</th>
+                        <th onclick="sortTable('permissiveTable', 0)">Video ID <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable('permissiveTable', 1)">v6 Standard (Node F1) <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable('permissiveTable', 2)">v6 Standard (Edge F1) <span class="sort-icon">↕</span></th>
+                        <th class="highlight-col" onclick="sortTable('permissiveTable', 3)">Parsimonious (Node F1) <span class="sort-icon">↕</span></th>
+                        <th class="highlight-col" onclick="sortTable('permissiveTable', 4)">Parsimonious (Edge F1) <span class="sort-icon">↕</span></th>
+                        <th onclick="sortTable('permissiveTable', 5)">Modelo Ganador <span class="sort-icon">↕</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1575,6 +1612,47 @@
                 }
             }
         }
+
+        const sortDirections = {};
+
+        function sortTable(tableId, colIndex) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+            
+            const key = tableId + "_" + colIndex;
+            const isAsc = !sortDirections[key];
+            sortDirections[key] = isAsc;
+
+            const headers = table.querySelectorAll("th");
+            headers.forEach(th => {
+                th.classList.remove("sort-asc", "sort-desc");
+                const icon = th.querySelector(".sort-icon");
+                if (icon) icon.textContent = "↕";
+            });
+
+            const currentHeader = headers[colIndex];
+            currentHeader.classList.add(isAsc ? "sort-asc" : "sort-desc");
+            const icon = currentHeader.querySelector(".sort-icon");
+            if (icon) icon.textContent = isAsc ? "▲" : "▼";
+
+            rows.sort((rowA, rowB) => {
+                const cellA = rowA.children[colIndex].innerText.trim();
+                const cellB = rowB.children[colIndex].innerText.trim();
+
+                const numA = parseFloat(cellA.replace("%", ""));
+                const numB = parseFloat(cellB.replace("%", ""));
+
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return isAsc ? numA - numB : numB - numA;
+                } else {
+                    return isAsc ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+                }
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
     </script>
 </body>
 </html>
+
