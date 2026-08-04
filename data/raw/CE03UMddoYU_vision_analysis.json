@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "The architecture represents Vigod Aqua, an IoT utility platform for water management handling 100k sensors and 27M events per day. Data enters via AWS API Gateway from external SENSORS (UserConsumerIOT). API Gateway passes payloads to TRANSFORMER (Lambda), which normalizes three generations of sensor protocols and splits output into FLOW (SQS FIFO queue) and ALARM (SQS FIFO queue). PRE PROCESSOR (Lambda) reads from the FLOW queue and evaluates data in real time against state stored in ELASTIC CACHE (ElastiCache Redis), filtering down to ~40% relevant events. The filtered data is sent to POST PROCESSOR (EC2 background workers), which write daily statistics to AURORA (Aurora Serverless) and event records to DYNAMO DB (DynamoDB). Finally, DYNAMO DB serves data up to the Client App (UserConsumerMobile) web/mobile applications.",
+  "graph": {
+    "name": "Vigod Aqua IoT Water Management Platform",
+    "link": "https://www.youtube.com/watch?v=CE03UMddoYU",
+    "categories": "IoT, Serverless Data Pipeline, Real-Time Analytics",
+    "graph_usable": true,
+    "notes": "Vigod Aqua manages ~100,000 IoT water meter sensors in the field ingesting ~27 million data points daily. Architecture is broken into ingestion (API Gateway + Lambda Transformers), pre-processing (SQS + Lambda + ElastiCache Redis filtering down to ~40%), post-processing (EC2), and dual storage (DynamoDB for events, Aurora Serverless for daily aggregates)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "SENSORS",
+      "notes": "Over 100k water meter IoT sensors in the field transmitting ~27 million events per day."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "AWS API Gateway acting as the public-facing ingestion endpoint for sensor telemetry."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "TRANSFORMER",
+      "notes": "AWS Lambda functions normalizing different protocol versions across 3 sensor generations and splitting telemetry into flow and alarm components."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "FLOW",
+      "notes": "Amazon SQS FIFO queue holding water flow telemetry messages."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "ALARM",
+      "notes": "Amazon SQS queue holding sensor alarm state messages."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "PRE PROCESSOR",
+      "notes": "AWS Lambda making real-time processing decisions to determine which telemetry data (~40%) requires full downstream processing."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ELASTIC CACHE",
+      "notes": "Amazon ElastiCache Redis in-memory database used by Pre Processor for real-time deduplication and state checks."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "POST PROCESSOR",
+      "notes": "AWS EC2 instances running background compute jobs to aggregate and store the filtered telemetry."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Amazon DynamoDB storing event-level water utility data (e.g. tanker lorry dumps, borewell starts)."
+    },
+    {
+      "id": "9",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Amazon Aurora Serverless MySQL storing aggregated daily usage statistics."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerMobile",
+      "name": "Client App",
+      "notes": "Web portals and mobile application clients consuming utility reports and visualizations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sensors transmit 27M daily telemetry payloads to API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway triggers Transformer Lambda functions."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transformer Lambda routes flow rate data into FLOW SQS queue."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Transformer Lambda routes alarm messages into ALARM SQS queue."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pre Processor reads flow telemetry messages from SQS queue."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pre Processor queries and updates in-memory cache state in ElastiCache."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Pre Processor passes the filtered 40% of actionable telemetry to Post Processor jobs."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Post Processor saves individual event records in DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "6'",
+      "type": "data",
+      "notes": "Post Processor writes aggregated daily consumption statistics into Aurora Serverless."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client Web and Mobile applications retrieve event data and daily usage reports."
+    }
+  ]
+}

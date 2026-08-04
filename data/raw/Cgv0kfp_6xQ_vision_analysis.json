@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "1. Identified all architecture entities visually and verbally: iOS mobile client, Android mobile client, EKS Gateway (GW), Media microservice, Messaging microservice (MCS), Friend Graph microservice, Snap DB microservice, CloudFront, S3 bucket, ElastiCache, and DynamoDB.\n2. Mapped each visual node to valid service strings: iOS/Android -> UserConsumerMobile, EKS components -> EKS, CloudFront -> CloudFront, S3 -> S3, ElastiCache -> ElastiCache, DynamoDB -> DynamoDB.\n3. Defined two main execution flows described in the transcript and visual arrows: Flow 0 (Sending snap media content to storage/CDN and evaluating friend graph) and Flow 1 (Messaging metadata processing, connection lookup, state persistence, and push notification to recipient client).",
+  "graph": {
+    "name": "Snap Snapchat Media and Messaging Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=Cgv0kfp_6xQ",
+    "categories": "Mobile Applications, Real-Time Messaging, Media Storage",
+    "graph_usable": true,
+    "notes": "Snapchat architecture handling over 300 million daily active users and billions of snaps per day across 900+ EKS clusters, ElastiCache, and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "IOS",
+      "notes": "iOS Snapchat mobile client sending a snap"
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "ANDROID",
+      "notes": "Android Snapchat recipient mobile client"
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "GW",
+      "notes": "API Gateway running inside EKS cluster"
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "MEDIA",
+      "notes": "Media delivery microservice in EKS handling media content routing"
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "MCS",
+      "notes": "Messaging microservice handling real-time push routing and connection lookups"
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "FRIEND GRAPH",
+      "notes": "Friend Graph microservice evaluating social graph connections"
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "SNAP DB",
+      "notes": "Snap DB microservice/custom layer managing state sync, transactions, and ephemeral data"
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "AWS CloudFront CDN for edge delivery of snap media"
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket for persistent media storage"
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "Amazon ElastiCache for low-latency server/connection ID lookups"
+    },
+    {
+      "id": "10",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Amazon DynamoDB storing over 400TB of metadata and supporting high-throughput scans"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "iOS app sends snap request to Gateway"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Gateway routes snap upload request to Media microservice"
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Media microservice uploads snap media to CloudFront"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "CloudFront persists media content to S3"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Media microservice connects with Friend Graph service"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Gateway routes messaging transaction to Messaging microservice (MCS)"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "MCS writes state and metadata to Snap DB"
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Snap DB persists structured metadata to DynamoDB"
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "MCS retrieves recipient connection ID and server mapping from ElastiCache"
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "MCS pushes message to recipient Android client via active persistent server connection"
+    }
+  ]
+}

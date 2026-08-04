@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "The visual diagram and transcript describe Pushpay's monolith decomposition strategy. 1. The original legacy monolith GIVING (.NET on Windows) connects to a SQL SERVER database. 2. Pushpay extracted identity microservices into Amazon ECS running .NET Core on Alpine Linux with GraphQL APIs. 3. Both GIVING and APPS (Node platform) invoke identity actions on ECS. 4. ECS stores event-sourced user data into Amazon DynamoDB and publishes full event payloads onto Amazon Kinesis. 5. Kinesis streams events back to GIVING to maintain state synchronization and checks-and-balances with the legacy monolith. 6. AWS X-Ray is integrated for distributed tracing across the microservices architecture.",
+  "graph": {
+    "name": "Pushpay Monolith Decomposition with Amazon ECS and DynamoDB",
+    "link": "https://www.youtube.com/watch?v=9Cg81Xgg7LQ",
+    "categories": "Migration, Microservices, Event-Driven Architecture",
+    "graph_usable": true,
+    "notes": "Architecture illustrating Pushpay strangling its .NET monolith into containerized identity microservices using ECS, DynamoDB event sourcing, Kinesis event streaming, and X-Ray tracing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "GIVING",
+      "notes": "Legacy .NET monolith running on Windows."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "SQL SERVER",
+      "notes": "Relational database supporting the Giving monolith."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "APPS",
+      "notes": "Node.js application platform for client apps."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Identity microservices running .NET Core on Alpine Linux containers exposing a GraphQL API."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "NoSQL database used as an event store for user sign-in and profile events."
+    },
+    {
+      "id": "5",
+      "service": "Kinesis",
+      "name": "KINESIS",
+      "notes": "Data stream for distributing user events to downstream services and back to the monolith."
+    },
+    {
+      "id": "6",
+      "service": "XRay",
+      "name": "X-RAY",
+      "notes": "Provides distributed tracing across microservices requests."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Giving monolith interacts with SQL Server database."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Giving monolith calls GraphQL API on ECS for user identity requests."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Apps platform calls GraphQL API on ECS for user identity requests."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "ECS identity microservice stores event records in DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "ECS identity microservice publishes event payloads into Kinesis data stream."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis streams events back to the Giving monolith for state synchronization."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "ECS identity microservice sends tracing data to AWS X-Ray."
+    }
+  ]
+}

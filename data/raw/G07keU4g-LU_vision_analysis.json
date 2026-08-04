@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows the data architecture of Jubilant Foodworks (Domino's/Dunkin' Donuts master franchisee in South Asia). Point of Sale (POS) systems and E-Commerce applications feed data into databases (POS DB and MySQL DB). DMS migrates data from the E-COMM database into an S3 data lake raw layer, while ETL scripts load POS database data to S3. EMR jobs process data in S3 (curating layers) and load hot data into Redshift. Redshift Spectrum transparently queries cold/warm data residing in S3. Athena executes ad-hoc SQL queries directly on S3 data to provide business insights.",
+  "graph": {
+    "name": "Jubilant Foodworks Data Lake and Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=G07keU4g-LU",
+    "categories": "Data Analytics & Data Lake",
+    "graph_usable": true,
+    "notes": "Architecture handles ~200,000 orders/day across ~1,250 restaurants, hitting up to 1,500 orders per minute at peak."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerPOS",
+      "name": "POS",
+      "notes": "Point of Sale machines across 1,200+ restaurants."
+    },
+    {
+      "id": "1",
+      "service": "RDS",
+      "name": "POS DB",
+      "notes": "Consolidation server / database for POS data on AWS cloud."
+    },
+    {
+      "id": "2",
+      "service": "UserConsumerWebMobile",
+      "name": "E-COMM",
+      "notes": "E-commerce digital assets including app, mobile, and desktop website."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "DB",
+      "notes": "E-commerce database running MySQL."
+    },
+    {
+      "id": "4",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "AWS Database Migration Service transferring MySQL data into S3 raw layer."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central S3 data lake holding raw and curated data layers."
+    },
+    {
+      "id": "6",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Serverless query service used by data analysts for ad hoc SQL insights."
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "EMR processing jobs for data curation and loading hot data into Redshift."
+    },
+    {
+      "id": "8",
+      "service": "RedShift",
+      "name": "REDSHIFT",
+      "notes": "Data warehouse storing ~5-6 months of hot data."
+    },
+    {
+      "id": "9",
+      "service": "RedShift",
+      "name": "RS Spectrum",
+      "notes": "Redshift Spectrum allowing queries directly against S3 cold data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "E-commerce orders flow into POS machines for restaurant fulfillment."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "E-commerce transactions stored in MySQL DB."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "POS machine data flows into consolidation POS DB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "DMS reads transaction data from MySQL DB."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "DMS loads data into S3 raw layer."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Custom ETL scripts transform and load POS DB data to S3 raw layer."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR reads raw data from S3 for processing."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR writes back processed/curated data to S3 curated layer."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR loads hot data (last 5-6 months) into Redshift."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Redshift Spectrum transparently queries warm/cold data in S3 data lake."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries historical data stored in S3 data lake."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 returns query result data back to Athena."
+    }
+  ]
+}

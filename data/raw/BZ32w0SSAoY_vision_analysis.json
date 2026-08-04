@@ -1,0 +1,144 @@
+{
+  "step_by_step_reasoning": "The architecture illustrates Cinefilm's PixelStrings platform on AWS. The user accesses the web interface hosted on an EC2 instance (Web Server / Job Manager) via a Web Browser. The user connects their S3 bucket containing input media clips. To extract metadata from clips, the Job Manager invokes an AWS Lambda function running mediainfo, which inspects the files in S3 and returns metadata to the Job Manager. The metadata is cached into a Database (RDS), where the Web Server retrieves it to display clip details in the user's browser. When a job is submitted, the Job Manager / Asset Manager copies input clips from S3 to the local storage of GPU-enabled EC2 instances (G3) to run retiming (Wormhole), de-interlacing (Spacetime), or noise removal (Dark Energy). Processed files are either copied directly back to the customer's S3 bucket or routed through an Interoperable Master Format (IMF) EC2 instance for IMF wrapping before being written back to S3.",
+  "graph": {
+    "name": "Cinefilm PixelStrings Cloud Video Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=BZ32w0SSAoY",
+    "categories": "Media & Entertainment, Video Processing",
+    "graph_usable": true,
+    "notes": "PixelStrings architecture on AWS providing video retiming, de-interlacing, noise removal, and upscaling using GPU-accelerated EC2 instances."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Browser",
+      "notes": "Client web browser used to access PixelStrings interface, input S3 credentials, and configure video workflows."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Web Server / Job Manager",
+      "notes": "EC2 instance hosting the Web Server, Job Manager, and Asset Manager components."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "Database",
+      "notes": "Database caching clip metadata and job state information."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "IMF",
+      "notes": "EC2 instance dedicated to Interoperable Master Format (IMF) wrapping."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "User-managed S3 bucket storing source media clips and processed video outputs."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless AWS Lambda function running mediainfo to extract video clip metadata."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "G3",
+      "notes": "GPU-accelerated EC2 instance cluster executing Wormhole, Spacetime, and Dark Energy video processing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User logs in, enters S3 bucket keys, and configures processing workflows via Web Browser."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Job Manager triggers Lambda function to extract clip metadata."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda function reads video clip metadata from S3."
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda function returns extracted clip metadata to Job Manager."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Job Manager saves metadata into Database."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Web server reads metadata from Database to present to the user in Web Browser."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Job Manager submits processing jobs to G3 GPU instance."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Asset Manager copies input video clip from S3 to G3 local disk."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Job Manager sends completed GPU output to IMF instance for wrapping if IMF format selected."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Asset Manager copies IMF wrapped video output clip back to S3 bucket."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Asset Manager copies processed output clip directly back to S3 bucket for standard non-IMF workflows."
+    }
+  ]
+}

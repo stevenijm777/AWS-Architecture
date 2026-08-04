@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The architecture illustrates Freightways' high-throughput parcel tracking system. Handheld mobile scanners capture scan data from drivers and submit it to an ingestion service running on AWS Fargate. The Fargate service writes scan records to DynamoDB. Changes in DynamoDB are streamed via DynamoDB Streams to an AWS Lambda function. Lambda publishes these scan events to an Amazon SNS topic for fan-out messaging. SNS forwards messages concurrently to two SQS queues: one for the Website processing service and one for the Image processing service. The Website SQS queue feeds a dedicated Fargate service that updates the public website where customers can track package status within five minutes. The Image SQS queue feeds another Fargate service designed specifically to process package scan photos.",
+  "graph": {
+    "name": "Freightways Parcel Scanning and Tracking Architecture",
+    "link": "https://www.youtube.com/watch?v=E8wYXtvGy5k",
+    "categories": "Express Logistics, Event-Driven Architecture, Serverless Ingestion",
+    "graph_usable": true,
+    "notes": "Handles over 50 million parcel scans annually, processing 500 average to 1,500 peak scans per minute with 99% website status updates within five minutes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "SCANNER",
+      "notes": "Handheld scanning device used by drivers in the field; captures around 50 million scans annually."
+    },
+    {
+      "id": "1",
+      "service": "Fargate",
+      "name": "FARGATE (Ingestion)",
+      "notes": "Containerized API ingestion service scaling between 500 and 1,500 scans per minute."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Primary NoSQL database storing scan records and generating stream events via DynamoDB Streams."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Serverless function reading events from DynamoDB Streams and publishing to SNS."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Notification topic implementing pub/sub fanout to multiple SQS queues."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS (Web Service)",
+      "notes": "Queue buffering tracking updates for the public website service."
+    },
+    {
+      "id": "6",
+      "service": "Fargate",
+      "name": "FARGATE (Web Service)",
+      "notes": "Compute service processing tracking updates for customer display."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "WEBSITE",
+      "notes": "Public website displaying parcel status updates to users within five minutes of scanning."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS (Image Service)",
+      "notes": "Queue buffering scan tasks that require image processing."
+    },
+    {
+      "id": "9",
+      "service": "Fargate",
+      "name": "FARGATE (Image Service)",
+      "notes": "Compute service specifically dedicated to processing package photos."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Scanners send scan payloads to the Fargate API ingestion endpoint."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate ingests and writes scan data to DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "DynamoDB Streams triggers Lambda function on scan record insertion."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda publishes scan events to the SNS topic."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "SNS fans out scan events to the web service SQS queue."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Web service Fargate task polls and processes messages from SQS."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Fargate updates tracking state published on the customer website."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "SNS fans out scan events parallelly to the image processing SQS queue."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Image processing Fargate service consumes scan image messages from SQS."
+    }
+  ]
+}

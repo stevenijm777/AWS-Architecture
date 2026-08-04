@@ -1,0 +1,194 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts Ecofit's serverless asset tracking system for fitness equipment. Equipment sensors communicate locally with an AWS Greengrass edge gateway. An installer mobile application interacts locally with the gateway over a RESTful interface and communicates with the backend via API Gateway. For utilization tracking, Greengrass forwards data to API Gateway, triggering a Utilization Lambda function that writes computed metrics into AWS Timestream DB. For health monitoring, real-time telemetry from Greengrass flows through AWS IoT Core into an SQS queue, which feeds a Sensor Health Lambda. If a gateway drops offline, the Sensor Health Lambda publishes an alert via SNS. For reporting, a Reporting Lambda queries Timestream DB and serves reporting data out through API Gateway to customer portals and BI tools.",
+  "graph": {
+    "name": "Ecofit Automated Fitness Asset Tracking Architecture",
+    "link": "https://www.youtube.com/watch?v=DnTQ3matqts",
+    "categories": "IoT, Serverless, Analytics",
+    "graph_usable": true,
+    "notes": "Serverless IoT tracking platform for gym equipment utilization and health monitoring using AWS Greengrass, AWS IoT Core, Timestream DB, Lambda, and API Gateway."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "SENSOR",
+      "notes": "Physical sensors attached to gym equipment tracking usage and telemetry."
+    },
+    {
+      "id": "1",
+      "service": "Greengrass",
+      "name": "GREENGRASS",
+      "notes": "AWS Greengrass edge gateway processing sensor data locally and buffering offline data."
+    },
+    {
+      "id": "2",
+      "service": "UserConsumerMobile",
+      "name": "APP",
+      "notes": "Installer mobile application used for configuring equipment sensors and gateways."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API GATEWAY (top)",
+      "notes": "API Gateway handling requests from installer app and utilization data ingestion."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS (top)",
+      "notes": "SQS queue buffer positioned above Utilization Lambda."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "UTILIZATION",
+      "notes": "Serverless Lambda function calculating equipment utilization metrics."
+    },
+    {
+      "id": "6",
+      "service": "IoTCore",
+      "name": "IOT CORE",
+      "notes": "AWS IoT Core ingesting real-time sensor health telemetry and gateway heartbeats."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS (middle)",
+      "notes": "SQS queue buffering sensor status messages from IoT Core."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "SENSOR HEALTH",
+      "notes": "Lambda function processing gateway heartbeat timeout logic."
+    },
+    {
+      "id": "9",
+      "service": "Timestream",
+      "name": "TIMESERIES DB",
+      "notes": "AWS Timestream database serving as central data lake for time-series utilization metrics."
+    },
+    {
+      "id": "10",
+      "service": "Cognito",
+      "name": "COGNITO",
+      "notes": "AWS Cognito managing authentication for system applications."
+    },
+    {
+      "id": "11",
+      "service": "ApiGateway",
+      "name": "API GATEWAY (reporting)",
+      "notes": "API Gateway exposing reporting endpoints to portals and BI tools."
+    },
+    {
+      "id": "12",
+      "service": "Lambda",
+      "name": "REPORTING",
+      "notes": "Reporting Lambda querying utilization data to generate customer reports."
+    },
+    {
+      "id": "13",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "SNS notification topic triggering alerts when sensors or gateways go offline."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Installer app connects directly to Greengrass gateway over local RESTful interface."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Installer app communicates with backend via API Gateway during equipment setup."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fitness equipment sensor transmits usage metrics to local Greengrass gateway."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Greengrass lambda forwards utilization data to backend API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Gateway invokes Utilization Lambda."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Utilization Lambda stores processed usage metrics into Timestream DB."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Greengrass sends real-time heartbeat and sensor status to AWS IoT Core."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "IoT Core routes health messages into SQS queue for buffering."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "SQS queue feeds Sensor Health Lambda to evaluate device availability."
+    },
+    {
+      "source": "8",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "control",
+      "notes": "Sensor Health Lambda triggers SNS notification if gateway is offline."
+    },
+    {
+      "source": "9",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reporting Lambda queries historical utilization data from Timestream DB."
+    },
+    {
+      "source": "12",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reporting Lambda outputs generated reports through API Gateway."
+    }
+  ]
+}

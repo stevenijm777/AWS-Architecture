@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Healthy Careers' GenAI-enabled job search platform. The workflow is divided into an online search flow and an offline job content ingestion flow. In the online search flow, a User enters a search query on the platform, which reaches the .Net Application running on Amazon ECS (Node 1). The application calls Amazon Bedrock Claude 2 (Top, Node 2) to check for prompt injection, sanitize the prompt, and convert location terms to coordinates. Claude 2 returns the enriched prompt to ECS, which sends it to Amazon Bedrock Titan (Middle, Node 3) for vectorization. The vectorized query is sent to MS SQL on EC2 (Node 4) to pull user search history, and then to ElasticSearch Knowledge Base on EC2 (Node 5) to retrieve the top 6 matching job descriptions. These results along with chat history are passed to Bedrock Claude 2 (Right, Node 6), which streams the final generative response directly back to the User. In the offline pipeline, job data from RSS feeds and APIs are periodically stored in Amazon S3 (Node 7), passed to Amazon Bedrock Titan (Bottom, Node 8) for vector embedding every 6 hours, and saved into the ElasticSearch knowledge base (Node 5).",
+  "graph": {
+    "name": "Healthy Careers GenAI Job Search Engine Architecture",
+    "link": "https://www.youtube.com/watch?v=7KqYdneuJjo",
+    "categories": "GenAI, Healthcare, Search Engine",
+    "graph_usable": true,
+    "notes": "Architecture for Healthy Careers AI-enabled healthcare job search platform powered by AWS Bedrock, ECS, SQL, and ElasticSearch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User",
+      "notes": "Healthcare job seekers searching for opportunities using natural language queries."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": ".Net Application Amazon ECS",
+      "notes": "Application controller running on Amazon ECS handling query requests."
+    },
+    {
+      "id": "2",
+      "service": "SageMaker",
+      "name": "Amazon Bedrock Claude 2 (Top)",
+      "notes": "Bedrock Claude 2 LLM used for prompt sanitization, prompt injection check, and geolocation parsing."
+    },
+    {
+      "id": "3",
+      "service": "SageMaker",
+      "name": "Amazon Bedrock Titan (Middle)",
+      "notes": "Bedrock Titan embedding model used to vectorize queries based on speed and cost efficiency."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "MS SQL Amazon EC2",
+      "notes": "MS SQL database running on EC2 to retrieve user search and chat history."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "ElasticSearch Amazon EC2",
+      "notes": "ElasticSearch Knowledge Base running on EC2 storing job description content."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "Amazon Bedrock Claude 2 (Right)",
+      "notes": "Bedrock Claude 2 used to generate streaming natural language responses from top search results."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Document store holding job data collected every 6 hours from RSS feeds, APIs, and partner sites."
+    },
+    {
+      "id": "8",
+      "service": "SageMaker",
+      "name": "Amazon Bedrock Titan (Bottom)",
+      "notes": "Bedrock Titan model used to vectorize job content offline for indexing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User submits natural language job query."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Application passes prompt to Claude 2 for prompt injection check, sanitization, and geolocation extraction."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Claude 2 returns enriched prompt with coordinates to .Net application."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Application passes enriched query to Titan for vector embedding."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Vectorized prompt queries MS SQL for user search/chat history."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Enriched query and search history pass to ElasticSearch knowledge base."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Top 6 matching job descriptions and chat history pass to Bedrock Claude 2."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Claude 2 streams generated AI response back to the User."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Job feeds stored in S3 pass every 6 hours to Bedrock Titan."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Vectorized content base is stored into ElasticSearch knowledge base."
+    }
+  ]
+}

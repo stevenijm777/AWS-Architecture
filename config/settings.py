@@ -29,6 +29,11 @@ for d in (RAW_DIR, AUDIO_DIR, FRAMES_DIR, GRAPHS_DIR, GOOD_WHITEBOARD_DIR, BAD_W
 
 # ── API Keys ─────────────────────────────────────────────────
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+raw_keys = os.getenv("GEMINI_API_KEYS", GEMINI_API_KEY)
+GEMINI_API_KEYS: list[str] = [k.strip() for k in raw_keys.split(",") if k.strip()]
+if not GEMINI_API_KEYS and GEMINI_API_KEY:
+    GEMINI_API_KEYS = [GEMINI_API_KEY]
+
 
 
 # ── Whisper ──────────────────────────────────────────────────

@@ -1,0 +1,96 @@
+{
+  "step_by_step_reasoning": "1. Identified core visual entities: End User actor, Account A VPC containing NAT Gateways and EKS clusters across public/private subnets, Account B VPC containing AWS WAF, ALB, and EKS cluster, and On-Premises Data Center.\n2. Normalised non-standard service naming according to valid vocabulary (mapped User actor to UserConsumerWeb, kept standard AWS services NAT, EKS, WAF, ALB, and OnPremDC).\n3. Fused multi-AZ redundant visual subnets (NAT Gateways and EKS nodes in Account A) into logical unit nodes to clarify functional routing paths.\n4. Mapped incoming web request flow in Account B: User -> WAF -> ALB -> EKS (Account B).\n5. Mapped outbound and hybrid connectivity for Account A based on transcript: EKS (Account A) -> NAT Gateway for outbound connectivity, and EKS (Account A) -> On-Premises DC via Direct Connect.",
+  "graph": {
+    "name": "GoDaddy Multi-Account Security Architecture",
+    "link": "https://www.youtube.com/watch?v=BgT_bDAejSQ",
+    "categories": "Security & Compliance, Multi-Account Architecture",
+    "graph_usable": true,
+    "notes": "Architecture illustrating zero-trust account boundaries between Account A and Account B with automated EKS node rotations and direct connect hybrid networking."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End user or developer interacting with cloud applications or public cloud portal."
+    },
+    {
+      "id": "1",
+      "service": "NAT",
+      "name": "NAT Gateway (Account A)",
+      "notes": "NAT Gateways in Account A public subnets for outbound internet communication."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS Cluster (Account A)",
+      "notes": "EKS worker nodes in Account A private subnets with 24-hour automated node rotations from golden AMI."
+    },
+    {
+      "id": "3",
+      "service": "WAF",
+      "name": "AWS WAF (Account B)",
+      "notes": "AWS WAF sitting at Account B boundary inspecting inbound traffic."
+    },
+    {
+      "id": "4",
+      "service": "ALB",
+      "name": "ALB (Account B)",
+      "notes": "Application Load Balancer in Account B public subnet routing incoming requests."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "EKS Cluster (Account B)",
+      "notes": "EKS cluster hosting workloads in Account B private subnet."
+    },
+    {
+      "id": "6",
+      "service": "OnPremDC",
+      "name": "On-Premises DC",
+      "notes": "On-Premises Data Center accessed via AWS Direct Connect."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User traffic arrives at Account B AWS WAF."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "WAF forwards validated traffic to Application Load Balancer."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB routes requests to backend EKS cluster in Account B."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Account A EKS pods route outbound internet connections through NAT Gateway."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Account A EKS pods communicate directly with on-premises services via Direct Connect."
+    }
+  ]
+}

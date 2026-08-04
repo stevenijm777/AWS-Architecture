@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identified core system nodes from the whiteboard visual inventory and audio transcript: User/Client Actor ('UserCompanyDeveloper'), primary SQS input queue ('SQS Bottom'), Fugue Conductor orchestration engine running on EC2 ('EC2'), S3 bucket for compiled policies ('S3'), KMS for encryption ('KMS'), DynamoDB for persistence ('DynamoDB'), secondary SQS output queue ('SQS Top'), SNS for drift notifications ('SNS'), and managed target AWS accounts ('AWS Account 1', 'AWS Account 2').\n2. Standardized service names to match valid vocabulary strict rules ('ThirdParty' for secondary AWS accounts, 'UserCompanyDeveloper' for external user triggers).\n3. Modeled core workflows into logical sequence flows:\n   - Flow 0: External request ingestion, decryption via KMS, policy load from S3, and persistence in DynamoDB.\n   - Flow 1: Cross-account infrastructure provisioning and automated drift remediation against AWS Account 1 and AWS Account 2 using cross-account IAM roles.\n   - Flow 2: Event messaging and drift notification dispatch via SQS Top and SNS.",
+  "graph": {
+    "name": "Automated Drift Detection with Fugue Conductor",
+    "link": "https://www.youtube.com/watch?v=Gds8hl8dKuo",
+    "categories": "Security, Compliance, Infrastructure as Code, Automation",
+    "graph_usable": true,
+    "notes": "Fugue Conductor runs as an EC2 instance within an Auto Scaling Group in the customer's AWS account. It ingests requests via SQS, loads compiled policies from S3, authenticates and decrypts with KMS/IAM/STS, stores state in DynamoDB, and continuously scans and remediates drift across multiple secondary AWS accounts every 60 seconds while emitting real-time notifications."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "User / External Client",
+      "notes": "External actor sending infrastructure requests into the conductor architecture."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "SQS Input Queue",
+      "notes": "Ingresses incoming SQS messages from external users to trigger conductor workflows."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2 (Conductor Engine)",
+      "notes": "Orchestration engine running inside an Auto Scaling Group (min 1, max 1) deploying and scanning infrastructure."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Policy Storage",
+      "notes": "Stores compiled policy code (CIS, GDPR, HIPAA, NIST 800-53, PCI) and infrastructure declarations."
+    },
+    {
+      "id": "4",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Provides encryption for all messages, data, and security standards."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Persistence layer storing infrastructure state and configurations."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS Top Queue",
+      "notes": "Handles internal conductor messaging and notifications."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Dispatches real-time drift alerts to admins when non-compliant modifications are detected."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "AWS Account 1",
+      "notes": "Target customer account managed by Conductor via cross-account IAM role."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "AWS Account 2",
+      "notes": "Target customer account managed by Conductor via cross-account IAM role."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "External user sends SQS message requesting infrastructure action."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Conductor EC2 instance polls and processes incoming SQS request."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "meta",
+      "notes": "KMS decrypts and authenticates message and security context."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Conductor downloads compiled policy and declaration code from S3."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Conductor persists state and baseline data into DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Conductor provisions, continuously scans (60s), and remediates drift in AWS Account 1 via cross-account IAM role."
+    },
+    {
+      "source": "2",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Conductor provisions, continuously scans (60s), and remediates drift in AWS Account 2 via cross-account IAM role."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Conductor routes internal event notifications via SQS."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Conductor triggers real-time drift alerts via SNS."
+    }
+  ]
+}

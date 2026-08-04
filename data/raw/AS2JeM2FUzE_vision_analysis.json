@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Intellect Design's Fabric Data Service running on AWS. External data sources send data via ELB into a Kubernetes cluster (hosted on EC2) running microservices (Keycloak, Jupyter, Kong). The microservices utilize Amazon MQ for decoupling and latency handling, store auth and gateway configuration in Amazon RDS (Postgres), and manage user sessions via ElastiCache (Redis). Processed insurance entity data is persisted into MongoDB Atlas through VPC Peering. External consumers access the platform via Kong API Gateway in Kubernetes.",
+  "graph": {
+    "name": "Intellect Design Fabric Data Service Architecture",
+    "link": "https://www.youtube.com/watch?v=AS2JeM2FUzE",
+    "categories": "Data Pipeline, Financial Services, Cloud Infrastructure",
+    "graph_usable": true,
+    "notes": "Intellect Design's Fabric Data Service processes 1-2 million messages across 2,000 data sources. Kubernetes microservices ingest data via ELB, decouple processing with Amazon MQ, manage sessions via Redis, store auth metadata in Postgres RDS, and persist data to MongoDB Atlas via VPC Peering."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "DATA SOURCES",
+      "notes": "External crawled data sources, premium connectors, and custom carrier data feeds."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Elastic Load Balancer fanning out incoming data source payloads to Kubernetes microservices."
+    },
+    {
+      "id": "2",
+      "service": "UserConsumerWeb",
+      "name": "CONSUMERS",
+      "notes": "Underwriters, agents, and policy clients accessing microservices via Kong API Gateway."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "K8S",
+      "notes": "Kubernetes cluster on EC2 hosting ~200 microservices including Keycloak, Jupyter Notebooks, and Kong API Gateway."
+    },
+    {
+      "id": "4",
+      "service": "AmazonMQ",
+      "name": "MQ",
+      "notes": "Amazon MQ used to loosely couple microservices and handle pipeline latency during message spikes (1-2M messages)."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Amazon RDS Postgres database backing Kong API gateway and Keycloak authentication microservice."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "REDIS",
+      "notes": "ElastiCache Redis used for session management and caching across microservices."
+    },
+    {
+      "id": "7",
+      "service": "VPCPeering",
+      "name": "VPC PEERING",
+      "notes": "VPC Peering connection enabling secure private routing from AWS VPC to MongoDB Atlas without public internet exposure."
+    },
+    {
+      "id": "8",
+      "service": "MongoDBAtlas",
+      "name": "MONGODB ATLAS",
+      "notes": "Managed MongoDB Atlas document database hosting cleansed and aggregated fabric entity data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data sources send crawled and connector data into ELB."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ELB fans out incoming traffic to Kubernetes microservices cluster."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Microservices push raw/unprocessed data into Amazon MQ."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "ML pipeline microservices consume messages from Amazon MQ for data cleansing and sentiment analysis."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Kubernetes microservices send cleansed data via VPC Peering."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "VPC Peering routes private traffic directly into MongoDB Atlas."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Logical data storage connection from Kubernetes pipeline to MongoDB Atlas."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Consumers access Kubernetes microservices via Kong API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kong and Keycloak microservices query and store auth and gateway configuration in Postgres RDS."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Microservices perform user session management and cache retrieval using Redis."
+    }
+  ]
+}

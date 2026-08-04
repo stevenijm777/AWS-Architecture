@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "1. Identified core data ingest components: Satellite data (ThirdParty) ingested into S3, and Mobile Device GIS data (UserCompanyAgent) stored in PostgreSQL database (RDS).\n2. Identified processing workflow: AWS Lambda triggers parallel execution on AWS SageMaker. SageMaker fetches inputs from Registry of Open Data (S3 bucket), raw imagery S3 bucket, and field boundaries from PostgreSQL. Upon completion, SageMaker writes spatial statistics to PostgreSQL and processed imagery back to S3.\n3. Identified presentation workflow: Application UI services running on AWS EKS (backed by EC2 Graviton instances) expose geospatial map layers through Amazon CloudFront CDN, delivering efficient cached content to agriculture sector end users (UserConsumerWeb).",
+  "graph": {
+    "name": "TCS DNA Platform Geospatial Data Architecture",
+    "link": "https://www.youtube.com/watch?v=Dxq_U1TNx1s",
+    "categories": "Geospatial Analytics, Machine Learning, Agriculture",
+    "graph_usable": true,
+    "notes": "Architecture for TCS Digital Platform for Next Gen Agriculture (DNA), processing satellite imagery and GIS data at India scale across 329M hectares."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Satellite",
+      "notes": "Open domain satellite imagery provided by ISRO and NASA"
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyAgent",
+      "name": "Mobile Device",
+      "notes": "Field managers collecting GIS field-level data"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores satellite imagery data and processed output images"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Registry of Open Data",
+      "notes": "AWS Registry of Open Data storing spectral regions, reducing transfer size from 60TB to 20TB"
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "PostgreSQL",
+      "notes": "PostgreSQL database with GIS extension storing field boundaries and spatial statistics"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Actuates parallel processing jobs on SageMaker every 5-10 days"
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Executes 3,400 parallel processing jobs for spatial and temporal analysis"
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Graviton-based EC2 instances hosting the EKS cluster for cost-effective compute"
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Deploys UI applications and serves geospatial map layers"
+    },
+    {
+      "id": "9",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Caches map data layers to minimize transfer latency and data transfer cost"
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWeb",
+      "name": "End User",
+      "notes": "Agriculture sector end users accessing UI applications"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Satellite imagery ingested into S3 bucket"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Field agents push mobile GIS data directly into PostgreSQL GIS database"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Lambda actuates 3,400 parallel SageMaker processing jobs"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "SageMaker reads selected spectral regions from Registry of Open Data on S3"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "SageMaker takes satellite imagery inputs from S3"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1''",
+      "type": "data",
+      "notes": "SageMaker reads field boundaries from PostgreSQL database"
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker writes processed image outputs back to S3 bucket"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "SageMaker writes aggregated spatial statistics into PostgreSQL database"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "EC2 Graviton instances provide compute infrastructure for EKS"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS application serves geospatial map data layers to CloudFront"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront delivers cached UI map content to end users"
+    }
+  ]
+}

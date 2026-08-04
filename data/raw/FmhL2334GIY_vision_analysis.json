@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "The architecture shows New Relic's Synthetic testing platform on AWS. The components are extracted directly from the visual board and transcript. Node 0 (SCHEDULER, EC2) schedules synthetic test jobs into Node 1 (JOB QUEUE, SQS). Node 4 (PUBLIC MONITORS, EC2) pulls jobs from JOB QUEUE to test public websites/APIs (Node 7, ThirdParty). Node 6 (PRIVATE MONITORS, EC2) runs inside customer environments to test private endpoints (Node 8, ThirdParty) and sends results securely back via Node 5 (GLOBAL ACCELERATOR, GlobalAccelerator) to Node 2 (MONITOR API, EC2). Results are pushed into Node 3 (RESULTS QUEUE, SQS) for alerting and dashboarding, completing the loop back to the SCHEDULER.",
+  "graph": {
+    "name": "New Relic Synthetics Architecture",
+    "link": "https://www.youtube.com/watch?v=FmhL2334GIY",
+    "categories": "Monitoring & Observability, Synthetic Testing, Global Acceleration",
+    "graph_usable": true,
+    "notes": "Architecture illustrating New Relic's Synthetic testing pipeline handling public and private test execution and result collection using AWS SQS, EC2, and Global Accelerator."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "SCHEDULER",
+      "notes": "Schedules synthetic test jobs on a configured time interval (e.g., every minute or hour)."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "JOB QUEUE",
+      "notes": "Stores scheduled synthetic test jobs until runtime monitors pick them up."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "MONITOR API",
+      "notes": "Receives synthetic test execution results from public and private monitors."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "RESULTS QUEUE",
+      "notes": "Stores test results for processing, dashboarding, and alerting."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "PUBLIC MONITORS",
+      "notes": "Public runtime instances (minions) executing tests against public endpoints."
+    },
+    {
+      "id": "5",
+      "service": "GlobalAccelerator",
+      "name": "GLOBAL ACCELERATOR",
+      "notes": "Provides static IPs for secure, performant routing from private monitors back to the MONITOR API."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "PRIVATE MONITORS",
+      "notes": "Containerized private monitors (minions) running inside customer private networks/VPCs."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "PUBLIC",
+      "notes": "Public website or API target tested by public monitors."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "PRIVATE",
+      "notes": "Private website or API target tested by private monitors inside customer network."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "SCHEDULER pushes scheduled jobs into JOB QUEUE."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Connects job processing pipeline towards MONITOR API."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "MONITOR API sends test execution results into RESULTS QUEUE."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Feedback loop returning process cycle back to SCHEDULER."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "PUBLIC MONITORS pick up scheduled jobs from JOB QUEUE."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "PUBLIC MONITORS execute tests against PUBLIC endpoint."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "PRIVATE MONITORS execute tests against PRIVATE endpoint."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "PRIVATE MONITORS route results upward using static IPs provided by GLOBAL ACCELERATOR."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "GLOBAL ACCELERATOR routes traffic securely to MONITOR API."
+    }
+  ]
+}

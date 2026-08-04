@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture transcription is derived from the whiteboard visual inventory and the audio transcript.\n1. **Nodes Identification**: The mobile client ('UserConsumerMobile') connects to the legacy platform hosted on 'EC2'. 'EC2' interacts with 'CouchBase' for user-generated data and 'Aurora' for editorial relational data. Feedback received by 'EC2' generates tasks stored in 'DynamoDB'.\n2. **Task Distribution & Real-Time Sync**: 'AppSync' interfaces with users to distribute tasks and sync updates. Simple data operations between 'AppSync' and 'DynamoDB' are performed directly using VTL templates, while complex operations (e.g., concurrent writes and publication) invoke a 'Lambda' function ('Lambda (Right)'), which writes to 'DynamoDB'. A second 'Lambda' function ('Lambda (Left)') also connects to 'DynamoDB'.\n3. **Analytics & Prioritization**: 'Fargate' runs batch jobs using external streaming charts to update task priorities in 'DynamoDB'. 'RedShift' performs analytics on content relevance per country/language, contributing rank updates to 'DynamoDB'.",
+  "graph": {
+    "name": "MusiXmatch Serverless and Batch Architecture",
+    "link": "https://www.youtube.com/watch?v=9LhiUsg3knw",
+    "categories": "Serverless, Mobile, Data Analytics",
+    "graph_usable": true,
+    "notes": "MusiXmatch architecture processing user feedback, lyrics synchronization, task distribution via AppSync, and task ranking via Fargate batch jobs and Redshift analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Clients / Users",
+      "notes": "Mobile app users providing feedback and consuming synchronized lyrics."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Legacy platform running in Auto Scaling groups with Docker, handling user feedback."
+    },
+    {
+      "id": "2",
+      "service": "CouchBase",
+      "name": "Couchbase",
+      "notes": "NoSQL database storing user-generated data."
+    },
+    {
+      "id": "3",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Relational database storing editorial data."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Central database storing editorial tasks assigned to users."
+    },
+    {
+      "id": "5",
+      "service": "AppSync",
+      "name": "AppSync",
+      "notes": "GraphQL service distributing tasks and enabling real-time client sync."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Left)",
+      "notes": "Function performing data/task updates into DynamoDB."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Right)",
+      "notes": "Orchestrates complex operations like concurrent DynamoDB writes and publishing."
+    },
+    {
+      "id": "8",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Analytics platform calculating content rankings by country and language."
+    },
+    {
+      "id": "9",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Runs batch jobs reading streaming service charts to prioritize internal tasks."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile users submit feedback on lyrics and sync quality to EC2."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 reads/writes user-generated data to Couchbase."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EC2 reads/writes editorial data to Aurora."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EC2 generates user tasks and writes them into DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "AppSync distributes tasks to users and provides real-time client synchronization."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "AppSync directly interacts with DynamoDB using VTL templates for standard task queries."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "AppSync triggers Lambda for complex operations like task submission and publishing."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda writes task completion results and updates into DynamoDB."
+    },
+    {
+      "source": "9",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fargate batch jobs compute chart relevance and update task rankings in DynamoDB."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Redshift analytics platform feeds content ranking scores into DynamoDB task list."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda updates task status and data directly in DynamoDB."
+    }
+  ]
+}

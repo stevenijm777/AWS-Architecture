@@ -1,0 +1,150 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Grindr's next-generation chat platform hosted on AWS EKS. A user connects via WebSocket (W1) to the EKS REST and WebSocket frontend layer. The WebSocket layer passes requests to the core EKS Chat and Notifications microservices. Message bodies are application-encrypted using KMS and persisted in Amazon DynamoDB (write-heavy), while message metadata and inbox state are stored in Amazon Aurora PostgreSQL (read-heavy). User inboxes are cached in Amazon ElastiCache for Redis to minimize database load. For active users, real-time messages are pushed back via WebSocket (W2). If a user is offline, EKS triggers Amazon Pinpoint to deliver push notifications. Additionally, metadata events are published to Amazon MSK (Kafka) for asynchronous processing such as anti-spam analysis.",
+  "graph": {
+    "name": "Grindr Next-Gen Chat Architecture",
+    "link": "https://www.youtube.com/watch?v=6uEX5RKd0Bk",
+    "categories": "Mobile, Messaging, Microservices, Caching, Event-Driven",
+    "graph_usable": true,
+    "notes": "Grindr's chat platform processes over 120 billion messages annually using AWS EKS microservices, DynamoDB for encrypted message bodies, Aurora for metadata, ElastiCache Redis for fast inbox caching, Pinpoint for push notifications, and MSK for event streaming."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "User",
+      "notes": "Mobile user application initiating chat sessions and receiving real-time messages or push notifications."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "Amazon EKS REST and WebSocket",
+      "notes": "Frontend WebSocket and REST routing layer hosted on EKS managing active client connections (W1 and W2)."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Amazon EKS Chat and Notifications",
+      "notes": "Core microservices brain handling authentication, validation, persistence bifurcation, and message delivery logic."
+    },
+    {
+      "id": "3",
+      "service": "Pinpoint",
+      "name": "Amazon Pinpoint",
+      "notes": "Targeted push notification service used to notify offline users over telephony networks."
+    },
+    {
+      "id": "4",
+      "service": "ElastiCache",
+      "name": "Amazon ElastiCache for Redis",
+      "notes": "In-memory cache layer storing user inbox state to serve read-heavy inbox queries fast."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "Amazon Aurora",
+      "notes": "Relational PostgreSQL database for message metadata, message ordering, timestamps, and inbox state."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "NoSQL database providing scalable storage for application-level encrypted chat message bodies."
+    },
+    {
+      "id": "7",
+      "service": "MSK",
+      "name": "Amazon MSK",
+      "notes": "Managed Streaming for Apache Kafka used as an event bus to stream chat metadata to downstream consumers like anti-spam."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User opens chat and sends message over WebSocket connection W1."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "WebSocket edge layer forwards request to internal chat microservices for low-level validation and processing."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Chat microservice encrypts payload and persists message body into DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Chat microservice writes metadata, envelope headers, and inbox timestamps into Aurora Postgres."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2''",
+      "type": "control",
+      "notes": "Chat microservice emits metadata event to MSK Kafka topic for async processing."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Chat service checks and updates user inbox state in ElastiCache Redis."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "On cache miss, inbox metadata is fetched from Aurora PostgreSQL to repopulate Redis cache."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Chat microservice triggers WebSocket layer if the recipient user is currently online."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "WebSocket layer pushes real-time chat message (W2) back to active recipient phone."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "control",
+      "notes": "If recipient is offline, Chat service requests push notification via Pinpoint."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "control",
+      "notes": "Pinpoint sends mobile push notification to offline user device."
+    }
+  ]
+}
