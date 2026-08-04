@@ -429,10 +429,10 @@ def generate_report():
             border: 1px solid rgba(148, 163, 184, 0.3);
         }}
 
-        /* Gallery Grid */
+        /* Gallery Grid & Image Dimensioning */
         .gallery-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
             gap: 24px;
         }}
 
@@ -441,28 +441,47 @@ def generate_report():
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }}
 
         .gallery-card h3 {{
             font-family: 'Outfit', sans-serif;
-            font-size: 18px;
+            font-size: 17px;
             margin-bottom: 12px;
             color: var(--accent-blue);
+            width: 100%;
+            text-align: left;
         }}
 
         .gallery-card img {{
-            width: 100%;
+            max-width: 100%;
+            max-height: 380px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             border-radius: 12px;
             border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }}
+
+        .gallery-card img:hover {{
+            transform: scale(1.02);
         }}
 
         .gallery-card p {{
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-secondary);
             margin-top: 12px;
+            text-align: left;
+            width: 100%;
         }}
     </style>
 </head>
+
 <body>
 
     <header>
