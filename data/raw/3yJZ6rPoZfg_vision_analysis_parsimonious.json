@@ -1,126 +1,118 @@
 {
-  "step_by_step_reasoning": "Identify two distinct environments separated by VPC Peering: the AWS Data account and the AWS User Experience & Processing account. The Data account contains an S3 bucket and an EKS cluster. The Processing account features an EKS cluster, an SQS queue, an Auto Scaling Group (ASG) for processing, and an S3 bucket. A User actor interacts with the processing pipeline. We map these to 8 nodes and define two flows: one for data retrieval and one for upload/processing.",
+  "step_by_step_reasoning": "The architecture diagram shows two AWS accounts/environments: 'AWS DATA' on the left and 'AWS USER PRO' on the right, separated by a dashed line with VPC Peering in between.\n\n1. External users interact with S3 (AWS USER PRO) directly to upload files using pre-signed URLs.\n2. S3 triggers an event sent to SQS.\n3. EKS in AWS USER PRO listens to/processes messages from SQS.\n4. SQS feeds jobs/messages to an Auto Scaling Group (ASG) of processing EC2 instances.\n5. On the AWS DATA side, S3 holds data that feeds into EKS (AWS DATA).\n6. EKS (AWS DATA) communicates securely via VPC Peering with EKS (AWS USER PRO).",
   "graph": {
-    "name": "Hexagon Digital Reality Geospatial Platform",
-    "link": "https://www.youtube.com/watch?v=3yJZ6rPoZfg",
-    "categories": "data_ingestion, compute_intensive",
+    "name": "Hexagon Digital Reality Architecture",
+    "link": "",
+    "categories": "Media & Geospatial Analytics Data Processing",
     "graph_usable": true,
-    "notes": "Hexagon's cloud-based platform for storing geospatial data and processing user uploads. It separates data storage from processing using VPC peering for secure, low-latency access, and scales compute-heavy processing using EC2 Auto Scaling Groups."
+    "notes": "Hexagon's multi-account cloud architecture for streaming geospatial data and user processing pipelines."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWebMobile",
-      "name": "Users & Devices",
-      "notes": "WORKLOAD_PEEK: Drag-and-drop web users or connected physical devices uploading geospatial data."
+      "name": "Users / Devices",
+      "notes": "External users and hardware devices uploading geospatial data"
     },
     {
       "id": "1",
-      "service": "EKS",
-      "name": "Data EKS",
-      "notes": "WORKLOAD_PEEK: Handles data streaming back to users from the main data account."
+      "service": "S3",
+      "name": "Data Account S3",
+      "notes": "Stores primary geospatial data in the single data account"
     },
     {
       "id": "2",
-      "service": "S3",
-      "name": "Data S3 Bucket",
-      "notes": "DATA_PEEK: Single source of truth S3 bucket storing large, high-precision geospatial datasets."
+      "service": "EKS",
+      "name": "Data Account EKS",
+      "notes": "Manages streaming logic and data store services"
     },
     {
       "id": "3",
       "service": "VPCPeering",
       "name": "VPC Peering",
-      "notes": "Enables secure and private connection across multiple AWS accounts over the AWS backbone."
+      "notes": "Connects data account VPC with user processing VPCs over AWS backbone"
     },
     {
       "id": "4",
       "service": "EKS",
-      "name": "UX & Processing EKS",
-      "notes": "WORKLOAD_PEEK: Runs user experience logic and coordinate ingestion queues."
+      "name": "User Processing EKS",
+      "notes": "Hosts user experience logic and listens to processing queue"
     },
     {
       "id": "5",
       "service": "SQS",
-      "name": "Processing SQS",
-      "notes": "Buffers incoming upload notifications and processing jobs."
+      "name": "SQS Queue",
+      "notes": "Buffers S3 upload event notifications"
     },
     {
       "id": "6",
-      "service": "S3",
-      "name": "Upload/Output S3",
-      "notes": "DATA_PEEK: Holds direct user uploads and final processed output assets."
+      "service": "AutoScaling",
+      "name": "Auto Scaling Group",
+      "notes": "EC2 processing instances dynamically scaled by output requirement"
     },
     {
       "id": "7",
-      "service": "AutoScaling",
-      "name": "EC2 ASG",
-      "notes": "WORKLOAD_PEEK: Runs pipeline containers on EC2 instances tailored for specific CPU/Memory profiles."
+      "service": "S3",
+      "name": "User Experience S3",
+      "notes": "Direct user upload target and output processed asset storage"
     }
   ],
   "edges": [
     {
-      "source": "2",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "0",
-      "type": "data",
-      "notes": "Reads data from central S3 storage."
-    },
-    {
-      "source": "1",
-      "target": "3",
-      "flow_id": 0,
+      "source": "0",
+      "target": "7",
+      "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Streams data through VPC Peering."
+      "notes": "User uploads file directly to S3 via pre-signed URL"
     },
     {
-      "source": "3",
-      "target": "4",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "Delivers data to the user-facing EKS cluster."
-    },
-    {
-      "source": "0",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "Direct file upload using pre-signed S3 URL."
-    },
-    {
-      "source": "6",
+      "source": "7",
       "target": "5",
       "flow_id": 1,
-      "seq": "1",
+      "seq": "2",
       "type": "data",
-      "notes": "S3 Event Notification triggers queue message."
+      "notes": "S3 triggers upload event message to SQS"
     },
     {
       "source": "4",
       "target": "5",
       "flow_id": 1,
-      "seq": "2",
+      "seq": "3",
       "type": "data",
-      "notes": "EKS container listens to SQS queue and coordinates tasks."
+      "notes": "EKS container component listens to SQS queue"
     },
     {
       "source": "5",
-      "target": "7",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Dispatches jobs to pipeline EC2 instances."
-    },
-    {
-      "source": "7",
       "target": "6",
       "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "Saves final processed outputs back to S3."
+      "notes": "SQS triggers processing tasks on ASG EC2 instances"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Data read from Data Account S3 by Data Account EKS"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Data Account EKS streams data via VPC Peering"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "VPC Peering delivers data securely to User Experience EKS"
     }
   ]
 }

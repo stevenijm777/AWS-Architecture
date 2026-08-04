@@ -1,96 +1,96 @@
 {
-  "step_by_step_reasoning": "The architecture shows a dual-path request processing flow managed by Route 53 and CloudFront. Incoming requests pass through an edge Route 53 to CloudFront and then to an internal Route 53 for dynamic weighted traffic routing between an ECS/Fargate container path and an API Gateway/Lambda serverless path. Both compute backends interact with four data stores: ElastiCache, DocumentDB, RDS, and ElasticSearch (OpenSearch). An AWS SDK/CloudWatch loop provides dynamic weight management. Infrastructure is provisioned via CDK.",
+  "step_by_step_reasoning": "1. Identified external user actor (UserConsumerWebMobile) initiating traffic to Route53.\n2. Inbound web traffic flows from Route53 to CloudFront, then to an internal Route53 instance for weighted load balancing.\n3. Internal Route53 splits traffic between two compute stacks: ECS running on Fargate, and API Gateway triggering Lambda functions.\n4. Real-time dynamic weight adjustments are driven by ECS metrics sent to CloudWatch, processed by Lambda (AWS SDK), which updates internal Route53 routing policies.\n5. Both compute paths store and retrieve data across ElastiCache, DocumentDB, RDS, and OpenSearch databases.",
   "graph": {
-    "name": "Zigbang Hybrid Architecture with Dynamic Traffic Balancing",
+    "name": "Zigbang Hybrid Serverless and Container Architecture",
     "link": "",
-    "categories": "Web & Mobile Backends",
+    "categories": "Compute, Serverless, Databases",
     "graph_usable": true,
-    "notes": "Hybrid architecture using ECS/Fargate and API Gateway/Lambda with dynamic weight distribution via Route 53."
+    "notes": "Architecture demonstrating dual-path traffic routing via internal Route53 weighted records across ECS Fargate and API Gateway Lambda stacks."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "Route53",
-      "name": "Route 53 (DNS)",
-      "notes": "Edge DNS entry point"
+      "service": "UserConsumerWebMobile",
+      "name": "Web/Mobile Client",
+      "notes": "External user client sending requests"
     },
     {
       "id": "1",
-      "service": "CloudFront",
-      "name": "CloudFront",
-      "notes": "CDN distribution"
+      "service": "Route53",
+      "name": "Public Route 53",
+      "notes": "DNS routing for incoming client requests"
     },
     {
       "id": "2",
-      "service": "Route53",
-      "name": "Route 53 (Internal Routing)",
-      "notes": "Internal weighted traffic distribution"
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN distribution layer"
     },
     {
       "id": "3",
-      "service": "ECS",
-      "name": "ECS",
-      "notes": "Container orchestration"
+      "service": "Route53",
+      "name": "Internal Route 53",
+      "notes": "Internal DNS for dynamic weighted traffic routing"
     },
     {
       "id": "4",
-      "service": "Fargate",
-      "name": "Fargate",
-      "notes": "Serverless compute for containers"
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Container management service"
     },
     {
       "id": "5",
-      "service": "ApiGateway",
-      "name": "API GW",
-      "notes": "API management for serverless path"
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Serverless container execution engine"
     },
     {
       "id": "6",
-      "service": "Lambda",
-      "name": "Lambda",
-      "notes": "Serverless execution backend"
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "REST API management endpoint"
     },
     {
       "id": "7",
       "service": "Lambda",
-      "name": "AWS SDK",
-      "notes": "Custom weight adjustment logic"
+      "name": "Lambda",
+      "notes": "Serverless application compute"
     },
     {
       "id": "8",
       "service": "CloudWatch",
       "name": "CloudWatch",
-      "notes": "Monitoring and metric collection"
+      "notes": "Monitors ECS performance and triggers feedback loop"
     },
     {
       "id": "9",
-      "service": "ElastiCache",
-      "name": "ElastiCache",
-      "notes": "In-memory caching layer"
+      "service": "Lambda",
+      "name": "AWS SDK (Lambda)",
+      "notes": "Executes SDK calls to adjust Route 53 weights"
     },
     {
       "id": "10",
-      "service": "DocumentDB",
-      "name": "Document DB",
-      "notes": "Unstructured/NoSQL data store"
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "In-memory caching store"
     },
     {
       "id": "11",
-      "service": "RDS",
-      "name": "RDS",
-      "notes": "Relational database for CRUD operations"
+      "service": "DocumentDB",
+      "name": "DocumentDB",
+      "notes": "Document database for semi-structured data"
     },
     {
       "id": "12",
-      "service": "OpenSearch",
-      "name": "ElasticSearch",
-      "notes": "Search engine and application log storage"
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database for structured CRUD operations"
     },
     {
       "id": "13",
-      "service": "CloudFormation",
-      "name": "CDK",
-      "notes": "Infrastructure as Code"
+      "service": "OpenSearch",
+      "name": "OpenSearch",
+      "notes": "Search engine and application logging store"
     }
   ],
   "edges": [
@@ -100,7 +100,7 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Routes initial external traffic to CloudFront"
+      "notes": "Client request to DNS"
     },
     {
       "source": "1",
@@ -108,23 +108,15 @@
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Forwards request to internal Route 53"
+      "notes": "DNS routes request to CloudFront"
     },
     {
       "source": "2",
       "target": "3",
       "flow_id": 1,
-      "seq": "3a",
+      "seq": "3",
       "type": "data",
-      "notes": "Weighted routing to ECS container path"
-    },
-    {
-      "source": "2",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "3b",
-      "type": "data",
-      "notes": "Weighted routing to API Gateway path during traffic spikes"
+      "notes": "CloudFront forwards to internal Route 53"
     },
     {
       "source": "3",
@@ -132,95 +124,119 @@
       "flow_id": 1,
       "seq": "4a",
       "type": "data",
-      "notes": "Executes workload on Fargate"
+      "notes": "Weighted routing path to ECS"
     },
     {
-      "source": "5",
+      "source": "3",
       "target": "6",
       "flow_id": 1,
       "seq": "4b",
       "type": "data",
-      "notes": "Triggers serverless Lambda execution"
+      "notes": "Weighted routing path to API Gateway"
     },
     {
       "source": "4",
-      "target": "9",
+      "target": "5",
       "flow_id": 1,
       "seq": "5a",
       "type": "data",
-      "notes": "Queries volatile cache"
+      "notes": "ECS runs on Fargate"
     },
     {
-      "source": "4",
-      "target": "10",
+      "source": "6",
+      "target": "7",
       "flow_id": 1,
       "seq": "5b",
       "type": "data",
-      "notes": "Queries unstructured data"
+      "notes": "API Gateway triggers Lambda"
     },
     {
       "source": "4",
-      "target": "11",
-      "flow_id": 1,
-      "seq": "5c",
-      "type": "data",
-      "notes": "Performs relational CRUD operations"
-    },
-    {
-      "source": "4",
-      "target": "12",
-      "flow_id": 1,
-      "seq": "5d",
-      "type": "data",
-      "notes": "Search operations and logging"
-    },
-    {
-      "source": "6",
-      "target": "9",
-      "flow_id": 1,
-      "seq": "5e",
-      "type": "data",
-      "notes": "Queries volatile cache"
-    },
-    {
-      "source": "6",
-      "target": "10",
-      "flow_id": 1,
-      "seq": "5f",
-      "type": "data",
-      "notes": "Queries unstructured data"
-    },
-    {
-      "source": "6",
-      "target": "11",
-      "flow_id": 1,
-      "seq": "5g",
-      "type": "data",
-      "notes": "Performs relational CRUD operations"
-    },
-    {
-      "source": "6",
-      "target": "12",
-      "flow_id": 1,
-      "seq": "5h",
-      "type": "data",
-      "notes": "Search operations and logging"
-    },
-    {
-      "source": "7",
       "target": "8",
       "flow_id": 2,
       "seq": "1",
       "type": "meta",
-      "notes": "Sends custom metrics to CloudWatch"
+      "notes": "ECS metrics sent to CloudWatch"
     },
     {
       "source": "8",
-      "target": "1",
+      "target": "9",
       "flow_id": 2,
       "seq": "2",
       "type": "meta",
-      "notes": "Adjusts traffic weighting dynamically based on metrics"
+      "notes": "CloudWatch triggers Lambda SDK function"
+    },
+    {
+      "source": "9",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Lambda updates Route 53 routing weights"
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "6a",
+      "type": "data",
+      "notes": "Fargate accesses ElastiCache"
+    },
+    {
+      "source": "5",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "6b",
+      "type": "data",
+      "notes": "Fargate accesses DocumentDB"
+    },
+    {
+      "source": "5",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "6c",
+      "type": "data",
+      "notes": "Fargate accesses RDS"
+    },
+    {
+      "source": "5",
+      "target": "13",
+      "flow_id": 1,
+      "seq": "6d",
+      "type": "data",
+      "notes": "Fargate accesses OpenSearch"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "6e",
+      "type": "data",
+      "notes": "Lambda accesses ElastiCache"
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "6f",
+      "type": "data",
+      "notes": "Lambda accesses DocumentDB"
+    },
+    {
+      "source": "7",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "6g",
+      "type": "data",
+      "notes": "Lambda accesses RDS"
+    },
+    {
+      "source": "7",
+      "target": "13",
+      "flow_id": 1,
+      "seq": "6h",
+      "type": "data",
+      "notes": "Lambda accesses OpenSearch"
     }
   ]
 }

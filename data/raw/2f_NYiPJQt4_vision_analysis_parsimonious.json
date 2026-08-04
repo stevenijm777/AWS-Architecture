@@ -1,128 +1,136 @@
 {
-  "step_by_step_reasoning": "The transcript and whiteboard layout describe a multi-tenant cloud architecture. Tenants are isolated using AWS Organizations managed under AWS Control Tower. The core application runs inside EC2 instance clusters behind an ALB, storing shared state on EFS. Users authenticate with Amazon Cognito. The EC2 instances access customer on-premises environments via an AWS Site-to-Site VPN. A separate serverless DevOps pipeline built with S3, API Gateway, and Lambda manages these multi-account environments.",
+  "step_by_step_reasoning": "The architecture diagram features three sections: Cluster, DevOps, and Management. The Cluster section contains a user/client accessing an ALB, Cognito, and EC2 instance. EC2 connects to EFS and S2S VPN. The DevOps section contains S3, API Gateway, and Lambda. The Management section shows AWS Control Tower enforcing policies on AWS Organizations.",
   "graph": {
-    "name": "Appway Multi-Tenant Financial Services SaaS Platform",
-    "link": "https://www.youtube.com/watch?v=2f_NYiPJQt4",
-    "categories": "compute_intensive,control",
+    "name": "Appway Multi-Tenant Architecture on AWS",
+    "link": "",
+    "categories": "SaaS / Multi-Tenant / Management",
     "graph_usable": true,
-    "notes": "Multi-tenant architecture isolating each banking customer inside its own AWS organization account. Management and guardrails are applied globally via AWS Control Tower."
+    "notes": "Architecture showing Appway's multi-account customer deployment model using AWS Organizations and Control Tower alongside customer cluster components and DevOps tooling."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerWeb",
-      "name": "Client",
-      "notes": "End-user accessing the Appway financial services portal."
+      "service": "UserConsumerWebMobile",
+      "name": "User / Client",
+      "notes": "End user accessing application services"
     },
     {
       "id": "1",
-      "service": "Cognito",
-      "name": "Amazon Cognito",
-      "notes": "Handles user login, supporting federation with external IdPs like Active Directory."
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer routing web traffic"
     },
     {
       "id": "2",
-      "service": "ALB",
-      "name": "Application Load Balancer",
-      "notes": "Routes HTTPS traffic and performs SSL offloading."
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Appway application nodes running on Amazon Linux EC2"
     },
     {
       "id": "3",
-      "service": "EC2",
-      "name": "Amazon EC2 Cluster",
-      "notes": "Runs multi-node Java/Tomcat Appway instances using Hazelcast clustering."
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "Authentication service"
     },
     {
       "id": "4",
-      "service": "EFS",
-      "name": "Amazon EFS",
-      "notes": "Centralized, scalable shared cluster storage for EC2 nodes."
+      "service": "S2SVPN",
+      "name": "S2S VPN",
+      "notes": "Site-to-Site VPN connecting to customer network"
     },
     {
       "id": "5",
-      "service": "Site-to-Site VPN",
-      "name": "AWS Site-to-Site VPN",
-      "notes": "Connects EC2 application cluster to customer's on-premises systems and core banking software."
+      "service": "EFS",
+      "name": "EFS",
+      "notes": "Central cluster shared storage"
     },
     {
       "id": "6",
       "service": "S3",
-      "name": "Amazon S3",
-      "notes": "Hosts the single-page React app used by the cloud automation team."
+      "name": "S3",
+      "notes": "Hosts single-page management application frontend"
     },
     {
       "id": "7",
-      "service": "API Gateway",
-      "name": "Amazon API Gateway",
-      "notes": "Exposes management endpoints for triggering serverless deployment workflows."
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "API Gateway endpoint for management backend"
     },
     {
       "id": "8",
       "service": "Lambda",
-      "name": "AWS Lambda",
-      "notes": "Executes deployment, provisioning, and patching tasks across environments."
+      "name": "Lambda",
+      "notes": "Serverless task execution across environments"
     },
     {
       "id": "9",
-      "service": "Organizations",
-      "name": "AWS Organizations",
-      "notes": "Aggregates and organizes dedicated single-tenant customer AWS accounts."
+      "service": "ControlTower",
+      "name": "Control Tower",
+      "notes": "Applies guardrails and policies across accounts"
     },
     {
       "id": "10",
-      "service": "Control Tower",
-      "name": "AWS Control Tower",
-      "notes": "Enforces compliance and baseline guardrails across the organization accounts."
+      "service": "Organizations",
+      "name": "Organizations",
+      "notes": "Manages dedicated customer AWS accounts"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 0,
-      "seq": "0",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "User authenticates session."
+      "notes": "User requests routed via ALB"
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "User authenticates with Cognito"
     },
     {
       "source": "0",
       "target": "2",
       "flow_id": 1,
-      "seq": "1",
+      "seq": "3",
       "type": "data",
-      "notes": "User sends web requests."
+      "notes": "Direct client interaction with cluster nodes"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "ALB routes requests to EC2 instances"
     },
     {
       "source": "2",
-      "target": "3",
+      "target": "5",
       "flow_id": 1,
-      "seq": "1.1",
+      "seq": "5",
       "type": "data",
-      "notes": "Distributes requests to cluster nodes."
+      "notes": "Cluster nodes persist data to EFS"
     },
     {
-      "source": "3",
+      "source": "2",
       "target": "4",
       "flow_id": 1,
-      "seq": "1.2",
+      "seq": "6",
       "type": "data",
-      "notes": "Accesses shared persistent storage."
+      "notes": "EC2 reaches on-prem data via S2S VPN"
     },
     {
-      "source": "3",
-      "target": "5",
+      "source": "9",
+      "target": "10",
       "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Retrieves on-premises banking resources secure network bridge."
-    },
-    {
-      "source": "10",
-      "target": "9",
-      "flow_id": 3,
-      "seq": "3",
-      "type": "data",
-      "notes": "Applies security guardrails across AWS organization accounts."
+      "seq": "1",
+      "type": "meta",
+      "notes": "Control Tower applies guardrails to Organizations"
     }
   ]
 }

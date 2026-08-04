@@ -1681,3 +1681,255 @@ Return ONLY valid JSON (no markdown fences):
 * **Servicios Faltantes (Omitidos):** `['UserCompanyAgent', 'UserCompanyDataStream']`
 * **Servicios Alucinados (Inventados):** `['UserCompanyDomainExpert', 'UserConsumerHospital']`
 
+
+
+---
+
+---
+
+## [Registro 20] - 2026-08-03 (Evaluación en Lote de 10 Nuevos Videos Adicionales con Prompt v9)
+* **Videos Evaluados (10 nuevos adicionales):** `2f_NYiPJQt4`, `37T7Nd8pL-c`, `3yJZ6rPoZfg`, `4-teOQ_dJvY`, `4WjXH8Wp0E4`, `53sUjFv9ByI`, `5CwIt-Alqhg`, `5EmA67lSJEs`, `5f3z1Z_9BJA`, `5vR5aN_xdI0`
+* **Modelo utilizado:** `gemini-3.6-flash` (y `gemini-2.5-flash` para 5f3z1Z_9BJA por límite de cuota)
+* **Modo:** Parsimonioso (1 sola fase con Prompt v9)
+
+### Resultados Detallados de Evaluación por Video (10 Tablas Individuales):
+
+#### Video `2f_NYiPJQt4` - Appway: Securing Sensitive Banking Workflows with Isolated Architecture on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 11 | 11 | **11** |
+| **Número de Aristas** | 9 | 9 | 6 | **7** |
+| **Service F1 (Unique)** | — | 95.2% | 85.7% | **95.2%** |
+| **Service Precision** | — | 90.9% | 81.8% | **90.9%** |
+| **Service Recall** | — | 100.0% | 90.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 77.8% | 40.0% | **50.0%** |
+| **Edge Precision** | — | 77.8% | 50.0% | **57.1%** |
+| **Edge Recall** | — | 77.8% | 33.3% | **44.4%** |
+
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['UserConsumerWebMobile']`
+
+#### Video `37T7Nd8pL-c` - Docebo: How to Create Compelling e-Learning Videos from Documents via AI ML Services
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 6 | 7 | **7** |
+| **Número de Aristas** | 12 | 7 | 7 | **9** |
+| **Service F1 (Unique)** | — | 92.3% | 85.7% | **85.7%** |
+| **Service Precision** | — | 100.0% | 85.7% | **85.7%** |
+| **Service Recall** | — | 85.7% | 85.7% | **85.7%** |
+| **Edge F1 (Connections)** | — | 42.1% | 42.1% | **47.6%** |
+| **Edge Precision** | — | 57.1% | 57.1% | **55.6%** |
+| **Edge Recall** | — | 33.3% | 33.3% | **41.7%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `['UserConsumerWebMobile']`
+
+#### Video `3yJZ6rPoZfg` - Hexagon HxDR: Cloud-Based Visualization of Spatial Data
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 8 | 8 | **8** |
+| **Número de Aristas** | 9 | 8 | 8 | **7** |
+| **Service F1 (Unique)** | — | 50.0% | 50.0% | **50.0%** |
+| **Service Precision** | — | 50.0% | 50.0% | **50.0%** |
+| **Service Recall** | — | 50.0% | 50.0% | **50.0%** |
+| **Edge F1 (Connections)** | — | 23.5% | 23.5% | **25.0%** |
+| **Edge Precision** | — | 25.0% | 25.0% | **28.6%** |
+| **Edge Recall** | — | 22.2% | 22.2% | **22.2%** |
+
+* **Servicios Faltantes (Omitidos):** `['EC2', 'UserConsumerEdge', 'VPC']`
+* **Servicios Alucinados (Inventados):** `['AutoScaling', 'UserConsumerWebMobile', 'VPCPeering']`
+
+#### Video `4-teOQ_dJvY` - SBB Cargo: Data Collection and Processing with Serverless Analytics Services
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 9 | 10 | **9** |
+| **Número de Aristas** | 13 | 9 | 12 | **12** |
+| **Service F1 (Unique)** | — | 76.9% | 71.4% | **71.4%** |
+| **Service Precision** | — | 83.3% | 71.4% | **71.4%** |
+| **Service Recall** | — | 71.4% | 71.4% | **71.4%** |
+| **Edge F1 (Connections)** | — | 63.6% | 64.0% | **72.0%** |
+| **Edge Precision** | — | 77.8% | 66.7% | **75.0%** |
+| **Edge Recall** | — | 53.8% | 61.5% | **69.2%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAPI', 'UserCompanyEdge']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyInternalPlatform', 'UserConsumerIOT']`
+
+#### Video `4WjXH8Wp0E4` - Kainos: Kainos Advances Patient Care with Next Generation Interoperability Platform
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 14 | 14 | 14 | **13** |
+| **Número de Aristas** | 22 | 22 | 22 | **12** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **84.2%** |
+| **Service Precision** | — | 100.0% | 100.0% | **88.9%** |
+| **Service Recall** | — | 100.0% | 100.0% | **80.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **52.9%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **75.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **40.9%** |
+
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserConsumerWeb']`
+* **Servicios Alucinados (Inventados):** `['OnPremDC']`
+
+#### Video `53sUjFv9ByI` - Neumora Therapeutics: Enabling DNA and RNA Data Insight for Rapid Genomics Sequencing Drug Discovery
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 6 | 6 | **6** |
+| **Número de Aristas** | 6 | 6 | 6 | **6** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **66.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **66.7%** |
+| **Service Recall** | — | 100.0% | 100.0% | **66.7%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **66.7%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **66.7%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **66.7%** |
+
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['S3', 'UserCompanyAnalyst']`
+
+#### Video `5CwIt-Alqhg` - Accenture: Building a Blockchain Circular Supply Chain
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **11** |
+| **Número de Aristas** | 12 | 12 | 12 | **13** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **90.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **90.9%** |
+| **Service Recall** | — | 100.0% | 100.0% | **90.9%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **88.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **84.6%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **91.7%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAgent']`
+* **Servicios Alucinados (Inventados):** `['UserConsumerWebMobile']`
+
+#### Video `5EmA67lSJEs` - Extreme Reach: The AdBridge Platform on AWS Handles 80%+ of all Commercials in the US
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 10 | 10 | **10** |
+| **Número de Aristas** | 20 | 11 | 12 | **13** |
+| **Service F1 (Unique)** | — | 87.5% | 80.0% | **75.0%** |
+| **Service Precision** | — | 87.5% | 85.7% | **75.0%** |
+| **Service Recall** | — | 87.5% | 75.0% | **75.0%** |
+| **Edge F1 (Connections)** | — | 38.7% | 43.8% | **48.5%** |
+| **Edge Precision** | — | 54.5% | 58.3% | **61.5%** |
+| **Edge Recall** | — | 30.0% | 35.0% | **40.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserConsumerAPI', 'UserConsumerWeb']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyDeveloper', 'UserCompanyInternalPlatform']`
+
+#### Video `5f3z1Z_9BJA` - Capgemini: Refactoring a Data Warehouse to Amazon Redshift
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 2.5**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **12** |
+| **Número de Aristas** | 17 | 11 | 11 | **19** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **80.0%** |
+| **Service Precision** | — | 85.7% | 85.7% | **75.0%** |
+| **Service Recall** | — | 85.7% | 85.7% | **85.7%** |
+| **Edge F1 (Connections)** | — | 71.4% | 71.4% | **61.1%** |
+| **Edge Precision** | — | 90.9% | 90.9% | **57.9%** |
+| **Edge Recall** | — | 58.8% | 58.8% | **64.7%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty', 'UserCompanyAnalyst']`
+
+#### Video `5vR5aN_xdI0` - Splunk: Data at Scale by Decoupling Compute and Storage LIVE
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 9 | 9 | **9** |
+| **Número de Aristas** | 10 | 10 | 8 | **8** |
+| **Service F1 (Unique)** | — | 100.0% | 92.3% | **76.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **83.3%** |
+| **Service Recall** | — | 100.0% | 85.7% | **71.4%** |
+| **Edge F1 (Connections)** | — | 100.0% | 55.6% | **55.6%** |
+| **Edge Precision** | — | 100.0% | 62.5% | **62.5%** |
+| **Edge Recall** | — | 100.0% | 50.0% | **50.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyDataStream']`
+
+
+
+---
+
+## [Registro 21] - 2026-08-04 (Re-evaluación de 5 Videos Clave con Prompt v9)
+* **Videos Evaluados (5 clave):** `3WgTBTDlQN8`, `-3lnf5lzsH0`, `-wLEkq21cvA`, `0F7KDLz-kIQ`, `1aYoIZvabbk`
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v9: Descomposición Obligatoria y Conexiones Balanceadas)
+
+### Resultados Detallados de Evaluación por Video (5 Tablas Individuales):
+
+#### Video `3WgTBTDlQN8` - FanFight: Building a Realtime Fantasy League Gaming Platform on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 9 | 9 | **9** |
+| **Número de Aristas** | 14 | 10 | 9 | **8** |
+| **Service F1 (Unique)** | — | 66.7% | 66.7% | **66.7%** |
+| **Service Precision** | — | 66.7% | 66.7% | **66.7%** |
+| **Service Recall** | — | 66.7% | 66.7% | **66.7%** |
+| **Edge F1 (Connections)** | — | 41.7% | 43.5% | **36.4%** |
+| **Edge Precision** | — | 50.0% | 55.6% | **50.0%** |
+| **Edge Recall** | — | 35.7% | 35.7% | **28.6%** |
+
+* **Servicios Faltantes (Omitidos):** `['EC2', 'UserCompanyAPI', 'UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `['MongoDBAtlas', 'ThirdParty', 'UserConsumerWebMobile']`
+
+#### Video `-3lnf5lzsH0` - MakeMyTrip: Building Next Generation SOC
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 9 | 12 | **12** |
+| **Número de Aristas** | 16 | 9 | 12 | **12** |
+| **Service F1 (Unique)** | — | 80.0% | 95.7% | **95.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 66.7% | 91.7% | **91.7%** |
+| **Edge F1 (Connections)** | — | 32.0% | 64.3% | **64.3%** |
+| **Edge Precision** | — | 44.4% | 75.0% | **75.0%** |
+| **Edge Recall** | — | 25.0% | 56.2% | **56.2%** |
+
+* **Servicios Faltantes (Omitidos):** `['EC2']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+#### Video `-wLEkq21cvA` - Versent: The Migration Factory
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 11 | 11 | **11** |
+| **Número de Aristas** | 10 | 12 | 11 | **14** |
+| **Service F1 (Unique)** | — | 66.7% | 66.7% | **66.7%** |
+| **Service Precision** | — | 57.1% | 57.1% | **57.1%** |
+| **Service Recall** | — | 80.0% | 80.0% | **80.0%** |
+| **Edge F1 (Connections)** | — | 45.5% | 47.6% | **50.0%** |
+| **Edge Precision** | — | 41.7% | 45.5% | **42.9%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **60.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAgent']`
+* **Servicios Alucinados (Inventados):** `['AMI', 'OnPremDC', 'UserCompanyDeveloper']`
+
+#### Video `0F7KDLz-kIQ` - Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 13 | 14 | **15** |
+| **Número de Aristas** | 28 | 16 | 16 | **18** |
+| **Service F1 (Unique)** | — | 90.9% | 87.0% | **83.3%** |
+| **Service Precision** | — | 90.9% | 83.3% | **76.9%** |
+| **Service Recall** | — | 90.9% | 90.9% | **90.9%** |
+| **Edge F1 (Connections)** | — | 63.6% | 54.5% | **60.9%** |
+| **Edge Precision** | — | 87.5% | 75.0% | **77.8%** |
+| **Edge Recall** | — | 50.0% | 42.9% | **50.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserConsumerWeb']`
+* **Servicios Alucinados (Inventados):** `['DevTools', 'ECS', 'UserConsumerWebMobile']`
+
+#### Video `1aYoIZvabbk` - OLX Autos: Building Developer Platform for Rapid Global Expansion
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 Gemini 3.6**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 6 | 7 | **7** |
+| **Número de Aristas** | 5 | 6 | 7 | **7** |
+| **Service F1 (Unique)** | — | 83.3% | 92.3% | **92.3%** |
+| **Service Precision** | — | 83.3% | 85.7% | **85.7%** |
+| **Service Recall** | — | 83.3% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 72.7% | 83.3% | **83.3%** |
+| **Edge Precision** | — | 66.7% | 71.4% | **71.4%** |
+| **Edge Recall** | — | 80.0% | 100.0% | **100.0%** |
+
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['EC2']`
+
+
+
+---

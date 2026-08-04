@@ -1,54 +1,54 @@
 {
-  "step_by_step_reasoning": "Analyze the whiteboard architecture: Users upload PDF documents to S3. This triggers events on EventBridge. EventBridge invokes Step Functions, which orchestrates Lambda functions to process the document. Lambda calls a SageMaker real-time endpoint for page analysis and Amazon Textract for text extraction. Finally, Step Functions posts a completion event back to EventBridge.",
+  "step_by_step_reasoning": "The user uploads PDF documents stored in Amazon S3. S3 emits events to EventBridge, which triggers AWS Step Functions. Step Functions orchestrates Lambda functions that interact with Amazon SageMaker for custom image analysis and Amazon Textract for text extraction. Processed results emit events back to EventBridge.",
   "graph": {
-    "name": "Docebo AI-Powered E-Learning Content Generation",
-    "link": "https://www.youtube.com/watch?v=37T7Nd8pL-c",
-    "categories": "data_ingestion, compute_intensive, other",
+    "name": "Docebo AI Document Processing Pipeline",
+    "link": "",
+    "categories": "AI/ML Document Processing",
     "graph_usable": true,
-    "notes": "Orchestrated pipeline to ingest PDFs and extract semantic content, reducing document noise by 80% to generate e-learning content."
+    "notes": "Architecture processes documents by extracting text and reducing noise using ML models and AWS managed services."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerWeb",
-      "name": "End User",
-      "notes": "Uploads PDF documents to the application."
+      "service": "UserConsumerWebMobile",
+      "name": "End User Files",
+      "notes": "PDF documents uploaded by users"
     },
     {
       "id": "1",
       "service": "S3",
-      "name": "S3 Bucket",
-      "notes": "Stores uploaded raw PDFs and converted page images."
+      "name": "Document Store",
+      "notes": "Stores uploaded raw document files"
     },
     {
       "id": "2",
       "service": "EventBridge",
-      "name": "Amazon EventBridge",
-      "notes": "Routes file upload and processing completion events."
+      "name": "Main Event Bus",
+      "notes": "Handles incoming and outgoing processing events"
     },
     {
       "id": "3",
-      "service": "Step Functions",
-      "name": "AWS Step Functions",
-      "notes": "Orchestrates the multi-stage document ingestion and cleaning pipeline."
+      "service": "StepFunctions",
+      "name": "Workflow State Machine",
+      "notes": "Orchestrates multi-step document processing pipeline"
     },
     {
       "id": "4",
       "service": "Lambda",
-      "name": "AWS Lambda",
-      "notes": "Performs tasks like converting pages to images and driving custom ML prediction steps."
+      "name": "Processing Tasks",
+      "notes": "Executes conversion, analysis, and post-processing steps"
     },
     {
       "id": "5",
       "service": "SageMaker",
-      "name": "Amazon SageMaker",
-      "notes": "Hosts custom ML model endpoint to identify and filter document noise."
+      "name": "Custom ML Model",
+      "notes": "Real-time endpoint analyzing page images"
     },
     {
       "id": "6",
       "service": "Textract",
-      "name": "Amazon Textract",
-      "notes": "Extracts text from page images for semantic analysis."
+      "name": "Managed Textract API",
+      "notes": "Extracts text from page images"
     }
   ],
   "edges": [
@@ -58,55 +58,71 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "User uploads raw PDF documents."
+      "notes": "Uploads PDF documents to S3"
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 1,
+      "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "S3 file creation triggers upload events."
+      "notes": "Emits document uploaded event"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 2,
+      "flow_id": 0,
       "seq": "2",
       "type": "data",
-      "notes": "EventBridge triggers Step Functions workflow execution."
+      "notes": "Triggers step function workflow execution"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 3,
+      "flow_id": 0,
       "seq": "3",
       "type": "data",
-      "notes": "Step Functions invokes Lambda execution steps."
+      "notes": "Executes processing tasks via Lambda"
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 4,
+      "flow_id": 0,
       "seq": "4",
       "type": "data",
-      "notes": "Lambda invokes SageMaker model endpoint to analyze page layouts."
+      "notes": "Sends page images for ML analysis"
     },
     {
-      "source": "3",
-      "target": "6",
-      "flow_id": 5,
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
       "seq": "5",
       "type": "data",
-      "notes": "Workflow invokes Textract to extract text content."
+      "notes": "Returns ML prediction results"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Sends images for text extraction"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Returns extracted text"
     },
     {
       "source": "3",
       "target": "2",
-      "flow_id": 6,
-      "seq": "6",
+      "flow_id": 0,
+      "seq": "8",
       "type": "data",
-      "notes": "Workflow publishes processing completion events back to the main bus."
+      "notes": "Publishes processing complete event"
     }
   ]
 }
