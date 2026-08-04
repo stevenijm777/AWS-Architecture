@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔬 Reporte Detallado de Ablación Parsimoniosa - AWS Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0b0f19;
+    --card-bg: #151c2c;
+    --card-border: #232f48;
+    --accent-blue: #38bdf8;
+    --accent-indigo: #6366f1;
+    --accent-green: #34d399;
+    --accent-purple: #c084fc;
+    --accent-amber: #fbbf24;
+    --accent-red: #f87171;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    line-height: 1.5;
+    padding: 24px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+    padding: 28px;
+    background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(90deg, #818cf8, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .metric-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .metric-card .title {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .metric-card .value {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .metric-card .subtext {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .search-input {
+    flex: 1;
+    min-width: 280px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent-indigo);
+  }
+
+  .sort-select {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    color: var(--text-main);
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .video-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 24px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .video-card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+  }
+
+  .video-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .video-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+
+  .video-id-badge {
+    background-color: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: var(--accent-indigo);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    font-size: 13.5px;
+  }
+
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  th {
+    background-color: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .badge-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+  }
+
+  .best-val {
+    color: var(--accent-green);
+    font-weight: 700;
+  }
+
+  .service-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .tag-missing {
+    background-color: rgba(248, 113, 113, 0.12);
+    border: 1px solid rgba(248, 113, 113, 0.3);
+    color: var(--accent-red);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .tag-hallucinated {
+    background-color: rgba(251, 191, 36, 0.12);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: var(--accent-amber);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Image Visual Comparison Grid */
+  .images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .image-box {
+    background-color: #0d1322;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .image-box .img-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .image-box img {
+    width: 100%;
+    max-height: 260px;
+    object-fit: contain;
+    border-radius: 6px;
+    background-color: #0b0f19;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.2s ease;
+  }
+
+  .image-box img:hover {
+    transform: scale(1.02);
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔬 Reporte Detallado de Ablación Parsimoniosa en 1 Fase</h1>
+  <p>AWS Architecture - Evaluación cuantitativa de 8 métricas con Gemini 3.6 Flash y Prompt v9</p>
+</div>
+
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="title">Total Videos Evaluados</div>
+    <div class="value" id="kpiTotalVideos" style="color: var(--accent-blue);">0</div>
+    <div class="subtext">Evaluaciones aisladas con GT</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">Promedio Service F1</div>
+    <div class="value" id="kpiAvgSvcF1" style="color: var(--accent-indigo);">0%</div>
+    <div class="subtext">Precisión & Recall de Servicios AWS</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">Promedio Edge F1</div>
+    <div class="value" id="kpiAvgEdgeF1" style="color: var(--accent-green);">0%</div>
+    <div class="subtext">Conexiones arquitectónicas</div>
+  </div>
+  <div class="metric-card">
+    <div class="title">Service Precision Promedio</div>
+    <div class="value" id="kpiAvgSvcP" style="color: var(--accent-purple);">0%</div>
+    <div class="subtext">Ausencia de alucinaciones</div>
+  </div>
+</div>
+
+<div class="controls">
+  <input type="text" id="searchInput" class="search-input" placeholder="🔍 Buscar por ID de video o título...">
+  <select id="sortSelect" class="sort-select">
+    <option value="id">Ordenar por ID</option>
+    <option value="svc_desc">Mayor Service F1 (Prompt v9)</option>
+    <option value="edge_desc">Mayor Edge F1 (Prompt v9)</option>
+  </select>
+</div>
+
+<div id="videoCardsContainer"></div>
+
+<script>
+const videoData = [
+  {
+    "id": "-3lnf5lzsH0",
+    "title": "MakeMyTrip: Building Next Generation SOC",
+    "wb_img": "lab_workspace/-3lnf5lzsH0/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/-3lnf5lzsH0_vision.png",
+    "gt_graph_img": "../Graphs/-3lnf5lzsH0_gt.png",
+    "gt_nodes": 13,
+    "gt_edges": 16,
+    "std": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 80.0,
+      "svc_p": 100.0,
+      "svc_r": 66.7,
+      "edge_f1": 32.0,
+      "edge_p": 44.4,
+      "edge_r": 25.0
+    },
+    "pars_orig": {
+      "nodes": 12,
+      "edges": 12,
+      "svc_f1": 95.7,
+      "svc_p": 100.0,
+      "svc_r": 91.7,
+      "edge_f1": 64.3,
+      "edge_p": 75.0,
+      "edge_r": 56.2
+    },
+    "pars_v9": {
+      "nodes": 12,
+      "edges": 12,
+      "svc_f1": 95.7,
+      "svc_p": 100.0,
+      "svc_r": 91.7,
+      "edge_f1": 64.3,
+      "edge_p": 75.0,
+      "edge_r": 56.2,
+      "missing": [
+        "EC2"
+      ],
+      "hallucinated": []
+    }
+  },
+  {
+    "id": "-ahWdCysMYw",
+    "title": "Summit Technology Group: Building a Data Consumption Model for Multi-Tenant Applications",
+    "wb_img": "lab_workspace/-ahWdCysMYw/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/-ahWdCysMYw_vision.png",
+    "gt_graph_img": "../Graphs/-ahWdCysMYw_gt.png",
+    "gt_nodes": 8,
+    "gt_edges": 9,
+    "std": {
+      "nodes": 7,
+      "edges": 6,
+      "svc_f1": 93.3,
+      "svc_p": 100.0,
+      "svc_r": 87.5,
+      "edge_f1": 53.3,
+      "edge_p": 66.7,
+      "edge_r": 44.4
+    },
+    "pars_orig": {
+      "nodes": 7,
+      "edges": 6,
+      "svc_f1": 93.3,
+      "svc_p": 100.0,
+      "svc_r": 87.5,
+      "edge_f1": 53.3,
+      "edge_p": 66.7,
+      "edge_r": 44.4
+    },
+    "pars_v9": {
+      "nodes": 7,
+      "edges": 5,
+      "svc_f1": 80.0,
+      "svc_p": 85.7,
+      "svc_r": 75.0,
+      "edge_f1": 28.6,
+      "edge_p": 40.0,
+      "edge_r": 22.2,
+      "missing": [
+        "ThirdParty",
+        "UserCompanyAnalyst"
+      ],
+      "hallucinated": [
+        "OnPremDC"
+      ]
+    }
+  },
+  {
+    "id": "07lfvavMdfU",
+    "title": "Levels Beyond: Digital Content Orchestration",
+    "wb_img": "lab_workspace/07lfvavMdfU/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/07lfvavMdfU_vision.png",
+    "gt_graph_img": "../Graphs/07lfvavMdfU_gt.png",
+    "gt_nodes": 10,
+    "gt_edges": 14,
+    "std": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 94.7,
+      "svc_p": 100.0,
+      "svc_r": 90.0,
+      "edge_f1": 69.6,
+      "edge_p": 88.9,
+      "edge_r": 57.1
+    },
+    "pars_orig": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 94.7,
+      "svc_p": 100.0,
+      "svc_r": 90.0,
+      "edge_f1": 69.6,
+      "edge_p": 88.9,
+      "edge_r": 57.1
+    },
+    "pars_v9": {
+      "nodes": 10,
+      "edges": 11,
+      "svc_f1": 90.0,
+      "svc_p": 90.0,
+      "svc_r": 90.0,
+      "edge_f1": 72.0,
+      "edge_p": 81.8,
+      "edge_r": 64.3,
+      "missing": [
+        "UserConsumerWeb"
+      ],
+      "hallucinated": [
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "0JxJpNjI9Y0",
+    "title": "The Washington Post: Building a Content Management Platform with Speed at its Core",
+    "wb_img": "lab_workspace/0JxJpNjI9Y0/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/0JxJpNjI9Y0_vision.png",
+    "gt_graph_img": "../Graphs/0JxJpNjI9Y0_gt.png",
+    "gt_nodes": 9,
+    "gt_edges": 17,
+    "std": {
+      "nodes": 10,
+      "edges": 10,
+      "svc_f1": 80.0,
+      "svc_p": 75.0,
+      "svc_r": 85.7,
+      "edge_f1": 44.4,
+      "edge_p": 60.0,
+      "edge_r": 35.3
+    },
+    "pars_orig": {
+      "nodes": 10,
+      "edges": 10,
+      "svc_f1": 80.0,
+      "svc_p": 75.0,
+      "svc_r": 85.7,
+      "edge_f1": 44.4,
+      "edge_p": 60.0,
+      "edge_r": 35.3
+    },
+    "pars_v9": {
+      "nodes": 10,
+      "edges": 11,
+      "svc_f1": 80.0,
+      "svc_p": 75.0,
+      "svc_r": 85.7,
+      "edge_f1": 50.0,
+      "edge_p": 63.6,
+      "edge_r": 41.2,
+      "missing": [
+        "UserConsumerAPI"
+      ],
+      "hallucinated": [
+        "UserCompanyDeveloper",
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "0gNMEyei-co",
+    "title": "Infor: Ingest and Analyze Millions of Application Events Daily for Compliance Violations",
+    "wb_img": "lab_workspace/0gNMEyei-co/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/0gNMEyei-co_vision.png",
+    "gt_graph_img": "../Graphs/0gNMEyei-co_gt.png",
+    "gt_nodes": 9,
+    "gt_edges": 13,
+    "std": {
+      "nodes": 9,
+      "edges": 11,
+      "svc_f1": 82.4,
+      "svc_p": 87.5,
+      "svc_r": 77.8,
+      "edge_f1": 75.0,
+      "edge_p": 81.8,
+      "edge_r": 69.2
+    },
+    "pars_orig": {
+      "nodes": 9,
+      "edges": 11,
+      "svc_f1": 82.4,
+      "svc_p": 87.5,
+      "svc_r": 77.8,
+      "edge_f1": 75.0,
+      "edge_p": 81.8,
+      "edge_r": 69.2
+    },
+    "pars_v9": {
+      "nodes": 9,
+      "edges": 11,
+      "svc_f1": 70.6,
+      "svc_p": 75.0,
+      "svc_r": 66.7,
+      "edge_f1": 66.7,
+      "edge_p": 72.7,
+      "edge_r": 61.5,
+      "missing": [
+        "Kinesis",
+        "ThirdParty",
+        "UserCompanyDataStream"
+      ],
+      "hallucinated": [
+        "KinesisDataStream",
+        "UserCompanyInternalPlatform"
+      ]
+    }
+  },
+  {
+    "id": "0wnNlOg42dc",
+    "title": "Spyne.AI: High-Quality Product Visuals at Scale with AI on AWS",
+    "wb_img": "lab_workspace/0wnNlOg42dc/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/0wnNlOg42dc_vision.png",
+    "gt_graph_img": "../Graphs/0wnNlOg42dc_gt.png",
+    "gt_nodes": 8,
+    "gt_edges": 12,
+    "std": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 94.1,
+      "svc_p": 88.9,
+      "svc_r": 100.0,
+      "edge_f1": 76.2,
+      "edge_p": 88.9,
+      "edge_r": 66.7
+    },
+    "pars_orig": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 94.1,
+      "svc_p": 88.9,
+      "svc_r": 100.0,
+      "edge_f1": 76.2,
+      "edge_p": 88.9,
+      "edge_r": 66.7
+    },
+    "pars_v9": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 94.1,
+      "svc_p": 88.9,
+      "svc_r": 100.0,
+      "edge_f1": 76.2,
+      "edge_p": 88.9,
+      "edge_r": 66.7,
+      "missing": [],
+      "hallucinated": [
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "1ZLiRT0C2Yo",
+    "title": "T-Mobile: Standardized Container-Based Architecture That can be Automatically Deployed Anywhere",
+    "wb_img": "lab_workspace/1ZLiRT0C2Yo/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/1ZLiRT0C2Yo_vision.png",
+    "gt_graph_img": "../Graphs/1ZLiRT0C2Yo_gt.png",
+    "gt_nodes": 6,
+    "gt_edges": 0,
+    "std": {
+      "nodes": 7,
+      "edges": 5,
+      "svc_f1": 92.3,
+      "svc_p": 85.7,
+      "svc_r": 100.0,
+      "edge_f1": 0.0,
+      "edge_p": 0.0,
+      "edge_r": 0.0
+    },
+    "pars_orig": {
+      "nodes": 7,
+      "edges": 5,
+      "svc_f1": 92.3,
+      "svc_p": 85.7,
+      "svc_r": 100.0,
+      "edge_f1": 0.0,
+      "edge_p": 0.0,
+      "edge_r": 0.0
+    },
+    "pars_v9": {
+      "nodes": 7,
+      "edges": 6,
+      "svc_f1": 92.3,
+      "svc_p": 85.7,
+      "svc_r": 100.0,
+      "edge_f1": 0.0,
+      "edge_p": 0.0,
+      "edge_r": 0.0,
+      "missing": [],
+      "hallucinated": [
+        "OnPremDC"
+      ]
+    }
+  },
+  {
+    "id": "1kWxymroGeE",
+    "title": "OutSystems: Decomposing a Data Monolith for Scale and MultiTenancy",
+    "wb_img": "lab_workspace/1kWxymroGeE/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/1kWxymroGeE_vision.png",
+    "gt_graph_img": "../Graphs/1kWxymroGeE_gt.png",
+    "gt_nodes": 5,
+    "gt_edges": 4,
+    "std": {
+      "nodes": 6,
+      "edges": 8,
+      "svc_f1": 90.9,
+      "svc_p": 83.3,
+      "svc_r": 100.0,
+      "edge_f1": 66.7,
+      "edge_p": 50.0,
+      "edge_r": 100.0
+    },
+    "pars_orig": {
+      "nodes": 6,
+      "edges": 8,
+      "svc_f1": 90.9,
+      "svc_p": 83.3,
+      "svc_r": 100.0,
+      "edge_f1": 66.7,
+      "edge_p": 50.0,
+      "edge_r": 100.0
+    },
+    "pars_v9": {
+      "nodes": 6,
+      "edges": 8,
+      "svc_f1": 90.9,
+      "svc_p": 83.3,
+      "svc_r": 100.0,
+      "edge_f1": 66.7,
+      "edge_p": 50.0,
+      "edge_r": 100.0,
+      "missing": [],
+      "hallucinated": [
+        "UserCompanyInternalPlatform"
+      ]
+    }
+  },
+  {
+    "id": "1xLjtJnfZes",
+    "title": "MATTR: Building Digital Trust at Scale",
+    "wb_img": "lab_workspace/1xLjtJnfZes/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/1xLjtJnfZes_vision.png",
+    "gt_graph_img": "../Graphs/1xLjtJnfZes_gt.png",
+    "gt_nodes": 8,
+    "gt_edges": 6,
+    "std": {
+      "nodes": 8,
+      "edges": 5,
+      "svc_f1": 80.0,
+      "svc_p": 85.7,
+      "svc_r": 75.0,
+      "edge_f1": 54.5,
+      "edge_p": 60.0,
+      "edge_r": 50.0
+    },
+    "pars_orig": {
+      "nodes": 8,
+      "edges": 5,
+      "svc_f1": 80.0,
+      "svc_p": 85.7,
+      "svc_r": 75.0,
+      "edge_f1": 54.5,
+      "edge_p": 60.0,
+      "edge_r": 50.0
+    },
+    "pars_v9": {
+      "nodes": 8,
+      "edges": 5,
+      "svc_f1": 80.0,
+      "svc_p": 85.7,
+      "svc_r": 75.0,
+      "edge_f1": 54.5,
+      "edge_p": 60.0,
+      "edge_r": 50.0,
+      "missing": [
+        "UserCompanyDataStream",
+        "UserConsumerAPI"
+      ],
+      "hallucinated": [
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "2XVgpMwY5iE",
+    "title": "Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis",
+    "wb_img": "lab_workspace/2XVgpMwY5iE/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/2XVgpMwY5iE_vision.png",
+    "gt_graph_img": "../Graphs/2XVgpMwY5iE_gt.png",
+    "gt_nodes": 7,
+    "gt_edges": 12,
+    "std": {
+      "nodes": 8,
+      "edges": 10,
+      "svc_f1": 71.4,
+      "svc_p": 71.4,
+      "svc_r": 71.4,
+      "edge_f1": 45.5,
+      "edge_p": 50.0,
+      "edge_r": 41.7
+    },
+    "pars_orig": {
+      "nodes": 8,
+      "edges": 10,
+      "svc_f1": 71.4,
+      "svc_p": 71.4,
+      "svc_r": 71.4,
+      "edge_f1": 45.5,
+      "edge_p": 50.0,
+      "edge_r": 41.7
+    },
+    "pars_v9": {
+      "nodes": 8,
+      "edges": 9,
+      "svc_f1": 71.4,
+      "svc_p": 71.4,
+      "svc_r": 71.4,
+      "edge_f1": 47.6,
+      "edge_p": 55.6,
+      "edge_r": 41.7,
+      "missing": [
+        "UserCompanyAgent",
+        "UserCompanyDataStream"
+      ],
+      "hallucinated": [
+        "UserCompanyDomainExpert",
+        "UserConsumerHospital"
+      ]
+    }
+  },
+  {
+    "id": "2f_NYiPJQt4",
+    "title": "Appway: Securing Sensitive Banking Workflows with Isolated Architecture on AWS",
+    "wb_img": "lab_workspace/2f_NYiPJQt4/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/2f_NYiPJQt4_vision.png",
+    "gt_graph_img": "../Graphs/2f_NYiPJQt4_gt.png",
+    "gt_nodes": 10,
+    "gt_edges": 9,
+    "std": {
+      "nodes": 11,
+      "edges": 9,
+      "svc_f1": 95.2,
+      "svc_p": 90.9,
+      "svc_r": 100.0,
+      "edge_f1": 77.8,
+      "edge_p": 77.8,
+      "edge_r": 77.8
+    },
+    "pars_orig": {
+      "nodes": 11,
+      "edges": 6,
+      "svc_f1": 85.7,
+      "svc_p": 81.8,
+      "svc_r": 90.0,
+      "edge_f1": 40.0,
+      "edge_p": 50.0,
+      "edge_r": 33.3
+    },
+    "pars_v9": {
+      "nodes": 11,
+      "edges": 7,
+      "svc_f1": 95.2,
+      "svc_p": 90.9,
+      "svc_r": 100.0,
+      "edge_f1": 50.0,
+      "edge_p": 57.1,
+      "edge_r": 44.4,
+      "missing": [],
+      "hallucinated": [
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "37T7Nd8pL-c",
+    "title": "Docebo: How to Create Compelling e-Learning Videos from Documents via AI ML Services",
+    "wb_img": "lab_workspace/37T7Nd8pL-c/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/37T7Nd8pL-c_vision.png",
+    "gt_graph_img": "../Graphs/37T7Nd8pL-c_gt.png",
+    "gt_nodes": 8,
+    "gt_edges": 12,
+    "std": {
+      "nodes": 6,
+      "edges": 7,
+      "svc_f1": 92.3,
+      "svc_p": 100.0,
+      "svc_r": 85.7,
+      "edge_f1": 42.1,
+      "edge_p": 57.1,
+      "edge_r": 33.3
+    },
+    "pars_orig": {
+      "nodes": 7,
+      "edges": 7,
+      "svc_f1": 85.7,
+      "svc_p": 85.7,
+      "svc_r": 85.7,
+      "edge_f1": 42.1,
+      "edge_p": 57.1,
+      "edge_r": 33.3
+    },
+    "pars_v9": {
+      "nodes": 7,
+      "edges": 9,
+      "svc_f1": 85.7,
+      "svc_p": 85.7,
+      "svc_r": 85.7,
+      "edge_f1": 47.6,
+      "edge_p": 55.6,
+      "edge_r": 41.7,
+      "missing": [
+        "UserConsumerAPI"
+      ],
+      "hallucinated": [
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "3WgTBTDlQN8",
+    "title": "FanFight: Building a Realtime Fantasy League Gaming Platform on AWS",
+    "wb_img": "lab_workspace/3WgTBTDlQN8/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/3WgTBTDlQN8_vision.png",
+    "gt_graph_img": "../Graphs/3WgTBTDlQN8_gt.png",
+    "gt_nodes": 9,
+    "gt_edges": 14,
+    "std": {
+      "nodes": 9,
+      "edges": 10,
+      "svc_f1": 66.7,
+      "svc_p": 66.7,
+      "svc_r": 66.7,
+      "edge_f1": 41.7,
+      "edge_p": 50.0,
+      "edge_r": 35.7
+    },
+    "pars_orig": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 66.7,
+      "svc_p": 66.7,
+      "svc_r": 66.7,
+      "edge_f1": 43.5,
+      "edge_p": 55.6,
+      "edge_r": 35.7
+    },
+    "pars_v9": {
+      "nodes": 9,
+      "edges": 8,
+      "svc_f1": 66.7,
+      "svc_p": 66.7,
+      "svc_r": 66.7,
+      "edge_f1": 36.4,
+      "edge_p": 50.0,
+      "edge_r": 28.6,
+      "missing": [
+        "EC2",
+        "UserCompanyAPI",
+        "UserConsumerMobile"
+      ],
+      "hallucinated": [
+        "MongoDBAtlas",
+        "ThirdParty",
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "-wLEkq21cvA",
+    "title": "Versent: The Migration Factory",
+    "wb_img": "lab_workspace/-wLEkq21cvA/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/-wLEkq21cvA_vision.png",
+    "gt_graph_img": "../Graphs/-wLEkq21cvA_gt.png",
+    "gt_nodes": 9,
+    "gt_edges": 10,
+    "std": {
+      "nodes": 11,
+      "edges": 12,
+      "svc_f1": 66.7,
+      "svc_p": 57.1,
+      "svc_r": 80.0,
+      "edge_f1": 45.5,
+      "edge_p": 41.7,
+      "edge_r": 50.0
+    },
+    "pars_orig": {
+      "nodes": 11,
+      "edges": 11,
+      "svc_f1": 66.7,
+      "svc_p": 57.1,
+      "svc_r": 80.0,
+      "edge_f1": 47.6,
+      "edge_p": 45.5,
+      "edge_r": 50.0
+    },
+    "pars_v9": {
+      "nodes": 11,
+      "edges": 12,
+      "svc_f1": 66.7,
+      "svc_p": 57.1,
+      "svc_r": 80.0,
+      "edge_f1": 45.5,
+      "edge_p": 41.7,
+      "edge_r": 50.0,
+      "missing": [
+        "UserCompanyAgent"
+      ],
+      "hallucinated": [
+        "AMI",
+        "OnPremDC",
+        "UserCompanyDeveloper"
+      ]
+    }
+  },
+  {
+    "id": "0F7KDLz-kIQ",
+    "title": "Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK",
+    "wb_img": "lab_workspace/0F7KDLz-kIQ/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/0F7KDLz-kIQ_vision.png",
+    "gt_graph_img": "../Graphs/0F7KDLz-kIQ_gt.png",
+    "gt_nodes": 13,
+    "gt_edges": 28,
+    "std": {
+      "nodes": 13,
+      "edges": 16,
+      "svc_f1": 90.9,
+      "svc_p": 90.9,
+      "svc_r": 90.9,
+      "edge_f1": 63.6,
+      "edge_p": 87.5,
+      "edge_r": 50.0
+    },
+    "pars_orig": {
+      "nodes": 14,
+      "edges": 16,
+      "svc_f1": 87.0,
+      "svc_p": 83.3,
+      "svc_r": 90.9,
+      "edge_f1": 54.5,
+      "edge_p": 75.0,
+      "edge_r": 42.9
+    },
+    "pars_v9": {
+      "nodes": 14,
+      "edges": 18,
+      "svc_f1": 87.0,
+      "svc_p": 83.3,
+      "svc_r": 90.9,
+      "edge_f1": 60.9,
+      "edge_p": 77.8,
+      "edge_r": 50.0,
+      "missing": [
+        "UserConsumerWeb"
+      ],
+      "hallucinated": [
+        "ECS",
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "1aYoIZvabbk",
+    "title": "OLX Autos: Building Developer Platform for Rapid Global Expansion",
+    "wb_img": "lab_workspace/1aYoIZvabbk/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/1aYoIZvabbk_vision.png",
+    "gt_graph_img": "../Graphs/1aYoIZvabbk_gt.png",
+    "gt_nodes": 6,
+    "gt_edges": 5,
+    "std": {
+      "nodes": 6,
+      "edges": 6,
+      "svc_f1": 83.3,
+      "svc_p": 83.3,
+      "svc_r": 83.3,
+      "edge_f1": 72.7,
+      "edge_p": 66.7,
+      "edge_r": 80.0
+    },
+    "pars_orig": {
+      "nodes": 7,
+      "edges": 7,
+      "svc_f1": 92.3,
+      "svc_p": 85.7,
+      "svc_r": 100.0,
+      "edge_f1": 83.3,
+      "edge_p": 71.4,
+      "edge_r": 100.0
+    },
+    "pars_v9": {
+      "nodes": 7,
+      "edges": 7,
+      "svc_f1": 92.3,
+      "svc_p": 85.7,
+      "svc_r": 100.0,
+      "edge_f1": 83.3,
+      "edge_p": 71.4,
+      "edge_r": 100.0,
+      "missing": [],
+      "hallucinated": [
+        "EC2"
+      ]
+    }
+  },
+  {
+    "id": "3yJZ6rPoZfg",
+    "title": "Hexagon HxDR: Cloud-Based Visualization of Spatial Data",
+    "wb_img": "lab_workspace/3yJZ6rPoZfg/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/3yJZ6rPoZfg_vision.png",
+    "gt_graph_img": "../Graphs/3yJZ6rPoZfg_gt.png",
+    "gt_nodes": 7,
+    "gt_edges": 9,
+    "std": {
+      "nodes": 8,
+      "edges": 8,
+      "svc_f1": 50.0,
+      "svc_p": 50.0,
+      "svc_r": 50.0,
+      "edge_f1": 23.5,
+      "edge_p": 25.0,
+      "edge_r": 22.2
+    },
+    "pars_orig": {
+      "nodes": 8,
+      "edges": 8,
+      "svc_f1": 50.0,
+      "svc_p": 50.0,
+      "svc_r": 50.0,
+      "edge_f1": 23.5,
+      "edge_p": 25.0,
+      "edge_r": 22.2
+    },
+    "pars_v9": {
+      "nodes": 8,
+      "edges": 7,
+      "svc_f1": 50.0,
+      "svc_p": 50.0,
+      "svc_r": 50.0,
+      "edge_f1": 25.0,
+      "edge_p": 28.6,
+      "edge_r": 22.2,
+      "missing": [
+        "EC2",
+        "UserConsumerEdge",
+        "VPC"
+      ],
+      "hallucinated": [
+        "AutoScaling",
+        "UserConsumerWebMobile",
+        "VPCPeering"
+      ]
+    }
+  },
+  {
+    "id": "4-teOQ_dJvY",
+    "title": "SBB Cargo: Data Collection and Processing with Serverless Analytics Services",
+    "wb_img": "lab_workspace/4-teOQ_dJvY/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/4-teOQ_dJvY_vision.png",
+    "gt_graph_img": "../Graphs/4-teOQ_dJvY_gt.png",
+    "gt_nodes": 9,
+    "gt_edges": 13,
+    "std": {
+      "nodes": 9,
+      "edges": 9,
+      "svc_f1": 76.9,
+      "svc_p": 83.3,
+      "svc_r": 71.4,
+      "edge_f1": 63.6,
+      "edge_p": 77.8,
+      "edge_r": 53.8
+    },
+    "pars_orig": {
+      "nodes": 10,
+      "edges": 12,
+      "svc_f1": 71.4,
+      "svc_p": 71.4,
+      "svc_r": 71.4,
+      "edge_f1": 64.0,
+      "edge_p": 66.7,
+      "edge_r": 61.5
+    },
+    "pars_v9": {
+      "nodes": 9,
+      "edges": 12,
+      "svc_f1": 71.4,
+      "svc_p": 71.4,
+      "svc_r": 71.4,
+      "edge_f1": 72.0,
+      "edge_p": 75.0,
+      "edge_r": 69.2,
+      "missing": [
+        "UserCompanyAPI",
+        "UserCompanyEdge"
+      ],
+      "hallucinated": [
+        "UserCompanyInternalPlatform",
+        "UserConsumerIOT"
+      ]
+    }
+  },
+  {
+    "id": "4WjXH8Wp0E4",
+    "title": "Kainos: Kainos Advances Patient Care with Next Generation Interoperability Platform",
+    "wb_img": "lab_workspace/4WjXH8Wp0E4/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/4WjXH8Wp0E4_vision.png",
+    "gt_graph_img": "../Graphs/4WjXH8Wp0E4_gt.png",
+    "gt_nodes": 14,
+    "gt_edges": 22,
+    "std": {
+      "nodes": 14,
+      "edges": 22,
+      "svc_f1": 100.0,
+      "svc_p": 100.0,
+      "svc_r": 100.0,
+      "edge_f1": 100.0,
+      "edge_p": 100.0,
+      "edge_r": 100.0
+    },
+    "pars_orig": {
+      "nodes": 14,
+      "edges": 22,
+      "svc_f1": 100.0,
+      "svc_p": 100.0,
+      "svc_r": 100.0,
+      "edge_f1": 100.0,
+      "edge_p": 100.0,
+      "edge_r": 100.0
+    },
+    "pars_v9": {
+      "nodes": 13,
+      "edges": 12,
+      "svc_f1": 84.2,
+      "svc_p": 88.9,
+      "svc_r": 80.0,
+      "edge_f1": 52.9,
+      "edge_p": 75.0,
+      "edge_r": 40.9,
+      "missing": [
+        "ThirdParty",
+        "UserConsumerWeb"
+      ],
+      "hallucinated": [
+        "OnPremDC"
+      ]
+    }
+  },
+  {
+    "id": "53sUjFv9ByI",
+    "title": "Neumora Therapeutics: Enabling DNA and RNA Data Insight for Rapid Genomics Sequencing Drug Discovery",
+    "wb_img": "lab_workspace/53sUjFv9ByI/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/53sUjFv9ByI_vision.png",
+    "gt_graph_img": "../Graphs/53sUjFv9ByI_gt.png",
+    "gt_nodes": 6,
+    "gt_edges": 6,
+    "std": {
+      "nodes": 6,
+      "edges": 6,
+      "svc_f1": 100.0,
+      "svc_p": 100.0,
+      "svc_r": 100.0,
+      "edge_f1": 100.0,
+      "edge_p": 100.0,
+      "edge_r": 100.0
+    },
+    "pars_orig": {
+      "nodes": 6,
+      "edges": 6,
+      "svc_f1": 100.0,
+      "svc_p": 100.0,
+      "svc_r": 100.0,
+      "edge_f1": 100.0,
+      "edge_p": 100.0,
+      "edge_r": 100.0
+    },
+    "pars_v9": {
+      "nodes": 6,
+      "edges": 6,
+      "svc_f1": 66.7,
+      "svc_p": 66.7,
+      "svc_r": 66.7,
+      "edge_f1": 66.7,
+      "edge_p": 66.7,
+      "edge_r": 66.7,
+      "missing": [
+        "ThirdParty",
+        "UserCompanyDataStream"
+      ],
+      "hallucinated": [
+        "S3",
+        "UserCompanyAnalyst"
+      ]
+    }
+  },
+  {
+    "id": "5CwIt-Alqhg",
+    "title": "Accenture: Building a Blockchain Circular Supply Chain",
+    "wb_img": "lab_workspace/5CwIt-Alqhg/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/5CwIt-Alqhg_vision.png",
+    "gt_graph_img": "../Graphs/5CwIt-Alqhg_gt.png",
+    "gt_nodes": 11,
+    "gt_edges": 12,
+    "std": {
+      "nodes": 11,
+      "edges": 12,
+      "svc_f1": 100.0,
+      "svc_p": 100.0,
+      "svc_r": 100.0,
+      "edge_f1": 100.0,
+      "edge_p": 100.0,
+      "edge_r": 100.0
+    },
+    "pars_orig": {
+      "nodes": 11,
+      "edges": 12,
+      "svc_f1": 100.0,
+      "svc_p": 100.0,
+      "svc_r": 100.0,
+      "edge_f1": 100.0,
+      "edge_p": 100.0,
+      "edge_r": 100.0
+    },
+    "pars_v9": {
+      "nodes": 11,
+      "edges": 13,
+      "svc_f1": 90.9,
+      "svc_p": 90.9,
+      "svc_r": 90.9,
+      "edge_f1": 88.0,
+      "edge_p": 84.6,
+      "edge_r": 91.7,
+      "missing": [
+        "UserCompanyAgent"
+      ],
+      "hallucinated": [
+        "UserConsumerWebMobile"
+      ]
+    }
+  },
+  {
+    "id": "5EmA67lSJEs",
+    "title": "Extreme Reach: The AdBridge Platform on AWS Handles 80%+ of all Commercials in the US",
+    "wb_img": "lab_workspace/5EmA67lSJEs/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/5EmA67lSJEs_vision.png",
+    "gt_graph_img": "../Graphs/5EmA67lSJEs_gt.png",
+    "gt_nodes": 11,
+    "gt_edges": 20,
+    "std": {
+      "nodes": 10,
+      "edges": 11,
+      "svc_f1": 87.5,
+      "svc_p": 87.5,
+      "svc_r": 87.5,
+      "edge_f1": 38.7,
+      "edge_p": 54.5,
+      "edge_r": 30.0
+    },
+    "pars_orig": {
+      "nodes": 10,
+      "edges": 12,
+      "svc_f1": 80.0,
+      "svc_p": 85.7,
+      "svc_r": 75.0,
+      "edge_f1": 43.8,
+      "edge_p": 58.3,
+      "edge_r": 35.0
+    },
+    "pars_v9": {
+      "nodes": 10,
+      "edges": 13,
+      "svc_f1": 75.0,
+      "svc_p": 75.0,
+      "svc_r": 75.0,
+      "edge_f1": 48.5,
+      "edge_p": 61.5,
+      "edge_r": 40.0,
+      "missing": [
+        "UserConsumerAPI",
+        "UserConsumerWeb"
+      ],
+      "hallucinated": [
+        "UserCompanyDeveloper",
+        "UserCompanyInternalPlatform"
+      ]
+    }
+  },
+  {
+    "id": "5f3z1Z_9BJA",
+    "title": "Capgemini: Refactoring a Data Warehouse to Amazon Redshift",
+    "wb_img": "lab_workspace/5f3z1Z_9BJA/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/5f3z1Z_9BJA_vision.png",
+    "gt_graph_img": "../Graphs/5f3z1Z_9BJA_gt.png",
+    "gt_nodes": 11,
+    "gt_edges": 17,
+    "std": {
+      "nodes": 11,
+      "edges": 11,
+      "svc_f1": 85.7,
+      "svc_p": 85.7,
+      "svc_r": 85.7,
+      "edge_f1": 71.4,
+      "edge_p": 90.9,
+      "edge_r": 58.8
+    },
+    "pars_orig": {
+      "nodes": 11,
+      "edges": 11,
+      "svc_f1": 85.7,
+      "svc_p": 85.7,
+      "svc_r": 85.7,
+      "edge_f1": 71.4,
+      "edge_p": 90.9,
+      "edge_r": 58.8
+    },
+    "pars_v9": {
+      "nodes": 12,
+      "edges": 19,
+      "svc_f1": 80.0,
+      "svc_p": 75.0,
+      "svc_r": 85.7,
+      "edge_f1": 61.1,
+      "edge_p": 57.9,
+      "edge_r": 64.7,
+      "missing": [
+        "UserCompanyDataStream"
+      ],
+      "hallucinated": [
+        "ThirdParty",
+        "UserCompanyAnalyst"
+      ]
+    }
+  },
+  {
+    "id": "5vR5aN_xdI0",
+    "title": "Splunk: Data at Scale by Decoupling Compute and Storage LIVE",
+    "wb_img": "lab_workspace/5vR5aN_xdI0/best_whiteboard.jpg",
+    "test_graph_img": "../Graphs/5vR5aN_xdI0_vision.png",
+    "gt_graph_img": "../Graphs/5vR5aN_xdI0_gt.png",
+    "gt_nodes": 9,
+    "gt_edges": 10,
+    "std": {
+      "nodes": 9,
+      "edges": 10,
+      "svc_f1": 100.0,
+      "svc_p": 100.0,
+      "svc_r": 100.0,
+      "edge_f1": 100.0,
+      "edge_p": 100.0,
+      "edge_r": 100.0
+    },
+    "pars_orig": {
+      "nodes": 9,
+      "edges": 8,
+      "svc_f1": 92.3,
+      "svc_p": 100.0,
+      "svc_r": 85.7,
+      "edge_f1": 55.6,
+      "edge_p": 62.5,
+      "edge_r": 50.0
+    },
+    "pars_v9": {
+      "nodes": 9,
+      "edges": 8,
+      "svc_f1": 76.9,
+      "svc_p": 83.3,
+      "svc_r": 71.4,
+      "edge_f1": 55.6,
+      "edge_p": 62.5,
+      "edge_r": 50.0,
+      "missing": [
+        "ThirdParty",
+        "UserConsumerAPI"
+      ],
+      "hallucinated": [
+        "UserCompanyDataStream"
+      ]
+    }
+  }
+];
+
+function calculateKPIs(data) {
+  if (!data.length) return;
+  document.getElementById('kpiTotalVideos').textContent = data.length;
+  const avgSvcF1 = (data.reduce((acc, item) => acc + item.pars_v9.svc_f1, 0) / data.length).toFixed(1);
+  const avgEdgeF1 = (data.reduce((acc, item) => acc + item.pars_v9.edge_f1, 0) / data.length).toFixed(1);
+  const avgSvcP = (data.reduce((acc, item) => acc + item.pars_v9.svc_p, 0) / data.length).toFixed(1);
+
+  document.getElementById('kpiAvgSvcF1').textContent = avgSvcF1 + '%';
+  document.getElementById('kpiAvgEdgeF1').textContent = avgEdgeF1 + '%';
+  document.getElementById('kpiAvgSvcP').textContent = avgSvcP + '%';
+}
+
+function renderCards(data) {
+  const container = document.getElementById('videoCardsContainer');
+  container.innerHTML = '';
+
+  data.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'video-card';
+
+    const missingTags = item.pars_v9.missing.length 
+      ? item.pars_v9.missing.map(m => `<span class="tag-missing">${m}</span>`).join('') 
+      : '<span style="color: var(--text-muted); font-size:12px;">Ninguno</span>';
+
+    const hallucinatedTags = item.pars_v9.hallucinated.length 
+      ? item.pars_v9.hallucinated.map(h => `<span class="tag-hallucinated">${h}</span>`).join('') 
+      : '<span style="color: var(--text-muted); font-size:12px;">Ninguno</span>';
+
+    card.innerHTML = `
+      <div class="video-card-header">
+        <div>
+          <div class="video-title">${item.title}</div>
+        </div>
+        <span class="video-id-badge">${item.id}</span>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Métrica</th>
+            <th>Ground Truth</th>
+            <th>Standard Original</th>
+            <th>Parsimonious Original</th>
+            <th>Nueva Prueba (Prompt v9 Gemini 3.6)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Número de Nodos</strong></td>
+            <td>${item.gt_nodes}</td>
+            <td>${item.std.nodes}</td>
+            <td>${item.pars_orig.nodes}</td>
+            <td><strong class="best-val">${item.pars_v9.nodes}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Número de Aristas</strong></td>
+            <td>${item.gt_edges}</td>
+            <td>${item.std.edges}</td>
+            <td>${item.pars_orig.edges}</td>
+            <td><strong class="best-val">${item.pars_v9.edges}</strong></td>
+          </tr>
+          <tr>
+            <td><strong>Service F1 (Unique)</strong></td>
+            <td>—</td>
+            <td>${item.std.svc_f1}%</td>
+            <td>${item.pars_orig.svc_f1}%</td>
+            <td><span class="badge-val best-val">${item.pars_v9.svc_f1}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Service Precision</strong></td>
+            <td>—</td>
+            <td>${item.std.svc_p}%</td>
+            <td>${item.pars_orig.svc_p}%</td>
+            <td><span class="badge-val">${item.pars_v9.svc_p}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Service Recall</strong></td>
+            <td>—</td>
+            <td>${item.std.svc_r}%</td>
+            <td>${item.pars_orig.svc_r}%</td>
+            <td><span class="badge-val">${item.pars_v9.svc_r}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Edge F1 (Connections)</strong></td>
+            <td>—</td>
+            <td>${item.std.edge_f1}%</td>
+            <td>${item.pars_orig.edge_f1}%</td>
+            <td><span class="badge-val best-val">${item.pars_v9.edge_f1}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Edge Precision</strong></td>
+            <td>—</td>
+            <td>${item.std.edge_p}%</td>
+            <td>${item.pars_orig.edge_p}%</td>
+            <td><span class="badge-val">${item.pars_v9.edge_p}%</span></td>
+          </tr>
+          <tr>
+            <td><strong>Edge Recall</strong></td>
+            <td>—</td>
+            <td>${item.std.edge_r}%</td>
+            <td>${item.pars_orig.edge_r}%</td>
+            <td><span class="badge-val">${item.pars_v9.edge_r}%</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top: 12px;">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;"><strong>Servicios Faltantes (Omitidos):</strong></div>
+        <div class="service-tags">${missingTags}</div>
+      </div>
+      <div style="margin-top: 8px;">
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;"><strong>Servicios Alucinados (Inventados):</strong></div>
+        <div class="service-tags">${hallucinatedTags}</div>
+      </div>
+
+      <!-- Grid Visual con las 3 imágenes por video -->
+      <div class="images-grid">
+        <div class="image-box">
+          <div class="img-title" style="color: var(--accent-amber);">🖼️ Mejor Pizarra (Whiteboard)</div>
+          <img src="${item.wb_img}" alt="Pizarra de ${item.id}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'180\'><rect width=\'100%\' height=\'100%\' fill=\'%23111827\'/><text x=\'50%\' y=\'50%\' fill=\'%239ca3af\' text-anchor=\'middle\'>Imagen no disponible</text></svg>'">
+        </div>
+        <div class="image-box">
+          <div class="img-title" style="color: var(--accent-indigo);">🕸️ Grafo Parsimonioso (Prompt v9)</div>
+          <img src="${item.test_graph_img}" alt="Grafo Parsimonioso ${item.id}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'180\'><rect width=\'100%\' height=\'100%\' fill=\'%23111827\'/><text x=\'50%\' y=\'50%\' fill=\'%239ca3af\' text-anchor=\'middle\'>Grafo Test no disponible</text></svg>'">
+        </div>
+        <div class="image-box">
+          <div class="img-title" style="color: var(--accent-green);">📌 Grafo Ground Truth (GT)</div>
+          <img src="${item.gt_graph_img}" alt="Grafo Ground Truth ${item.id}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'180\'><rect width=\'100%\' height=\'100%\' fill=\'%23111827\'/><text x=\'50%\' y=\'50%\' fill=\'%239ca3af\' text-anchor=\'middle\'>Grafo GT no disponible</text></svg>'">
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function updateApp() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const sortVal = document.getElementById('sortSelect').value;
+
+  let filtered = videoData.filter(item => 
+    item.id.toLowerCase().includes(searchTerm) || 
+    item.title.toLowerCase().includes(searchTerm)
+  );
+
+  if (sortVal === 'svc_desc') {
+    filtered.sort((a, b) => b.pars_v9.svc_f1 - a.pars_v9.svc_f1);
+  } else if (sortVal === 'edge_desc') {
+    filtered.sort((a, b) => b.pars_v9.edge_f1 - a.pars_v9.edge_f1);
+  } else {
+    filtered.sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  calculateKPIs(filtered);
+  renderCards(filtered);
+}
+
+document.getElementById('searchInput').addEventListener('input', updateApp);
+document.getElementById('sortSelect').addEventListener('change', updateApp);
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateApp();
+});
+</script>
+</body>
+</html>
