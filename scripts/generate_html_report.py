@@ -429,11 +429,18 @@ def generate_report():
             border: 1px solid rgba(148, 163, 184, 0.3);
         }}
 
-        /* Gallery Grid & Image Dimensioning */
+        html, body {{
+            max-width: 100vw;
+            overflow-x: hidden;
+        }}
+
+        /* Gallery Grid & Bulletproof Image Dimensioning */
         .gallery-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 24px;
+            width: 100%;
+            box-sizing: border-box;
         }}
 
         .gallery-card {{
@@ -445,6 +452,10 @@ def generate_report():
             flex-direction: column;
             align-items: center;
             text-align: center;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            box-sizing: border-box;
         }}
 
         .gallery-card h3 {{
@@ -458,10 +469,11 @@ def generate_report():
 
         .gallery-card img {{
             max-width: 100%;
-            max-height: 380px;
-            width: auto;
             height: auto;
+            max-height: 420px;
             object-fit: contain;
+            display: block;
+            margin: 0 auto;
             border-radius: 12px;
             border: 1px solid var(--border);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
@@ -481,6 +493,7 @@ def generate_report():
         }}
     </style>
 </head>
+
 
 <body>
 

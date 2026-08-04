@@ -153,7 +153,7 @@ def plot_all():
                         
     plt.tight_layout()
     p1 = OUTPUT_DIR / "01_global_performance_comparison.png"
-    plt.savefig(p1, dpi=300)
+    plt.savefig(p1, dpi=140)
     plt.close()
     print(f"✓ Saved {p1.name}")
     
@@ -178,7 +178,7 @@ def plot_all():
     
     plt.tight_layout()
     p2 = OUTPUT_DIR / "02_score_distribution_boxplot.png"
-    plt.savefig(p2, dpi=300)
+    plt.savefig(p2, dpi=140)
     plt.close()
     print(f"✓ Saved {p2.name}")
 
@@ -208,7 +208,7 @@ def plot_all():
     
     plt.tight_layout()
     p3 = OUTPUT_DIR / "03_node_vs_edge_f1_scatter.png"
-    plt.savefig(p3, dpi=300)
+    plt.savefig(p3, dpi=140)
     plt.close()
     print(f"✓ Saved {p3.name}")
 
@@ -234,7 +234,7 @@ def plot_all():
     
     plt.tight_layout()
     p4 = OUTPUT_DIR / "04_per_video_f1_comparison.png"
-    plt.savefig(p4, dpi=300)
+    plt.savefig(p4, dpi=140)
     plt.close()
     print(f"✓ Saved {p4.name}")
 
@@ -269,9 +269,10 @@ def plot_all():
     
     plt.tight_layout()
     p5 = OUTPUT_DIR / "05_radar_multimetric_comparison.png"
-    plt.savefig(p5, dpi=300)
+    plt.savefig(p5, dpi=140)
     plt.close()
     print(f"✓ Saved {p5.name}")
+
 
 if __name__ == "__main__":
     plot_all()
