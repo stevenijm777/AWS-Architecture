@@ -471,11 +471,11 @@ def generate_report():
             overflow-x: hidden;
         }}
 
-        /* Gallery Grid & Bulletproof Image Dimensioning */
+        /* Gallery Grid & Compact Image Dimensioning */
         .gallery-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 24px;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
             width: 100%;
             box-sizing: border-box;
         }}
@@ -484,7 +484,7 @@ def generate_report():
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 16px;
-            padding: 20px;
+            padding: 18px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -497,8 +497,8 @@ def generate_report():
 
         .gallery-card h3 {{
             font-family: 'Outfit', sans-serif;
-            font-size: 17px;
-            margin-bottom: 12px;
+            font-size: 16px;
+            margin-bottom: 10px;
             color: var(--accent-blue);
             width: 100%;
             text-align: left;
@@ -507,29 +507,71 @@ def generate_report():
         .gallery-card img {{
             max-width: 100%;
             height: auto;
-            max-height: 420px;
+            max-height: 260px;
             object-fit: contain;
             display: block;
             margin: 0 auto;
-            border-radius: 12px;
+            border-radius: 10px;
             border: 1px solid var(--border);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-            transition: transform 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease;
         }}
 
         .gallery-card img:hover {{
             transform: scale(1.02);
+            border-color: var(--accent-blue);
         }}
 
         .gallery-card p {{
             font-size: 13px;
             color: var(--text-secondary);
-            margin-top: 12px;
+            margin-top: 10px;
             text-align: left;
             width: 100%;
         }}
+
+        /* Lightbox Modal */
+        .modal-overlay {{
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }}
+
+        .modal-overlay.active {{
+            display: flex;
+        }}
+
+        .modal-img {{
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 12px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border);
+        }}
+
+        .modal-close {{
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 32px;
+            color: #ffffff;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+        }}
     </style>
 </head>
+
 
 
 <body>
@@ -580,12 +622,12 @@ def generate_report():
         <div class="gallery-grid">
             <div class="gallery-card">
                 <h3>Rendimiento Global Promedio</h3>
-                <img src="{b64_chart1}" alt="Rendimiento Global">
+                <img src="{b64_chart1}" alt="Rendimiento Global" onclick="openModal(this.src)">
                 <p>Comparación de F1 Score de Nodos y Aristas. v6 Standard logra mayor precisión de aristas al preservar identificadores de flujo (flow_id y seq).</p>
             </div>
             <div class="gallery-card">
                 <h3>Comparación Radar Multimétrica</h3>
-                <img src="{b64_chart5}" alt="Gráfico Radar">
+                <img src="{b64_chart5}" alt="Gráfico Radar" onclick="openModal(this.src)">
                 <p>El diagrama Spider muestra el equilibrio entre evaluación estricta y permisiva de ambos modelos.</p>
             </div>
         </div>
@@ -646,33 +688,51 @@ def generate_report():
         <div class="gallery-grid">
             <div class="gallery-card">
                 <h3>01. Resumen Global de Rendimiento</h3>
-                <img src="{b64_chart1}" alt="Global Chart">
+                <img src="{b64_chart1}" alt="Global Chart" onclick="openModal(this.src)">
                 <p>Muestra el promedio de F1 score en evaluación estricta y permisiva.</p>
             </div>
             <div class="gallery-card">
                 <h3>02. Distribución de Puntajes F1 (Boxplot)</h3>
-                <img src="{b64_chart2}" alt="Boxplot Chart">
+                <img src="{b64_chart2}" alt="Boxplot Chart" onclick="openModal(this.src)">
                 <p>Distribución estadística y mediana de los puntajes por modelo.</p>
             </div>
             <div class="gallery-card">
                 <h3>03. Mapeo Nodos F1 vs. Aristas F1 (Scatter Plot)</h3>
-                <img src="{b64_chart3}" alt="Scatter Chart">
+                <img src="{b64_chart3}" alt="Scatter Chart" onclick="openModal(this.src)">
                 <p>Diagrama de dispersión por vídeo individual.</p>
             </div>
             <div class="gallery-card">
                 <h3>04. Rendimiento Desglosado por Vídeo (Sample 25)</h3>
-                <img src="{b64_chart4}" alt="Per Video Chart">
+                <img src="{b64_chart4}" alt="Per Video Chart" onclick="openModal(this.src)">
                 <p>Barras horizontales comparativas por vídeo.</p>
             </div>
-            <div class="gallery-card" style="grid-column: span 2;">
+            <div class="gallery-card">
                 <h3>05. Comparación Radar Multimétrica</h3>
-                <img src="{b64_chart5}" alt="Radar Chart">
+                <img src="{b64_chart5}" alt="Radar Chart" onclick="openModal(this.src)">
                 <p>Evaluación multidimensional tipo Radar/Spider Chart.</p>
             </div>
         </div>
     </div>
 
+    <!-- LIGHTBOX MODAL -->
+    <div id="imageModal" class="modal-overlay" onclick="closeModal()">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <img id="modalImg" class="modal-img" src="" alt="Zoomed Chart">
+    </div>
+
     <script>
+        function openModal(src) {{
+            const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImg');
+            img.src = src;
+            modal.classList.add('active');
+        }}
+
+        function closeModal() {{
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('active');
+        }}
+
         function switchTab(tabId) {{
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -742,6 +802,7 @@ def generate_report():
     </script>
 </body>
 </html>
+
 
 """
     
