@@ -581,12 +581,13 @@ def generate_report():
     <header>
         <div>
             <h1>Dashboard Comparativo: v6 Standard vs. Parsimonious Mode</h1>
-            <p class="subtitle">Evaluación cuantitativa sobre 61 vídeos de la base de datos Cloudscape (FAST25 Ground Truth)</p>
+            <p class="subtitle">Evaluación cuantitativa sobre {len(eval_vids)} vídeos de la base de datos Cloudscape (FAST25 Ground Truth)</p>
         </div>
         <div>
-            <span class="badge win-std" style="font-size: 14px; padding: 8px 16px;">69 Vídeos Procesados</span>
+            <span class="badge win-std" style="font-size: 14px; padding: 8px 16px;">{len(eval_vids)} Vídeos Procesados</span>
         </div>
     </header>
+
 
     <!-- Navigation Tabs -->
     <div class="nav-tabs">
