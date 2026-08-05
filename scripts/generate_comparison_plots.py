@@ -123,7 +123,8 @@ def plot_all():
     colors = {"v6 Standard": "#1f77b4", "Parsimonious": "#ff7f0e"}
     
     # ── PLOT 1: Global Performance Summary (Bar Chart) ──
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(7.5, 7))
+
     
     avg_df = df.groupby("model")[["strict_node_f1", "strict_edge_f1", "permissive_node_f1", "permissive_edge_f1"]].mean().reset_index()
     melted = avg_df.melt(id_vars="model", var_name="Metric", value_name="F1 Score (%)")
@@ -183,7 +184,8 @@ def plot_all():
     print(f"✓ Saved {p2.name}")
 
     # ── PLOT 3: Scatter Plot Node F1 vs Edge F1 ──
-    fig, ax = plt.subplots(figsize=(9, 7))
+    fig, ax = plt.subplots(figsize=(7.5, 7))
+
     
     sns.scatterplot(
         data=df,

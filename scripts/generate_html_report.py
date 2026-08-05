@@ -471,10 +471,10 @@ def generate_report():
             overflow-x: hidden;
         }}
 
-        /* Gallery Grid & Compact Image Dimensioning */
+        /* Gallery Grid & Uniform Image Dimensioning */
         .gallery-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
             gap: 20px;
             width: 100%;
             box-sizing: border-box;
@@ -498,17 +498,18 @@ def generate_report():
         .gallery-card h3 {{
             font-family: 'Outfit', sans-serif;
             font-size: 16px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             color: var(--accent-blue);
             width: 100%;
             text-align: left;
         }}
 
         .gallery-card img {{
-            max-width: 100%;
-            height: auto;
-            max-height: 260px;
+            width: 100%;
+            max-width: 380px;
+            height: 330px;
             object-fit: contain;
+            background: #ffffff;
             display: block;
             margin: 0 auto;
             border-radius: 10px;
@@ -526,7 +527,7 @@ def generate_report():
         .gallery-card p {{
             font-size: 13px;
             color: var(--text-secondary);
-            margin-top: 10px;
+            margin-top: 12px;
             text-align: left;
             width: 100%;
         }}
@@ -571,6 +572,7 @@ def generate_report():
         }}
     </style>
 </head>
+
 
 
 
@@ -717,7 +719,7 @@ def generate_report():
     <!-- LIGHTBOX MODAL -->
     <div id="imageModal" class="modal-overlay" onclick="closeModal()">
         <span class="modal-close" onclick="closeModal()">&times;</span>
-        <img id="modalImg" class="modal-img" src="" alt="Zoomed Chart">
+        <img id="modalImg" class="modal-img" style="display: none;">
     </div>
 
     <script>
@@ -725,13 +727,18 @@ def generate_report():
             const modal = document.getElementById('imageModal');
             const img = document.getElementById('modalImg');
             img.src = src;
+            img.style.display = 'block';
             modal.classList.add('active');
         }}
 
         function closeModal() {{
             const modal = document.getElementById('imageModal');
+            const img = document.getElementById('modalImg');
             modal.classList.remove('active');
+            img.style.display = 'none';
+            img.src = '';
         }}
+
 
         function switchTab(tabId) {{
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
