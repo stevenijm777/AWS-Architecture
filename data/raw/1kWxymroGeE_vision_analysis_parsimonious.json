@@ -1,48 +1,60 @@
 {
-  "step_by_step_reasoning": "The visual diagram illustrates the decomposition of a monolithic data architecture into AWS purpose-built database and storage services. At the top, a container representing the OutSystems Monolith Platform categorizes data into Binary, Relational, Key-Value/Doc, and Encrypted types, which route directly to their respective AWS target services: S3, Aurora, DynamoDB, and Secrets Manager. At the bottom, AWS KMS provides encryption keys across S3, Aurora, DynamoDB, and Secrets Manager for multi-tenant data protection.",
+  "step_by_step_reasoning": "The whiteboard diagram illustrates a monolith database decomposition into specialized AWS data storage and management services. At the top, a container representing the legacy Monolith Data (divided into Binary, Relational, Key/Value, and Encrypted types) connects to four target AWS services: Amazon S3 (for binary/blob data), Amazon Aurora Serverless (for relational data), Amazon DynamoDB (for key/value data), and AWS Secrets Manager (for encrypted sensitive data). Below, individual microservices (Service A and Service B) connect directly to their respective storage instances (Service A to S3; Service B to S3 and Aurora). At the bottom center, AWS KMS connects to all storage/security services (S3, Aurora, DynamoDB, Secrets Manager) to manage multi-tenant encryption keys.",
   "graph": {
-    "name": "OutSystems Multi-Tenant Data Architecture on AWS",
+    "name": "Decomposing Data Monolith with AWS Purpose-Built Databases and KMS Encryption",
     "link": "",
-    "categories": "Database & Storage Multi-Tenancy Architecture",
+    "categories": "Database & Storage Monolith Decomposition",
     "graph_usable": true,
-    "notes": "Decomposition of monolith data layer into purpose-built storage services with centralized KMS encryption."
+    "notes": "Architecture showing how OutSystems decomposes monolith data into S3, Aurora, DynamoDB, and Secrets Manager with multi-tenant KMS encryption."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserCompanyInternalPlatform",
-      "name": "OutSystems Monolith Data Layer",
-      "notes": "Contains Binary, Relational, Key-Value/Doc, and Encrypted data types"
+      "name": "Monolith Data",
+      "notes": "Legacy data monolith containing binary, relational, key/value, and encrypted data."
     },
     {
       "id": "1",
       "service": "S3",
       "name": "Amazon S3",
-      "notes": "Stores binary unstructured blob and key-value document data"
+      "notes": "Stores binary and unstructured blob data."
     },
     {
       "id": "2",
       "service": "Aurora",
-      "name": "Amazon Aurora Serverless",
-      "notes": "Stores core relational data per tenant"
+      "name": "Amazon Aurora",
+      "notes": "Aurora Serverless for core relational application data per tenant."
     },
     {
       "id": "3",
       "service": "DynamoDB",
       "name": "Amazon DynamoDB",
-      "notes": "Stores configuration and key-value pairs"
+      "notes": "Stores key-value pair and configuration data offloaded from relational DB."
     },
     {
       "id": "4",
       "service": "SecretsManager",
       "name": "AWS Secrets Manager",
-      "notes": "Securely stores sensitive encrypted data"
+      "notes": "Stores sensitive and encrypted configuration/credentials directly."
     },
     {
       "id": "5",
       "service": "KMS",
-      "name": "AWS Key Management Service",
-      "notes": "Generates per-tenant KMS keys for multi-tenant encryption"
+      "name": "AWS KMS",
+      "notes": "Manages per-tenant encryption keys across all services."
+    },
+    {
+      "id": "6",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Service A",
+      "notes": "Decoupled microservice accessing binary blob data in S3."
+    },
+    {
+      "id": "7",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Service B",
+      "notes": "Decoupled microservice accessing S3 and relational data in Aurora."
     }
   ],
   "edges": [
@@ -52,7 +64,7 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Binary data routed to S3"
+      "notes": "Offloading binary data from monolith to S3"
     },
     {
       "source": "0",
@@ -60,7 +72,7 @@
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Relational data routed to Aurora Serverless"
+      "notes": "Migrating relational core data to Aurora Serverless"
     },
     {
       "source": "0",
@@ -68,7 +80,7 @@
       "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Key-value data routed to DynamoDB"
+      "notes": "Offloading key/value configuration data to DynamoDB"
     },
     {
       "source": "0",
@@ -76,39 +88,63 @@
       "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "Encrypted secrets/data routed to Secrets Manager"
+      "notes": "Offloading sensitive encrypted data to Secrets Manager"
     },
     {
-      "source": "5",
+      "source": "6",
       "target": "1",
       "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "KMS encryption key applied to S3 buckets"
+      "notes": "Service A accesses S3 bucket"
+    },
+    {
+      "source": "7",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Service B accesses S3 bucket"
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Service B accesses Aurora database"
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Per-tenant encryption keys applied to S3"
     },
     {
       "source": "5",
       "target": "2",
-      "flow_id": 2,
+      "flow_id": 4,
       "seq": "2",
-      "type": "data",
-      "notes": "KMS encryption key applied to Aurora DB instances"
+      "type": "meta",
+      "notes": "Per-tenant encryption keys applied to Aurora"
     },
     {
       "source": "5",
       "target": "3",
-      "flow_id": 2,
+      "flow_id": 4,
       "seq": "3",
-      "type": "data",
-      "notes": "KMS encryption key applied to DynamoDB tables"
+      "type": "meta",
+      "notes": "Per-tenant encryption keys applied to DynamoDB"
     },
     {
       "source": "5",
       "target": "4",
-      "flow_id": 2,
+      "flow_id": 4,
       "seq": "4",
-      "type": "data",
-      "notes": "KMS encryption key applied to Secrets Manager entries"
+      "type": "meta",
+      "notes": "Encryption keys applied to Secrets Manager"
     }
   ]
 }

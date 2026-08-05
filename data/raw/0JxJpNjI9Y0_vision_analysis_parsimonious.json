@@ -1,30 +1,30 @@
 {
-  "step_by_step_reasoning": "The whiteboard architecture illustrates a rendering and content management platform built by Arc Publishing at The Washington Post. Public users send web requests to an origin ECS cluster, which routes requests to S3 buckets for static resources and pre-rendered content, or triggers a Lambda function for dynamic rendering. The Lambda function interacts with DynamoDB for templates/configuration, writes pre-rendered content to S3, and connects to a second ECS proxy cluster to fetch content from ElastiCache or external/internal CMS APIs. Developers and newsroom users interact with Lambda and DynamoDB directly for publishing page templates and deploying code.",
+  "step_by_step_reasoning": "The architecture diagram depicts Arc Publishing's (The Washington Post) web rendering platform. Public users hit an origin ECS cluster, which routes requests to S3 for static resources or pre-rendered content, or to Lambda for dynamic page rendering. Developers and Newsroom staff configure templates in DynamoDB and deploy code to Lambda. The Lambda function accesses templates in DynamoDB and fetches live content through a second ECS proxy cluster, which caches raw responses in ElastiCache and fetches missing content from external CMS endpoints.",
   "graph": {
-    "name": "Arc Publishing Web Rendering Architecture at Washington Post",
+    "name": "The Washington Post Arc Publishing Web Rendering Platform",
     "link": "",
-    "categories": "",
+    "categories": "Media & Entertainment, Serverless, Content Delivery",
     "graph_usable": true,
-    "notes": "Architecture showing public web rendering flow and internal newsroom/developer template management using ECS, Lambda, DynamoDB, S3, and ElastiCache."
+    "notes": "Web rendering architecture using ECS, Lambda, DynamoDB, ElastiCache, and S3."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWebMobile",
       "name": "Public Users",
-      "notes": "Public web viewers accessing Washington Post content"
+      "notes": "Public website visitors"
     },
     {
       "id": "1",
       "service": "UserCompanyDeveloper",
       "name": "Developer / Newsroom",
-      "notes": "Newsroom staff and developers managing page templates and code deployments"
+      "notes": "Internal developers and newsroom staff"
     },
     {
       "id": "2",
       "service": "ECS",
-      "name": "Origin ECS",
-      "notes": "Handles incoming web traffic routing"
+      "name": "ECS (Origin Proxy)",
+      "notes": "Handles request routing"
     },
     {
       "id": "3",
@@ -36,25 +36,25 @@
       "id": "4",
       "service": "S3",
       "name": "Pre-Render Content",
-      "notes": "Stores cached pre-rendered HTML content"
+      "notes": "Stores pre-rendered HTML content"
     },
     {
       "id": "5",
       "service": "Lambda",
-      "name": "Site Rendering Lambda",
-      "notes": "Executes site rendering code dynamically"
+      "name": "Lambda (Site Rendering)",
+      "notes": "Renders pages dynamically on cache miss"
     },
     {
       "id": "6",
-      "service": "DynamoDB",
-      "name": "DynamoDB",
-      "notes": "Stores web page templates and configuration"
+      "service": "ECS",
+      "name": "ECS (Content Proxy)",
+      "notes": "Proxies requests to internal/external CMS APIs"
     },
     {
       "id": "7",
-      "service": "ECS",
-      "name": "Proxy ECS",
-      "notes": "Content access proxy cluster"
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores page templates and configuration"
     },
     {
       "id": "8",
@@ -65,8 +65,8 @@
     {
       "id": "9",
       "service": "ThirdParty",
-      "name": "CMS",
-      "notes": "External/internal content management system APIs"
+      "name": "CMS / APIs",
+      "notes": "External CMS and third-party content APIs"
     }
   ],
   "edges": [
@@ -76,7 +76,7 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Public request hits origin ECS cluster"
+      "notes": "Public request to origin"
     },
     {
       "source": "2",
@@ -84,7 +84,7 @@
       "flow_id": 1,
       "seq": "2a",
       "type": "data",
-      "notes": "Fetches static resources"
+      "notes": "Fetch static assets"
     },
     {
       "source": "2",
@@ -92,7 +92,7 @@
       "flow_id": 1,
       "seq": "2b",
       "type": "data",
-      "notes": "Fetches pre-rendered content from cache"
+      "notes": "Fetch pre-rendered HTML"
     },
     {
       "source": "2",
@@ -100,15 +100,15 @@
       "flow_id": 1,
       "seq": "2c",
       "type": "data",
-      "notes": "Triggers dynamic web page rendering on cache miss"
+      "notes": "Invoke site rendering Lambda on cache miss"
     },
     {
       "source": "5",
-      "target": "4",
+      "target": "7",
       "flow_id": 1,
       "seq": "3a",
       "type": "data",
-      "notes": "Stores rendered HTML content into S3"
+      "notes": "Fetch page templates"
     },
     {
       "source": "5",
@@ -116,31 +116,23 @@
       "flow_id": 1,
       "seq": "3b",
       "type": "data",
-      "notes": "Reads page templates from DynamoDB"
+      "notes": "Request content via proxy"
     },
     {
-      "source": "5",
-      "target": "7",
-      "flow_id": 1,
-      "seq": "3c",
-      "type": "data",
-      "notes": "Requests external content via proxy ECS cluster"
-    },
-    {
-      "source": "7",
+      "source": "6",
       "target": "8",
       "flow_id": 1,
       "seq": "4a",
       "type": "data",
-      "notes": "Reads/writes content JSON payload in ElastiCache"
+      "notes": "Check/store raw JSON cache"
     },
     {
-      "source": "7",
+      "source": "6",
       "target": "9",
       "flow_id": 1,
       "seq": "4b",
       "type": "data",
-      "notes": "Fetches content from CMS or external APIs on cache miss"
+      "notes": "Fetch raw content from CMS"
     },
     {
       "source": "1",
@@ -148,15 +140,15 @@
       "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Developer deploys rendering code updates to Lambda"
+      "notes": "Developer code deployment to Lambda"
     },
     {
       "source": "1",
-      "target": "6",
+      "target": "7",
       "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "Newsroom user creates and publishes page templates to DynamoDB"
+      "notes": "Newsroom web template configuration"
     }
   ]
 }

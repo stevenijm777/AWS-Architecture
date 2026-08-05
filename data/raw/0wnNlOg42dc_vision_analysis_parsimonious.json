@@ -1,140 +1,140 @@
 {
-  "step_by_step_reasoning": "The whiteboard architecture displays an AI image cataloging processing and training pipeline. 1. External image uploads enter through Amazon API Gateway. 2. API Gateway routes requests to an Application Load Balancer (ALB). 3. ALB forwards traffic to Amazon ECS, which handles image parameters and metadata. 4. ECS pushes image processing jobs into Amazon SQS queues based on categories. 5. Amazon SQS feeds messages to the EC2 Processing layer (CPU for pre/post processing and G5 GPU instances for inference). 6. For training, Amazon SageMaker fetches input training data from Amazon S3. 7. Upon completion, SageMaker saves trained model weights back to Amazon S3. 8. SageMaker triggers an AWS Lambda function. 9. Lambda synchronizes the updated weights from S3 to the EC2 Processing layer.",
+  "step_by_step_reasoning": "The whiteboard architecture illustrates Spine.ai's computer vision cataloging pipeline. 1) Input images (IMAGE) arrive via API Gateway, which routes requests down to an Application Load Balancer (ALB). 2) The ALB distributes traffic to ECS cluster tasks that parse image metadata/parameters. 3) ECS pushes jobs into appropriate SQS queues. 4) The SQS queues feed into the EC2-based Processing layer (divided into PRE, INFER, POST compute workloads). 5) In parallel, the Training Pipeline (TP) uses SageMaker, fetching input training data from S3 and saving trained weights back to S3. 6) Upon benchmark completion, SageMaker triggers Lambda, which synchronizes updated model weights into the Processing layer.",
   "graph": {
-    "name": "Spine.ai - Computer Vision Cataloging Pipeline",
+    "name": "Spine.ai Computer Vision Image Processing Architecture",
     "link": "",
-    "categories": "AI/ML & Compute Processing",
+    "categories": "AI/ML, Image Processing",
     "graph_usable": true,
-    "notes": "Architecture diagram showing image processing pipeline and SageMaker model training pipeline."
+    "notes": "Architectural overview showing Spine.ai's image processing and training pipelines using AWS ECS, SageMaker, EC2 processing nodes, Lambda, and S3."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWebMobile",
-      "name": "Image Source",
-      "notes": "External source for image uploads (Web, Mobile, SDK, APIs)"
+      "name": "IMAGE",
+      "notes": "External input source uploading images via web, SDK, or API"
     },
     {
       "id": "1",
       "service": "ApiGateway",
-      "name": "API Gateway",
-      "notes": "Entry gateway for incoming image requests"
+      "name": "API GATEWAY",
+      "notes": "Receives incoming API requests"
     },
     {
       "id": "2",
       "service": "ALB",
       "name": "ALB",
-      "notes": "Application Load Balancer directing traffic"
+      "notes": "Application Load Balancer routing to appropriate ECS cluster"
     },
     {
       "id": "3",
       "service": "ECS",
       "name": "ECS",
-      "notes": "ECS cluster determining category and metadata processing parameters"
+      "notes": "Processes metadata and decides image category"
     },
     {
       "id": "4",
       "service": "SQS",
       "name": "SQS",
-      "notes": "Queues images by processing category"
+      "notes": "Queues images for CPU/GPU worker processing"
     },
     {
       "id": "5",
       "service": "EC2",
-      "name": "Processing",
-      "notes": "Pre-, Infer-, and Post-processing instances (CPU and G5 GPUs)"
+      "name": "PROCESSING",
+      "notes": "Pre, Infer, and Post compute layer using CPU and GPU (G5) instances"
     },
     {
       "id": "6",
       "service": "SageMaker",
-      "name": "SageMaker",
-      "notes": "Model training using spot instances"
+      "name": "SAGEMAKER",
+      "notes": "Handles model training using spot instances"
     },
     {
       "id": "7",
       "service": "S3",
       "name": "S3",
-      "notes": "Storage for training data and trained model weights"
+      "notes": "Stores input training data and output model weights"
     },
     {
       "id": "8",
       "service": "Lambda",
-      "name": "Lambda",
-      "notes": "Function triggered to sync model weights to processing layer"
+      "name": "LAMBDA",
+      "notes": "Triggered by SageMaker to sync model weights to processing layer"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "0",
       "type": "data",
-      "notes": "User uploads images"
+      "notes": "Image uploaded to API Gateway"
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Routes request to load balancer"
+      "notes": "Requests routed to ALB"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Forwards traffic to ECS cluster"
+      "notes": "ALB forwards to ECS cluster"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Pushes image processing tasks to category queues"
+      "notes": "ECS pushes image jobs to SQS queues"
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "Processing layer consumes image jobs from SQS"
+      "notes": "Processing instances consume jobs from SQS queues"
     },
     {
       "source": "7",
       "target": "6",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "0",
       "type": "data",
-      "notes": "SageMaker reads input training data from S3"
+      "notes": "SageMaker fetches training data from S3"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "SageMaker outputs trained weights back to S3"
+      "notes": "SageMaker writes model weights back to S3"
     },
     {
       "source": "6",
       "target": "8",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "SageMaker triggers Lambda after benchmarking"
+      "notes": "SageMaker triggers Lambda when training completes"
     },
     {
       "source": "8",
       "target": "5",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "3",
       "type": "data",
-      "notes": "Lambda synchronizes weights from S3 to processing layer"
+      "notes": "Lambda synchronizes model weights to processing nodes"
     }
   ]
 }

@@ -1,164 +1,140 @@
 {
-  "step_by_step_reasoning": "The architecture diagram shows an IoT data ingestion and querying platform for SBB freight trains. In the ingestion flow, sensor data from a Producer (UserConsumerIOT) is ingested via a Lambda function, sent to a Kinesis Data Stream, processed and filtered by Kinesis Analytics, and passed to a second Kinesis Stream. From there, another Lambda function writes the normalized data into DynamoDB. In the query/consumption flow, an external Consumer algorithm requests data through API Gateway, which invokes the data management Lambda to fetch data from DynamoDB and return it back through API Gateway.",
+  "step_by_step_reasoning": "The architecture shows an IoT data ingestion and processing pipeline for train condition monitoring. Sensor data from a train producer is ingested via AWS Lambda, streamed into Kinesis Data Streams, and filtered using Kinesis Data Analytics. The processed stream feeds a central Kinesis Data Stream. From there, another Lambda function writes the formatted data into DynamoDB and serves it via Amazon API Gateway to end consumers/algorithms.",
   "graph": {
-    "name": "SBB Freight Train Digital Twin Data Platform",
+    "name": "SBB Train Condition Monitoring Architecture",
     "link": "",
-    "categories": "IoT, Serverless, Data Analytics",
+    "categories": "IoT Data Analytics and Serverless",
     "graph_usable": true,
-    "notes": "Architecture for capturing, filtering, and serving train sensor data to create digital twin views for freight train inspection."
+    "notes": "Serverless and stream processing pipeline for railway sensor data."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerIOT",
+      "service": "UserCompanyDataStream",
       "name": "Producer",
-      "notes": "Locomotive or track sensors sending real-time data"
+      "notes": "Locomotive and trackside sensors emitting telemetry data."
     },
     {
       "id": "1",
       "service": "Lambda",
       "name": "Ingestion Lambda",
-      "notes": "Receives sensor data in any format and forwards it to Kinesis"
+      "notes": "Ingests raw sensor data streams."
     },
     {
       "id": "2",
-      "service": "Kinesis",
-      "name": "Kinesis Stream (Ingestion)",
-      "notes": "Buffers incoming raw sensor data stream"
+      "service": "KinesisDataStream",
+      "name": "Raw Kinesis Stream",
+      "notes": "Buffers raw telemetry incoming from Lambda."
     },
     {
       "id": "3",
       "service": "KinesisAnalytics",
       "name": "Kinesis Analytics",
-      "notes": "Filters and reduces incoming high-volume sample data"
+      "notes": "Filters and reduces incoming telemetry streams."
     },
     {
       "id": "4",
-      "service": "Kinesis",
-      "name": "Kinesis Stream (Filtered)",
-      "notes": "Holds harmonized and filtered data stream"
+      "service": "KinesisDataStream",
+      "name": "Harmonized Kinesis Stream",
+      "notes": "Central stream holding normalized sensor data."
     },
     {
       "id": "5",
       "service": "Lambda",
-      "name": "Data Management Lambda",
-      "notes": "Manages data writes to DynamoDB and handles read queries from API Gateway"
+      "name": "Processing Lambda",
+      "notes": "Manages data into DynamoDB and forwards to API Gateway."
     },
     {
       "id": "6",
       "service": "DynamoDB",
       "name": "DynamoDB",
-      "notes": "Stores train digital twin state and sensor data"
+      "notes": "Stores digital twin state and train condition data."
     },
     {
       "id": "7",
       "service": "ApiGateway",
       "name": "API Gateway",
-      "notes": "Exposes API endpoint for consumers and algorithms"
+      "notes": "Exposes API interface for downstream consumers."
     },
     {
       "id": "8",
       "service": "UserCompanyInternalPlatform",
       "name": "Consumer",
-      "notes": "Algorithm or application querying train condition data"
+      "notes": "Algorithms or applications querying train status."
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "0",
       "type": "data",
-      "notes": "Producer sends raw sensor data to ingestion Lambda"
+      "notes": "Telemetry sent to Lambda."
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 1,
-      "seq": "2",
+      "flow_id": 0,
+      "seq": "1",
       "type": "data",
-      "notes": "Lambda forwards data into Kinesis stream"
+      "notes": "Lambda puts raw data into Kinesis stream."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 1,
-      "seq": "3",
+      "flow_id": 0,
+      "seq": "2",
       "type": "data",
-      "notes": "Kinesis stream feeds data into Kinesis Analytics"
+      "notes": "Kinesis stream feeds analytics application."
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 1,
-      "seq": "4",
+      "flow_id": 0,
+      "seq": "3",
       "type": "data",
-      "notes": "Filtered data is emitted to a new Kinesis stream"
+      "notes": "Filtered data output to central Kinesis stream."
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 1,
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Stream data consumed by processing Lambda."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
       "seq": "5",
       "type": "data",
-      "notes": "Data management Lambda reads filtered data from Kinesis stream"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "Lambda persists formatted data into DynamoDB"
-    },
-    {
-      "source": "8",
-      "target": "7",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Consumer requests train condition data via API Gateway"
-    },
-    {
-      "source": "7",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "API Gateway routes request to Data Management Lambda"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Lambda queries DynamoDB for required data"
+      "notes": "Lambda writes normalized data to DynamoDB."
     },
     {
       "source": "6",
       "target": "5",
-      "flow_id": 2,
-      "seq": "4",
+      "flow_id": 0,
+      "seq": "6",
       "type": "data",
-      "notes": "DynamoDB returns queried data to Lambda"
+      "notes": "Lambda retrieves state from DynamoDB."
     },
     {
       "source": "5",
       "target": "7",
-      "flow_id": 2,
-      "seq": "5",
+      "flow_id": 0,
+      "seq": "7",
       "type": "data",
-      "notes": "Lambda returns formatted response to API Gateway"
+      "notes": "Lambda returns formatted data to API Gateway."
     },
     {
       "source": "7",
       "target": "8",
-      "flow_id": 2,
-      "seq": "6",
+      "flow_id": 0,
+      "seq": "8",
       "type": "data",
-      "notes": "API Gateway returns data to Consumer"
+      "notes": "API Gateway delivers data to consumer."
     }
   ]
 }
