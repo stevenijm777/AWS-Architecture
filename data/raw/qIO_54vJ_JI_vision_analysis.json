@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "The architecture diagram displays a video recording and processing pipeline for insurance claims. 1) Users (Agents and Clients) connect via WebRTC to an OpenVideo platform hosted on AWS EC2. 2) Completed recordings are uploaded from EC2 to an initial S3 bucket (Raw Storage). 3) S3 event notifications trigger messages into an SQS queue. 4) Auto-scaling ECS Fargate container tasks poll SQS, using FFMPEG to encode raw video into HLS format. 5) Processed HLS video files are saved to a second S3 bucket (Processed Storage). 6) Lifecycle policies archive raw recordings to S3 Glacier for long-term retention and cost optimization while deleting intermediate processed files over time. Service types are strictly matched against the valid vocabulary list.",
+  "graph": {
+    "name": "Lancome Technology Insurance Video Conferencing Architecture",
+    "link": "https://www.youtube.com/watch?v=qIO_54vJ_JI",
+    "categories": "Media & Processing",
+    "graph_usable": true,
+    "notes": "Architecture for streaming, recording, processing, and archiving video calls between loss adjusters and insurance clients."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "Users (Agents & Clients)",
+      "notes": "Insurance loss adjusters (agents) and clients connecting via mobile/web apps."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 (OpenVideo Hosting)",
+      "notes": "Hosts the OpenVideo platform running WebRTC server and recording upload scripts."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (Raw Storage)",
+      "notes": "Stores uploaded raw video recordings."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Buffers S3 upload event notifications for downstream container processing."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "ECS Fargate Processing Tasks",
+      "notes": "Auto-scaling Fargate containers running FFMPEG to process video files into HLS format."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Processed Storage)",
+      "notes": "Stores encoded HLS video files for dynamic playback review."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 Glacier",
+      "notes": "Long-term cost-effective archive storage for raw video recordings."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Agents and clients establish WebRTC video streams to OpenVideo on EC2."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Script on EC2 uploads raw video recording files to S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 raw video upload triggers event notification message to SQS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Fargate tasks poll SQS queue based on auto-scaling queue depth metrics."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate uploads processed HLS encoded video files into S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lifecycle policy transitions long-term archival recordings to S3 Glacier."
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "1. Identified Producer compute layers (EC2, Lambda Producer, Fargate) generating logs on the right side.\n2. Identified Processor log collection layers (Logstash, Lambda Processor, FluentBit) in the middle column.\n3. Identified the centralized search & storage engine (OpenSearch) on the left.\n4. Identified access control elements (Users actor and Okta identity provider) providing index filtering and RBAC into OpenSearch.\n5. Mapped data ingestion flows from producers through processors into OpenSearch, and access control flows from Users through Okta to OpenSearch.",
+  "graph": {
+    "name": "Benevity Centralized Logging Architecture with OpenSearch",
+    "link": "https://www.youtube.com/watch?v=pk5yddJpC_8",
+    "categories": "Analytics & Data Lakes, Security & Identity",
+    "graph_usable": true,
+    "notes": "Benevity migrated from disjointed log destinations to a centralized OpenSearch architecture, cutting 16 hours/month of maintenance. Logs from EC2, Lambda, and Fargate pass through respective processors (Logstash, Lambda Processor, FluentBit) into OpenSearch, with access governed via Okta."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Producer generating compute logs"
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda Producer",
+      "notes": "Producer generating serverless application logs"
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Producer generating ECS task logs via FireLens"
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Logstash",
+      "notes": "Logstash processor for EC2 logs"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda Processor",
+      "notes": "Lambda function for processing Lambda logs based on OpenSearch documentation"
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "FluentBit",
+      "notes": "FluentBit sidecar container in ECS task definition for processing Fargate logs"
+    },
+    {
+      "id": "6",
+      "service": "OpenSearch",
+      "name": "OpenSearch",
+      "notes": "Centralized search and indexing solution for all application logs"
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Okta",
+      "notes": "Identity provider enforcing RBAC and index-level log filtering"
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Users",
+      "notes": "Hundreds of internal users across SecOps, IT, Engineering, and Operations"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 logs are pushed to Logstash"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Logstash ships processed logs to OpenSearch"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Lambda producer sends logs to Lambda log processor"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Lambda processor streams logs to OpenSearch"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Fargate container logs are sent to FluentBit sidecar via FireLens"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1''",
+      "type": "data",
+      "notes": "FluentBit forwards container logs to OpenSearch"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Users authenticate through Okta"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Okta enforces role-based access control and index filtering on OpenSearch"
+    }
+  ]
+}

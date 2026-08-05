@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates ThreatStack's telemetry ingestion and analytics pipeline. 1. Telemetry and CloudTrail events originate from the customer's VPC (EC2 with ThreatStack agent installed and CloudTrail) and cross over to an Apache Kafka broker (MSK). 2. For near real-time processing, Kafka streams data into an Apache Flink cluster (ThirdParty), which formats and streams GZIP JSON files into a near real-time S3 bucket. 3. For long-term data warehousing (30 days retention), Kafka streams directly to an EMR ingestion cluster, which is orchestrated and managed by an orchestration EC2 instance. The EMR ingestion cluster writes structured Apache Parquet files into a dedicated S3 bucket. 4. On the analytics and consumption side, the orchestration EC2 instance submits JAR/Spark jobs to an EMR analytics cluster. Multiple analytics tools, including Athena (SQL queries), SageMaker (ML trend analysis and anomaly detection), and the EMR analytics cluster, consume the Parquet data directly from the S3 Parquet bucket.",
+  "graph": {
+    "name": "ThreatStack Telemetry Ingestion and Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=INog0_9tCtY",
+    "categories": "Data Pipeline, Analytics, Security",
+    "graph_usable": true,
+    "notes": "Architectural breakdown of ThreatStack processing 60 billion events per day using dual path processing (near real-time GZIP JSON via Flink and 30-day Parquet warehousing via EMR) consumed by Athena, SageMaker, and EMR."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "Customer EC2 (Agent)",
+      "notes": "Customer EC2 instance with installed ThreatStack proprietary agent sending host security telemetry."
+    },
+    {
+      "id": "1",
+      "service": "CloudTrail",
+      "name": "Customer CloudTrail",
+      "notes": "CloudTrail service in customer VPC streaming API events to ThreatStack."
+    },
+    {
+      "id": "2",
+      "service": "MSK",
+      "name": "Kafka",
+      "notes": "Apache Kafka ingestion broker receiving, validating, and normalizing normalized stream telemetry."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Apache Flink",
+      "notes": "Apache Flink cluster doing near real-time stream routing and processing."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (Near Real Time)",
+      "notes": "S3 bucket receiving GZIP JSON formatted logs for fast lookup and customer syncing."
+    },
+    {
+      "id": "5",
+      "service": "EMR",
+      "name": "EMR (Ingestion)",
+      "notes": "EMR cluster ingesting long-term data from Kafka for 30-day warehousing."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 (Parquet)",
+      "notes": "S3 data warehouse storing structured telemetry in Apache Parquet format."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 (Orchestration)",
+      "notes": "Orchestration service running on EC2 that spins up security-blessed EMR clusters and submits JAR/Spark jobs."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Amazon Athena querying Parquet data in S3 for SQL-based threat investigation."
+    },
+    {
+      "id": "9",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Amazon SageMaker running machine learning models for anomaly detection and trend analysis on Parquet data."
+    },
+    {
+      "id": "10",
+      "service": "EMR",
+      "name": "EMR (Analytics)",
+      "notes": "Consumption-side EMR cluster performing MapReduce jobs and generating customer report analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "ThreatStack agent sends telemetry across customer VPC boundary to Kafka."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "CloudTrail events streamed to Kafka via STS role access."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kafka feeds normalized event stream into Apache Flink cluster."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Flink streams GZIP JSON formatted logs into near real-time S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kafka streams long-term telemetry data directly to EMR Ingestion cluster."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Orchestration EC2 instance provisions and configures EMR Ingestion cluster."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR Ingestion cluster writes processed data in Apache Parquet format to S3."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "Orchestration EC2 instance submits JAR/Spark jobs to EMR Analytics cluster."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries Parquet data stored in S3."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "1'",
+      "type": "data",
+      "notes": "SageMaker accesses Parquet dataset in S3 for ML trend analysis and anomaly detection."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1''",
+      "type": "data",
+      "notes": "EMR Analytics cluster reads Parquet data from S3 for report generation."
+    }
+  ]
+}

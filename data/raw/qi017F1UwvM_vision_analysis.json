@@ -1,0 +1,252 @@
+{
+  "step_by_step_reasoning": "The visual architecture and transcript describe Sales Flow Engage's serverless platform. The pipeline is split into three core functional flows: 1) Ingestion and Automated Workflow Execution (Mobile App -> Kinesis -> Lambda Ingestion -> Step Functions -> SNS & Lambda Processing -> RDS / S3 Backup), 2) Data Lake Analytics and Reporting (Kinesis -> S3 Data Lake -> Glue -> Athena <- Web App), and 3) Web Application Backend Processing (Web App -> Route 53 -> API Gateway -> Fargate & Lambda Backend -> RDS & ElastiCache). Nodes are mapped strictly to standard AWS services from the vocabulary, preserving visual separate instances of AWS Lambda and S3 based on their functional roles.",
+  "graph": {
+    "name": "Sales Flow Engage Serverless Architecture",
+    "link": "https://www.youtube.com/watch?v=qi017F1UwvM",
+    "categories": "Serverless, Data Lake, Operations Management",
+    "graph_usable": true,
+    "notes": "Sales Flow Engage utilizes a serverless AWS architecture to manage on-ground operations, workflow customization, real-time alerts, dynamic data lake analytics, and web platform management."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Application",
+      "notes": "Mobile client streaming workflow analytics and user tracking data from on-ground field forces."
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Amazon Kinesis",
+      "notes": "Ingests high-volume streaming data from mobile applications, backs up raw streams to S3, and routes payloads to ingestion Lambda and S3 Data Lake."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon S3 (Backup)",
+      "notes": "Stores raw data stream backups natively pushed from Amazon Kinesis."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda (Ingestion)",
+      "notes": "Parses aggregated data payloads from Kinesis and feeds them to the Step Functions state machine."
+    },
+    {
+      "id": "4",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates state machine logic for modular workflow rules configured on the web application."
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "Amazon Simple Notification Service (Amazon SNS)",
+      "notes": "Sends alerts (email, SMS, app prompts) to users when business metric thresholds are breached."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "AWS Lambda (Workflow Processing)",
+      "notes": "Executes workflow tasks triggered by Step Functions and persists outcome data in Amazon RDS."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Amazon S3 (Data Lake)",
+      "notes": "Stores aggregated, compressed Apache Parquet format data (up to 90% compression) for analytics."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Crawls, classifies, and catalogs Parquet datasets stored in the S3 Data Lake."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Executes serverless, on-demand SQL queries against the Glue catalog and S3 Data Lake."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWeb",
+      "name": "Web Application For Dashboards and Reporting",
+      "notes": "Web interface used by administrators to configure workflows, journey plans, and view analytical reports."
+    },
+    {
+      "id": "11",
+      "service": "Route53",
+      "name": "Amazon Route 53",
+      "notes": "DNS service handling domain routing for the web application."
+    },
+    {
+      "id": "12",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Entry API layer fronting web client communications to backend microservices."
+    },
+    {
+      "id": "13",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Executes complex, long-running backend jobs like image processing and data validations."
+    },
+    {
+      "id": "14",
+      "service": "Lambda",
+      "name": "AWS Lambda (Backend Processing)",
+      "notes": "Handles short-running transactional API requests (add, update, delete operations)."
+    },
+    {
+      "id": "15",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Relational database storing core transactional application data."
+    },
+    {
+      "id": "16",
+      "service": "ElastiCache",
+      "name": "Amazon ElastiCache",
+      "notes": "In-memory caching layer for fast session management and user permissions, handling up to 1M concurrent users at peak load."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile application streams live telemetry and tracking data to Kinesis."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis natively backs up raw incoming streaming data into S3."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Kinesis aggregates data batches and triggers ingestion Lambda."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ingestion Lambda parses aggregated payloads into Step Functions state machine."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Step Functions triggers SNS alerts when metric threshold breaches are detected."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "control",
+      "notes": "Step Functions invokes downstream workflow processing Lambda."
+    },
+    {
+      "source": "6",
+      "target": "15",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Workflow Lambda persists processed relational data to Amazon RDS."
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kinesis consolidates and streams data in Parquet format to the S3 Data Lake."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "AWS Glue crawls and catalogs metadata from S3 Data Lake files."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Glue catalog metadata is exposed to Amazon Athena for querying."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Web application queries Athena on-demand to populate reporting dashboards."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Web app requests resolve through Route 53 DNS."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route 53 routes web application traffic to API Gateway."
+    },
+    {
+      "source": "12",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Gateway routes long-running tasks to AWS Fargate."
+    },
+    {
+      "source": "12",
+      "target": "14",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "control",
+      "notes": "API Gateway routes short-running transactional requests to backend Lambda."
+    },
+    {
+      "source": "14",
+      "target": "15",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Backend Lambda reads and writes operational transactional data to Amazon RDS."
+    },
+    {
+      "source": "14",
+      "target": "16",
+      "flow_id": 2,
+      "seq": "3'",
+      "type": "data",
+      "notes": "Backend Lambda uses ElastiCache to manage high-concurrency sessions and permissions."
+    }
+  ]
+}

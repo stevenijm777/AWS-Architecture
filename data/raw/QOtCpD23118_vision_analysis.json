@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "1. Identified all 11 entities (10 visual components + 1 explicit on-prem destination described in transcript and visual drawing).\n2. Assigned accurate node categories and mapped them to the valid service vocabulary list.\n3. Segmented architecture into logical sequential workflows: Raw Ingestion & Buffering (Flow 0), Map Enrichment & Real-Time Event Detection (Flow 1), and Data Analytics & On-Prem Export (Flow 2).\n4. Formatted output strictly adhering to JSON schema requirements without any extra commentary.",
+  "graph": {
+    "name": "LeasePlan OneConnect Telematics Platform",
+    "link": "https://www.youtube.com/watch?v=QOtCpD23118",
+    "categories": "IoT, Analytics, Migration",
+    "graph_usable": true,
+    "notes": "LeasePlan's OneConnect telematics platform ingests vehicle sensor data, enriches it with OpenStreetMap data, detects safety events using Kinesis sliding windows, and exports enriched data via Glue to on-premises data centers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "IOT",
+      "notes": "Vehicle sensors capturing speed, g-force, GPS, and vehicle computer telematics data."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "LAMBDA (Ingestion)",
+      "notes": "Ingests raw vehicle sensor telematics data."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (Raw Data Lake)",
+      "notes": "Stores raw telematics data forming the initial data lake."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers and batches telematics data for scalable processing and durability."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (OpenStreetMaps)",
+      "notes": "Stores pre-chunked OpenStreetMap map data provided via AWS Open Data Initiative."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "LAMBDA (Enrichment)",
+      "notes": "Enriches telematics batches with pre-chunked map data chunks."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "KINESIS",
+      "notes": "Runs sliding window queries to detect events like speeding."
+    },
+    {
+      "id": "7",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Runs background queries to pre-chunk map data and query raw telematics data."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 (Enriched Data)",
+      "notes": "Stores enriched event data and telemetry results."
+    },
+    {
+      "id": "9",
+      "service": "Glue",
+      "name": "GLUE",
+      "notes": "ETL job that transfers enriched and summary data to destination systems."
+    },
+    {
+      "id": "10",
+      "service": "OnPremDC",
+      "name": "On-Prem Data Center",
+      "notes": "On-premises destination powering reports, dashboards, and customer applications."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Vehicle IoT sensors send raw telematics data to Ingestion Lambda."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingestion Lambda stores raw telemetry into S3 data lake."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Raw telemetry is batched and loaded into SQS."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "SQS sends batched messages to Enrichment Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Enrichment Lambda pulls map chunks from OpenStreetMap S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Enrichment Lambda feeds data into Kinesis for real-time event detection."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Enrichment Lambda writes enriched telematics to enriched S3 bucket."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis outputs detected safety events into enriched S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries raw telematics data in S3."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena query results are passed to Glue."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Glue reads enriched event data from S3."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Glue pushes data to the on-premises data center."
+    }
+  ]
+}

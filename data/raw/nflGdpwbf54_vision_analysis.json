@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "The architecture depicts a serverless molecular search platform used by Vertex Pharmaceuticals chemists. 1. Chemists submit search requests via API Gateway from desktop clients. 2. API Gateway invokes Lambda, which queries RDS to enrich search parameters. 3. Lambda sends instructions to Amazon MQ. 4. Amazon MQ triggers ECS to spin up a Fargate Spot task cluster consisting of an orchestrator task and search worker tasks. 5. Workers and orchestrator exchange task dispatches and status updates bidirectionally through Amazon MQ to drive intelligent searching across tens of billions of molecules. 6. Upon completing the search, the Fargate orchestrator writes the results to S3. 7. The user receives an email with a pre-signed URL to download the search results directly from S3.",
+  "graph": {
+    "name": "Vertex Pharmaceuticals Molecule Search Architecture",
+    "link": "https://www.youtube.com/watch?v=nflGdpwbf54",
+    "categories": "Serverless, Compute, HPC, Healthcare",
+    "graph_usable": true,
+    "notes": "A serverless HPC platform for searching tens of billions of molecular combinations efficiently using dynamic Fargate worker tasks, RabbitMQ on Amazon MQ, and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDomainExpert",
+      "name": "User",
+      "notes": "Computational chemists submitting molecular search requests from client laptops."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives incoming POST requests with search payload and fleet configuration."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Enriches request using RDS data and dynamically provisions search environment."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database providing additional search configuration details."
+    },
+    {
+      "id": "4",
+      "service": "AmazonMQ",
+      "name": "MQ",
+      "notes": "Amazon MQ running RabbitMQ for inter-task communication between orchestrator and workers."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Manages Fargate Spot task execution fleet."
+    },
+    {
+      "id": "6",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Executes orchestrator task and up to 500 worker tasks (up to 1000 vCPUs)."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores completed search results for download via pre-signed URLs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User submits search request payload via desktop client."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda function."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queries RDS database for search enrichment parameters."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "RDS returns enriched metadata to Lambda."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Lambda initializes message queues on Amazon MQ to launch orchestration environment."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Amazon MQ triggers ECS to deploy orchestrator and worker Fargate tasks."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Orchestrator sends search commands to Fargate worker tasks via Amazon MQ."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Fargate worker tasks send progress reports back to orchestrator via Amazon MQ."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Orchestrator writes search result set into Amazon S3."
+    },
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "User downloads search results directly from S3 using pre-signed URL."
+    }
+  ]
+}

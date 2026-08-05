@@ -1,0 +1,120 @@
+{
+  "step_by_step_reasoning": "The architecture diagram displays iRobot's serverless data lake processing workflow. 1. Incoming JSON data (~3 TB/day) lands in an S3 bucket ('S3 (JSON)'). 2. A Glue Crawler scans the S3 JSON bucket to extract schema metadata into the Glue Data Catalog. 3. A Glue ETL job transforms the JSON records into Parquet columnar format and writes them to a secondary S3 bucket ('S3 (Parquet)'). 4. A second Glue Crawler scans the Parquet files and updates the Data Catalog. 5. Amazon Athena uses metadata from the Data Catalog to perform selective columnar queries over both JSON data for short-term analysis and Parquet data for full historical analysis.",
+  "graph": {
+    "name": "iRobot Serverless Data Lake Architecture",
+    "link": "https://www.youtube.com/watch?v=GoziWpmFCS0",
+    "categories": "Data Lake, Serverless, Analytics",
+    "graph_usable": true,
+    "notes": "Serverless data lake architecture processing ~3 TB/day of incoming JSON records into Parquet format for cost-effective querying with Athena."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 (JSON)",
+      "notes": "Receives ~3 TB/day of raw JSON records from incoming data pipelines."
+    },
+    {
+      "id": "1",
+      "service": "Glue",
+      "name": "CRAWLER (JSON)",
+      "notes": "Crawls raw JSON data in S3 to automatically discover table schemas and data types."
+    },
+    {
+      "id": "2",
+      "service": "Glue",
+      "name": "GLUE",
+      "notes": "Serverless Glue ETL job that processes raw JSON records into optimized Parquet columnar format."
+    },
+    {
+      "id": "3",
+      "service": "Glue",
+      "name": "DATA CATALOG",
+      "notes": "Central metadata store holding schema information, table names, and column types."
+    },
+    {
+      "id": "4",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Interactive serverless query engine used by data scientists to explore raw JSON and historical Parquet data."
+    },
+    {
+      "id": "5",
+      "service": "Glue",
+      "name": "CRAWLER (Parquet)",
+      "notes": "Crawls processed Parquet files in S3 and registers partition and schema updates in the Data Catalog."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 (Parquet)",
+      "notes": "Stores transformed Parquet columnar files for efficient full history querying."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Glue JSON Crawler inspects incoming raw JSON files in S3."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Glue JSON Crawler writes discovered JSON table metadata and schemas to the Data Catalog."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Glue ETL job reads newly arrived JSON data from S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue ETL job transforms JSON data into Parquet format and writes it to the Parquet S3 bucket."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Glue Parquet Crawler scans newly created Parquet files in S3."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Glue Parquet Crawler stores updated Parquet schema and partition information in Data Catalog."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Athena retrieves table definitions and schemas from the Data Catalog."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries optimized Parquet datasets directly in S3 for fast, cost-effective historical analysis."
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Identified core system components from the architecture whiteboard and video transcript: SQL Server database source, DMS, Landing S3 bucket, S3 event notification target SQS queue, scheduled EventBridge rules, Step Functions orchestrator, Glue ETL processing engine, and Delta Lake S3 bucket.\n2. Applied Rule 5 (Pruning) to human stick figure actor 'Data Scientist' as it represents a generic user role without a dedicated client infrastructure component.\n3. Verified all services against the allowed vocabulary list: SQL Server is mapped to 'ThirdParty', DMS to 'DMS', S3 buckets to 'S3', SQS to 'SQS', EventBridge to 'EventBridge', Step Functions to 'StepFunctions', Glue to 'Glue'.\n4. Created two distinct sequence flows: Flow 0 models CDC ingestion from SQL Server via DMS to Landing S3 and S3 event triggers to SQS; Flow 1 models the scheduled orchestration where EventBridge triggers Step Functions, which directs Glue jobs to extract from SQS and perform upserts into the Delta Lake S3 bucket.\n5. Structured all node descriptions and edges with detailed notes based on the transcript explanations (e.g., Parquet files, 10/60/180-min interval triggers, bronze/silver/gold Delta Lake layers).",
+  "graph": {
+    "name": "TrueBlue Near-Real-Time Delta Lakehouse Architecture",
+    "link": "https://www.youtube.com/watch?v=iKYvG5aiIn8",
+    "categories": "Data Lakehouse ETL",
+    "graph_usable": true,
+    "notes": "Architecture demonstrating continuous CDC database migration from SQL Server to an S3 Delta Lake using AWS DMS, SQS, EventBridge, Step Functions, and AWS Glue."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "SQL Server",
+      "notes": "On-premises/external transactional SQL Server databases generating inserts, updates, and deletes."
+    },
+    {
+      "id": "1",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "AWS Database Migration Service capturing CDC changes from SQL Server."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (LANDING)",
+      "notes": "Landing S3 bucket storing raw transactional change data in Parquet format."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Amazon SQS queues capturing S3 event notifications categorized by target processing latency."
+    },
+    {
+      "id": "4",
+      "service": "EventBridge",
+      "name": "EVENTBRIDGE",
+      "notes": "Amazon EventBridge scheduled rules (10-min, 60-min, 3-hour) triggering orchestration."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "AWS Step Functions orchestrating the execution workflow of Glue ETL jobs."
+    },
+    {
+      "id": "6",
+      "service": "Glue",
+      "name": "GLUE",
+      "notes": "Serverless AWS Glue ETL jobs reading event messages from SQS and executing updates."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 (DELTA LAKE)",
+      "notes": "Delta Lake storage on S3 organized in bronze, silver, and gold tiers for querying and ML feature store."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "DMS replicates transactional database changes from SQL Server."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "DMS writes inserts, updates, and deletes as Parquet files into the landing S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Landing S3 bucket triggers event notifications sent to SQS queues."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "EventBridge scheduled rules trigger Step Functions state machine execution."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions orchestrates Glue ETL workflow jobs."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Glue extractor job reads landing S3 location paths from SQS queue messages."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Glue performs upserts to keep Delta Lake tables updated in S3."
+    }
+  ]
+}

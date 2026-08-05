@@ -1,0 +1,190 @@
+{
+  "step_by_step_reasoning": "1. **Graph Meta:** Extract architecture title from transcript (trade data processing and retrieval using AWS OpenSearch for Cybex/Cybage), video URL, relevant categories, and operational notes.\n2. **Nodes Definition:** Map visual components in the Data Ingestion and Data Retrieval boundary boxes. Use exact service identifiers from the valid vocabulary list:\n   - Data Ingestion: S3 (Raw Data), Lambda (Validation), S3 (Validated Data), Lambda (Processing), OpenSearch (Data Ingestion, running on Graviton2 instances).\n   - Data Retrieval: User (UserConsumerWebMobile), Front-End Application (ThirdParty - Angular), Back-End Application (ThirdParty - Python), OpenSearch (Data Retrieval, running on Graviton2 instances), Amazon RDS, Amazon S3 (Data Retrieval), Amazon SES.\n3. **Edges Definition & Flow Identification:**\n   - Flow 0 (Data Ingestion Pipeline): Raw data uploaded to S3 -> Validation Lambda -> Validated data uploaded to S3 -> Processing Lambda -> OpenSearch cluster (Graviton2).\n   - Flow 1 (Web Application Retrieval): User -> Front-End (Angular) -> User -> Back-End (Python).\n   - Flow 2 (Mobile & Backend Data Querying / Large Report Handling): User/Mobile -> Back-End (Python) -> OpenSearch / RDS / S3. Large reports generate pre-signed URLs sent via Amazon SES.",
+  "graph": {
+    "name": "Trade Data Processing and Retrieval Architecture with AWS OpenSearch",
+    "link": "https://www.youtube.com/watch?v=JYeXbUdFOdw",
+    "categories": "Data Processing, Search & Analytics, Event-Driven Architecture",
+    "graph_usable": true,
+    "notes": "Data processing and retrieval architecture built for Cybex/Cybage to handle ~5 billion records. Features an event-driven ingestion pipeline (S3, Lambda, OpenSearch on Graviton2) and dual retrieval paths via web (Angular FE) and mobile/API (Python BE) querying OpenSearch, RDS, S3, and SES for report notifications."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "Amazon S3 (Raw Data)",
+      "notes": "Stores uploaded raw trade data files in CSV or Excel formats."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "AWS Lambda (Validation)",
+      "notes": "Triggered by raw data uploads to validate contents and highlight discrepancies."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon S3 (Validated Data)",
+      "notes": "Stores validated copies of data in a dedicated S3 location."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda (Processing)",
+      "notes": "Triggered by validated data to process payloads and ingest into OpenSearch."
+    },
+    {
+      "id": "4",
+      "service": "OpenSearch",
+      "name": "AWS OpenSearch (Data Ingestion)",
+      "notes": "Ingests processed data; utilizes Graviton2 instances, query templates, index mapping, and aggregated reporting layers."
+    },
+    {
+      "id": "5",
+      "service": "UserConsumerWebMobile",
+      "name": "User",
+      "notes": "End users accessing export-import trade data via web browser or mobile app."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Front-End Application",
+      "notes": "Angular-based web front-end application running in the user's browser."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Back-End Application",
+      "notes": "Python-based back-end application servicing business logic and data layer access."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "AWS OpenSearch (Data Retrieval)",
+      "notes": "OpenSearch cluster running on Graviton2 instances providing 2-4 second response times across ~5B records."
+    },
+    {
+      "id": "9",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Relational database providing relational data querying capabilities to the back-end."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Amazon S3 (Data Retrieval)",
+      "notes": "Stores large generated reports (over 10,000 records) accessible via pre-signed URLs."
+    },
+    {
+      "id": "11",
+      "service": "SES",
+      "name": "Amazon SES",
+      "notes": "Sends email intimations containing pre-signed URLs to users for downloading large reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Raw data upload triggers validation Lambda function."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Validation Lambda writes validated copy of data into S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Validated data upload triggers processing Lambda function."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Processing Lambda ingests processed data into OpenSearch cluster."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends web request to Angular front-end application."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Front-end application returns response to user browser."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Web browser forwards application request to Python back-end application."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile application sends direct requests to Python back-end application."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Back-end queries OpenSearch search indexes."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Back-end queries relational database layer in Amazon RDS."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Back-end uploads large reports (>10,000 records) to S3 bucket."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Back-end application sends query results back to user."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3'",
+      "type": "control",
+      "notes": "SES delivers email intimation with pre-signed URL for S3 report download."
+    }
+  ]
+}

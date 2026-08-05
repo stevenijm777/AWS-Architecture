@@ -1,0 +1,133 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">www</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">Website or app visited by the user that triggers auction requests during page load within 100ms.</data>
+    </node>
+    <node id="1">
+      <data key="d5">EC2 Bidding</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Real-time bidding layer running on EC2 Spot Instances (~600 instances across 3 regions) handling 1M requests/sec.</data>
+    </node>
+    <node id="2">
+      <data key="d5">EC2 Tracking</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Conversion tracking layer on EC2 Spot Instances tracking user interactions tied to unique auction IDs.</data>
+    </node>
+    <node id="3">
+      <data key="d5">ElastiCache</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">In-memory Redis cache storing 1 hour of hot auction key-value data covering 90% of tracking events.</data>
+    </node>
+    <node id="4">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">S3 bucket storing auction logs partitioned by minute in JSON and Parquet formats.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Lambda Converter</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Lambda function automatically triggered by new JSON uploads in S3 to convert them to Parquet format to reduce Athena scanning costs.</data>
+    </node>
+    <node id="6">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queue for enqueuing tracking requests for events older than 1 hour.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Lambda Query</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Intermediate Lambda function triggered by SQS to construct and execute SQL queries in Athena.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Athena</data>
+      <data key="d6">Athena</data>
+      <data key="d7">Serverless query engine querying cold partitioned Parquet log data from S3.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User visits web page/app, triggering an ad auction request to the bidding layer within 100ms.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User interaction event with unique auction ID sent to the tracking layer.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Bidding layer writes auction key-value payload to Redis with a 1-hour retention window.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Bidding layer flushes auction JSON log files to S3 every minute.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Tracking layer queries Redis for hot event matching the unique auction ID (&lt;1 hour).</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Enqueues tracking event to SQS when the auction ID is older than 1 hour.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">S3 object creation triggers Parquet converter Lambda function.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda converts JSON log files into Parquet format and writes them back into S3.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SQS message triggers intermediate Lambda function.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Intermediate Lambda invokes targeted Athena SQL query for the relevant minute partition.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="8" target="4" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Athena reads cold partitioned Parquet data from S3 bucket.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Smadex Real-Time Programmatic Ad Bidding and Tracking Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=l0mvXogANE4</data>
+    <data key="d2">Architecture for processing ~1 million ad auction requests per second within a 100ms response window. Operates across 3 geographic regions using ~600 EC2 Spot instances. Features a dual hot (&lt;1 hour via ElastiCache Redis) and cold (&gt;1 hour via SQS, Lambda, Athena, and S3 Parquet) tracking strategy.</data>
+    <data key="d3">Analytics, Data Processing</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

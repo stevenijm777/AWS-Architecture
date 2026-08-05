@@ -1,0 +1,88 @@
+{
+  "step_by_step_reasoning": "1. Identify services from the diagram and transcript: Route 53, NLB, EKS and EC2 instances split across two Availability Zones (AZ1 and AZ2), and Amazon Aurora.\n2. Verify against vocabulary list: Route53, NLB, EKS, EC2, and Aurora are all valid AWS services.\n3. Map connections: Route 53 routes ~10 million requests/day to NLB. NLB routes Layer 4 traffic across AZ1 (EKS/EC2) and AZ2 (EC2/EKS). The compute layer sends ~3000 requests/sec down to Amazon Aurora.\n4. Annotate nodes and edges with specific context from the video (e.g., 10M requests, 3000 req/s, Layer 4 traffic, Carpenter autoscaler, ARM instances, Multi-AZ failover).",
+  "graph": {
+    "name": "FinBorn Chaos Engineering & Resilient Data Architecture",
+    "link": "https://www.youtube.com/watch?v=lkDq9g43djw",
+    "categories": "Compute, Databases, Networking",
+    "graph_usable": true,
+    "notes": "FinBorn uses chaos engineering (terminating apps every 17 minutes, EC2 instances every 6 hours, and failing an AZ twice weekly) across a multi-AZ deployment on AWS to handle 10 million requests/day."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Handles ~10 million requests per day; routes away from failed Availability Zones."
+    },
+    {
+      "id": "1",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "Used to route Layer 4 network traffic specifically."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS (AZ 1)",
+      "notes": "Stripes workloads across instances and AZs; uses Carpenter for autoscaling."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 (AZ 1)",
+      "notes": "Worker nodes running on ARM/Spot instances to optimize costs."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 (AZ 2)",
+      "notes": "Worker nodes in second Availability Zone for high availability."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "EKS (AZ 2)",
+      "notes": "Container orchestration in second Availability Zone."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Receives ~3000 requests/second; replicates across AZs and regions; runs on ARM."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Route 53 routes 10M daily requests to Network Load Balancer"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "NLB distributes Layer 4 traffic to compute resources in Availability Zone 1"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "NLB distributes Layer 4 traffic to compute resources in Availability Zone 2"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Compute layer sends 3000 requests per second to Aurora database"
+    }
+  ]
+}

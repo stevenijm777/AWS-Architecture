@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">User</data>
+      <data key="d6">UserCompanyDomainExpert</data>
+      <data key="d7">Computational chemists submitting molecular search requests from client laptops.</data>
+    </node>
+    <node id="1">
+      <data key="d5">API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Receives incoming POST requests with search payload and fleet configuration.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Enriches request using RDS data and dynamically provisions search environment.</data>
+    </node>
+    <node id="3">
+      <data key="d5">RDS</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Relational database providing additional search configuration details.</data>
+    </node>
+    <node id="4">
+      <data key="d5">MQ</data>
+      <data key="d6">AmazonMQ</data>
+      <data key="d7">Amazon MQ running RabbitMQ for inter-task communication between orchestrator and workers.</data>
+    </node>
+    <node id="5">
+      <data key="d5">ECS</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Manages Fargate Spot task execution fleet.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Fargate</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">Executes orchestrator task and up to 500 worker tasks (up to 1000 vCPUs).</data>
+    </node>
+    <node id="7">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores completed search results for download via pre-signed URLs.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User submits search request payload via desktop client.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">API Gateway triggers Lambda function.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda queries RDS database for search enrichment parameters.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda initializes message queues on Amazon MQ to launch orchestration environment.</data>
+      <data key="d10">4</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">RDS returns enriched metadata to Lambda.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Amazon MQ triggers ECS to deploy orchestrator and worker Fargate tasks.</data>
+      <data key="d10">5</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Orchestrator sends search commands to Fargate worker tasks via Amazon MQ.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Fargate worker tasks send progress reports back to orchestrator via Amazon MQ.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Orchestrator writes search result set into Amazon S3.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="0" id="0">
+      <data key="d8">2</data>
+      <data key="d9">User downloads search results directly from S3 using pre-signed URL.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Vertex Pharmaceuticals Molecule Search Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=nflGdpwbf54</data>
+    <data key="d2">A serverless HPC platform for searching tens of billions of molecular combinations efficiently using dynamic Fargate worker tasks, RabbitMQ on Amazon MQ, and S3.</data>
+    <data key="d3">Serverless, Compute, HPC, Healthcare</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

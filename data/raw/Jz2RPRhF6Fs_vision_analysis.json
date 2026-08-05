@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identified system components from visual diagram and audio transcript:\n   - User client (Web/Mobile): map to UserConsumerWebMobile.\n   - CloudFront: map to CloudFront.\n   - Lambda@Edge: map to LambdaAtEdge.\n   - Legacy API Gateway: map to ThirdParty (named 'API').\n   - Amazon API Gateway: map to ApiGateway.\n   - Custom Authorizer Lambda: map to Lambda.\n   - DynamoDB (Scope storage): map to DynamoDB.\n   - ELB (Load Balancer): map to ELB.\n   - Nginx Proxy: map to ThirdParty (named 'NGINX').\n   - Internal ALB: map to ALB.\n2. Identified network connectivity and flow sequences:\n   - Flow 0: Client requests to CloudFront -> Lambda@Edge handles dynamic traffic shifting to either legacy API Gateway or Amazon API Gateway.\n   - Flow 1: Amazon API Gateway invokes Lambda custom authorizer, which queries scopes stored in DynamoDB.\n   - Flow 2: Validated traffic from API Gateway passes to ELB -> Nginx (mutual TLS verification) -> internal ALB for backend container services.\n3. Formatted nodes and edges strictly following vocabulary list and schema rules without control characters.",
+  "graph": {
+    "name": "Accolade Serverless API Gateway Migration Architecture",
+    "link": "https://www.youtube.com/watch?v=Jz2RPRhF6Fs",
+    "categories": "Migration, Security, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture demonstrating traffic shifting between a legacy API gateway and Amazon API Gateway using CloudFront and Lambda@Edge, custom token authorization with DynamoDB scope externalization, and mTLS via Nginx to an internal ALB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "USER",
+      "notes": "Web applications and mobile clients sending API requests."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "CDN edge distribution routing client requests."
+    },
+    {
+      "id": "2",
+      "service": "LambdaAtEdge",
+      "name": "LAMBDA @EDGE",
+      "notes": "Lambda@Edge performing dynamic traffic shifting between legacy gateway and AWS API Gateway."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "API",
+      "notes": "Legacy API Gateway relying on XML configuration."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Amazon API Gateway using OpenAPI standard."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Custom authorizer Lambda verifying JWT tokens and comparing scopes."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Externalized scope configuration store."
+    },
+    {
+      "id": "7",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Elastic Load Balancing routing traffic to Nginx proxy."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "NGINX",
+      "notes": "Nginx reverse proxy executing mutual TLS termination and client certificate verification."
+    },
+    {
+      "id": "9",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Private Application Load Balancer fronting backend container services to protect PHI data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Clients send API requests with authorization headers to CloudFront."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudFront triggers Lambda@Edge function."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda@Edge routes portion of traffic to legacy API gateway."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Lambda@Edge routes portion of traffic to Amazon API Gateway."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway invokes custom Lambda authorizer."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Custom authorizer checks scopes in DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Authorized requests pass from API Gateway towards backend."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "ELB forwards traffic to Nginx proxy."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Nginx verifies client certificates (mTLS) and forwards to private ALB."
+    }
+  ]
+}

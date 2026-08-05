@@ -1,0 +1,166 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">SQS (Ingest Queue)</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Buffers incoming file notifications.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Ingest Manager Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Processes incoming file metadata from SQS.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Postgres RDS</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Central database storing metadata and process state for files.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Work Manager Lambda (EMR)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Queries RDS for pending transformations and triggers EMR jobs.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Spark EMR Cluster</data>
+      <data key="d6">EMR</data>
+      <data key="d7">Performs batch transformation and formatting of segmentation data.</data>
+    </node>
+    <node id="5">
+      <data key="d5">S3 (Input Bucket)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores incoming raw segmentation files.</data>
+    </node>
+    <node id="6">
+      <data key="d5">S3 (Output Bucket)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores transformed and formatted segmentation files.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Work Manager Lambda (Fan-out)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Applies rate limiting and triggers concurrent worker Lambdas.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Worker Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Fetches files from S3 and uploads data to individual ad networks.</data>
+    </node>
+    <node id="9">
+      <data key="d5">SQS (Status Queue)</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Buffers status update messages from worker Lambdas to prevent database connection limits.</data>
+    </node>
+    <node id="10">
+      <data key="d5">Status Updater Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Batch reads status messages from SQS queue and writes updates to RDS.</data>
+    </node>
+    <node id="11">
+      <data key="d5">AD NETWORKS</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Over 100 partner ad network platforms.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingest Manager Lambda reads incoming file notification messages from SQS.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingest Manager Lambda registers new file metadata into Postgres RDS.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Work Manager Lambda reads pending processing tasks from RDS database.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Fan-out Work Manager Lambda queries RDS for processed files ready to upload.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Work Manager Lambda triggers Spark processing jobs on EMR cluster.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EMR writes processed/transformed files to output S3 bucket.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EMR updates transformation job completion status back to RDS.</data>
+      <data key="d10">4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EMR pulls raw data files from input S3 bucket.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Worker Lambda fetches formatted files from output S3 bucket.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Fan-out Work Manager Lambda invokes Worker Lambdas with intelligent rate-limiting.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="8" target="11" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Worker Lambdas upload formatted data to partner ad networks.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Worker Lambdas push status and retry notifications into SQS status queue.</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Status Updater Lambda consumes status messages from SQS in batches.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="10" target="2" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Status Updater Lambda writes batch status updates to RDS, mitigating DB connection limits.</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <data key="d0">Nielsen Marketing Cloud DataOut Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=Jkx6kVbDpL4</data>
+    <data key="d2">Handles 250B events/day with 55TB peak volume, 17M files, and up to 3,000 concurrent Lambda instances. Employs rate limiting per network (e.g., Mbps, HTTP connection counts) and batch queue updates to avoid Postgres RDS connection choking.</data>
+    <data key="d3">Data Lake, Serverless, Data Ingestion, AdTech</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

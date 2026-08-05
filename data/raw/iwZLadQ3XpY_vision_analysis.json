@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "1. Identify entities from World Model and Transcript: Game Clients/Users (UserConsumerWebMobile), EKS (EKS), On-Prem Data Centers (OnPremDC), MSK (MSK), S3 (S3), and Glue (Glue).\n2. Normalize entity service values strictly using the VALID VOCABULARY LISTS (UserConsumerWebMobile, EKS, OnPremDC, MSK, S3, Glue).\n3. Map visual connections and transcript flow descriptions into structured edges with appropriate flow_id, seq, and type.\n4. Ensure notes fields summarize key architectural metrics (e.g., 8 TB/day, 500k events/sec peak, 20+ shards, 5-minute processing latency).",
+  "graph": {
+    "name": "Riot Games Data Ingestion Architecture",
+    "link": "https://www.youtube.com/watch?v=iwZLadQ3XpY",
+    "categories": "Analytics, Gaming, Streaming",
+    "graph_usable": true,
+    "notes": "Architecture for global telemetry and player data ingestion for League of Legends, reducing data availability latency from 6-24 hours down to 5 minutes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User",
+      "notes": "Game clients connecting across 20+ shards worldwide."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Runs API receiving player experience telemetry from game clients."
+    },
+    {
+      "id": "2",
+      "service": "OnPremDC",
+      "name": "OnPremDC",
+      "notes": "On-premise game servers buffering data in local Kafka before replication."
+    },
+    {
+      "id": "3",
+      "service": "MSK",
+      "name": "MSK",
+      "notes": "Regional managed Kafka streaming buffer handling up to 500,000 events per second."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central data lake storing ~8 TB per day in Delta Lake format via Spark streaming."
+    },
+    {
+      "id": "5",
+      "service": "Glue",
+      "name": "GLUE",
+      "notes": "Data catalog/metastore and permission/access management layer for analysts and engineers."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Game client sends API requests and telemetry to EKS."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Players connect to regional game servers."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EKS forwards collected data to MSK regional buffer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Local Kafka buffers data and uses MirrorMaker to replicate into regional MSK clusters."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Spark streaming job writes data from MSK to Delta Lake on S3."
+    }
+  ]
+}

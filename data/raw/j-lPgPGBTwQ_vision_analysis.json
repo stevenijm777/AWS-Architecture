@@ -1,0 +1,206 @@
+{
+  "step_by_step_reasoning": "The architecture represents Halter's livestock management and telemetry system. Telemetry originates from solar-powered Smart Collars on cows using two communication paths: MQTT over WiFi into AWS IoT Core, and LoRa radio via a farm base station into a third-party software instance hosted on Amazon EC2. Both ingestion paths write raw binary telemetry into a Raw Kinesis Stream. An AWS Lambda function is triggered to deduplicate and decode the raw binary into JSON format, publishing it to a Processed Kinesis Stream. An Apache Flink application running on Kinesis Data Analytics aggregates the location data into 10-minute buckets with geoindexing and saves the files to Amazon S3 partitioned by farm ID and date. For visualization, a Farmer requests a cow location heat map through the Mobile App. The request hits a backend service running on Amazon ECS Fargate, which orchestrates a query on Amazon Athena over the aggregated location data points in S3. ECS Fargate retrieves the query results from S3 and delivers the heat map data back to the Mobile App for display to the Farmer.",
+  "graph": {
+    "name": "Halter Livestock Telemetry and Heat Map Architecture",
+    "link": "https://www.youtube.com/watch?v=j-lPgPGBTwQ",
+    "categories": "IoT, Data Processing, Analytics",
+    "graph_usable": true,
+    "notes": "Architecture for Halter's livestock management system processing collar telemetry over MQTT and LoRa, running streaming analytics with Apache Flink, and performing query analytics via Athena and ECS Fargate."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Smart Collar",
+      "notes": "Solar-powered, GPS-enabled collar attached to cows. Transmits telemetry via WiFi/MQTT or LoRa radio."
+    },
+    {
+      "id": "1",
+      "service": "IoTCore",
+      "name": "IOT CORE",
+      "notes": "Receives MQTT telemetry directly from smart collars when on WiFi."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Hosts third-party software receiving long-range LoRa radio data from farm base stations."
+    },
+    {
+      "id": "3",
+      "service": "KinesisDataStream",
+      "name": "RAW KINESIS STREAM",
+      "notes": "Stores raw binary data ingested from IoT Core and EC2; contains duplicate records."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Deduplicates and decodes binary payloads into JSON format."
+    },
+    {
+      "id": "5",
+      "service": "KinesisDataStream",
+      "name": "PROCESSED KINESIS STREAM",
+      "notes": "Main stream delivering cleaned JSON location telemetry to backend services."
+    },
+    {
+      "id": "6",
+      "service": "KinesisAnalytics",
+      "name": "KINESIS ANALYTICS",
+      "notes": "Runs Apache Flink application to aggregate location data into 10-minute buckets with geoindexing."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores aggregated location data files partitioned by farm ID and date."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Executes MapReduce queries over ~25 million location data points in ~10 seconds."
+    },
+    {
+      "id": "9",
+      "service": "Fargate",
+      "name": "ECS FARGATE",
+      "notes": "Orchestrates Athena queries and fetches resulting heat map data files from S3."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App",
+      "notes": "Mobile application used by farmers to request heat maps and manage virtual fences."
+    },
+    {
+      "id": "11",
+      "service": "UserConsumerFarmer",
+      "name": "FARMER",
+      "notes": "Farmer requesting pasture health reports and cow location heat maps."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends high-throughput MQTT telemetry via WiFi."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Sends long-range LoRa telemetry via farm base station."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams raw MQTT binary telemetry into Kinesis."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Pushes raw LoRa binary telemetry into Kinesis."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Triggers Lambda to deduplicate and decode binary stream data into JSON."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Publishes decoded JSON location data into processed stream."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Apache Flink application consumes processed stream."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Writes 10-minute aggregated location files partitioned by farm ID and date to S3."
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Farmer triggers heat map report request in mobile app."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Sends heat map report request to ECS Fargate backend service."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Orchestrates location query execution on Athena."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queries aggregated location data points stored in S3."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fetches query result files directly from S3 bucket."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns heat map data to mobile app."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Renders cow location heat map on screen for the farmer."
+    }
+  ]
+}

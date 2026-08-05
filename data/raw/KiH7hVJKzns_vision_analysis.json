@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents ADP Workforce Now on AWS. User requests start at client devices (UserConsumerWebMobile), pass through an API layer (ApiGateway), get load balanced via ELB, and hit the core application microservices in EKS. For event-driven processing like employee clock-outs, EKS publishes events to Managed Streaming for Apache Kafka (MSK), which sends events back into EKS for continuous payroll calculations. Calculated data is stored in Amazon Aurora (PostgreSQL) with row-level security and encryption. Data from Aurora syncs to ElastiCache for low-latency entitlement checks and to OpenSearch (Elasticsearch) for client lookups and history searches.",
+  "graph": {
+    "name": "ADP Workforce Now Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=KiH7hVJKzns",
+    "categories": "Application Modernization, Event-Driven Architecture, Database & Analytics",
+    "graph_usable": true,
+    "notes": "ADP Workforce Now handles HR, capital management, and real-time payroll for tens of millions of users across 70,000 clients. Features multi-AZ and multi-region deployment across US and Canada with full end-to-end encryption."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User Devices",
+      "notes": "Mobile and desktop interfaces for employees, managers, and practitioners."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API",
+      "notes": "API gateway layer receiving incoming client requests."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Load balancer cluster distributing traffic into the application cluster."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Main application cluster running hundreds of microservices, including the real-time continuous payroll engine."
+    },
+    {
+      "id": "4",
+      "service": "MSK",
+      "name": "STREAMING FOR KAFKA",
+      "notes": "Managed Streaming for Apache Kafka handling high-speed event streaming (e.g. clock-out events)."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Primary system of record using PostgreSQL with row-level security and at-rest/in-transit encryption."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "In-memory cache for fast user entitlement checks and data retrieval upon login."
+    },
+    {
+      "id": "7",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Search index used to query employee lists, payroll history, and other client record searches."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests enter through the API layer."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API forwards traffic to the load balancing cluster."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ELB balances traffic into the EKS microservice nodes."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "EKS publishes events (e.g. employee clocking out) onto Kafka."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Kafka streams event to EKS continuous calc engine to trigger payroll recalculation."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Calculated real-time payroll and liability state are persisted to Aurora."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Aurora syncs state changes to ElastiCache."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Aurora syncs record changes to OpenSearch for indexing."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Microservices check ElastiCache for cached user entitlement and profile data."
+    }
+  ]
+}

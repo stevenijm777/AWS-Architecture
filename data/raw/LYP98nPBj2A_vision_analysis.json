@@ -1,0 +1,108 @@
+{
+  "step_by_step_reasoning": "1. Identified the entry points: Internet Gateway (IGW) for external users/merchants and Virtual Private Gateway (VGW) for internal Singtel management and technical support.\n2. Identified central load balancing via Application Load Balancer (ALB) receiving traffic from both IGW and VGW.\n3. Identified multi-AZ primary compute and database stack in AZ1: EC2 Web Tier, EC2 App Tier, and Amazon Aurora DB Tier, connected sequentially.\n4. Identified secondary multi-AZ high-availability stack in AZ2: EC2 Web Tier, EC2 App Tier, and Amazon Aurora DB Tier.\n5. Pruned human actor stick figures in accordance with rule 5, retaining system entry points IGW and VGW.\n6. Formulated data flow sequence following incoming external and internal requests through ALB to the primary AZ1 web, app, and database tiers.",
+  "graph": {
+    "name": "Singtel Electronic Mobile Top-up Architecture",
+    "link": "https://www.youtube.com/watch?v=LYP98nPBj2A",
+    "categories": "Networking & Content Delivery, Compute, Databases",
+    "graph_usable": true,
+    "notes": "Singtel EMTU landing zone architecture featuring segregation of internal and external traffic for regulatory compliance and multi-AZ deployment for high availability."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "VPC",
+      "name": "Internet Gateway (IGW)",
+      "notes": "Routes external traffic from mobile users and merchants into the landing zone."
+    },
+    {
+      "id": "1",
+      "service": "VPN",
+      "name": "Virtual Private Gateway (VGW)",
+      "notes": "Routes internal enterprise traffic for Singtel management and technical support."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "Application Load Balancer (ALB)",
+      "notes": "Distributes incoming external and internal traffic with automatic failover across application instances."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Web Tier (AZ1)",
+      "notes": "Primary web front-end handling incoming requests, capable of catering up to 50 TPS."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 App Tier (AZ1)",
+      "notes": "Primary application tier executing EMTU transaction business logic."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "Aurora DB Tier (AZ1)",
+      "notes": "Primary Amazon Aurora relational database acting as the system of record."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 Web Tier (AZ2)",
+      "notes": "Secondary web front-end instance in AZ2 providing high availability and failover support."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 App Tier (AZ2)",
+      "notes": "Secondary application tier instance in AZ2 providing high availability."
+    },
+    {
+      "id": "8",
+      "service": "Aurora",
+      "name": "Aurora DB Tier (AZ2)",
+      "notes": "Secondary Amazon Aurora database replica instance in AZ2 for high availability."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "External web and mobile user traffic enters through IGW and routes to ALB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Internal enterprise management and support traffic enters through VGW and routes to ALB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB forwards incoming requests to the primary EC2 Web Tier in AZ1."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Web tier processes request and forwards calls to the EC2 App Tier in AZ1."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "App tier executes database reads and writes on the primary Aurora DB in AZ1."
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "1. Identified all architecture components from the whiteboard and audio transcript, mapping them to valid service types: ThirdParty (PDF Images, Legacy Application), Lambda (Data Automation, Scan and Process), S3 (Amazon S3), Textract (Amazon Textract), Comprehend (Amazon Comprehend), DynamoDB (Amazon DynamoDB), ApiGateway (Amazon API Gateway), ECS (Amazon ECS React App), and UserCompanyAgent (Exception Cases human reviewers).\n2. Arranged nodes with sequential integer string IDs ('0' through '10').\n3. Structured logical flows:\n   - Flow 0: Document Ingestion and Automated Processing (PDF Images -> Lambda Data Automation -> S3 -> Lambda Scan & Process <-> Textract/Comprehend -> DynamoDB).\n   - Flow 1: Exception Handling Web Interface (ECS React App -> Exception Cases -> API Gateway -> DynamoDB).\n   - Flow 2: Weekly Retraining Loop (DynamoDB export -> S3 -> Comprehend).\n4. Verified all fields conform strictly to the specified JSON schema.",
+  "graph": {
+    "name": "DXC Claims Automation Architecture",
+    "link": "https://www.youtube.com/watch?v=LD5ksgnu8r8",
+    "categories": "Serverless, AI/ML, Document Processing",
+    "graph_usable": true,
+    "notes": "Serverless solution reducing workers' compensation claim processing time from over 4.5 minutes to under 1.5 minutes per claim."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "PDF Images",
+      "notes": "Incoming workers' compensation claim PDF images submitted by doctors."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "AWS Lambda Data Automation",
+      "notes": "Automates initial document upload into Amazon S3."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores uploaded PDF claim images and weekly CSV exports for model retraining."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda Scan and Process",
+      "notes": "Triggered by S3 upload to coordinate text extraction with Textract and classification with Comprehend."
+    },
+    {
+      "id": "4",
+      "service": "Textract",
+      "name": "Amazon Textract",
+      "notes": "Extracts raw text from PDF claim images."
+    },
+    {
+      "id": "5",
+      "service": "Comprehend",
+      "name": "Amazon Comprehend",
+      "notes": "Custom classification model trained on 200,000+ injury descriptions to assign medical codes."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores extracted text, medical codes, and claim metadata."
+    },
+    {
+      "id": "7",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Provides API endpoints for web application access to DynamoDB data."
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "Amazon ECS React App (stateless)",
+      "notes": "Stateless React front-end application hosted on ECS for human exception review."
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyAgent",
+      "name": "Exception Cases",
+      "notes": "Team of ~20 reviewers who inspect edge cases side-by-side with claim images."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Application",
+      "notes": "Legacy application receiving final claim data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "PDF claim images sent to Lambda Data Automation."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda uploads claim PDF images into S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 object creation triggers Lambda Scan and Process."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda sends document image to Textract."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Textract returns extracted text to Lambda."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda sends doctor description to Comprehend."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Comprehend returns medical classification codes to Lambda."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Lambda writes extracted text and codes into DynamoDB."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Stateless ECS React app serves web user interface to exception handling operators."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Exception handling operators make API calls through API Gateway."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "API Gateway retrieves and updates claim data in DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Weekly claim data exported from DynamoDB to S3 as CSV for Comprehend retraining."
+    }
+  ]
+}

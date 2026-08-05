@@ -1,0 +1,190 @@
+{
+  "step_by_step_reasoning": "The architecture illustrates Raiffeisen Bank International's (RBI) integration between an on-premises Thales Key Management System (KMS) and AWS. The architecture is divided into two primary workflows: Onboarding and Key Management/Encryption Lifecycle. First, the Security DevOps Team pushes a mappings.json file to Git, which triggers a Git Action uploading the artifact into an S3 Artifacts Bucket. This S3 event invokes AWS Step Functions, which creates IAM roles in target accounts and triggers a Lambda function to provision a virtual tenant in the Thales On-Premises KMS. Upon completion, Step Functions triggers SNS to notify the Security DevOps Team. For key operations, the Product DevOps Team creates master keys on Thales On-Premises KMS. Thales uses the assumed IAM role to import/sync keys into AWS KMS. AWS KMS then generates Data Encryption Keys (DEKs) to encrypt data stored in S3 Data Storage and EBS volumes.",
+  "graph": {
+    "name": "RBI On-Premises Thales KMS Integration with AWS KMS",
+    "link": "https://www.youtube.com/watch?v=H_S7CxtHgSM",
+    "categories": "Security, Governance, Storage",
+    "graph_usable": true,
+    "notes": "Hybrid key management architecture enabling on-premises control over encryption keys used across AWS services."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Security DevOps Team",
+      "notes": "Initiates onboarding by pushing mapping configuration files and receives workflow completion notifications."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Git",
+      "notes": "Version control repository hosting mapping JSON configuration and running deployment workflows."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Artifacts Bucket",
+      "notes": "Stores uploaded mapping configuration artifacts to trigger onboarding state machine."
+    },
+    {
+      "id": "3",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates tenant onboarding by configuring IAM roles, invoking Lambda, and triggering notifications."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Publishes notification upon successful virtual tenant onboarding."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Executes logic to establish and configure the virtual tenant inside Thales KMS."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Thales On-Premises KMS",
+      "notes": "On-premises HSM/KMS holding master keys (CMK) and running virtual tenant wrappers."
+    },
+    {
+      "id": "7",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "Role assumed by Thales to execute key management operations across target AWS accounts."
+    },
+    {
+      "id": "8",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "AWS KMS holding virtual wrapper keys (master key and data key combined) for service encryption."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 Data Storage",
+      "notes": "Stores application data encrypted using KMS Data Encryption Keys."
+    },
+    {
+      "id": "10",
+      "service": "EBS",
+      "name": "EBS",
+      "notes": "Stores block volumes encrypted using KMS Data Encryption Keys."
+    },
+    {
+      "id": "11",
+      "service": "UserCompanyDeveloper",
+      "name": "Product DevOps Team",
+      "notes": "Generates 256-bit symmetric encryption keys on Thales and manages key lifecycle/revocation."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Security DevOps Team pushes mappings.json into Git repository."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Git Action uploads mapping artifact into S3 Artifacts Bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Artifact upload in S3 triggers Step Functions onboarding state machine."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Step Functions provisions IAM roles in target AWS accounts."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Step Functions triggers Lambda execution for tenant creation."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Lambda creates virtual tenant wrapper in Thales On-Premises KMS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "control",
+      "notes": "Step Functions triggers SNS notification upon successful onboarding completion."
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "control",
+      "notes": "SNS notifies Security DevOps Team that team is onboarded."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "meta",
+      "notes": "Thales On-Premises KMS assumes IAM role to operate in AWS."
+    },
+    {
+      "source": "11",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Product DevOps Team generates 256-bit symmetric master key on Thales KMS."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Thales KMS syncs/imports key into AWS KMS as customer managed key wrapper."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "AWS KMS uses Data Encryption Key (DEK) to encrypt S3 Data Storage bucket."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "AWS KMS uses Data Encryption Key (DEK) to encrypt EBS storage volumes."
+    }
+  ]
+}

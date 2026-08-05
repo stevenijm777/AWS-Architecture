@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates IDA Technologies' Fraud Waste Abuse (FWA) as a Service, handling both batch and real-time processing paths using a shared ML container model. Nodes and connections are transcribed directly from the whiteboard diagram and video transcript: 1) Batch Processing Flow (flow_id 0): A user interacts with the Web UI fronted by CloudFront and protected by WAF. Batch claims files are uploaded to S3, which triggers AWS Step Functions orchestration. Step Functions launches an AWS Fargate task running the ML model container to process the claims batch and write results to client-isolated RDS schemas. Fargate triggers Amazon SES upon completion to notify the user UI dashboard. 2) Real-time API Flow (flow_id 1): External integration systems send JSON payloads via REST API through API Gateway using API keys. API Gateway invokes AWS Lambda (running the same containerized ML model), which stores results in RDS and synchronously returns the FWA determination back to the integration system. All generic third-party integration nodes are assigned ThirdParty, user actors assigned UserConsumerWeb, and native AWS services mapped to exact vocabulary strings. Output formatted strictly as parseable JSON without unescaped control characters.",
+  "graph": {
+    "name": "IDA Technologies - Fraud Waste Abuse (FWA) as a Service Architecture",
+    "link": "https://www.youtube.com/watch?v=q7nwPQ7XLJI",
+    "categories": "Machine Learning, Serverless, Batch Processing, Real-Time API",
+    "graph_usable": true,
+    "notes": "SaaS architecture for Fraud Waste Abuse (FWA) detection using AWS Fargate for batch container execution, AWS Lambda for real-time claim evaluation, and Amazon RDS with tenant schema isolation."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "Batch user accessing the Web UI to upload claim files for FWA analysis."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "Amazon CloudFront",
+      "notes": "Delivers the Web UI frontend for file upload and dashboard analysis."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores uploaded batch claim files and notifies Step Functions."
+    },
+    {
+      "id": "3",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Web application firewall protecting the Web UI component."
+    },
+    {
+      "id": "4",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates batch processing workflows upon file upload."
+    },
+    {
+      "id": "5",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Runs containerized ML models on-demand for batch claims FWA processing."
+    },
+    {
+      "id": "6",
+      "service": "SES",
+      "name": "Amazon SES",
+      "notes": "Sends completion notifications to users once batch processing finishes."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Integration Systems",
+      "notes": "External client systems sending real-time API requests using API keys."
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Exposes REST API endpoints with usage plans for real-time claims analysis."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Executes the containerized ML model for real-time claims evaluation within 15-minute execution limits."
+    },
+    {
+      "id": "10",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Multi-tenant database storing claims results isolated by dedicated per-client schemas."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User logs into Web UI and uploads batch claim files."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Web UI stores uploaded file into Amazon S3."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 upload event triggers AWS Step Functions orchestration."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Step Functions invokes AWS Fargate task running containerized ML model."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fargate writes processed batch claim FWA results into RDS client schema."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Fargate triggers completion notification via Amazon SES upon task completion."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "meta",
+      "notes": "SES sends completion notification update back to Web UI dashboard."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Integration systems send real-time claim JSON payloads via REST API using API keys."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway forwards REST request to AWS Lambda."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda runs containerized ML model and stores claim analysis in client RDS schema."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda returns real-time FWA evaluation response back through API Gateway."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "API Gateway returns evaluation results back to client integration system."
+    }
+  ]
+}

@@ -1,0 +1,182 @@
+{
+  "step_by_step_reasoning": "The architecture represents Verana Health's data ingestion, validation, and distribution pipeline on AWS. Verana uploads QData modules into an Amazon S3 Bucket. Amazon Managed Workflows for Apache Airflow (MWAA, normalized to ThirdParty since it is not in the strict service list) orchestrates the ingestion pipeline by moving data from S3 into a Redshift Staging table and triggering validation checks on the Validation table. If validations fail, an alert is sent to Slack (ThirdParty), which notifies the Data Engineering team ('de') who fix the issue and rerun the MWAA pipeline. If validations pass, data is promoted to Production inside Amazon Redshift Serverless. Production data is listed on AWS Data Exchange and shared via Redshift Data Share directly to end Customers.",
+  "graph": {
+    "name": "Verana Health AWS Data Ingestion and Sharing Architecture",
+    "link": "https://www.youtube.com/watch?v=o7sKra5MeZE",
+    "categories": "Data Engineering & Analytics",
+    "graph_usable": true,
+    "notes": "Faithful transcription of Verana Health's architectural whiteboard presentation."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Verana",
+      "notes": "Uploads QData modules specific to diseases or indicators to Amazon S3."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Amazon S3 Bucket",
+      "notes": "Stores uploaded QData modules."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Amazon Managed Workflows for Apache Airflow (Amazon MWAA)",
+      "notes": "Orchestrates data pipeline tasks from ingestion to staging and validation."
+    },
+    {
+      "id": "3",
+      "service": "RedShift",
+      "name": "Staging",
+      "notes": "Staging environment inside Redshift where raw datasets are initially loaded."
+    },
+    {
+      "id": "4",
+      "service": "RedShift",
+      "name": "Validation",
+      "notes": "Runs schema, primary/foreign key, and column data type validations taking up to 2-3 hours."
+    },
+    {
+      "id": "5",
+      "service": "RedShift",
+      "name": "Production",
+      "notes": "Production table holding validated QData ready for client sharing."
+    },
+    {
+      "id": "6",
+      "service": "RedShift",
+      "name": "Amazon Redshift",
+      "notes": "Serverless Amazon Redshift cluster hosting staging, validation, and production environments."
+    },
+    {
+      "id": "7",
+      "service": "DataExchange",
+      "name": "AWS Data Exchange",
+      "notes": "Single pane of glass for customer subscriptions to datasets updated bi-weekly."
+    },
+    {
+      "id": "8",
+      "service": "RedShift",
+      "name": "Amazon Redshift Data Share",
+      "notes": "Shares production table copies directly into customer Redshift instances."
+    },
+    {
+      "id": "9",
+      "service": "UserConsumerDeveloper",
+      "name": "Customer",
+      "notes": "Subscribes to and consumes datasets directly or via Redshift Data Share."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": "Receives alert notifications if validation subtasks fail."
+    },
+    {
+      "id": "11",
+      "service": "UserCompanyDeveloper",
+      "name": "de",
+      "notes": "Data Engineering team notified via Slack alerts to fix dataset issues and trigger pipeline reruns."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Verana uploads QData modules into S3."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "MWAA triggers data reading from S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "MWAA loads datasets from S3 into Redshift Staging."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Staged data is evaluated by validation workflows."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "MWAA triggers validation subtasks on Redshift."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Successfully validated datasets are promoted to Production."
+    },
+    {
+      "source": "4",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Validation failure triggers Slack alert."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Slack alert notifies the Data Engineering team."
+    },
+    {
+      "source": "11",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "DE team fixes data issues and reruns MWAA pipeline."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Production datasets are registered on AWS Data Exchange with manual documentation."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Amazon Redshift shares tables directly via Redshift Data Share."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Customers query/consume data from Redshift Data Share."
+    }
+  ]
+}

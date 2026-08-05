@@ -1,0 +1,198 @@
+{
+  "step_by_step_reasoning": "The Nielsen Marketing Cloud 'DataOut' architecture processes high-volume marketing segmentation data (up to 250 billion events per day) and delivers it to over 100 partner ad networks. First, incoming file notifications enter via an Ingest SQS queue to an Ingest Manager Lambda, which registers metadata in a Postgres RDS database. A Work Manager Lambda reads pending file metadata from RDS and triggers an EMR Spark cluster to transform the data, reading raw files from an input S3 bucket and saving formatted files to an output S3 bucket, while reporting job status back to RDS. Next, a Fan-out Work Manager Lambda queries RDS for files ready to be uploaded, applying rate limiting controls before invoking worker Lambdas concurrently. Worker Lambdas read transformed data from the output S3 bucket and upload payloads to external Ad Networks. To prevent database connection bottlenecks, Worker Lambdas send completion/retry statuses to an SQS Status Queue, which is batch-consumed by a Status Updater Lambda to perform batch updates back into the Postgres RDS database.",
+  "graph": {
+    "name": "Nielsen Marketing Cloud DataOut Architecture",
+    "link": "https://www.youtube.com/watch?v=Jkx6kVbDpL4",
+    "categories": "Data Lake, Serverless, Data Ingestion, AdTech",
+    "graph_usable": true,
+    "notes": "Handles 250B events/day with 55TB peak volume, 17M files, and up to 3,000 concurrent Lambda instances. Employs rate limiting per network (e.g., Mbps, HTTP connection counts) and batch queue updates to avoid Postgres RDS connection choking."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "SQS",
+      "name": "SQS (Ingest Queue)",
+      "notes": "Buffers incoming file notifications."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Ingest Manager Lambda",
+      "notes": "Processes incoming file metadata from SQS."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "Postgres RDS",
+      "notes": "Central database storing metadata and process state for files."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Work Manager Lambda (EMR)",
+      "notes": "Queries RDS for pending transformations and triggers EMR jobs."
+    },
+    {
+      "id": "4",
+      "service": "EMR",
+      "name": "Spark EMR Cluster",
+      "notes": "Performs batch transformation and formatting of segmentation data."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Input Bucket)",
+      "notes": "Stores incoming raw segmentation files."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 (Output Bucket)",
+      "notes": "Stores transformed and formatted segmentation files."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Work Manager Lambda (Fan-out)",
+      "notes": "Applies rate limiting and triggers concurrent worker Lambdas."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Worker Lambda",
+      "notes": "Fetches files from S3 and uploads data to individual ad networks."
+    },
+    {
+      "id": "9",
+      "service": "SQS",
+      "name": "SQS (Status Queue)",
+      "notes": "Buffers status update messages from worker Lambdas to prevent database connection limits."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Status Updater Lambda",
+      "notes": "Batch reads status messages from SQS queue and writes updates to RDS."
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "AD NETWORKS",
+      "notes": "Over 100 partner ad network platforms."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Ingest Manager Lambda reads incoming file notification messages from SQS."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingest Manager Lambda registers new file metadata into Postgres RDS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Work Manager Lambda reads pending processing tasks from RDS database."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Work Manager Lambda triggers Spark processing jobs on EMR cluster."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR pulls raw data files from input S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EMR writes processed/transformed files to output S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "EMR updates transformation job completion status back to RDS."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Fan-out Work Manager Lambda queries RDS for processed files ready to upload."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Fan-out Work Manager Lambda invokes Worker Lambdas with intelligent rate-limiting."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Worker Lambda fetches formatted files from output S3 bucket."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Worker Lambdas upload formatted data to partner ad networks."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Worker Lambdas push status and retry notifications into SQS status queue."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "Status Updater Lambda consumes status messages from SQS in batches."
+    },
+    {
+      "source": "10",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Status Updater Lambda writes batch status updates to RDS, mitigating DB connection limits."
+    }
+  ]
+}

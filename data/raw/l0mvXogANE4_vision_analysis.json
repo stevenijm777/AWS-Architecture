@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "1. Identified nodes from visual diagram and transcript: 'www' web app entry point (UserConsumerWeb), EC2 Bidding layer (EC2), EC2 Tracking layer (EC2), ElastiCache Redis (ElastiCache), S3 storage bucket (S3), S3-triggered Parquet converter Lambda (Lambda), SQS queue (SQS), intermediate query execution Lambda (Lambda), and Athena query engine (Athena).\n2. Pruned the generic stick figure human 'User' actor according to Node Rule 5, using 'www' (UserConsumerWeb) as the active entry point.\n3. Kept the two Lambda functions separate according to Node Rule 4 and explicit transcript confirmation (one converts JSON to Parquet on S3 upload, the other triggers Athena queries from SQS).\n4. Structured workflows into logical flows: Flow 0 for real-time bidding and hot tracking (<1h), Flow 1 for S3 log ingestion and Parquet conversion, Flow 2 for asynchronous cold tracking (>1h) via SQS, Lambda, Athena, and S3.",
+  "graph": {
+    "name": "Smadex Real-Time Programmatic Ad Bidding and Tracking Architecture",
+    "link": "https://www.youtube.com/watch?v=l0mvXogANE4",
+    "categories": "Analytics, Data Processing",
+    "graph_usable": true,
+    "notes": "Architecture for processing ~1 million ad auction requests per second within a 100ms response window. Operates across 3 geographic regions using ~600 EC2 Spot instances. Features a dual hot (<1 hour via ElastiCache Redis) and cold (>1 hour via SQS, Lambda, Athena, and S3 Parquet) tracking strategy."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "www",
+      "notes": "Website or app visited by the user that triggers auction requests during page load within 100ms."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Bidding",
+      "notes": "Real-time bidding layer running on EC2 Spot Instances (~600 instances across 3 regions) handling 1M requests/sec."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2 Tracking",
+      "notes": "Conversion tracking layer on EC2 Spot Instances tracking user interactions tied to unique auction IDs."
+    },
+    {
+      "id": "3",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "In-memory Redis cache storing 1 hour of hot auction key-value data covering 90% of tracking events."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 bucket storing auction logs partitioned by minute in JSON and Parquet formats."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda Converter",
+      "notes": "Lambda function automatically triggered by new JSON uploads in S3 to convert them to Parquet format to reduce Athena scanning costs."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue for enqueuing tracking requests for events older than 1 hour."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda Query",
+      "notes": "Intermediate Lambda function triggered by SQS to construct and execute SQL queries in Athena."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Serverless query engine querying cold partitioned Parquet log data from S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User visits web page/app, triggering an ad auction request to the bidding layer within 100ms."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Bidding layer writes auction key-value payload to Redis with a 1-hour retention window."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "User interaction event with unique auction ID sent to the tracking layer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Tracking layer queries Redis for hot event matching the unique auction ID (<1 hour)."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Bidding layer flushes auction JSON log files to S3 every minute."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 object creation triggers Parquet converter Lambda function."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda converts JSON log files into Parquet format and writes them back into S3."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Enqueues tracking event to SQS when the auction ID is older than 1 hour."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "SQS message triggers intermediate Lambda function."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "Intermediate Lambda invokes targeted Athena SQL query for the relevant minute partition."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Athena reads cold partitioned Parquet data from S3 bucket."
+    }
+  ]
+}

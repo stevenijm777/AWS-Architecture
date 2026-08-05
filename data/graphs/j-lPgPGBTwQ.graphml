@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Smart Collar</data>
+      <data key="d6">UserConsumerIOT</data>
+      <data key="d7">Solar-powered, GPS-enabled collar attached to cows. Transmits telemetry via WiFi/MQTT or LoRa radio.</data>
+    </node>
+    <node id="1">
+      <data key="d5">IOT CORE</data>
+      <data key="d6">IoTCore</data>
+      <data key="d7">Receives MQTT telemetry directly from smart collars when on WiFi.</data>
+    </node>
+    <node id="2">
+      <data key="d5">EC2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Hosts third-party software receiving long-range LoRa radio data from farm base stations.</data>
+    </node>
+    <node id="3">
+      <data key="d5">RAW KINESIS STREAM</data>
+      <data key="d6">KinesisDataStream</data>
+      <data key="d7">Stores raw binary data ingested from IoT Core and EC2; contains duplicate records.</data>
+    </node>
+    <node id="4">
+      <data key="d5">LAMBDA</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Deduplicates and decodes binary payloads into JSON format.</data>
+    </node>
+    <node id="5">
+      <data key="d5">PROCESSED KINESIS STREAM</data>
+      <data key="d6">KinesisDataStream</data>
+      <data key="d7">Main stream delivering cleaned JSON location telemetry to backend services.</data>
+    </node>
+    <node id="6">
+      <data key="d5">KINESIS ANALYTICS</data>
+      <data key="d6">KinesisAnalytics</data>
+      <data key="d7">Runs Apache Flink application to aggregate location data into 10-minute buckets with geoindexing.</data>
+    </node>
+    <node id="7">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores aggregated location data files partitioned by farm ID and date.</data>
+    </node>
+    <node id="8">
+      <data key="d5">ATHENA</data>
+      <data key="d6">Athena</data>
+      <data key="d7">Executes MapReduce queries over ~25 million location data points in ~10 seconds.</data>
+    </node>
+    <node id="9">
+      <data key="d5">ECS FARGATE</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">Orchestrates Athena queries and fetches resulting heat map data files from S3.</data>
+    </node>
+    <node id="10">
+      <data key="d5">Mobile App</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">Mobile application used by farmers to request heat maps and manage virtual fences.</data>
+    </node>
+    <node id="11">
+      <data key="d5">FARMER</data>
+      <data key="d6">UserConsumerFarmer</data>
+      <data key="d7">Farmer requesting pasture health reports and cow location heat maps.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Sends high-throughput MQTT telemetry via WiFi.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Sends long-range LoRa telemetry via farm base station.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Streams raw MQTT binary telemetry into Kinesis.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Pushes raw LoRa binary telemetry into Kinesis.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Triggers Lambda to deduplicate and decode binary stream data into JSON.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Publishes decoded JSON location data into processed stream.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Apache Flink application consumes processed stream.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Writes 10-minute aggregated location files partitioned by farm ID and date to S3.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Queries aggregated location data points stored in S3.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Orchestrates location query execution on Athena.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="9" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Fetches query result files directly from S3 bucket.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Returns heat map data to mobile app.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Sends heat map report request to ECS Fargate backend service.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="10" target="11" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Renders cow location heat map on screen for the farmer.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="11" target="10" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Farmer triggers heat map report request in mobile app.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Halter Livestock Telemetry and Heat Map Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=j-lPgPGBTwQ</data>
+    <data key="d2">Architecture for Halter's livestock management system processing collar telemetry over MQTT and LoRa, running streaming analytics with Apache Flink, and performing query analytics via Athena and ECS Fargate.</data>
+    <data key="d3">IoT, Data Processing, Analytics</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

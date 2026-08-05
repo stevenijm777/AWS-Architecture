@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "1. Identified infrastructure components from the visual diagram and transcript: CloudFront (CDN), S3 (SPA hosting), ALB (load balancing API traffic), ECS (container microservices and workers), SQS (asynchronous queue), ElastiCache Redis (application caching), RDS MySQL (relational database), and DynamoDB (key-value store for real-time events). Generic human user actor is pruned per rules.\n2. Mapped each service to valid vocabulary terms: CloudFront, S3, ALB, ECS, SQS, ElastiCache, RDS, DynamoDB.\n3. Defined flows:\n   - Flow 0: Asset delivery and API routing (CloudFront -> S3 -> ALB -> ECS).\n   - Flow 1: Queue event messaging and worker processing (ECS -> SQS -> ECS).\n   - Flow 2: Data caching and persistence operations (ECS -> ElastiCache, ECS -> RDS, ECS -> DynamoDB).\n4. Formatted output into strict parseable JSON.",
+  "graph": {
+    "name": "MailUp Group Messaging API Architecture",
+    "link": "https://www.youtube.com/watch?v=HwHVFWdczVw",
+    "categories": "Web Architecture, Event Driven, Microservices",
+    "graph_usable": true,
+    "notes": "MailUp Group's Messaging API platform allows clients to schedule and send marketing campaigns via instant messaging applications. Frontend assets are hosted on S3 via CloudFront, API calls are handled by ECS microservices via ALB, asynchronous events are processed via SQS, with ElastiCache Redis, Multi-AZ RDS MySQL, and DynamoDB backing data requirements."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Delivers the Single Page Application frontend and static marketing resources."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores SPA assets and marketing campaign content."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer distributing incoming API requests to ECS container microservices."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Cluster hosting API microservices (auth, bot, URL shortening, webhooks) and worker tasks."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Decouples microservices and buffers real-time or scheduled event messages for worker processing."
+    },
+    {
+      "id": "5",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Redis application-level caching layer to reduce database load."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "RDS MySQL",
+      "notes": "Multi-AZ MySQL relational database for persistent application data."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Key-value store recording real-time events generated on the platform."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront fetches web assets and single page application files from S3."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Single Page Application makes API calls routed to the Application Load Balancer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB routes incoming REST API traffic to microservices running on the ECS cluster."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "ECS microservices publish scheduled or real-time event messages to SQS."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "ECS worker tasks pull messages from SQS to process campaign sending and events."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "ECS microservices query ElastiCache Redis for fast data caching."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "ECS microservices persist structured relational data in Multi-AZ RDS MySQL."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS microservices record high-throughput event logs directly in DynamoDB."
+    }
+  ]
+}

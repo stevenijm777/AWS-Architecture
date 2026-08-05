@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Atlassian Forge's application deployment and execution workflows. There are two main flows: 1) Deployment Flow: A developer uses the CLI to send customer code (JS/TS) to an EC2 Deployment Ingestion web service sitting behind an ALB. This service records state in DynamoDB and enqueues deployment jobs into an SQS queue to handle scale and avoid Lambda control plane rate limits. An EC2 Deployment Worker polls SQS and provisions the Lambda function across an account boundary line into a separate execution account. 2) Invocation Flow: An end user's Browser calls an internal EC2 Invocation Service. This service validates security permissions, resolves the proper multi-tenant Lambda function, and invokes it (where execution occurs inside per-request V8 isolates for strict tenant isolation). All nodes and flows are mapped accurately to valid AWS and actor categories.",
+  "graph": {
+    "name": "Atlassian Forge Architecture",
+    "link": "https://www.youtube.com/watch?v=H2fOkeXxpyw",
+    "categories": "Compute, Serverless, Application Integration, Security",
+    "graph_usable": true,
+    "notes": "Atlassian Forge uses multi-tenant Lambda infrastructure separated by account boundaries and V8 isolates per request to ensure customer code security and isolate compute execution."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerDeveloper",
+      "name": "CLI",
+      "notes": "Command-line interface used by developers to deploy JavaScript/TypeScript code."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 (Deployment Ingestion)",
+      "notes": "Ingestion web service hosted on EC2 behind an ALB to scale and ingest customer deployment requests."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "NoSQL database used to track deployment progress and status."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue used to buffer deployment requests and prevent Lambda control plane rate limits."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 (Deployment Worker)",
+      "notes": "Worker service on EC2 that polls SQS deployment jobs and provisions customer Lambda functions."
+    },
+    {
+      "id": "5",
+      "service": "UserConsumerWeb",
+      "name": "Browser",
+      "notes": "End-user browser client making application requests and invoking custom code."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 (Internal Invocation Service)",
+      "notes": "Internal EC2 service handling security authentication, permission checks, parameter passing, and invoking Lambda."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Customer Lambda function running across account boundary using V8 isolates per request for tenant isolation."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "CLI deploys customer code to the EC2 deployment ingestion web service."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Deployment ingestion service updates deployment status in DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Deployment ingestion service puts deployment tasks on SQS queue."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Deployment worker polls deployment requests from SQS."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Deployment worker creates/provisions Lambda function across account boundary line."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Browser invokes application action directed to internal invocation service."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Invocation service verifies permissions and triggers customer Lambda function across account boundary."
+    }
+  ]
+}

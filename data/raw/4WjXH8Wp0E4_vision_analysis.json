@@ -1,0 +1,188 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Kainos's healthcare interoperability platform on AWS. NHS users access the system over the N3/HSCN network via AWS Direct Connect (DX). Requests go to the Integration Service microservice (backed by an RDS instance), which hands off data to the FHIR Service (backed by its own RDS instance) to normalize structured clinical data into HL7 FHIR format. For unstructured documents (e.g., discharge summaries from Primary/Social Care), AWS Storage Gateway mirrors content to an S3 bucket. Content additions in S3 trigger messages into an SQS queue, which invokes a Lambda function. Lambda updates the Document Service (storing metadata in its RDS instance) and writes document content directly back into S3.",
+  "graph": {
+    "name": "Kainos Healthcare Interoperability Platform",
+    "link": "https://www.youtube.com/watch?v=4WjXH8Wp0E4",
+    "categories": "Healthcare",
+    "graph_usable": true,
+    "notes": "Architecture for aggregating structured FHIR data and unstructured care documents at scale across NHS systems using microservices and serverless components."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "N3 / HSCN",
+      "notes": "Secure NHS private network accessed by health and care workers."
+    },
+    {
+      "id": "1",
+      "service": "DirectConnect",
+      "name": "DX",
+      "notes": "AWS Direct Connect connection providing secure data transfer into AWS."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Integration Service",
+      "notes": "Microservice handling integration requests and external third-party system queries."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS Integration",
+      "notes": "Dedicated PostgreSQL RDS instance for the Integration Service."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "FHIR Service",
+      "notes": "Microservice responsible for normalizing health data into HL7 FHIR standard format."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS FHIR",
+      "notes": "Dedicated PostgreSQL RDS instance storing structured FHIR patient records."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Primary / Social Care",
+      "notes": "External care providers generating unstructured documents like clinic letters."
+    },
+    {
+      "id": "7",
+      "service": "StorageGateway",
+      "name": "Storage Gateway",
+      "notes": "AWS Storage Gateway providing a local bridge to upload documents into S3."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket storing patient document content."
+    },
+    {
+      "id": "9",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Amazon SQS queue buffering upload events from S3 for processing."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "AWS Lambda function processing document business logic and metadata extraction."
+    },
+    {
+      "id": "11",
+      "service": "EC2",
+      "name": "Document Service",
+      "notes": "Microservice managing document metadata and linking structured views."
+    },
+    {
+      "id": "12",
+      "service": "RDS",
+      "name": "RDS Document",
+      "notes": "Dedicated PostgreSQL RDS instance storing document metadata."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User patient request originates from N3/HSCN network into AWS Direct Connect."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Direct Connect routes user request to the Integration Service microservice."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Integration Service queries and updates its dedicated RDS database."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Integration Service hands off retrieved third-party clinical data to the FHIR Service."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "FHIR Service stores normalized FHIR records into RDS FHIR."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Primary and Social Care systems send document content via AWS Storage Gateway."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Storage Gateway syncs document files into the Amazon S3 bucket."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 triggers event notifications to the SQS queue upon document arrival."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "SQS queue triggers processing execution in Lambda."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda passes extracted metadata to the Document Service."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Document Service persists document metadata in RDS Document."
+    },
+    {
+      "source": "10",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda stores finalized document content directly back into S3."
+    }
+  ]
+}

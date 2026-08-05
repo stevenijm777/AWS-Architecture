@@ -1,0 +1,136 @@
+{
+  "step_by_step_reasoning": "The architecture depicts DataCoral's fully serverless data engineering platform deployed inside a customer VPC. An external Data Source (Postgres, MySQL, SaaS, etc.) is queried by a Connector Lambda triggered every 5 minutes by an Orchestration Lambda. The Orchestration service uses DynamoDB as a config and state store. Connector Lambda extracts data in parallel batches, stores progress state and metrics into DynamoDB, stages raw data into S3, and notifies Orchestration Lambda upon completion. Orchestration Lambda then invokes the Redshift Loader Lambda, which applies DDL schema changes to Redshift if necessary, updates DynamoDB, and issues COPY statements to import raw data from S3 directly into Redshift.",
+  "graph": {
+    "name": "DataCoral Serverless Data Pipeline Architecture",
+    "link": "https://www.youtube.com/watch?v=JiWHomdh1oI",
+    "categories": "Data Pipeline, Serverless, Data Warehouse",
+    "graph_usable": true,
+    "notes": "Serverless data engineering platform architecture deployed within customer VPC to extract data from various sources into Redshift using AWS Lambda, S3, DynamoDB, and Redshift."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Data Source",
+      "notes": "External database (e.g., MySQL, Postgres, SaaS apps) located outside customer VPC."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Orchestration Lambda",
+      "notes": "Central orchestration component that triggers data fetching schedules, responds to completion events, and coordinates data pipeline steps."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Config and state store for orchestration, tracking batch progress, sync metrics, and schema changes."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Connector Lambda",
+      "notes": "Serverless connector fetching data from source in parallel batches, saving metrics to DynamoDB, and staging raw files to S3."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Redshift Loader Lambda",
+      "notes": "Redshift service Lambda that executes DDL schema updates and COPY commands into Redshift."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Staging bucket for raw data extracted from data sources before loading into Redshift."
+    },
+    {
+      "id": "6",
+      "service": "Redshift",
+      "name": "Redshift",
+      "notes": "Target data warehouse for data analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Orchestration Lambda uses DynamoDB as a config and state store."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Orchestration Lambda triggers Connector Lambda every 5 minutes."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Connector Lambda extracts raw data from external Data Source in parallel batches."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Connector Lambda updates progress state and sync metrics into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Connector Lambda stages fetched raw data into S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Connector Lambda notifies Orchestration Lambda upon successful sync."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Orchestration Lambda triggers Redshift Loader Lambda for the next step."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Redshift Loader Lambda checks and updates schema/state in DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Redshift Loader Lambda sends DDL schema modifications and COPY commands to Redshift."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Redshift loads raw staged data directly from S3 bucket."
+    }
+  ]
+}

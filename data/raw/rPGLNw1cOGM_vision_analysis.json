@@ -1,0 +1,158 @@
+{
+  "step_by_step_reasoning": "1. **Identify Entities & Services**: The visual architecture shows two client actor groups (Material Scientists and Business Analysts), CloudFront CDN entry point, a central Auth Lambda, DynamoDB AUTHZ table for fine-grained bitmask permissions, two backend processing Lambdas (Remix Lambda for UI, GraphQL Lambda for programmatic API), and Amazon Aurora PostgreSQL database.\n2. **Map to Valid Vocabulary**: Material Scientists mapped to `UserCompanyDomainExpert`, Business Analysts to `UserCompanyAnalyst`, CloudFront to `CloudFront`, central Lambda to `Lambda`, DynamoDB to `DynamoDB`, Remix Lambda and GraphQL Lambda to `Lambda`, Aurora to `Aurora`.\n3. **Flow 0 (Scientist Web Flow)**: Scientists access web UI through CloudFront -> Auth Lambda checks permissions in DynamoDB AUTHZ -> Auth Lambda routes request to Remix Lambda -> Remix Lambda reads material data from Aurora.\n4. **Flow 1 (Analyst API Flow)**: Analysts access programmatically through CloudFront -> Auth Lambda checks permissions in DynamoDB AUTHZ -> Auth Lambda routes request to GraphQL Lambda -> GraphQL Lambda queries Aurora.",
+  "graph": {
+    "name": "3M Fine-Grained Serverless Material Access Architecture",
+    "link": "https://www.youtube.com/watch?v=rPGLNw1cOGM",
+    "categories": "Serverless, Security & Authorization, Databases",
+    "graph_usable": true,
+    "notes": "3M utilizes a serverless architecture to provide fine-grained access control over proprietary material IP for 8,000+ scientists globally across 50 countries. Fine-grained bitmask authorization is managed via DynamoDB before routing to specialized web (Remix) or programmatic (GraphQL) compute layers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDomainExpert",
+      "name": "Material Scientists User",
+      "notes": "Over 8,000 scientists in labs across 50 countries requesting material property data via web browser."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyAnalyst",
+      "name": "Business Analysts User",
+      "notes": "Business analysts requiring programmatic API access to material information."
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Amazon CloudFront content delivery network providing global entry point for web and API requests."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Auth Lambda",
+      "notes": "Central authorization Lambda function that validates incoming JWT tokens and performs access checks."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB AUTHZ",
+      "notes": "DynamoDB table storing material UUIDs, user IDs, and fine-grained access level bitmasks."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Remix Lambda",
+      "notes": "Monolithic Node.js application running Remix SSR for rendering scientist UI."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "GraphQL Lambda",
+      "notes": "AWS Lambda function running GraphQL engine to handle programmatic queries from business analysts."
+    },
+    {
+      "id": "7",
+      "service": "Aurora",
+      "name": "Aurora Database",
+      "notes": "Amazon Aurora PostgreSQL database storing all 3M material data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Material Scientists send web browser requests with JWT tokens via CloudFront."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront routes user request to central Auth Lambda."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Auth Lambda queries DynamoDB AUTHZ to check user permissions and material UUID bitmask."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB AUTHZ returns authorization decision to Auth Lambda."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Auth Lambda forwards authorized web request to Remix Lambda UI handler."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Remix Lambda queries Aurora database for requested material attributes."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Business Analysts send programmatic API requests via CloudFront."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront forwards API request to Auth Lambda."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Auth Lambda queries DynamoDB AUTHZ for access permissions."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB AUTHZ returns bitmask authorization metadata."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "Auth Lambda forwards authorized programmatic request to GraphQL Lambda."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "GraphQL Lambda fetches material data from Aurora database."
+    }
+  ]
+}
