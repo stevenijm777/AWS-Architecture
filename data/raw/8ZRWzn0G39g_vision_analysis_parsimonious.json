@@ -1,0 +1,222 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows two types of users: 'Enterprise' and 'Users' (typical). Both interact with an 'API Gateway'. The API Gateway then routes requests to 'BUSINESS LOGIC', which the transcript explicitly states is 'a combination of EC2, ECS, and EKS systems'. Following the decomposition rule, individual nodes for EC2, ECS, and EKS are created, with EC2 acting as the entry/exit point for the logical 'BUSINESS LOGIC' group. The Business Logic interacts with an 'I3' system, identified as 'Fargate' with a 'DynamoDB' backing store. This I3 system determines whether to route to a 'Dedicated Enterprise Aurora' (encrypted by a customer's 'KMS' key) or a 'Shared Multi-tenant Aurora' (encrypted by Replicon's 'KMS' key). Edges are drawn based on visual arrows and logical flow described in the transcript, including necessary return paths for routing decisions.",
+  "graph": {
+    "name": "Replicon's Multi-Tenant Architecture with Customer-Managed Keys",
+    "link": "https://www.youtube.com/watch?v=EXAMPLE_VIDEO_LINK",
+    "categories": "SaaS, Security, Data Management, Multi-tenancy",
+    "graph_usable": true,
+    "notes": "This architecture demonstrates Replicon's SaaS-based time tracking and project management solution, showcasing a multi-tenant system with an option for enterprise customers to bring their own AWS KMS CMK for dedicated data encryption in Aurora. The Inter-Infrastructure Intelligence (I3) system, built on Fargate and DynamoDB, handles routing requests to the appropriate data store based on customer type."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Enterprise Users",
+      "notes": "Users with higher compliance and regulatory needs, requiring dedicated data storage and control over encryption keys."
+    },
+    {
+      "id": "1",
+      "service": "KMS",
+      "name": "Enterprise CMK",
+      "notes": "Customer-provided KMS Customer Master Key (CMK) provisioned within their own AWS account and shared with Replicon's account."
+    },
+    {
+      "id": "2",
+      "service": "Aurora",
+      "name": "Dedicated Enterprise Aurora",
+      "notes": "Dedicated data storage system provisioned for enterprise users, encrypted using their shared Enterprise CMK."
+    },
+    {
+      "id": "3",
+      "service": "UserConsumerWebMobile",
+      "name": "Typical Users",
+      "notes": "Standard users interacting with the shared multi-tenant system."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "The primary entry point for both typical and enterprise users to access the Replicon application."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Business Logic EC2",
+      "notes": "Part of the shared business logic layer, handling incoming requests from API Gateway and coordinating data access."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "Business Logic ECS",
+      "notes": "Component of the shared business logic layer, working in combination with EC2 and EKS."
+    },
+    {
+      "id": "7",
+      "service": "EKS",
+      "name": "Business Logic EKS",
+      "notes": "Component of the shared business logic layer, working in combination with EC2 and ECS."
+    },
+    {
+      "id": "8",
+      "service": "Fargate",
+      "name": "Inter-Infrastructure Intelligence (I3)",
+      "notes": "A Fargate-based application API responsible for determining the correct data storage system (dedicated or shared Aurora) for each customer request."
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "I3 DynamoDB",
+      "notes": "The backing store for the I3 Fargate application, containing routing information for customer data."
+    },
+    {
+      "id": "10",
+      "service": "Aurora",
+      "name": "Shared Multi-tenant Aurora",
+      "notes": "The default multi-tenant data storage system for typical users, encrypted with Replicon's platform-provided KMS key."
+    },
+    {
+      "id": "11",
+      "service": "KMS",
+      "name": "Replicon's KMS",
+      "notes": "Replicon's platform-provided KMS key used for encrypting data at rest in the shared multi-tenant Aurora system."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Enterprise users provision and share their KMS CMK with Replicon's account."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "The Enterprise CMK is used to encrypt the dedicated Aurora instance."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Enterprise users access the application through API Gateway."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "API Gateway routes enterprise user requests to the Business Logic (EC2 component)."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Business Logic queries the I3 Fargate system to determine the correct data location."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "I3 Fargate accesses DynamoDB to retrieve customer-specific routing information."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "DynamoDB returns the routing information to I3 Fargate."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "I3 Fargate returns the data routing decision to the Business Logic (EC2)."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Business Logic accesses the Dedicated Enterprise Aurora based on the routing decision."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Typical users access the application through API Gateway."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes typical user requests to the Business Logic (EC2 component)."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Business Logic queries the I3 Fargate system to determine the correct data location."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "I3 Fargate accesses DynamoDB to retrieve customer-specific routing information."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "DynamoDB returns the routing information to I3 Fargate."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "I3 Fargate returns the data routing decision to the Business Logic (EC2)."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Business Logic accesses the Shared Multi-tenant Aurora based on the routing decision."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "The Shared Multi-tenant Aurora uses Replicon's platform-provided KMS key for encryption at rest."
+    }
+  ]
+}

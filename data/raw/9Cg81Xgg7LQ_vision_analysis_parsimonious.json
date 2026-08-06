@@ -1,72 +1,72 @@
 {
-  "step_by_step_reasoning": "We identify six main components from the whiteboard: GIVING (monolith on EC2), SQL Server (ThirdParty database), APPS (Node platform on EC2), ECS (Identity service container), DynamoDB (for event sourcing), and Kinesis (for distributing events). X-Ray is positioned at the top for distributed tracing. The flows capture the migration/strangler pattern where apps and giving platform interact with the new ECS identity service, which saves events to DynamoDB and streams them to Kinesis, which syncs updates back to the monolith.",
+  "step_by_step_reasoning": "The diagram illustrates Pushpay's strategy to decompose a monolithic application into microservices. The core flow starts with existing platforms, the 'Giving Platform' (a .NET monolith with SQL Server) and the 'Apps Platform', interacting with a newly introduced 'Identity Service' hosted on ECS. This Identity Service uses DynamoDB for event storage and an event sourcing architecture. Events from DynamoDB are then streamed via Kinesis Data Stream, primarily feeding back into the original monolith for synchronization, as well as potentially to other services not explicitly drawn. X-Ray is used for observability, tracing requests through the new microservice architecture. The connections are derived directly from the arrows in the whiteboard diagram, and service names are strictly mapped to the provided AWS list or semantic ontology for external components.",
   "graph": {
-    "name": "Pushpay Monolith Decomposition to Containerized Microservices",
-    "link": "https://www.youtube.com/watch?v=9Cg81Xgg7LQ",
-    "categories": "compute_intensive, data_ingestion",
+    "name": "Pushpay's Monolith Decomposition into Microservices",
+    "link": "https://www.youtube.com/watch?v=EXAMPLE_VIDEO_ID",
+    "categories": "SaaS,Microservices,Event-Driven,DotNet",
     "graph_usable": true,
-    "notes": "Decomposing a .NET/SQL Server monolith into containerized .NET Core microservices on ECS, utilizing DynamoDB for event sourcing and Kinesis to sync back with the legacy platform."
+    "notes": "Architecture showing Pushpay's decomposition of a .NET monolith into microservices using ECS, DynamoDB, and Kinesis, with X-Ray for observability and an event sourcing pattern."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "EC2",
-      "name": "Giving Platform (Monolith)",
-      "notes": "WORKLOAD_PEEK: Legacy .NET Windows monolith."
+      "service": "UserCompanyInternalPlatform",
+      "name": "Giving Platform Monolith (.NET)",
+      "notes": "The existing .NET monolith application, part of Pushpay's giving platform, which is being decomposed and now interacts with the new Identity Service."
     },
     {
       "id": "1",
       "service": "ThirdParty",
       "name": "SQL Server",
-      "notes": "DATA_PEEK: Database for the legacy monolith."
+      "notes": "The relational database used by the existing Giving Platform monolith."
     },
     {
       "id": "2",
-      "service": "EC2",
-      "name": "Apps Platform",
-      "notes": "WORKLOAD_PEEK: Node-based apps platform."
+      "service": "UserCompanyInternalPlatform",
+      "name": "Apps Platform (Node)",
+      "notes": "An existing application platform, described as 'Node', which now integrates with the new Identity Service for user sign-in and sign-up functionality."
     },
     {
       "id": "3",
       "service": "ECS",
-      "name": "Identity Service (ECS)",
-      "notes": "WORKLOAD_PEEK: .NET Core container running on Alpine Linux hosting a GraphQL API."
+      "name": "Identity Service",
+      "notes": "The new .NET Core microservice, running in containers on Alpine Linux within ECS, responsible for user identity functions like sign-in, sign-up, and profile management, exposed via a GraphQL API."
     },
     {
       "id": "4",
       "service": "DynamoDB",
-      "name": "DynamoDB",
-      "notes": "DATA_PEEK: Event store capturing user profile histories."
+      "name": "Identity Service Data Store",
+      "notes": "A NoSQL database used by the Identity Service to store user events and profile information as part of an event sourcing architecture."
     },
     {
       "id": "5",
-      "service": "Kinesis",
-      "name": "Kinesis Stream",
-      "notes": "DATA_PEEK: Distributes events back to other microservices and legacy platform."
+      "service": "KinesisDataStream",
+      "name": "Event Stream",
+      "notes": "A Kinesis Data Stream that receives events from DynamoDB for distribution to other microservices (e.g., fraud detection) and for feeding back into the monolith to ensure data synchronization."
     },
     {
       "id": "6",
       "service": "XRay",
-      "name": "AWS X-Ray",
-      "notes": "Used for tracing requests across the distributed system."
+      "name": "Distributed Tracing",
+      "notes": "An observability service adopted to provide insights and trace requests flowing through the distributed system, especially the new microservices."
     }
   ],
   "edges": [
     {
-      "source": "0",
-      "target": "1",
+      "source": "1",
+      "target": "0",
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Monolith database queries."
+      "notes": "The Giving Platform monolith interacts with its SQL Server database."
     },
     {
       "source": "0",
       "target": "3",
       "flow_id": 1,
-      "seq": "1",
+      "seq": "0",
       "type": "data",
-      "notes": "Sign-in/up requests from legacy platform to new Identity API."
+      "notes": "The Giving Platform monolith makes requests to the new Identity Service via its GraphQL API for user management."
     },
     {
       "source": "2",
@@ -74,39 +74,39 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Sign-in/up requests from Apps platform to GraphQL API."
+      "notes": "The Apps Platform makes requests to the new Identity Service via its GraphQL API for user management (e.g., sign-up, sign-in)."
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 1,
-      "seq": "2",
+      "flow_id": 2,
+      "seq": "0",
       "type": "data",
-      "notes": "Stores events in DynamoDB."
+      "notes": "The Identity Service stores events generated by user actions (e.g., sign-in events) into DynamoDB."
     },
     {
-      "source": "3",
+      "source": "4",
       "target": "5",
-      "flow_id": 1,
-      "seq": "3",
+      "flow_id": 3,
+      "seq": "0",
       "type": "data",
-      "notes": "Publishes events to Kinesis."
+      "notes": "Events from DynamoDB are published to the Kinesis Data Stream for further processing and distribution."
     },
     {
       "source": "5",
       "target": "0",
-      "flow_id": 1,
-      "seq": "4",
+      "flow_id": 3,
+      "seq": "1",
       "type": "data",
-      "notes": "Synchronization loop back to the monolith."
+      "notes": "Events from the Kinesis Data Stream are fed back into the Giving Platform monolith to synchronize user information and ensure consistency."
     },
     {
       "source": "3",
       "target": "6",
-      "flow_id": 1,
-      "seq": "5",
+      "flow_id": 4,
+      "seq": "0",
       "type": "meta",
-      "notes": "Sends execution trace logs."
+      "notes": "The Identity Service sends tracing data and operational insights to X-Ray for monitoring and debugging distributed requests."
     }
   ]
 }

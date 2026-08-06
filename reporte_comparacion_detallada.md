@@ -27,9 +27,9 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `6LcSv9XocTY` | Intuit: Serving 7 Million Customers Using Amazon Connect | **82.3%** | 76.2% | Parsimonious supera a Standard por 5.8%. El clásico alucina nodos por ruidos de la transcripción. |
 | `6YkguepAQuQ` | Aetion: Deploy Applications  Provision Cloud Resources with AWS Developer Tools | **100.0%** | 100.0% | Parsimonious supera a Standard por 5.3%. El clásico alucina nodos por ruidos de la transcripción. |
 | `6iK4WNj6QqI` | Ticketmaster: Active-Active Multi-Region Checkout for Ticket Purchases | **76.9%** | N/A | Comparación no disponible. |
-| `7wBOFcP1HwA` | Seera Group: Transforming Online Travel Booking with Microservices (Arabic) | **73.7%** | 77.8% | Standard supera a Parsimonious por 3.8%. El simplificado omitió detalles menores. |
-| `8ZRWzn0G39g` | Replicon: Multi-Tenant SaaS Solution with Bring Your Own Key (BYOK) Encryption for Enterprises | **70.6%** | N/A | Comparación no disponible. |
-| `9Cg81Xgg7LQ` | Pushpay Holdings Ltd.: Strangling a Monolithic Application While Moving to Microservices on AWS | **100.0%** | N/A | Comparación no disponible. |
+| `7wBOFcP1HwA` | Seera Group: Transforming Online Travel Booking with Microservices (Arabic) | **84.2%** | 84.2% | Rendimiento equivalente en servicios. F1 de conexiones del 50.0%. |
+| `8ZRWzn0G39g` | Replicon: MultiTenant SaaS Solution with Bring Your Own Key BYOK Encryption f... | **84.2%** | 70.6% | Parsimonious supera a Standard por 13.6%. F1 de conexiones del 32.7%. |
+| `9Cg81Xgg7LQ` | Pushpay Holdings Ltd : Strangling a Monolithic Application While Moving to Mi... | **66.7%** | 100.0% | Standard supera a Parsimonious por 33.3%. F1 de conexiones del 14.3%. |
 | `AS2JeM2FUzE` | Intellect Design Arena: Insurance Risk Assessment with Intellect FABRIC Data Services | **88.9%** | 82.3% | Parsimonious supera a Standard por 6.6%. El clásico alucina nodos por ruidos de la transcripción. |
 | `BPvr0qWpJlA` | ContactSuite: Automated Omni-Channel Service Desk Workflow | **63.2%** | 73.7% | Standard supera a Parsimonious por 10.7%. El simplificado omitió detalles menores. |
 | `Cgv0kfp_6xQ` | Snap: Journey of a Snap on Snapchat Using AWS | **100.0%** | 100.0% | Rendimiento equivalente en detección de servicios. |
@@ -81,8 +81,8 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `6E_Dg3YRil4` | Avnet: Accelerating OEM's with IoT and AI | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
 | `6uEX5RKd0Bk` | Grindr: Leveraging Dynamo and Aurora to Build an Enhanced Chat System | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
 | `7KqYdneuJjo` | Health eCareers: Using Generative AI to reinvent the Job Search Experience | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `8TExnSvZqt0` | AxiomSL's RegCloud®️: Secure & Scalable Risk & Regulatory Reporting on AWS | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
-| `99nNHsbwBpg` | SkyScanner: Building HighlyAvailable MultiRegion Kubernetes Clusters on 100 Amazon EC2 Spot | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
+| `8TExnSvZqt0` | AxiomSL's RegCloud®️: Secure & Scalable Risk & Regulatory Reporting on AWS | **95.7%** | 100.0% | Standard supera a Parsimonious por 4.3%. F1 de conexiones del 0.0%. |
+| `99nNHsbwBpg` | SkyScanner: Building HighlyAvailable MultiRegion Kubernetes Clusters on 100 A... | **80.0%** | 50.0% | Parsimonious supera a Standard por 30.0%. F1 de conexiones del 0.0%. |
 | `BgT_bDAejSQ` | GoDaddy: Empowering Agility with ZeroTrust Environment Best Practices | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
 | `FqCs3BD6qvo` | Accellion kiteworks: Cost-Effective CI/CD Platform Using Amazon EC2 Spot | **N/A** | N/A | Omitido en la evaluación del pipeline Parsimonious. |
 | `GoziWpmFCS0` | iRobot: Serverless Data Cataloging for Data Scientists | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
@@ -111,3 +111,8 @@ Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonio
 | `4WjXH8Wp0E4` | Kainos: Kainos Advances Patient Care with Next Generation Interoperability Pl... | **88.9%** | 88.9% | Rendimiento equivalente en servicios. F1 de conexiones del 58.8%. |
 | `53sUjFv9ByI` | Neumora Therapeutics: Enabling DNA and RNA Data Insight for Rapid Genomics Se... | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 66.7%. |
 | `5CwIt-Alqhg` | Accenture: Building a Blockchain Circular Supply Chain | **90.9%** | 90.9% | Rendimiento equivalente en servicios. F1 de conexiones del 88.0%. |
+| `8s0wGRkiDrw` | Mobilewalla: S3 Access Monitoring Using ML | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 36.4%. |
+| `9-6hQdFeolc` | Lyniate: Scaling Healthcare Data Exchange At Scale with Tenant Isolation | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 58.8%. |
+| `9-a9Y5THTYo` | Vitesco Technologies Cloud Foundation: A Scalable and Automated Cloud Landing... | **76.9%** | 76.9% | Rendimiento equivalente en servicios. F1 de conexiones del 62.5%. |
+| `90rWUjKjnAE` | amazee.io: Kubernetes Deployments Made Easy | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 33.3%. |
+| `9LhiUsg3knw` | Musixmatch: How Content is Generated by Users Italian | **66.7%** | 90.0% | Standard supera a Parsimonious por 23.3%. F1 de conexiones del 23.1%. |
