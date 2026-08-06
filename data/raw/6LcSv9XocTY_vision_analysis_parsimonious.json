@@ -1,11 +1,11 @@
 {
-  "step_by_step_reasoning": "We identify the main components from the whiteboard and transcript. The user calls into Amazon Connect. Connect triggers a data dip via a Lambda to Salesforce CRM (represented by Salesforce box and Lambda). Another Lambda handles Lex/natural language integration. Top S3 bucket stores contact center events, queried by Athena. Bottom S3 bucket stores call recordings, which are processed by Transcribe and analyzed by Comprehend.",
+  "step_by_step_reasoning": "The architecture diagram visually depicts users interacting with Amazon Connect. Amazon Connect initiates a data dip to Salesforce via a Lambda function for customer information. Separately, Amazon Connect sends call recordings to an S3 bucket for post-call processing by Transcribe and Comprehend. Concurrently, Amazon Connect emits events for reporting and analytics, which land in a separate S3 bucket and are then processed by Athena. All nodes and edges are derived directly from the visual diagram and confirmed with the transcript, ensuring adherence to the 'visual-first' and 'strictly parsimonious' rules. Services like Lex, Kinesis, and Kinesis Firehose, though mentioned in the transcript, are omitted as they are not explicitly drawn as distinct visual components on the whiteboard. The unconnected Lambda icon at the bottom of the diagram is also omitted as it lacks explicit visual connections.",
   "graph": {
-    "name": "Intuit Global Contact Center Architecture",
-    "link": "https://www.youtube.com/watch?v=6LcSv9XocTY",
-    "categories": "data_ingestion, compute_intensive",
+    "name": "Intuit Global Contact Center",
+    "link": "",
+    "categories": "Contact Center, Analytics, AI/ML",
     "graph_usable": true,
-    "notes": "A serverless, scalable contact center architecture built on Amazon Connect. It utilizes automated CRM lookups, real-time analytics, and AI-driven post-call sentiment analysis."
+    "notes": "Intuit's architecture for a global contact center, leveraging Amazon Connect for customer interactions, Lambda for CRM data dips, S3 for call recordings and analytics events, and AI/ML services (Transcribe, Comprehend) for post-call analysis, alongside Athena for reporting."
   },
   "nodes": [
     {
@@ -16,57 +16,51 @@
     },
     {
       "id": "1",
-      "service": "Connect",
-      "name": "Amazon Connect",
-      "notes": "Cloud contact center service orchestrating voice calls and routing."
+      "service": "Amazon Connect",
+      "name": "Connect",
+      "notes": "Handles incoming calls and routes interactions."
     },
     {
       "id": "2",
-      "service": "Lambda",
-      "name": "CRM Lambda",
-      "notes": "WORKLOAD_PEEK: Executes data dips into Salesforce to retrieve user context."
+      "service": "S3",
+      "name": "Analytics S3 Bucket",
+      "notes": "Stores event data from Amazon Connect for reporting and analytics."
     },
     {
       "id": "3",
-      "service": "ThirdParty",
-      "name": "Salesforce CRM",
-      "notes": "External CRM database containing customer records."
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Queries the analytics data stored in S3."
     },
     {
       "id": "4",
       "service": "Lambda",
-      "name": "Integration Lambda",
-      "notes": "Integrates natural language processing and customer steering."
+      "name": "CRM Data Dip Lambda",
+      "notes": "Executes a data dip to the CRM system to retrieve customer information."
     },
     {
       "id": "5",
-      "service": "S3",
-      "name": "Event S3 Bucket",
-      "notes": "DATA_PEEK: Stores real-time contact center event logs."
+      "service": "ThirdParty",
+      "name": "Salesforce CRM",
+      "notes": "External CRM system for customer data. Represented as Salesforce."
     },
     {
       "id": "6",
-      "service": "Athena",
-      "name": "Athena",
-      "notes": "Queries event data for real-time dashboards."
+      "service": "S3",
+      "name": "Call Recordings S3 Bucket",
+      "notes": "Stores call recordings from Amazon Connect."
     },
     {
       "id": "7",
-      "service": "S3",
-      "name": "Recording S3 Bucket",
-      "notes": "DATA_PEEK: Stores post-call voice recordings."
+      "service": "Transcribe",
+      "name": "Transcribe",
+      "notes": "Processes call recordings from S3 for transcription."
     },
     {
       "id": "8",
-      "service": "Transcribe",
-      "name": "Transcribe",
-      "notes": "Generates text transcriptions of voice calls."
-    },
-    {
-      "id": "9",
       "service": "Comprehend",
       "name": "Comprehend",
-      "notes": "Performs sentiment analysis on transcribed text."
+      "notes": "Performs sentiment analysis on call recordings from S3."
     }
   ],
   "edges": [
@@ -76,71 +70,71 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "User initiates call."
-    },
-    {
-      "source": "1",
-      "target": "2",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Triggers data lookup."
-    },
-    {
-      "source": "3",
-      "target": "2",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "Retrieves profile info."
+      "notes": "Users initiate calls to Amazon Connect."
     },
     {
       "source": "1",
       "target": "4",
       "flow_id": 0,
-      "seq": "3",
+      "seq": "1",
       "type": "data",
-      "notes": "Resolves call intent."
+      "notes": "Amazon Connect triggers Lambda for a data dip."
     },
     {
-      "source": "1",
+      "source": "4",
       "target": "5",
-      "flow_id": 1,
-      "seq": "0",
+      "flow_id": 0,
+      "seq": "2",
       "type": "data",
-      "notes": "Streams real-time metrics."
+      "notes": "Lambda queries Salesforce CRM for customer data."
     },
     {
       "source": "5",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
       "type": "data",
-      "notes": "Performs analytics queries."
+      "notes": "Salesforce CRM returns customer data to Lambda."
     },
     {
       "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Amazon Connect stores call recordings in S3."
+    },
+    {
+      "source": "6",
       "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 triggers Transcribe for call transcription."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 triggers Comprehend for sentiment analysis of call recordings."
+    },
+    {
+      "source": "1",
+      "target": "2",
       "flow_id": 2,
       "seq": "0",
       "type": "data",
-      "notes": "Saves raw call recordings."
+      "notes": "Amazon Connect emits events for reporting to S3."
     },
     {
-      "source": "7",
-      "target": "8",
+      "source": "2",
+      "target": "3",
       "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Triggers transcription."
-    },
-    {
-      "source": "8",
-      "target": "9",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Extracts sentiment metrics."
+      "notes": "Athena queries event data stored in S3 for analytics."
     }
   ]
 }

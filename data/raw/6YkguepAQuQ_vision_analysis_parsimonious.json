@@ -1,130 +1,146 @@
 {
-  "step_by_step_reasoning": "Based on the whiteboard and the transcript, the developer triggers the pipeline by committing code to CodeCommit. CodePipeline orchestrates the flow. CodeBuild compiles the code and pushes the container image to ECR (Registry). CloudFormation then runs a 3-step process (ChangeSet, Approve, Execute) to provision the resources in the customer VPC, including ECS, ALB, and IAM roles. I will map the Developer, CodePipeline, CodeCommit, CodeBuild, CloudFormation, ECR, and the resources inside the VPC (VPC boundary, ECS, ALB, IAM).",
+  "step_by_step_reasoning": "The architecture describes a CI/CD pipeline for deploying applications and infrastructure. The process starts with a developer committing code to CodeCommit. This triggers CodePipeline, which orchestrates the build process in CodeBuild. CodeBuild then outputs a container image to Amazon ECR. Once the image is in ECR, CloudFormation is triggered to deploy the application and its underlying infrastructure, including Amazon ECS, IAM roles, and an Application Load Balancer (ALB) within a specified VPC. The visual diagram clearly shows the flow of services and their relationships, with additional details from the transcript for clarification.",
   "graph": {
-    "name": "Etion automated multi-tenant deployment pipeline",
-    "link": "https://www.youtube.com/watch?v=6YkguepAQuQ",
-    "categories": "control, compute_intensive",
+    "name": "Etion Healthcare Analytics CI/CD Architecture",
+    "link": "https://www.youtube.com/watch?v=YOUR_VIDEO_ID",
+    "categories": "CI/CD, Healthcare, Analytics, Containerization, Infrastructure as Code",
     "graph_usable": true,
-    "notes": "Automated deployment pipeline leveraging CodePipeline, CodeBuild, and CloudFormation to consistently deploy isolated tenant workloads to separate VPCs containing ECS, ALB, and IAM resources."
+    "notes": "This architecture leverages AWS developer tools to create a streamlined, consistent, and governed deployment process for healthcare analytics applications, including parallel deployments to multiple customer VPCs with controlled change sets."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserCompanyDeveloper",
       "name": "Developer",
-      "notes": "Developer commits infrastructure and application code modifications."
+      "notes": "An Etion developer initiating code changes and infrastructure template modifications."
     },
     {
       "id": "1",
-      "service": "CodePipeline",
-      "name": "AWS CodePipeline",
-      "notes": "Orchestrates the build and deployment pipeline stages."
+      "service": "CodeCommit",
+      "name": "CodeCommit Repository",
+      "notes": "Stores application source code and CloudFormation infrastructure templates."
     },
     {
       "id": "2",
-      "service": "CodeCommit",
-      "name": "AWS CodeCommit",
-      "notes": "Version control repository for application code and CloudFormation templates."
+      "service": "CodePipeline",
+      "name": "CodePipeline",
+      "notes": "Orchestrates the entire CI/CD workflow from commit to deployment."
     },
     {
       "id": "3",
       "service": "CodeBuild",
-      "name": "AWS CodeBuild",
-      "notes": "Builds docker images on demand inside short-lived containers."
+      "name": "CodeBuild",
+      "notes": "Builds application containers, paying only for the duration of the build."
     },
     {
       "id": "4",
       "service": "ECR",
       "name": "Amazon ECR Registry",
-      "notes": "Stores completed application docker images ready for deployment."
+      "notes": "Stores the Docker container images built by CodeBuild, ready for deployment."
     },
     {
       "id": "5",
       "service": "CloudFormation",
-      "name": "AWS CloudFormation",
-      "notes": "Executes deployment in three steps: ChangeSet, Approve, and Execute to deploy templates."
+      "name": "CloudFormation",
+      "notes": "Manages the deployment of both application code (via container images) and underlying infrastructure (like ALB, IAM roles) using templates. It supports a three-step process (Change Set, Approve, Execute) and parallel deployments to up to 100 VPCs."
     },
     {
       "id": "6",
       "service": "VPC",
-      "name": "Customer VPC",
-      "notes": "Isolated network environment deployed for each customer."
+      "name": "Production VPC",
+      "notes": "The Virtual Private Cloud environment where the application and its infrastructure are deployed."
     },
     {
       "id": "7",
       "service": "ECS",
-      "name": "Amazon ECS",
-      "notes": "Runs the containerized applications defined in task definitions."
+      "name": "Elastic Container Service",
+      "notes": "Runs the containerized applications within the VPC."
     },
     {
       "id": "8",
-      "service": "ALB",
-      "name": "Application Load Balancer",
-      "notes": "Routes external traffic to the ECS container tasks."
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "Manages roles and permissions required by the application components within the VPC."
     },
     {
       "id": "9",
-      "service": "IAM",
-      "name": "AWS IAM",
-      "notes": "Defines access permissions and execution roles for deployed applications."
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Distributes incoming traffic to the ECS tasks running the application."
     }
   ],
   "edges": [
     {
       "source": "0",
-      "target": "2",
+      "target": "1",
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Developer pushes code changes to git repository."
+      "notes": "Developer commits application code or infrastructure templates to the CodeCommit repository."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "CodeCommit change triggers the CodePipeline workflow."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "1",
-      "type": "data",
-      "notes": "CodeCommit triggers AWS CodeBuild."
+      "type": "meta",
+      "notes": "CodePipeline orchestrates the CodeBuild stage, initiating the build process."
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 0,
+      "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "CodeBuild outputs built container image to ECR."
+      "notes": "CodeBuild pushes the successfully built container image to Amazon ECR."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "The availability of the container image in ECR triggers the CloudFormation deployment stage."
     },
     {
       "source": "5",
       "target": "6",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "0",
-      "type": "data",
-      "notes": "CloudFormation deploys and configures the target customer VPC environment."
+      "type": "meta",
+      "notes": "CloudFormation provisions and updates resources within the target VPC."
     },
     {
       "source": "5",
       "target": "7",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "CloudFormation updates or instantiates ECS task definitions."
+      "notes": "CloudFormation deploys and configures ECS services and task definitions."
     },
     {
       "source": "5",
       "target": "8",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "CloudFormation provisions or modifies the Application Load Balancer."
+      "notes": "CloudFormation creates and manages necessary IAM roles and policies."
     },
     {
       "source": "5",
       "target": "9",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "3",
       "type": "data",
-      "notes": "CloudFormation applies IAM roles and permission policies."
+      "notes": "CloudFormation provisions and configures the Application Load Balancer."
     }
   ]
 }

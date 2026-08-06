@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "The architecture diagram is analyzed visually first to identify all distinct components (boxes/icons) and their explicit connections (arrows). The transcript is then used to confirm the service names and understand the interactions, especially for the auto-scaling mechanism. Mobile is identified as the external user. ALB acts as the entry point. ECS hosts the game logic and interacts with Aurora for player data and ElastiCache for caching. A separate flow describes the auto-scaling mechanism: Auto Scaling events are detected by CloudWatch Events, which triggers a Lambda function. This Lambda function then interacts with Auto Scaling to manage ECS task counts for rapid scaling. Floating text like test types is ignored as per rules. Service names are strictly taken from the allowed list, with 'CLOUD WATCH EVENTS' mapped to 'CloudWatch'.",
+  "graph": {
+    "name": "Akatsuki Mobile Game Backend Architecture for Romancing SaGa Re;univerSe",
+    "link": "https://www.youtube.com/watch?v=XXXXX (example, specific link not provided)",
+    "categories": "Mobile Gaming, Backend, Auto Scaling, High Concurrency",
+    "graph_usable": true,
+    "notes": "This architecture supports the mobile game 'Romancing SaGa Re;univerSe', handling over 1 million requests per minute and scaling over 700 containers during peak times. A key feature is the integrated auto-scaling of ECS, triggered by EC2 scaling events and managed by CloudWatch Events and Lambda, achieving scale-out within 2 minutes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Mobile Client",
+      "notes": "Mobile devices making API requests to the game backend."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Distributes incoming application traffic across multiple targets, such as ECS tasks."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS Cluster",
+      "notes": "Runs game logic applications within containers, processing player requests and interacting with databases."
+    },
+    {
+      "id": "3",
+      "service": "Aurora",
+      "name": "Aurora Database",
+      "notes": "Stores persistent player data and game-related information."
+    },
+    {
+      "id": "4",
+      "service": "ElastiCache",
+      "name": "ElastiCache Cluster",
+      "notes": "Provides in-memory cache for frequently accessed data to improve performance."
+    },
+    {
+      "id": "5",
+      "service": "AutoScaling",
+      "name": "Auto Scaling",
+      "notes": "Manages the automatic scaling of resources, specifically ECS tasks, in response to demand. Also, emits events for scaling actions related to EC2 as per transcript."
+    },
+    {
+      "id": "6",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Detects events from Auto Scaling (e.g., EC2 launch completion) and triggers Lambda functions."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda Function",
+      "notes": "Invoked by CloudWatch Events to control and adjust ECS task counts via Auto Scaling."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile clients send API requests to the game backend."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB routes API requests to the ECS cluster for game logic processing."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS applications access player data stored in Aurora."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "ECS applications retrieve and store cached data in ElastiCache."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "ECS sends processed game logic responses back through ALB."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "ALB forwards the response back to the mobile client."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Auto Scaling events (e.g., EC2 instance launch completions) are emitted and detected by CloudWatch Events."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "CloudWatch Events triggers a Lambda function in response to Auto Scaling events."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Lambda adjusts the Auto Scaling configuration for ECS tasks to achieve desired scaling."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Auto Scaling dynamically scales the number of ECS tasks/instances."
+    }
+  ]
+}

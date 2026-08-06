@@ -1,156 +1,104 @@
 {
-  "step_by_step_reasoning": "The architecture depicts a data security posture management solution primarily using Amazon Macie to scan S3 buckets across multiple AWS accounts. Findings are centralized in an S3 bucket within a main AWS account, then processed and analyzed by Amazon Athena, AWS Glue, and stored in a MySQL data lake. Amazon QuickSight is used for visualization, with Security Engineers as the primary users. I have followed the visual diagram strictly, deduplicating the Macie and S3 instances in the 'data' AWS accounts into single representative nodes. The central Macie node's connectivity is limited to what is explicitly drawn. Flow IDs and sequences are assigned based on the logical progression of data discovery, processing, and reporting.",
+  "step_by_step_reasoning": "The architecture visualizes automated sensitive data discovery and reporting across AWS accounts. Amazon Macie analyzes S3 buckets and exports finding metadata into a central S3 bucket. Amazon Athena queries this finding metadata in S3, while Amazon QuickSight connects to retrieve visualization data. Data is also exported from S3 into a MySQL database. AWS Glue provides background data processing, and Security Engineers access QuickSight dashboards.",
   "graph": {
-    "name": "Opportune Data Security Posture Management with Macie",
+    "name": "Opportune Data Security Posture Management with Amazon Macie",
     "link": "",
-    "categories": "Security,Analytics,Data Governance",
+    "categories": "Security & Analytics",
     "graph_usable": true,
-    "notes": "This architecture focuses on using Amazon Macie across multiple AWS accounts to discover sensitive data in S3 buckets. Findings are aggregated into a central S3 bucket and processed using Amazon Athena, AWS Glue, and a MySQL data lake. Amazon QuickSight provides visualization for Security Engineers."
+    "notes": "Architecture shows cross-account Macie metadata aggregation to a central S3 bucket for analysis via Athena and QuickSight."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserCompanyDeveloper",
       "name": "Security Engineers",
-      "notes": "Internal company staff (Security Engineers) who interact with the data analysis and visualization tools."
+      "notes": "Internal security staff reviewing findings."
     },
     {
       "id": "1",
-      "service": "S3",
-      "name": "S3_DataAccounts",
-      "notes": "Represents S3 buckets in various AWS accounts containing sensitive data to be scanned by Macie. Deduplicated from multiple S3 icons in the data accounts."
+      "service": "QuickSight",
+      "name": "Amazon QuickSight",
+      "notes": "Provides dashboards showing risky buckets."
     },
     {
       "id": "2",
-      "service": "Macie",
-      "name": "Macie_DataAccounts",
-      "notes": "Represents Amazon Macie instances deployed in multiple AWS accounts to scan S3 buckets for sensitive data. Deduplicated from multiple Macie icons in the data accounts."
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "SQL-based discovery querying S3 findings."
     },
     {
       "id": "3",
       "service": "S3",
-      "name": "S3_Findings",
-      "notes": "A central S3 bucket where findings from Macie scans are aggregated and stored."
+      "name": "Amazon Simple Storage Service (Amazon S3)",
+      "notes": "Central bucket storing Macie metadata findings."
     },
     {
       "id": "4",
       "service": "Macie",
-      "name": "Amazon Macie_Central",
-      "notes": "A central Amazon Macie instance, possibly for managing findings or providing a dashboard, consuming data from the S3 Findings bucket."
+      "name": "Amazon Macie",
+      "notes": "Data discovery tool scanning buckets for sensitive PII."
     },
     {
       "id": "5",
-      "service": "Athena",
-      "name": "Amazon Athena",
-      "notes": "Used by Security Engineers to query the Macie findings stored in S3."
+      "service": "ThirdParty",
+      "name": "MySQL",
+      "notes": "Target MySQL data lake receiving findings data."
     },
     {
       "id": "6",
-      "service": "MySQL",
-      "name": "MySQL",
-      "notes": "A MySQL data lake where processed findings data is stored."
-    },
-    {
-      "id": "7",
       "service": "Glue",
       "name": "AWS Glue",
-      "notes": "Used for data processing, loading, and aggregation, working in conjunction with Athena."
-    },
-    {
-      "id": "8",
-      "service": "QuickSight",
-      "name": "Amazon QuickSight",
-      "notes": "Used for visualizing the processed findings and presenting them as dashboards to Security Engineers."
+      "notes": "ETL automation loading and aggregating findings."
     }
   ],
   "edges": [
     {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Macie exports discovery findings metadata into central S3."
+    },
+    {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Macie in data accounts scans S3 buckets and sends sensitive data findings to the central S3_Findings bucket."
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "The central Amazon Macie instance consumes findings data from the S3_Findings bucket."
-    },
-    {
-      "source": "0",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "Security Engineers interact with Amazon Athena to initiate queries for findings."
-    },
-    {
-      "source": "5",
-      "target": "3",
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Amazon Athena queries the S3_Findings bucket to retrieve Macie findings."
+      "notes": "Athena queries S3 bucket findings."
     },
     {
       "source": "3",
-      "target": "5",
+      "target": "2",
       "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Amazon Athena retrieves data from the S3_Findings bucket."
+      "notes": "S3 returns metadata query results to Athena."
     },
     {
-      "source": "5",
-      "target": "7",
+      "source": "1",
+      "target": "3",
       "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "Amazon Athena coordinates with AWS Glue for automated data processing."
+      "notes": "QuickSight fetches visualization data directly from S3 bucket."
     },
     {
-      "source": "7",
-      "target": "3",
+      "source": "3",
+      "target": "5",
       "flow_id": 1,
       "seq": "5",
       "type": "data",
-      "notes": "AWS Glue reads and writes processed data from/to the S3_Findings bucket."
-    },
-    {
-      "source": "7",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "AWS Glue loads aggregated findings data into the MySQL data lake."
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "7",
-      "type": "data",
-      "notes": "Amazon Athena can directly output query results into the MySQL data lake."
+      "notes": "Findings metadata is loaded into MySQL data lake."
     },
     {
       "source": "0",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "1",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "6",
       "type": "data",
-      "notes": "Security Engineers access dashboards and reports via Amazon QuickSight."
-    },
-    {
-      "source": "8",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Amazon QuickSight queries Amazon Athena to retrieve data for visualizations."
+      "notes": "Security engineers view QuickSight dashboards."
     }
   ]
 }

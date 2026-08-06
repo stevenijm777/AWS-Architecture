@@ -1,66 +1,60 @@
 {
-  "step_by_step_reasoning": "The architecture shows a real-time cloud security ingestion and rules processing pipeline. Event streams flow into Collect Kinesis Data Streams, which sends resource updates to Neptune. Neptune connects to Elasticsearch, CloudWatch, and DynamoDB. Elasticsearch feeds metrics to CloudWatch, which informs a Shard service that loops back to Collect. Collect also feeds Rules Kinesis Data Streams, which evaluates rules against Neptune and persists results into DynamoDB, triggering Slack/Email notifications.",
+  "step_by_step_reasoning": "The whiteboard architecture shows real-time cloud security event collection and evaluation using AWS services. 1. External cloud providers' native security event streams enter the COLLECT Kinesis Data Stream. 2. Data flows into Neptune (graph database) for resource state graph representations. 3. Neptune replicates/synchronizes data across search and metric databases: Elasticsearch, CloudWatch, and DynamoDB. 4. Elasticsearch metrics feed into CloudWatch, and CloudWatch metrics feed a sharder loop back into COLLECT Kinesis Data Streams / Neptune. 5. Security events flow from COLLECT Kinesis Data Streams down to RULES Kinesis Data Streams. 6. RULES Kinesis Data Streams queries Neptune for security rule evaluation and writes detected violations to DynamoDB. 7. DynamoDB feeds notification channels (Slack and Email).",
   "graph": {
-    "name": "CloudHealth SecureState Data Ingestion and Rules Engine",
+    "name": "CloudHealth SecureState Architecture",
     "link": "",
-    "categories": "Security and Compliance",
+    "categories": "Security, Real-Time Analytics",
     "graph_usable": true,
-    "notes": "Real-time security insights pipeline using Neptune graph DB, sharded write optimization, and rule evaluation."
+    "notes": "Architecture for real-time security violation detection and resource monitoring using Kinesis Data Streams, Neptune, Elasticsearch, DynamoDB, and CloudWatch."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserCompanyDataStream",
       "name": "Cloud Event Streams",
-      "notes": "Incoming activity logs and event streams"
+      "notes": "Native event streams from cloud providers (e.g. AWS CloudWatch events / Azure activity logs)"
     },
     {
       "id": "1",
       "service": "KinesisDataStream",
-      "name": "Collect Kinesis Data Streams",
-      "notes": "Ingests raw event data"
+      "name": "COLLECT Kinesis Data Streams",
+      "notes": "Ingests real-time security events"
     },
     {
       "id": "2",
       "service": "Neptune",
-      "name": "Amazon Neptune",
-      "notes": "Graph database for resource configuration mapping"
+      "name": "Neptune",
+      "notes": "Primary graph database storing cloud resource topology and configurations"
     },
     {
       "id": "3",
       "service": "OpenSearch",
       "name": "Elasticsearch",
-      "notes": "Search and analytics data store"
+      "notes": "Provides search, reporting, and analytical aggregation capabilities"
     },
     {
       "id": "4",
       "service": "CloudWatch",
-      "name": "Amazon CloudWatch",
-      "notes": "Monitors cluster metrics"
+      "name": "CloudWatch",
+      "notes": "Monitors CPU, memory, and performance metrics for sharding decisions"
     },
     {
       "id": "5",
-      "service": "UserCompanyInternalPlatform",
-      "name": "Shard Service",
-      "notes": "Determines shard capacity and load balances writes"
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores detected security violations and resource configuration history"
     },
     {
       "id": "6",
       "service": "KinesisDataStream",
-      "name": "Rules Kinesis Data Streams",
-      "notes": "Fronts rule execution pipeline"
+      "name": "RULES Kinesis Data Streams",
+      "notes": "Buffers incoming resource changes for rule execution pipeline"
     },
     {
       "id": "7",
-      "service": "DynamoDB",
-      "name": "Amazon DynamoDB",
-      "notes": "Stores security violation results"
-    },
-    {
-      "id": "8",
       "service": "ThirdParty",
       "name": "Notifications (Slack / Email)",
-      "notes": "Alerting channels for end users"
+      "notes": "External notification integration channels for real-time customer alerts"
     }
   ],
   "edges": [
@@ -68,97 +62,97 @@
       "source": "0",
       "target": "1",
       "flow_id": 1,
-      "seq": "0",
+      "seq": "1",
       "type": "data",
-      "notes": "Event stream data ingestion"
+      "notes": "Incoming cloud security events"
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 1,
-      "seq": "1",
+      "seq": "2",
       "type": "data",
-      "notes": "Ingests cloud resource graph data"
-    },
-    {
-      "source": "1",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "Propagates event changes to rule pipeline"
+      "notes": "Publishes evaluated cloud resources into Neptune graph database"
     },
     {
       "source": "2",
       "target": "3",
       "flow_id": 1,
-      "seq": "2",
+      "seq": "3",
       "type": "data",
-      "notes": "Replicates state for search and reporting"
+      "notes": "Replicates resource data for reporting and analytics"
     },
     {
       "source": "2",
       "target": "4",
       "flow_id": 1,
-      "seq": "2a",
+      "seq": "4",
       "type": "meta",
-      "notes": "Reports performance metrics"
+      "notes": "Exports cluster usage metrics to CloudWatch"
     },
     {
       "source": "2",
-      "target": "7",
+      "target": "5",
       "flow_id": 1,
-      "seq": "2b",
+      "seq": "5",
       "type": "data",
-      "notes": "Stores state attributes"
+      "notes": "Persists resource configuration history"
     },
     {
       "source": "3",
       "target": "4",
       "flow_id": 1,
-      "seq": "3",
+      "seq": "6",
       "type": "meta",
-      "notes": "Metrics flow to monitoring"
+      "notes": "Elasticsearch metrics sent to CloudWatch"
     },
     {
       "source": "4",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "meta",
-      "notes": "Provides capacity parameters"
-    },
-    {
-      "source": "5",
       "target": "1",
       "flow_id": 1,
-      "seq": "5",
-      "type": "control",
-      "notes": "Load balances sharded write requests"
+      "seq": "7",
+      "type": "meta",
+      "notes": "Sharder service uses metrics to load balance cluster writes"
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Propagates event changes down to rules engine pipeline"
     },
     {
       "source": "6",
       "target": "2",
       "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Evaluates rules against graph DB"
-    },
-    {
-      "source": "6",
-      "target": "7",
-      "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "Persists detected violations"
+      "notes": "Executes security rule queries over Neptune graph database"
     },
     {
-      "source": "7",
-      "target": "8",
+      "source": "2",
+      "target": "6",
       "flow_id": 2,
       "seq": "3",
       "type": "data",
-      "notes": "Triggers user alerts"
+      "notes": "Returns graph relation data for rule processing"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Persists detected security violations into DynamoDB"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Triggers real-time alerts to external notification services"
     }
   ]
 }
