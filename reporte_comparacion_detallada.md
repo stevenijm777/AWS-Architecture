@@ -1,118 +1,53 @@
-# Reporte de Comparación Detallada: Arquitecturas AWS
-
-Este reporte compara los gráficos generados por el pipeline **Gemini Parsimonious** y el **Standard Vision Pipeline** contra el **Ground Truth** manual.
-
-## Evaluación Core (Ground Truths Válidos)
-
-| Video ID | Título | F1 Parsimonious | F1 Standard | Diagnóstico / Observaciones |
-|---|---|---|---|---|
-| `6CgqEzyWpeA` | SundaySky: Create Personalized Videos in Real Time on GPU-based Spot Instance... | **82.4%** | 84.2% | Standard supera a Parsimonious por 1.9%. F1 de conexiones del 34.3%. |
+| Code | Título | Service F1 (Parsimonious) | Service F1 (Standard) | Observación |
+| :--- | :--- | :---: | :---: | :--- |
 | `-3lnf5lzsH0` | MakeMyTrip: Building Next Generation SOC | **95.7%** | 80.0% | Parsimonious supera a Standard por 15.7%. F1 de conexiones del 64.3%. |
-| `-kA0ahrhX3I` | Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie | **100.0%** | 85.7% | Parsimonious supera a Standard por 14.3%. F1 de conexiones del 52.6%. |
+| `-S-R7MWRpaI` | mimik: Hybrid Edge Cloud Leveraging AWS to Support Edge Microservice Mesh | **66.7%** | 71.4% | Standard supera a Parsimonious por 4.7%. F1 de conexiones del 33.3%. |
+| `-ahWdCysMYw` | Summit Technology Group: Building a Data Consumption Model for Multi-Tenant A... | **80.0%** | 93.3% | Standard supera a Parsimonious por 13.3%. F1 de conexiones del 28.6%. |
+| `-kA0ahrhX3I` | Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amazon Macie | **100.0%** | 92.3% | Parsimonious supera a Standard por 7.7%. F1 de conexiones del 71.4%. |
 | `-wLEkq21cvA` | Versent: The Migration Factory | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 47.6%. |
 | `07lfvavMdfU` | Levels Beyond: Digital Content Orchestration | **90.0%** | 94.7% | Standard supera a Parsimonious por 4.7%. F1 de conexiones del 72.0%. |
 | `0F7KDLz-kIQ` | Zigbang: A Hybrid API of Serverless and ECS, Infra as a Code via CDK | **83.3%** | 90.9% | Standard supera a Parsimonious por 7.6%. F1 de conexiones del 57.8%. |
-| `1aYoIZvabbk` | OLX Autos: Building Developer Platform for Rapid Global Expansion | **92.3%** | 83.3% | Parsimonious supera a Standard por 9.0%. F1 de conexiones del 66.7%. |
-| `1xLjtJnfZes` | MATTR: Building Digital Trust at Scale | **80.0%** | 80.0% | Rendimiento equivalente en servicios. F1 de conexiones del 54.5%. |
-| `2L0m28ZLmtE` | Sanofi with TeamWork: OnDemand Data Science Environment | **100.0%** | 91.7% | Parsimonious supera a Standard por 8.3%. F1 de conexiones del 50.0%. |
-| `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis | **71.4%** | 71.4% | Rendimiento equivalente en servicios. F1 de conexiones del 47.6%. |
-| `2e3vOxsHekE` | Mueller Water Products: A Water Intelligent Platform | **83.3%** | 83.3% | Rendimiento equivalente en servicios. F1 de conexiones del 60.0%. |
-| `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League Gaming Platform on AWS | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 43.5%. |
-| `3yJZ6rPoZfg` | Hexagon HxDR: Cloud-Based Visualization of Spatial Data | **50.0%** | 50.0% | Rendimiento equivalente en servicios. F1 de conexiones del 23.5%. |
-| `4-teOQ_dJvY` | SBB Cargo: Data Collection and Processing with Serverless Analytics Services | **57.1%** | 76.9% | Standard supera a Parsimonious por 19.8%. F1 de conexiones del 27.3%. |
-| `5EmA67lSJEs` | Extreme Reach: The AdBridge Platform on AWS Handles 80%+ of all Commercials in the US | **80.0%** | 80.0% | Rendimiento equivalente en detección de servicios. |
-| `5f3z1Z_9BJA` | Capgemini: Refactoring a Data Warehouse to Amazon Redshift | **85.7%** | 80.0% | Parsimonious supera a Standard por 6.0%. El clásico alucina nodos por ruidos de la transcripción. |
-| `5vR5aN_xdI0` | Splunk: Data at Scale by Decoupling Compute and Storage LIVE | **76.9%** | 76.9% | Rendimiento equivalente en servicios. F1 de conexiones del 55.6%. |
-| `6EUknQqaV1w` | CloudHealth by VMware: Secure State. Manages Over 50M Assets from Billions of... | **93.3%** | 93.3% | Rendimiento equivalente en servicios. F1 de conexiones del 69.6%. |
-| `6LcSv9XocTY` | Intuit: Serving 7 Million Customers Using Amazon Connect | **82.3%** | 76.2% | Parsimonious supera a Standard por 5.8%. El clásico alucina nodos por ruidos de la transcripción. |
-| `6YkguepAQuQ` | Aetion: Deploy Applications  Provision Cloud Resources with AWS Developer Tools | **100.0%** | 100.0% | Parsimonious supera a Standard por 5.3%. El clásico alucina nodos por ruidos de la transcripción. |
-| `6iK4WNj6QqI` | Ticketmaster: Active-Active Multi-Region Checkout for Ticket Purchases | **76.9%** | N/A | Comparación no disponible. |
-| `7wBOFcP1HwA` | Seera Group: Transforming Online Travel Booking with Microservices (Arabic) | **84.2%** | 84.2% | Rendimiento equivalente en servicios. F1 de conexiones del 50.0%. |
-| `8ZRWzn0G39g` | Replicon: MultiTenant SaaS Solution with Bring Your Own Key BYOK Encryption f... | **84.2%** | 70.6% | Parsimonious supera a Standard por 13.6%. F1 de conexiones del 32.7%. |
-| `9Cg81Xgg7LQ` | Pushpay Holdings Ltd : Strangling a Monolithic Application While Moving to Mi... | **66.7%** | 100.0% | Standard supera a Parsimonious por 33.3%. F1 de conexiones del 14.3%. |
-| `AS2JeM2FUzE` | Intellect Design Arena: Insurance Risk Assessment with Intellect FABRIC Data Services | **88.9%** | 82.3% | Parsimonious supera a Standard por 6.6%. El clásico alucina nodos por ruidos de la transcripción. |
-| `BPvr0qWpJlA` | ContactSuite: Automated Omni-Channel Service Desk Workflow | **63.2%** | 73.7% | Standard supera a Parsimonious por 10.7%. El simplificado omitió detalles menores. |
-| `Cgv0kfp_6xQ` | Snap: Journey of a Snap on Snapchat Using AWS | **100.0%** | 100.0% | Rendimiento equivalente en detección de servicios. |
-| `D6rG9eZ5Qus` | Graham Media Group: Modernizing Traditional Broadcasting with AWS | **77.8%** | 70.0% | Parsimonious supera a Standard por 8.0%. El clásico alucina nodos por ruidos de la transcripción. |
-| `D9qTotVJYss` | HBO Max: Using Canaries for Outside-in Validation | **76.9%** | 83.3% | Standard supera a Parsimonious por 6.3%. El simplificado omitió detalles menores. |
-| `DAJZAygxDZA` | BASF Digital Farming: Productionizing ML with a Cross-Account Model Deployment Solution | **72.7%** | 61.5% | Parsimonious supera a Standard por 11.5%. El clásico alucina nodos por ruidos de la transcripción. |
-| `Felt-hOU6kU` | Xero: Building a Scalable Self-Service Portal for Thousands of Developers Provisioning Resources | N/A | 92.3% | Omitido en la evaluación del pipeline Parsimonious. |
-| `G07keU4g-LU` | Jubilant FoodWorks: Driving a Quality Customer Experience Using Data Lake | N/A | 70.0% | Omitido en la evaluación del pipeline Parsimonious. |
-| `GJ1So_pbZWk` | Taysols: Next Best Offer Recommendation System using Amazon SageMaker | N/A | 77.8% | Omitido en la evaluación del pipeline Parsimonious. |
-| `H_S7CxtHgSM` | Raiffeisen Bank International: Automated Integration of OnPremises Key Management with AWS KMS | N/A | 82.3% | Omitido en la evaluación del pipeline Parsimonious. |
-| `INog0_9tCtY` | Threat Stack: Proactive Risk Identification and Real-time Threat Detection across AWS | N/A | 72.7% | Omitido en la evaluación del pipeline Parsimonious. |
-| `JYeXbUdFOdw` | Noventiq: Harnessing Search and Analytics with Event-Driven Architecture on Amazon OpenSearch | **80.0%** | N/A | Comparación no disponible. |
-| `JiWHomdh1oI` | Datacoral: Using Serverless to Create Data Pipelines | N/A | 80.0% | Omitido en la evaluación del pipeline Parsimonious. |
-| `Jkx6kVbDpL4` | Nielsen: Processing 55TB of Data Per Day with AWS Lambda | N/A | 76.9% | Omitido en la evaluación del pipeline Parsimonious. |
-| `Kebb0LOVC28` | Openfit: ChatOps with Slack and AWS Lambda | N/A | 100.0% | Omitido en la evaluación del pipeline Parsimonious. |
-| `KywvGM6HVXI` | Capillary Technologies: Building an OmniChannel Data Ingestion Platform | N/A | 63.2% | Omitido en la evaluación del pipeline Parsimonious. |
-| `KzJKdUZ3Ba4` | PwC: Streamlining Asset Tracking with Amazon Managed Blockchain | N/A | 75.0% | Omitido en la evaluación del pipeline Parsimonious. |
-| `LYP98nPBj2A` | Singtel: Next-Generation Mobile Financial Services Platform on AWS and Amazon Aurora PostgreSQL | N/A | 53.3% | Omitido en la evaluación del pipeline Parsimonious. |
-| `LxeSC3-xMlk` | St. Louis University: Using Amazon Lex to Answer Students' Questions Through Alexa and a Mobile App | N/A | 77.8% | Omitido en la evaluación del pipeline Parsimonious. |
-| `Ly_UhX3LCCs` | AWS Solutions: Simple and Secure Media Exchange on AWS | N/A | 88.9% | Omitido en la evaluación del pipeline Parsimonious. |
-| `M_hqigB9C4I` | Innovaccer: Deriving Insights from Healthcare Data to Empower Care Teams | N/A | 70.6% | Omitido en la evaluación del pipeline Parsimonious. |
-| `MbkLJ62jtMc` | Mueller Water Products: Scalable Ingestion of Sensor Data for Municipal Water Conservation LIVE | N/A | 66.7% | Omitido en la evaluación del pipeline Parsimonious. |
-| `NfUwtK8ALtw` | MX Player: Achieving Massive Scalability Using Amazon EKS with Spot Instances | N/A | 85.7% | Omitido en la evaluación del pipeline Parsimonious. |
-| `OQKOHNtyz3E` | Vodafone NZ: Data Driven Omni Channel Contact Center via Automation and Continuous Improvement | N/A | 84.2% | Omitido en la evaluación del pipeline Parsimonious. |
-| `OWLGK-eVrTw` | Heimdall Data: Query Caching Without Code Changes | N/A | 76.9% | Omitido en la evaluación del pipeline Parsimonious. |
-| `Pc7_uOdlGKo` | Panasonic Avionics: Weather Data and ML Models Improve In-Flight Entertainment Customer Satisfaction | N/A | 87.5% | Omitido en la evaluación del pipeline Parsimonious. |
-| `PgeQufaQy7I` | MindTickle: Building a Secure, Automated, Multi-Region Architecture on AWS | N/A | 80.0% | Omitido en la evaluación del pipeline Parsimonious. |
-| `QOtCpD23118` | LeasePlan: Leverages Serverless to Increase Driver Safety Reduce Fleet Costs and Lower Risk | **75.0%** | 75.0% | Rendimiento equivalente en detección de servicios. |
-| `Yju3yReAQtc` | Fortinet Uses AWS Serverless to Provide a Highly Available ControlPlane for their FortiWeb CloudWAF | N/A | 80.0% | Omitido en la evaluación del pipeline Parsimonious. |
-| `bikXzsVihF4` | United Airlines: How to Use AWS Backup to Protect Data from Ransomware Events | **93.3%** | N/A | Comparación no disponible. |
-| `fppIOuRMI2g` | Instructure: Elevating Digital Education to the Next-Level Event Driven CI/CD Deployments Globally | **100.0%** | N/A | Comparación no disponible. |
-| `gpWR5JBC64A` | FoodHub: Enabling Massive Scale Order Processing with Serverless Architecture | N/A | 75.0% | Omitido en la evaluación del pipeline Parsimonious. |
-| `jBffL9zUCSE` | The New York Times: Giving Developers the Freedom to Deploy, While Governing Cloud Services at Scale | **100.0%** | N/A | Comparación no disponible. |
-| `lkDq9g43djw` | FINBOURNE: How Finbourne Assures Resiliency Through Chaos Engineering Events Every 17 min | **100.0%** | N/A | Comparación no disponible. |
-| `pk5yddJpC_8` | Benevity: Centralized Logging for Multiple Compute Classes Using OpenSearch | **83.3%** | N/A | Comparación no disponible. |
-| `qi017F1UwvM` | Salesflo: Transforming Field-Force Operations Using Event-Driven Architecture | **92.9%** | N/A | Comparación no disponible. |
-| `rPGLNw1cOGM` | 3M: Parallel Serverless Workflows for Materials Science | **83.3%** | N/A | Comparación no disponible. |
-| `unFVfqj9cQ8` | Contino: Measuring and Communicating The Business Impact of Landing Zones with Flight Controller | **93.3%** | N/A | Comparación no disponible. |
-| `wjtSHyENv0I` | Main Street America Insurance: The Independent Agent Portal, Breaking up the Monolith | N/A | 85.7% | Omitido en la evaluación del pipeline Parsimonious. |
-
-## Validación / Excluidos (Ground Truths Inválidos o Sin Ground Truth)
-
-| Video ID | Título | F1 Parsimonious | F1 Standard | Diagnóstico / Observaciones |
-|---|---|---|---|---|
-| `-yCol_7qH2U` | Experian: Self-Service MLOps Platform for Financial Services Customers | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `0-db3wFRfSc` | MyHeritage: Handling the Deep Nostalgia Virality, Scaling GPU Spot Instances Using Multi-Region | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `3BGPEFFCpvk` | Clickatech Smart Home Solution for Luxury Apartments (Stonehenge NYC) | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `62E9ggjGS8I` | DISH Network: Building a Self-Service Portal to Create Multiple Accounts at Scale | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
-| `6E_Dg3YRil4` | Avnet: Accelerating OEM's with IoT and AI | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `6uEX5RKd0Bk` | Grindr: Leveraging Dynamo and Aurora to Build an Enhanced Chat System | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `7KqYdneuJjo` | Health eCareers: Using Generative AI to reinvent the Job Search Experience | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `8TExnSvZqt0` | AxiomSL's RegCloud®️: Secure & Scalable Risk & Regulatory Reporting on AWS | **95.7%** | 100.0% | Standard supera a Parsimonious por 4.3%. F1 de conexiones del 0.0%. |
-| `99nNHsbwBpg` | SkyScanner: Building HighlyAvailable MultiRegion Kubernetes Clusters on 100 A... | **80.0%** | 50.0% | Parsimonious supera a Standard por 30.0%. F1 de conexiones del 0.0%. |
-| `BgT_bDAejSQ` | GoDaddy: Empowering Agility with ZeroTrust Environment Best Practices | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
-| `FqCs3BD6qvo` | Accellion kiteworks: Cost-Effective CI/CD Platform Using Amazon EC2 Spot | **N/A** | N/A | Omitido en la evaluación del pipeline Parsimonious. |
-| `GoziWpmFCS0` | iRobot: Serverless Data Cataloging for Data Scientists | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
-| `K5ww_O4vsxo` | Samsung Cloud: Global Hybrid Network Optimization Across 5 AWS Regions Using AWS Transit Gateway | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
-| `OTPyxlTjWp0` | Experian: Scalable and Flexible Machine Learning Batch Transformation | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `QnmmTIYZxNI` | Adobe: Simplifying Networking Across Thousands of AWS Accounts with AWS Transit Gateway LIVE | **N/A** | N/A | Excluido de evaluación: Ground Truth marcado como inválido/incompleto. |
-| `UPV6ggX4eSE` | Mission Cloud: Building a Generative AI Content Translation Pipeline Using Amazon Bedrock | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `W4QzOaKCX2Y` | Vercara UltraDNS Analytics & Operations: Petabyte-Scale Data on Amazon S3 and Amazon Athena | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `_cca2eNePC4` | Infinitium: Low Latency Fraud Detection System with Amazon Neptune Graph Database | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `cczJb4heExQ` | First Orion: Improved Operational Efficiency with Response Times Leveraging Amazon Q | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `npQWtmnuM6s` | Swyftx: Building Automated, Secure, and Attestable Pipelines from Engineers to Production | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `s4eerNhXf84` | Aqua Security: Enabling Real Time Blocking, Scalability, and High Availability in Containers | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `t8JCvcnFX10` | Age of Learning: Highly Scalable Continuous Integration Platform with Amazon EKS and Amazon EC2-Spot | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `vQgUkn3rAMY` | AssemblyAI: Building a Scalable Machine Learning Platform for Voice Data Transcription and Analysis | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `ym_Gz_zH7w8` | Peloton: Improved Customer Satisfaction and Engagement Powered by Real-Time Recommendations | **N/A** | N/A | Solo validación: No existe Ground Truth manual. |
-| `ww5fiygF6eg` | Marathon Oil: Automating Drone Image Processing to Monitor Equipment Health | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 29.6%. |
-| `-S-R7MWRpaI` | mimik: Hybrid Edge Cloud Leveraging AWS to Support Edge Microservice Mesh | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 33.3%. |
-| `-ahWdCysMYw` | Summit Technology Group: Building a Data Consumption Model for Multi-Tenant A... | **80.0%** | 93.3% | Standard supera a Parsimonious por 13.3%. F1 de conexiones del 28.6%. |
 | `0JxJpNjI9Y0` | The Washington Post: Building a Content Management Platform with Speed at its... | **80.0%** | 80.0% | Rendimiento equivalente en servicios. F1 de conexiones del 51.9%. |
 | `0gNMEyei-co` | Infor: Ingest and Analyze Millions of Application Events Daily for Compliance... | **77.8%** | 82.4% | Standard supera a Parsimonious por 4.6%. F1 de conexiones del 75.0%. |
 | `0wnNlOg42dc` | Spyne.AI: High-Quality Product Visuals at Scale with AI on AWS | **94.1%** | 94.1% | Rendimiento equivalente en servicios. F1 de conexiones del 76.2%. |
 | `1ZLiRT0C2Yo` | T-Mobile: Standardized Container-Based Architecture That can be Automatically... | **92.3%** | 92.3% | Rendimiento equivalente en servicios. F1 de conexiones del 0.0%. |
+| `1aYoIZvabbk` | OLX Autos: Building Developer Platform for Rapid Global Expansion | **92.3%** | 83.3% | Parsimonious supera a Standard por 9.0%. F1 de conexiones del 66.7%. |
 | `1kWxymroGeE` | OutSystems: Decomposing a Data Monolith for Scale and MultiTenancy | **90.9%** | 90.9% | Rendimiento equivalente en servicios. F1 de conexiones del 53.3%. |
+| `1xLjtJnfZes` | MATTR: Building Digital Trust at Scale | **80.0%** | 80.0% | Rendimiento equivalente en servicios. F1 de conexiones del 54.5%. |
+| `2L0m28ZLmtE` | Sanofi with TeamWork: OnDemand Data Science Environment | **96.0%** | 96.0% | Rendimiento equivalente en servicios. F1 de conexiones del 87.0%. |
+| `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for Digital Pathology Image Analysis | **71.4%** | 71.4% | Rendimiento equivalente en servicios. F1 de conexiones del 47.6%. |
+| `2e3vOxsHekE` | Mueller Water Products: A Water Intelligent Platform | **83.3%** | 83.3% | Rendimiento equivalente en servicios. F1 de conexiones del 60.0%. |
 | `2f_NYiPJQt4` | Appway: Securing Sensitive Banking Workflows with Isolated Architecture on AWS | **95.2%** | 95.2% | Rendimiento equivalente en servicios. F1 de conexiones del 40.0%. |
 | `37T7Nd8pL-c` | Docebo: How to Create Compelling e-Learning Videos from Documents via AI ML S... | **85.7%** | 92.3% | Standard supera a Parsimonious por 6.6%. F1 de conexiones del 40.0%. |
+| `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League Gaming Platform on AWS | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 43.5%. |
+| `3yJZ6rPoZfg` | Hexagon HxDR: Cloud-Based Visualization of Spatial Data | **50.0%** | 50.0% | Rendimiento equivalente en servicios. F1 de conexiones del 23.5%. |
+| `4-teOQ_dJvY` | SBB Cargo: Data Collection and Processing with Serverless Analytics Services | **57.1%** | 76.9% | Standard supera a Parsimonious por 19.8%. F1 de conexiones del 27.3%. |
 | `4WjXH8Wp0E4` | Kainos: Kainos Advances Patient Care with Next Generation Interoperability Pl... | **88.9%** | 88.9% | Rendimiento equivalente en servicios. F1 de conexiones del 58.8%. |
-| `53sUjFv9ByI` | Neumora Therapeutics: Enabling DNA and RNA Data Insight for Rapid Genomics Se... | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 66.7%. |
-| `5CwIt-Alqhg` | Accenture: Building a Blockchain Circular Supply Chain | **90.9%** | 90.9% | Rendimiento equivalente en servicios. F1 de conexiones del 88.0%. |
-| `8s0wGRkiDrw` | Mobilewalla: S3 Access Monitoring Using ML | **66.7%** | 66.7% | Rendimiento equivalente en servicios. F1 de conexiones del 36.4%. |
-| `9-6hQdFeolc` | Lyniate: Scaling Healthcare Data Exchange At Scale with Tenant Isolation | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 58.8%. |
-| `9-a9Y5THTYo` | Vitesco Technologies Cloud Foundation: A Scalable and Automated Cloud Landing... | **76.9%** | 76.9% | Rendimiento equivalente en servicios. F1 de conexiones del 62.5%. |
-| `90rWUjKjnAE` | amazee.io: Kubernetes Deployments Made Easy | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 33.3%. |
+| `53sUjFv9ByI` | Neumora Therapeutics: Enabling DNA and RNA Data Insight for Rapid Genomics Se... | **76.9%** | 72.7% | Parsimonious supera a Standard por 4.2%. F1 de conexiones del 66.7%. |
+| `5CwIt-Alqhg` | Accenture: Building a Blockchain Circular Supply Chain | **90.9%** | 90.9% | Rendimiento equivalente en servicios. F1 de conexiones del 91.7%. |
+| `5EmA67lSJEs` | Extreme Reach: The AdBridge Platform on AWS Handles 80%+ of all Commercials i... | **87.5%** | 87.5% | Rendimiento equivalente en servicios. F1 de conexiones del 58.8%. |
+| `5f3z1Z_9BJA` | Capgemini: Refactoring a Data Warehouse to Amazon Redshift | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 80.0%. |
+| `5vR5aN_xdI0` | Splunk: Data at Scale by Decoupling Compute and Storage LIVE | **76.9%** | 92.3% | Standard supera a Parsimonious por 15.4%. F1 de conexiones del 55.6%. |
+| `62E9ggjGS8I` | DISH Network: Building a Self-Service Portal to Create Multiple Accounts at S... | **83.3%** | 100.0% | Standard supera a Parsimonious por 16.7%. F1 de conexiones del 30.8%. |
+| `66fPHLmvikk` | ContentWise: How we Use Amazon SageMaker in Production Italian | **76.9%** | 83.3% | Standard supera a Parsimonious por 6.4%. F1 de conexiones del 60.0%. |
+| `6CgqEzyWpeA` | SundaySky: Create Personalized Videos in Real Time on GPU-based Spot Instance... | **88.9%** | 88.9% | Rendimiento equivalente en servicios. F1 de conexiones del 52.9%. |
+| `6EUknQqaV1w` | CloudHealth by VMware: Secure State. Manages Over 50M Assets from Billions of... | **100.0%** | 92.3% | Parsimonious supera a Standard por 7.7%. F1 de conexiones del 78.3%. |
+| `6LcSv9XocTY` | Intuit: Serving 7 Million Customers Using Amazon Connect | **82.4%** | 87.5% | Standard supera a Parsimonious por 5.1%. F1 de conexiones del 44.4%. |
+| `6YkguepAQuQ` | Aetion: Deploy Applications  Provision Cloud Resources with AWS Developer Tools | **100.0%** | 100.0% | Rendimiento equivalente en servicios. F1 de conexiones del 42.1%. |
+| `6iK4WNj6QqI` | Ticketmaster: Active-Active Multi-Region Checkout for Ticket Purchases | **76.9%** | 76.9% | Rendimiento equivalente en servicios. F1 de conexiones del 35.3%. |
+| `6sY0AunanlM` | NGINX: Deploy and Scale Applications with Ease Using AWS EKS, ECS and the NGI... | **60.0%** | 100.0% | Standard supera a Parsimonious por 40.0%. F1 de conexiones del 0.0%. |
+| `6sew_hdI6cY` | Triboo: Hosting Magento on Containers Italian | **96.0%** | 96.0% | Rendimiento equivalente en servicios. F1 de conexiones del 71.4%. |
+| `7LziNjUTo7w` | IHS Markit: Virtual Instructor-Led Trainings with IHS Markit (now part of S&P... | **87.5%** | 100.0% | Standard supera a Parsimonious por 12.5%. F1 de conexiones del 69.0%. |
+| `7V8wTCkjOqo` | NAB: Automating Cloud Governance at the National Australia Bank | **76.9%** | 100.0% | Standard supera a Parsimonious por 23.1%. F1 de conexiones del 20.0%. |
+| `7dtomip_VXc` | Akatsuki: Building Stable and Scalable Large Scale Game Servers with Amazon E... | **87.5%** | 100.0% | Standard supera a Parsimonious por 12.5%. F1 de conexiones del 57.1%. |
+| `7wBOFcP1HwA` | Seera Group: Transforming Online Travel Booking with Microservices (Arabic) | **84.2%** | 84.2% | Rendimiento equivalente en servicios. F1 de conexiones del 50.0%. |
+| `8TExnSvZqt0` | AxiomSL's RegCloud®️: Secure & Scalable Risk & Regulatory Reporting on AWS | **95.7%** | 100.0% | Standard supera a Parsimonious por 4.3%. F1 de conexiones del 0.0%. |
+| `8ZRWzn0G39g` | Replicon: MultiTenant SaaS Solution with Bring Your Own Key BYOK Encryption f... | **84.2%** | 70.6% | Parsimonious supera a Standard por 13.6%. F1 de conexiones del 32.7%. |
+| `8s0wGRkiDrw` | Mobilewalla: S3 Access Monitoring Using ML | **66.7%** | 100.0% | Standard supera a Parsimonious por 33.3%. F1 de conexiones del 36.4%. |
+| `9-6hQdFeolc` | Lyniate: Scaling Healthcare Data Exchange At Scale with Tenant Isolation | **85.7%** | 100.0% | Standard supera a Parsimonious por 14.3%. F1 de conexiones del 58.8%. |
+| `9-a9Y5THTYo` | Vitesco Technologies Cloud Foundation: A Scalable and Automated Cloud Landing... | **76.9%** | 100.0% | Standard supera a Parsimonious por 23.1%. F1 de conexiones del 62.5%. |
+| `90rWUjKjnAE` | amazee.io: Kubernetes Deployments Made Easy | **85.7%** | 100.0% | Standard supera a Parsimonious por 14.3%. F1 de conexiones del 33.3%. |
+| `99nNHsbwBpg` | SkyScanner: Building HighlyAvailable MultiRegion Kubernetes Clusters on 100 A... | **80.0%** | 50.0% | Parsimonious supera a Standard por 30.0%. F1 de conexiones del 0.0%. |
+| `9Cg81Xgg7LQ` | Pushpay Holdings Ltd : Strangling a Monolithic Application While Moving to Mi... | **66.7%** | 100.0% | Standard supera a Parsimonious por 33.3%. F1 de conexiones del 14.3%. |
 | `9LhiUsg3knw` | Musixmatch: How Content is Generated by Users Italian | **66.7%** | 90.0% | Standard supera a Parsimonious por 23.3%. F1 de conexiones del 23.1%. |
+| `ww5fiygF6eg` | Marathon Oil: Automating Drone Image Processing to Monitor Equipment Health | **85.7%** | 85.7% | Rendimiento equivalente en servicios. F1 de conexiones del 29.6%. |
