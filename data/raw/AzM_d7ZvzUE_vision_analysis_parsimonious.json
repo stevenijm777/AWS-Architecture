@@ -1,168 +1,168 @@
 {
-  "step_by_step_reasoning": "The whiteboard depicts Epsagon's serverless architecture for processing and analyzing customer AWS Lambda metrics. The flow starts at a customer's Lambda function sending CloudWatch log data to an ingesting Kinesis Data Stream. A Transform Lambda reads from Kinesis, interacting bidirectionally with DynamoDB to fetch customer config and maintain state for partial invocations, then outputs formatted invocation records into a second Kinesis Data Stream. From there, two distinct paths process the data: (1) A writer Lambda consumes from Kinesis to write invocation records directly into Serverless Aurora for fast point-lookup querying. (2) Kinesis Data Firehose receives invocation records, applies data format conversion using schema definitions from AWS Glue, and outputs Parquet files into an S3 bucket data lake. Finally, Amazon Athena queries the aggregated data stored in S3.",
+  "step_by_step_reasoning": "1. Visual Analysis of Whiteboard Diagram:\n- Top Left: Customer Lambda function icon (outlined with green dashed box) streaming log data.\n- Top Left to Mid Left: Stream icon labeled 'KINESIS' receiving logs.\n- Center Top: Orange Lambda icon ('Transform Lambda') taking data from Kinesis.\n- Center Bottom: DynamoDB icon ('DYNAMO DB') under Transform Lambda with bidirectional arrows.\n- Center Right: Stream icon labeled 'KINESIS' receiving transformed invocation records.\n- Top Right: Orange Lambda icon ('Writer Lambda') connecting to Aurora DB ('AURORA').\n- Middle Bottom: Firehose icon ('FIREHOSE') below second Kinesis, connected to Glue ('GLUE') underneath it.\n- Bottom Right: Green S3 Bucket icon receiving Parquet data from Firehose.\n- Far Bottom Right: Athena icon ('ATHENA') pointing to S3 bucket.\n\n2. AWS Service Mapping Verification:\n- Client Lambda -> Lambda\n- Ingestion Kinesis -> KinesisDataStream\n- Transform Lambda -> Lambda\n- Customer Data DB -> DynamoDB\n- Records Stream -> KinesisDataStream\n- Storage Writer -> Lambda\n- Serverless DB -> Aurora\n- Ingestion Stream -> Firehose\n- Schema Registry -> Glue\n- Object Storage -> S3\n- Query Engine -> Athena\n\n3. Edge and Arrowhead Verification:\n- Client Lambda -> Kinesis 1 (flow 0)\n- Kinesis 1 -> Transform Lambda (flow 0)\n- Transform Lambda <-> DynamoDB (flow 0, bi-directional lookup/update)\n- Transform Lambda -> Kinesis 2 (flow 0)\n- Kinesis 2 -> Writer Lambda (flow 1)\n- Writer Lambda -> Aurora (flow 1)\n- Kinesis 2 -> Firehose (flow 2)\n- Glue -> Firehose (flow 2, schema conversion integration)\n- Firehose -> S3 (flow 2)\n- Athena -> S3 (flow 2, querying dataset)",
   "graph": {
-    "name": "Epsagon - Serverless Cloud Monitoring Architecture",
+    "name": "Epsagon Serverless Monitoring and Metrics Ingestion Architecture",
     "link": "",
-    "categories": "Monitoring, Serverless, Data Lake",
+    "categories": "Monitoring & Observability",
     "graph_usable": true,
-    "notes": "Extracts serverless telemetry ingestion and data lake processing pipeline."
+    "notes": "Architecture for streaming, transforming, and querying serverless metrics and invocation records at scale."
   },
   "nodes": [
     {
       "id": "0",
       "service": "Lambda",
-      "name": "Customer Lambda Function",
-      "notes": "Customer function running in external account"
+      "name": "Client Lambda Function",
+      "notes": "Customer's Lambda function producing CloudWatch logs"
     },
     {
       "id": "1",
-      "service": "Kinesis",
-      "name": "Ingestion Kinesis Data Stream",
-      "notes": "Receives CloudWatch logs from customer account"
+      "service": "KinesisDataStream",
+      "name": "Logs Kinesis Data Stream",
+      "notes": "Ingests streamed CloudWatch log chunks from customer accounts"
     },
     {
       "id": "2",
       "service": "Lambda",
       "name": "Transform Lambda",
-      "notes": "Processes log streams into invocation records"
+      "notes": "Transforms log chunks into normalized invocation records"
     },
     {
       "id": "3",
       "service": "DynamoDB",
-      "name": "Customer Config DynamoDB",
-      "notes": "Stores customer function configs and partial invocation state"
+      "name": "Customer Metadata DynamoDB",
+      "notes": "Stores customer configuration, limits, and partial invocation state"
     },
     {
       "id": "4",
-      "service": "Kinesis",
-      "name": "Invocation Records Kinesis Stream",
-      "notes": "Buffers transformed invocation records"
+      "service": "KinesisDataStream",
+      "name": "Invocation Records Stream",
+      "notes": "Central stream for clean invocation records"
     },
     {
       "id": "5",
       "service": "Lambda",
       "name": "Aurora Writer Lambda",
-      "notes": "Writes invocation records to Aurora DB"
+      "notes": "Writes invocation records to Aurora with controlled concurrency"
     },
     {
       "id": "6",
       "service": "Aurora",
-      "name": "Serverless Aurora DB",
-      "notes": "Stores invocation data for instant point lookup queries"
+      "name": "Serverless Aurora Database",
+      "notes": "Fast query storage for individual invocation lookups"
     },
     {
       "id": "7",
       "service": "Firehose",
       "name": "Kinesis Data Firehose",
-      "notes": "Batches and converts records to Parquet"
+      "notes": "Batches records and performs Parquet format conversion"
     },
     {
       "id": "8",
       "service": "Glue",
-      "name": "AWS Glue Schema Registry",
-      "notes": "Provides table schema for Parquet conversion"
+      "name": "AWS Glue Schema Catalog",
+      "notes": "Defines Data Lake schema for Parquet conversion in Firehose"
     },
     {
       "id": "9",
       "service": "S3",
-      "name": "Data Lake S3 Bucket",
-      "notes": "Stores converted Parquet records for analytics"
+      "name": "S3 Data Lake Bucket",
+      "notes": "Stores formatted invocation Parquet files for analytics"
     },
     {
       "id": "10",
       "service": "Athena",
       "name": "Amazon Athena",
-      "notes": "Queries aggregated metrics from S3"
+      "notes": "Queries aggregated metrics over S3 data lake"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "0",
       "type": "data",
-      "notes": "Streams CloudWatch logs to Kinesis"
+      "notes": "CloudWatch logs streamed into Kinesis"
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 1,
-      "seq": "2",
+      "flow_id": 0,
+      "seq": "1",
       "type": "data",
-      "notes": "Triggers Transform Lambda"
+      "notes": "Log stream triggers Transform Lambda"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 1,
-      "seq": "3",
+      "flow_id": 0,
+      "seq": "2a",
       "type": "data",
-      "notes": "Queries customer config and stores partial invocation state"
+      "notes": "Fetches metadata and updates partial state"
     },
     {
       "source": "3",
       "target": "2",
-      "flow_id": 1,
-      "seq": "4",
+      "flow_id": 0,
+      "seq": "2b",
       "type": "data",
-      "notes": "Returns config data to Transform Lambda"
+      "notes": "Returns metadata to Transform Lambda"
     },
     {
       "source": "2",
       "target": "4",
-      "flow_id": 1,
-      "seq": "5",
+      "flow_id": 0,
+      "seq": "3",
       "type": "data",
-      "notes": "Emits invocation records"
+      "notes": "Publishes processed invocation records"
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 2,
-      "seq": "1",
+      "flow_id": 1,
+      "seq": "4",
       "type": "data",
-      "notes": "Triggers Writer Lambda"
+      "notes": "Invocation records trigger Aurora Writer Lambda"
     },
     {
       "source": "5",
       "target": "6",
-      "flow_id": 2,
-      "seq": "2",
+      "flow_id": 1,
+      "seq": "5",
       "type": "data",
-      "notes": "Persists invocation records to Aurora"
+      "notes": "Writes invocation records to Aurora"
     },
     {
       "source": "4",
       "target": "7",
-      "flow_id": 3,
-      "seq": "1",
+      "flow_id": 2,
+      "seq": "6",
       "type": "data",
       "notes": "Streams invocation records to Firehose"
     },
     {
       "source": "8",
       "target": "7",
-      "flow_id": 3,
-      "seq": "2",
+      "flow_id": 2,
+      "seq": "7",
       "type": "meta",
-      "notes": "Provides data schema for format conversion"
+      "notes": "Provides schema definition for Parquet conversion"
     },
     {
       "source": "7",
       "target": "9",
-      "flow_id": 3,
-      "seq": "3",
+      "flow_id": 2,
+      "seq": "8",
       "type": "data",
-      "notes": "Writes Parquet files to S3"
+      "notes": "Saves Parquet files into S3"
     },
     {
       "source": "10",
       "target": "9",
-      "flow_id": 3,
-      "seq": "4",
+      "flow_id": 2,
+      "seq": "9",
       "type": "data",
-      "notes": "Executes analytical queries on S3 data lake"
+      "notes": "Queries metrics and aggregate data from S3"
     }
   ]
 }

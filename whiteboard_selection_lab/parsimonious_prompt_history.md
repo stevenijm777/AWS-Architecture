@@ -3332,3 +3332,204 @@ Return ONLY valid JSON (no markdown fences):
 | :---: | :---: | :---: |
 | ![bqZWYmRAka0 Whiteboard](lab_workspace/bqZWYmRAka0/best_whiteboard.jpg) | ![bqZWYmRAka0 Vision](../Graphs/bqZWYmRAka0_vision.png) | ![bqZWYmRAka0 GT](../Graphs/bqZWYmRAka0_gt.png) |
 
+
+
+---
+
+## [Registro 27] - 2026-08-08 (Fase 5: Evaluación de 10 Videos con PROMPT V10 - Refinamiento de Aristas y Ontología)
+* **Videos Evaluados (10 videos del Lote 4):** `9qTEHITVeLE`, `9yziTe6lBwk`, `A4Lfk1Zz1dE`, `AS2JeM2FUzE`, `AzM_d7ZvzUE`, `BgT_bDAejSQ`, `bikXzsVihF4`, `BlCXEMp_lqY`, `BPvr0qWpJlA`, `bqZWYmRAka0`
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase con Prompt v10 Refinado)
+
+### Resultados Detallados de Evaluación por Video (10 Tablas Individuales con Prompt v10):
+
+#### Video `9qTEHITVeLE` - Majid Al Futtaim: Building a Custom Data Management Solution on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 9 | 10 | **10** |
+| **Número de Aristas** | 14 | 14 | 13 | **15** |
+| **Service F1 (Unique)** | — | 100.0% | 70.6% | **66.7%** |
+| **Service Precision** | — | 100.0% | 60.0% | **62.5%** |
+| **Service Recall** | — | 100.0% | 85.7% | **71.4%** |
+| **Edge F1 (Connections)** | — | 100.0% | 37.0% | **34.5%** |
+| **Edge Precision** | — | 100.0% | 38.5% | **33.3%** |
+| **Edge Recall** | — | 100.0% | 35.7% | **35.7%** |
+
+* **Servicios Faltantes (Omitidos):** `['MSK', 'UserConsumerWeb']`
+* **Servicios Alucinados (Inventados):** `['OnPremDC', 'OpenSearch', 'UserCompanyAgent']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![9qTEHITVeLE Whiteboard](lab_workspace/9qTEHITVeLE/best_whiteboard.jpg) | ![9qTEHITVeLE Vision](../Graphs/9qTEHITVeLE_vision.png) | ![9qTEHITVeLE GT](../Graphs/9qTEHITVeLE_gt.png) |
+
+#### Video `9yziTe6lBwk` - Ânima Educação: Digitizing Student Experience for Colleges in Brazil
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 10 | **10** |
+| **Número de Aristas** | 16 | 16 | 9 | **9** |
+| **Service F1 (Unique)** | — | 100.0% | 90.0% | **90.0%** |
+| **Service Precision** | — | 100.0% | 90.0% | **90.0%** |
+| **Service Recall** | — | 100.0% | 90.0% | **90.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 64.0% | **64.0%** |
+| **Edge Precision** | — | 100.0% | 88.9% | **88.9%** |
+| **Edge Recall** | — | 100.0% | 50.0% | **50.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `['UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![9yziTe6lBwk Whiteboard](lab_workspace/9yziTe6lBwk/best_whiteboard.jpg) | ![9yziTe6lBwk Vision](../Graphs/9yziTe6lBwk_vision.png) | ![9yziTe6lBwk GT](../Graphs/9yziTe6lBwk_gt.png) |
+
+#### Video `A4Lfk1Zz1dE` - Spot.io: Optimizing Cloud Infrastructure Through Secure Cost Aware Automation
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 7 | **8** |
+| **Número de Aristas** | 5 | 5 | 9 | **7** |
+| **Service F1 (Unique)** | — | 100.0% | 92.3% | **100.0%** |
+| **Service Precision** | — | 100.0% | 85.7% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 42.9% | **50.0%** |
+| **Edge Precision** | — | 100.0% | 33.3% | **42.9%** |
+| **Edge Recall** | — | 100.0% | 60.0% | **60.0%** |
+
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![A4Lfk1Zz1dE Whiteboard](lab_workspace/A4Lfk1Zz1dE/best_whiteboard.jpg) | ![A4Lfk1Zz1dE Vision](../Graphs/A4Lfk1Zz1dE_vision.png) | ![A4Lfk1Zz1dE GT](../Graphs/A4Lfk1Zz1dE_gt.png) |
+
+#### Video `AS2JeM2FUzE` - Intellect Design Arena: Insurance Risk Assessment with Intellect FABRIC Data Services
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 9 | 9 | **10** |
+| **Número de Aristas** | 12 | 10 | 9 | **10** |
+| **Service F1 (Unique)** | — | 88.9% | 88.9% | **77.8%** |
+| **Service Precision** | — | 88.9% | 88.9% | **77.8%** |
+| **Service Recall** | — | 88.9% | 88.9% | **77.8%** |
+| **Edge F1 (Connections)** | — | 72.7% | 76.2% | **45.5%** |
+| **Edge Precision** | — | 80.0% | 88.9% | **50.0%** |
+| **Edge Recall** | — | 66.7% | 66.7% | **41.7%** |
+
+* **Servicios Faltantes (Omitidos):** `['MongoDBAtlas', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty', 'UserCompanyAgent']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![AS2JeM2FUzE Whiteboard](lab_workspace/AS2JeM2FUzE/best_whiteboard.jpg) | ![AS2JeM2FUzE Vision](../Graphs/AS2JeM2FUzE_vision.png) | ![AS2JeM2FUzE GT](../Graphs/AS2JeM2FUzE_gt.png) |
+
+#### Video `AzM_d7ZvzUE` - Epsagon: Automatically Tracing and Analyzing Billions of AWS Serverless Events
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **11** |
+| **Número de Aristas** | 20 | 20 | 11 | **11** |
+| **Service F1 (Unique)** | — | 100.0% | 87.5% | **87.5%** |
+| **Service Precision** | — | 100.0% | 87.5% | **87.5%** |
+| **Service Recall** | — | 100.0% | 87.5% | **87.5%** |
+| **Edge F1 (Connections)** | — | 100.0% | 38.7% | **38.7%** |
+| **Edge Precision** | — | 100.0% | 54.5% | **54.5%** |
+| **Edge Recall** | — | 100.0% | 30.0% | **30.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['Kinesis']`
+* **Servicios Alucinados (Inventados):** `['KinesisDataStream']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![AzM_d7ZvzUE Whiteboard](lab_workspace/AzM_d7ZvzUE/best_whiteboard.jpg) | ![AzM_d7ZvzUE Vision](../Graphs/AzM_d7ZvzUE_vision.png) | ![AzM_d7ZvzUE GT](../Graphs/AzM_d7ZvzUE_gt.png) |
+
+#### Video `BgT_bDAejSQ` - GoDaddy: Empowering Agility with ZeroTrust Environment Best Practices
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 2 | 7 | 9 | **9** |
+| **Número de Aristas** | 1 | 5 | 6 | **0** |
+| **Service F1 (Unique)** | — | 28.6% | 28.6% | **28.6%** |
+| **Service Precision** | — | 16.7% | 16.7% | **16.7%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Precision** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Recall** | — | 0.0% | 0.0% | **0.0%** |
+
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['ALB', 'NAT', 'OnPremDC', 'UserCompanyDeveloper', 'WAF']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![BgT_bDAejSQ Whiteboard](lab_workspace/BgT_bDAejSQ/best_whiteboard.jpg) | ![BgT_bDAejSQ Vision](../Graphs/BgT_bDAejSQ_vision.png) | ![BgT_bDAejSQ GT](../Graphs/BgT_bDAejSQ_gt.png) |
+
+#### Video `bikXzsVihF4` - United Airlines: How to Use AWS Backup to Protect Data from Ransomware Events
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 8 | 8 | **8** |
+| **Número de Aristas** | 10 | 7 | 7 | **7** |
+| **Service F1 (Unique)** | — | 100.0% | 93.3% | **100.0%** |
+| **Service Precision** | — | 100.0% | 87.5% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 58.8% | 47.1% | **58.8%** |
+| **Edge Precision** | — | 71.4% | 57.1% | **71.4%** |
+| **Edge Recall** | — | 50.0% | 40.0% | **50.0%** |
+
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![bikXzsVihF4 Whiteboard](lab_workspace/bikXzsVihF4/best_whiteboard.jpg) | ![bikXzsVihF4 Vision](../Graphs/bikXzsVihF4_vision.png) | ![bikXzsVihF4 GT](../Graphs/bikXzsVihF4_gt.png) |
+
+#### Video `BlCXEMp_lqY` - Vizio: Smart TV Analytics at Scale
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 6 | 6 | **6** |
+| **Número de Aristas** | 9 | 9 | 5 | **5** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **66.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **66.7%** |
+| **Service Recall** | — | 100.0% | 100.0% | **66.7%** |
+| **Edge F1 (Connections)** | — | 100.0% | 71.4% | **42.9%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **60.0%** |
+| **Edge Recall** | — | 100.0% | 55.6% | **33.3%** |
+
+* **Servicios Faltantes (Omitidos):** `['Kinesis', 'UserConsumerTV']`
+* **Servicios Alucinados (Inventados):** `['KinesisDataStream', 'ThirdParty']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![BlCXEMp_lqY Whiteboard](lab_workspace/BlCXEMp_lqY/best_whiteboard.jpg) | ![BlCXEMp_lqY Vision](../Graphs/BlCXEMp_lqY_vision.png) | ![BlCXEMp_lqY GT](../Graphs/BlCXEMp_lqY_gt.png) |
+
+#### Video `BPvr0qWpJlA` - ContactSuite: Automated Omni-Channel Service Desk Workflow
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 11 | **12** |
+| **Número de Aristas** | 9 | 7 | 9 | **10** |
+| **Service F1 (Unique)** | — | 58.8% | 63.2% | **70.0%** |
+| **Service Precision** | — | 62.5% | 60.0% | **63.6%** |
+| **Service Recall** | — | 55.6% | 66.7% | **77.8%** |
+| **Edge F1 (Connections)** | — | 37.5% | 33.3% | **42.1%** |
+| **Edge Precision** | — | 42.9% | 33.3% | **40.0%** |
+| **Edge Recall** | — | 33.3% | 33.3% | **44.4%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserCompanyCRM', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['EC2', 'SES', 'ThirdParty', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![BPvr0qWpJlA Whiteboard](lab_workspace/BPvr0qWpJlA/best_whiteboard.jpg) | ![BPvr0qWpJlA Vision](../Graphs/BPvr0qWpJlA_vision.png) | ![BPvr0qWpJlA GT](../Graphs/BPvr0qWpJlA_gt.png) |
+
+#### Video `bqZWYmRAka0` - DBS Bank: Architecting Quant Pricing Engine for Performance with Amazon ElastiCache
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v10 Refinado**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 5 | 5 | 7 | **10** |
+| **Número de Aristas** | 5 | 5 | 10 | **10** |
+| **Service F1 (Unique)** | — | 100.0% | 80.0% | **80.0%** |
+| **Service Precision** | — | 100.0% | 80.0% | **80.0%** |
+| **Service Recall** | — | 100.0% | 80.0% | **80.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 53.3% | **40.0%** |
+| **Edge Precision** | — | 100.0% | 40.0% | **30.0%** |
+| **Edge Recall** | — | 100.0% | 80.0% | **60.0%** |
+
+* **Servicios Faltantes (Omitidos):** `['UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyAgent']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v10) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![bqZWYmRAka0 Whiteboard](lab_workspace/bqZWYmRAka0/best_whiteboard.jpg) | ![bqZWYmRAka0 Vision](../Graphs/bqZWYmRAka0_vision.png) | ![bqZWYmRAka0 GT](../Graphs/bqZWYmRAka0_gt.png) |
+
