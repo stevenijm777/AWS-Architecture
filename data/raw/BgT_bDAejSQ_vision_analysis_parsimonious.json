@@ -1,116 +1,55 @@
 {
-  "step_by_step_reasoning": "We identify two distinct AWS accounts (Account A and Account B) separated by a boundary line. Account A contains two public subnets with NAT Gateways and two private subnets with EKS clusters. Account B contains a WAF, an ALB in a public subnet, and an EKS cluster in a private subnet. An on-premises data center is represented at the bottom, and a developer user is represented at the top. We will map these nodes and logical flows representing internet outbound traffic, on-prem access, and Account B ingress.",
+  "step_by_step_reasoning": "The whiteboard depicts a multi-account AWS architecture separating Account A (non-production/isolated) and Account B (production). External actors include a Developer/User represented by a user icon at the top (mapped to UserCompanyDeveloper) and an On-Premises Data Center represented by a building icon at the bottom (mapped to OnPremDC). Within Account A, there are subnets containing NAT Gateway (NAT) in the public subnet and Amazon EKS (EKS) in the private subnet (deduplicated across the two visually identical subnets). Within Account B, AWS WAF (WAF) sits at the entry, followed by an Application Load Balancer (ALB) in the public subnet and Amazon EKS (EKS) in the private subnet. No explicit directional arrows are drawn between the service icons on the whiteboard (only a crossed-out VPC Peering symbol between accounts), so no edges are defined.",
   "graph": {
-    "name": "GoDaddy Secure Multi-Account EKS Architecture",
-    "link": "https://www.youtube.com/watch?v=BgT_bDAejSQ",
-    "categories": "compute_intensive, control",
+    "name": "GoDaddy - Multi-Account Zero Trust Architecture",
+    "link": "",
+    "categories": "Security & Multi-Account Architecture",
     "graph_usable": true,
-    "notes": "Focuses on zero-trust multi-account isolation, 24-hour EKS node rotations, and strictly controlled lateral movement with no VPC peering."
+    "notes": "Architecture illustrating account isolation, non-peered VPCs, NAT gateways, and automated node rotation on EKS."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserCompanyDeveloper",
-      "name": "Developer",
-      "notes": "Initiates application creation via the public cloud portal."
+      "name": "Developer / User",
+      "notes": "User accessing the public cloud portal"
     },
     {
       "id": "1",
-      "service": "NAT",
-      "name": "NAT Gateway AZ1",
-      "notes": "Outbound internet gateway for EKS workloads."
+      "service": "OnPremDC",
+      "name": "On-Premises Data Center",
+      "notes": "On-prem infrastructure connected via Direct Connect"
     },
     {
       "id": "2",
-      "service": "EKS",
-      "name": "EKS Workload AZ1",
-      "notes": "WORKLOAD_PEEK: Rotates nodes every 24 hours using golden AMIs."
+      "service": "NAT",
+      "name": "NAT Gateway",
+      "notes": "Located in Account A public subnet for outbound internet access"
     },
     {
       "id": "3",
-      "service": "NAT",
-      "name": "NAT Gateway AZ2",
-      "notes": "Outbound internet gateway for redundant EKS workloads."
+      "service": "EKS",
+      "name": "Amazon EKS",
+      "notes": "Located in Account A private subnet with 24-hour node rotations"
     },
     {
       "id": "4",
-      "service": "EKS",
-      "name": "EKS Workload AZ2",
-      "notes": "WORKLOAD_PEEK: Rotates nodes every 24 hours using golden AMIs."
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Web Application Firewall in Account B"
     },
     {
       "id": "5",
-      "service": "OnPremDC",
-      "name": "On-Premises Services",
-      "notes": "Connected securely via Direct Connect."
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Located in Account B public subnet"
     },
     {
       "id": "6",
-      "service": "WAF",
-      "name": "AWS WAF",
-      "notes": "Protects public endpoints in Account B."
-    },
-    {
-      "id": "7",
-      "service": "ALB",
-      "name": "ALB",
-      "notes": "Distributes public traffic in Account B."
-    },
-    {
-      "id": "8",
       "service": "EKS",
-      "name": "EKS Workload Account B",
-      "notes": "Isolated environment for production/non-production workloads."
+      "name": "Amazon EKS",
+      "notes": "Located in Account B private subnet"
     }
   ],
-  "edges": [
-    {
-      "source": "2",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "0",
-      "type": "data",
-      "notes": "Outbound traffic via NAT GW."
-    },
-    {
-      "source": "4",
-      "target": "3",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Outbound traffic via NAT GW."
-    },
-    {
-      "source": "2",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "Secure connection to on-prem via DX."
-    },
-    {
-      "source": "4",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "Secure connection to on-prem via DX."
-    },
-    {
-      "source": "6",
-      "target": "7",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "Filtered traffic routed to ALB."
-    },
-    {
-      "source": "7",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Traffic forwarded to isolated EKS pods."
-    }
-  ]
+  "edges": []
 }
