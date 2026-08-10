@@ -77,60 +77,47 @@ user_actors_str = ", ".join(USER_ACTORS)
 
 CLOUDSCAPE_PROMPT_TEMPLATE = """You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
 
-Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.) in a way that matches the style and level of detail of the manual ground truth dataset as closely as possible.
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
 
 ## RULES:
-1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", "EC2", "DynamoDB", "EKS", "CloudFront", etc.
+1. EXACT AWS SERVICES: You MUST strictly use the exact string from the ACM, ALB, AMI, AWSConfig, AccessAnalyzer, AlexaForBusiness, AmazonML, AmazonMQ, Amplify, ApiGateway, AppDiscovery, AppStream, AppSync, Athena, Aurora, AutoScaling, Batch, BeanStalk, Chime, CloudFormation, CloudFront, CloudHSM, CloudTrail, CloudWatch, CodeBuild, CodeCommit, CodeDeploy, CodePipeline, Cognito, Comprehend, Connect, ControlTower, CouchBase, DMS, DataExchange, DataPipeline, DeepLens, Detective, DevTools, DirectConnect, DirectoryService, DocumentDB, DynamoDB, DynamoDBStream, EBS, EC2, ECR, ECS, EFS, EKS, ELB, EMR, ElastiCache, ElasticTranscoder, ElementalLive, EventBridge, FSX, Fargate, Firehose, GlobalAccelerator, Glue, Grafana, Greengrass, GuardDuty, IAM, Inspector, IoT1Click, IoTAnalytics, IoTCore, KMS, Kendra, Kinesis, KinesisAnalytics, KinesisDataStream, KinesisVideo, LakeFormation, Lambda, LambdaAtEdge, Lex, LookoutForVision, MAM, MSK, Macie, MediaConnect, MediaConvert, MediaLive, MediaPackage, MediaStore, MemoryDB, ModelRegistry, MongoDBAtlas, NAT, NLB, Neptune, OnPremDC, OpenSearch, Organizations, Outpost, Pinpoint, Polly, PrivateLink, QLDB, QuickSight, RAM, RDS, RedShift, Rekognition, RoboMaker, Route53, S2SVPN, S3, SAP, SES, SNS, SQS, STS, SageMaker, SageMakerGroundTruth, SecretsManager, SecurityHub, ServerlessApplicationRepository, ServiceCatalog, ServiceNow, Shield, ShieldAdvanced, StepFunctions, StorageGateway, SystemsManager, Textract, ThirdParty, Timestream, Transcribe, TransferFamily, TransitGateway, Translate, VPC, VPCPeering, VPN, WAF, WorkSpaces, XRay list for the `service` field. Do not truncate, split, or abbreviate names (e.g., use "KinesisDataStream", not "Kinesis") regardless of how the speaker pronounces it.
 
-2. USER ACTOR NORMALIZATION: Only add User nodes that are EXPLICITLY shown as icons on the whiteboard OR mentioned as main actors. Choose from this list: <USER_ACTORS_PLACEHOLDER>. To match Ground Truth style:
-   - Map end-users accessing via browsers to "UserConsumerWeb", and app users to "UserConsumerMobile". Do NOT combine them into "UserConsumerWebMobile" unless a single physical box on the board is explicitly labeled for both.
-   - Prefer "UserCompanyAgent" for internal operations teams, database administrators, migration teams, or backend system operators.
-   - Use "UserCompanyDeveloper" ONLY when the text or diagram explicitly refers to writing application code, managing CI/CD pipelines, or software development.
+2. EXTERNAL/INTERNAL ACTORS: Identify what comes from "outside" the core AWS architecture based on the visual drawing. Use ONLY these canonical labels:
+   - `UserConsumerWeb` / `UserConsumerMobile`: For external customers or end-users.
+   - `UserCompanyDeveloper`: Default label for ANY internal company staff (engineers, security, operations) interacting with the system. Do NOT use UserCompanyAnalyst or UserCompanyAgent.
+   - `ThirdParty`: For external SaaS, public APIs, or non-AWS open-source services.
+   - `OnPremDC`: For corporate physical datacenters.
 
-3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
+3. VISUAL-FIRST SERVICES (NO AUDIO EXPANSION): Base your nodes strictly on physical boxes or distinct icons drawn. 
+   - If a single generic box is drawn (e.g., labeled "AWS" or "Log Sources") but the audio mentions multiple underlying services, DO NOT expand them. Create a single node for that visual block.
+   - Ignore floating text or standalone words that do not have a bounding box or clear icon.
 
-4. NON-CLOUD & ON-PREMISE NORMALIZATION: Do NOT use "ThirdParty" for internal microservices. Map them to the underlying AWS compute/storage service they run on (e.g. "EKS", "Lambda").
-   - However, map on-premises servers, local databases, and legacy infrastructure to "ThirdParty" (representing external resources outside AWS) to maintain consistency with Ground Truth, unless a dedicated data center icon is explicitly drawn (in which case use "OnPremDC").
+4. BOUNDARY & NESTED BOX ROUTING: If an arrow points to the edge of a large container box (like a VPC, Subnet, or AWS Account boundary), assume the connection routes directly to the primary service(s) drawn inside that boundary, rather than the boundary itself.
 
-5. NODE MULTIPLICITY & NO TRANSIENT ARTIFACTS: The number of nodes must match the number of physical icons (boxes) drawn on the whiteboard.
-   - Do NOT create nodes for transient artifacts, machine images, config templates, or zip files (e.g., do NOT create nodes for "AMI", "Container Image", or "CloudFormation Template") even if they are described as being baked, shared, or uploaded. Instead, represent these actions as descriptions or notes on the edges (flows) connecting the permanent compute/storage components that generate or consume them.
+5. VISUAL-FIRST EDGES: 
+   - Base your connections primarily on the PHYSICAL arrows drawn on the whiteboard. 
+   - You MUST include "entry" edges: connections where data or triggers arrive from the outside into the AWS architecture.
+   - Do not hallucinate invisible API return paths (bidirectional loops) unless they are explicitly drawn.
 
-6. Edges must have: flow_id (integer), seq (string), type ("data" or "meta"). Default to "data" for all edges.
+6. LOGICAL SEQUENCING: When assigning `flow_id` and `seq` to edges, attempt to trace the logical flow starting from the external actors (Users, ThirdParty, OnPremDC) moving inwards to the backend. Number them sequentially to match the chronological flow of data described in the audio.
 
-7. EDGE DIRECTIONALITY (NO RETURN PATHS): Map ONLY active data movement or control triggers. Do NOT add return/response paths or API acknowledgments (e.g., target acknowledging source) unless they carry a distinct new payload or trigger a new asynchronous step. Orient arrows in the direction of request initiation.
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step (e.g., merge 3 drawn EC2 instances into 1).
 
-8. Minimize the number of flows. Group related sequential interactions into a single flow.
-
-9. The `notes` field for nodes should capture context from the transcript: how the service is used.
-
-10. WHITEBOARD IMAGE IS THE PRIMARY STRUCTURE GUIDE (MATCH HUMAN DESIGN): The physical whiteboard image (icons and drawn arrows) is the primary source of truth for the structure of the graph. Do NOT add extra nodes or complex orchestration paths that are not represented by icons or arrows on the whiteboard.
-
-## PARSIMONY PRINCIPLE:
-Prefer FEWER nodes and edges over more. If you are unsure whether a service exists in the architecture, DO NOT include it. It is better to miss a real service than to hallucinate a fake one.
-
-## VALID SERVICE NAMES:
-You MUST only use names from this list of canonical services when defining the `service` field in the nodes list (do not invent names or use raw abbreviations unless listed here):
-<AWS_SERVICES_PLACEHOLDER>
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
 
 ## OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown fences):
 {
-  "step_by_step_reasoning": "Analyze the transcript chronologically...",
+  "step_by_step_reasoning": "Briefly analyze the visual components and entry points...",
   "graph": {
-    "name": "<title of the architecture>",
-    "link": "<youtube URL if known, else empty string>",
-    "categories": "<comma-separated from: data_ingestion, interactive, compute_intensive, control, other>",
-    "graph_usable": true,
-    "notes": "<distilled context>"
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
   },
-  "nodes": [
-    {"id": "0", "service": "...", "name": "", "notes": "..."}
-  ],
-  "edges": [
-    {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""}
-  ]
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
 }
 """
+
 
 CLOUDSCAPE_PROMPT = CLOUDSCAPE_PROMPT_TEMPLATE.replace(
     "<USER_ACTORS_PLACEHOLDER>", user_actors_str
