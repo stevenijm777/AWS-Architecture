@@ -17,24 +17,30 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 from google import genai
 from rich.console import Console
 
-from config.settings import GEMINI_API_KEY, GEMINI_MODEL
+from config.settings import GEMINI_API_KEY, GEMINI_API_KEYS, GEMINI_MODEL
 
 console = Console()
 
-# ── Gemini Client (lazy init) ────────────────────────────────
+# ── Gemini Client (lazy init & multi-key rotation) ────────────
+_current_key_idx = 0
 _client: genai.Client | None = None
 
 
-def _get_client() -> genai.Client:
-    global _client
-    if _client is None:
-        if not GEMINI_API_KEY:
-            raise ValueError(
-                "GEMINI_API_KEY not set. Add it to your .env file."
-            )
-        _client = genai.Client(api_key=GEMINI_API_KEY)
-        console.print("[green]✓[/] Gemini client initialised")
+def _get_client(force_rotate: bool = False) -> genai.Client:
+    global _client, _current_key_idx
+    keys = GEMINI_API_KEYS if GEMINI_API_KEYS else ([GEMINI_API_KEY] if GEMINI_API_KEY else [])
+    if not keys:
+        raise ValueError("GEMINI_API_KEY or GEMINI_API_KEYS not set. Add them to your .env file.")
+
+    if force_rotate:
+        _current_key_idx = (_current_key_idx + 1) % len(keys)
+        console.print(f"[yellow]🔄 Rotated Gemini API Key to key #{_current_key_idx+1}/{len(keys)}[/]")
+        _client = genai.Client(api_key=keys[_current_key_idx])
+    elif _client is None:
+        _client = genai.Client(api_key=keys[_current_key_idx])
+        console.print(f"[green]✓[/] Gemini client initialised with key #{_current_key_idx+1}/{len(keys)}")
     return _client
+
 
 
 # ── Cloudscape-compatible Prompt ─────────────────────────────
@@ -188,12 +194,12 @@ def analyze_frame(
         console.print(f"  [dim]  Including transcript ({len(transcript)} chars)[/]")
 
     import time
-    import os
-    max_retries = int(os.environ.get("GEMINI_MAX_RETRIES", "3"))
-    retry_delay = 10
+    keys = GEMINI_API_KEYS if GEMINI_API_KEYS else ([GEMINI_API_KEY] if GEMINI_API_KEY else [])
+    max_key_attempts = len(keys)
     response = None
 
-    for attempt in range(max_retries):
+    for key_attempt in range(max_key_attempts):
+        client = _get_client()
         try:
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
@@ -210,17 +216,22 @@ def analyze_frame(
                         ]
                     }
                 ],
-                config={"response_mime_type": "application/json"},
+                config={"response_mime_type": "application/json", "temperature": 0.0},
             )
             break
         except Exception as e:
             err_msg = str(e)
-            if attempt < max_retries - 1 and any(x in err_msg.upper() or y in err_msg for x in ["503", "429", "UNAVAILABLE", "LIMIT"] for y in ["demand", "ResourceExhausted"]):
-                console.print(f"  [yellow]⚠ Gemini API returned error: {err_msg}. Retrying in {retry_delay}s... (Attempt {attempt+1}/{max_retries})[/]")
-                time.sleep(retry_delay)
-                retry_delay *= 2
+            if any(k in err_msg.upper() for k in ["429", "RESOURCE_EXHAUSTED", "QUOTA", "RATE_LIMIT"]):
+                if key_attempt < max_key_attempts - 1:
+                    console.print(f"  [yellow]⚠ Key #{_current_key_idx+1} quota exhausted (429). Rotating to next API key...[/]")
+                    _get_client(force_rotate=True)
+                    time.sleep(2)
+                else:
+                    console.print("  [bold red]🛑 All configured Gemini API keys have exhausted their quota.[/]")
+                    raise e
             else:
                 raise e
+
 
     # Parse the JSON response
     raw_text = response.text.strip()
