@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture diagram describes Town Square's data ingestion, transformation, analytics, and serving pipelines. Operational data from MongoDB change streams is pushed via Kinesis Data Firehose into an S3 Raw Zone bucket. In parallel, an external AIS middleware integration ingests accounting system data into the S3 Raw Zone. AWS Glue crawls and catalogs the raw JSON data, deduplicates it into an S3 Landing Zone, and transforms it into a star schema loaded into Amazon Aurora. Amazon Athena queries the curated Landing Zone data directly for BI reports. An Angular client hosted via CloudFront (CDN) sends web requests to an Elastic Beanstalk backend, which queries Amazon Aurora to serve performance benchmarks and insights to community managers.",
+  "graph": {
+    "name": "Town Square Data Processing and Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=E8BGpIxzYc4",
+    "categories": "Data Analytics & Data Ingestion Pipeline",
+    "graph_usable": true,
+    "notes": "The architecture processes operational MongoDB change streams and accounting data through an S3 raw/landing zone pipeline using AWS Glue, Amazon Aurora star schema, Amazon Athena, and Elastic Beanstalk with CloudFront."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "MongoDBAtlas",
+      "name": "MongoDB",
+      "notes": "Operational database with change streams enabled to track application updates."
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Buffers incoming streaming updates and saves them into the raw S3 bucket."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Raw Zone",
+      "notes": "Raw storage zone bucket holding raw change stream and accounting JSON files."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Landing Zone",
+      "notes": "Curated storage zone containing deduplicated and cataloged JSON data."
+    },
+    {
+      "id": "4",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Crawls raw data for cataloging, executes deduplication jobs, and transforms curated JSON into star schema tables."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "Amazon Aurora",
+      "notes": "Relational database holding star schema facts and dimensions for benchmark and performance analytics."
+    },
+    {
+      "id": "6",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Interactive query service used to run ad-hoc BI queries directly on Landing Zone S3 data via Glue Data Catalog."
+    },
+    {
+      "id": "7",
+      "service": "BeanStalk",
+      "name": "Elastic Beanstalk",
+      "notes": "Backend service handling HTTP requests from the frontend and querying Aurora."
+    },
+    {
+      "id": "8",
+      "service": "CloudFront",
+      "name": "CDN",
+      "notes": "CloudFront distribution hosting the Angular web application for community managers."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "AIS Middleware",
+      "notes": "External middleware interfacing with ~6 accounting systems to drop accounting data into the S3 Raw Zone."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "MongoDB change streams drop operational data into Kinesis Data Firehose."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis Data Firehose buffers and writes raw JSON streams into S3 Raw Zone."
+    },
+    {
+      "source": "9",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "AIS middleware drops accounting data into S3 Raw Zone."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 Raw Zone triggers AWS Glue crawler to classify data and build catalog."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue deduplication job processes raw data and saves curated data into S3 Landing Zone."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "AWS Glue reads curated data from S3 Landing Zone."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue ETL job transforms landing data into star schema facts/dimensions and writes to Aurora."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries data directly from S3 Landing Zone using Glue catalog."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "Angular frontend via CloudFront sends HTTP query requests to Elastic Beanstalk backend."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Elastic Beanstalk executes queries against Aurora star schema database."
+    }
+  ]
+}

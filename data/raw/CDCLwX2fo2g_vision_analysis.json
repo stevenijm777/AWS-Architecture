@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Ztore's e-commerce recommendation system on AWS, split into two pipelines: User-Item and Cart-Item recommendations.\n\n1. User-Item Pipeline:\n   - CloudWatch Schedule triggers an EC2 instance daily to retrain the user recommendation model.\n   - The EC2 instance writes pre-computed user recommendation results to DynamoDB.\n   - Incoming web traffic arrives at the ALB, which routes requests to an ECS service running on Fargate.\n   - The ECS (User-Item) service fetches recommendation results directly from DynamoDB.\n\n2. Cart-Item Pipeline:\n   - An EC2 instance periodically retrains the cart-to-item model and writes model artifacts to S3.\n   - The EC2 instance signals ECS (Cart-Item) to perform a rolling re-deployment.\n   - Upon startup, the new ECS (Cart-Item) container tasks load the updated ML model directly from S3.\n   - Traffic for cart recommendations is routed from the ALB to the ECS (Cart-Item) service.",
+  "graph": {
+    "name": "Ztore Machine Learning Recommendation System",
+    "link": "https://www.youtube.com/watch?v=CDCLwX2fo2g",
+    "categories": "E-commerce & Machine Learning Architecture",
+    "graph_usable": true,
+    "notes": "Recommendation system architecture handling user-based and cart-based recommendations using batch retraining on EC2 and serving via ECS Fargate and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer routing incoming frontend traffic based on request endpoint."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "ECS (User-Item)",
+      "notes": "Containerized microservice on AWS Fargate serving user-based recommendation requests."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB (User-Item)",
+      "notes": "Key-value database storing pre-computed recommendation results per user with auto-scaling enabled."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 (User-Item)",
+      "notes": "P2 EC2 instance executing daily batch model retraining and generating batch recommendation outputs."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS (Cart-Item)",
+      "notes": "Containerized microservice on Fargate running real-time cart-to-item inference."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Cart-Item)",
+      "notes": "Object storage storing trained ML model artifacts for cart-item recommendations."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 (Cart-Item)",
+      "notes": "EC2 compute instance performing cart-item model retraining."
+    },
+    {
+      "id": "7",
+      "service": "CloudWatch",
+      "name": "CloudWatch Schedule",
+      "notes": "Scheduled rule triggering daily model retraining jobs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch Schedule triggers daily retraining job on EC2 User-Item instance."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 writes batch recommendation results per user into DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "ALB routes user recommendation API requests to ECS User-Item containers."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "ECS service queries DynamoDB for pre-computed user recommendation results using User ID."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 Cart-Item instance uploads newly trained ML model artifacts to S3."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "EC2 triggers re-deployment of the ECS Cart-Item service."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Newly launched ECS Cart-Item containers download updated ML model artifacts from S3."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "ALB routes cart recommendation API requests to ECS Cart-Item microservice."
+    }
+  ]
+}

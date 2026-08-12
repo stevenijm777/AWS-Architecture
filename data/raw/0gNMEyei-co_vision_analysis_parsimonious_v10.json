@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture visualizes an ingestion and analysis pipeline for governance, risk, and compliance data. External applications stream data to Kinesis, which Fargate processes and stores into Aurora and S3. A scheduler triggers a Fargate analysis engine that launches an EMR job. EMR reads data from Aurora and S3, emitting compliance violation events to EventBridge. EventBridge forwards these to SQS, where Fargate processes notifications.",
+  "graph": {
+    "name": "Infor Governance Risk and Compliance Architecture",
+    "link": "https://www.youtube.com/watch?v=0gNMEyei-co",
+    "categories": "Data Ingestion & Analytics",
+    "graph_usable": true,
+    "notes": "Architecture showing streaming ingestion, storage in Aurora/S3, and automated event-driven compliance analysis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Applications",
+      "notes": "External client applications generating transactional and security logs."
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "Kinesis",
+      "notes": "Streams incoming application log data."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Runs data parsing, scoping services, and notification processing."
+    },
+    {
+      "id": "3",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Stores parsed transactional and security metadata."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores bulk log data and compliance records."
+    },
+    {
+      "id": "5",
+      "service": "EventBridge",
+      "name": "Scheduler",
+      "notes": "Scheduled trigger initiating analysis runs."
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs Spark analysis rules over Aurora and S3 datasets."
+    },
+    {
+      "id": "7",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Receives violation events from EMR."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues violation messages for processing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Applications push logs to Kinesis stream."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate service consumes and parses stream data."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fargate stores parsed metadata into Aurora."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fargate persists raw and processed logs into S3."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Scheduler triggers analysis execution on Fargate."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Fargate triggers EMR Spark job."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR retrieves data from Aurora."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EMR retrieves data from S3."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EMR sends rule violation events to EventBridge."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "EventBridge routes violation messages to SQS queue."
+    },
+    {
+      "source": "8",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Fargate consumes queue messages to send alerts."
+    }
+  ]
+}

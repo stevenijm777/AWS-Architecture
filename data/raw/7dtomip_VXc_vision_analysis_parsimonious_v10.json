@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts a mobile game backend for Akatsuki. Requests originate from mobile clients, passing through an Application Load Balancer to ECS tasks running backend application logic. ECS interacts with Aurora for persistent player data and ElastiCache for caching. To handle traffic spikes, Auto Scaling triggers CloudWatch Events, which invokes a Lambda function to dynamically update the ECS task count within 2 minutes.",
+  "graph": {
+    "name": "Akatsuki Scalable Mobile Game Backend",
+    "link": "https://www.youtube.com/watch?v=7dtomip_VXc",
+    "categories": "Mobile & Gaming",
+    "graph_usable": true,
+    "notes": "High-concurrency mobile game backend supporting massive auto-scaling and rapid spike handling."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Client",
+      "notes": "External mobile application sending game API requests."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Distributes incoming game API traffic."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs game server containers to compute application logic."
+    },
+    {
+      "id": "3",
+      "service": "AutoScaling",
+      "name": "Auto Scaling",
+      "notes": "Scales underlying EC2 instances based on load."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Detects EC2 launch completion events."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Executes logic to adjust ECS desired task count."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Stores primary relational game and player data."
+    },
+    {
+      "id": "7",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Provides in-memory caching for low latency."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests enter through ALB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB routes API traffic to ECS container tasks."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS reads and writes persistent player data to Aurora."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "ECS retrieves and updates cached state in ElastiCache."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Auto Scaling EC2 instance launch triggers CloudWatch Events."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "CloudWatch Events invokes Lambda function."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Lambda scales out ECS tasks to match EC2 capacity."
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The architecture shows a real-time clickstream processing and search suggestion pipeline. Users generate clickstream data on mobile devices, streaming into Kinesis Data Streams and analyzed via Kinesis Data Analytics. Filtered search events pass to a secondary Kinesis Data Stream and are processed by a Transformer Lambda function querying an external Search API before writing to DocumentDB. On a schedule, a Producer Lambda reads from DocumentDB, checks stock via an Inventory API, and writes suggestions to Redis ElastiCache, which serves the frontend Search API.",
+  "graph": {
+    "name": "Zulily Suggestive Search Architecture",
+    "link": "https://www.youtube.com/watch?v=Ccutfm_Srzw",
+    "categories": "Analytics & Real-time Search",
+    "graph_usable": true,
+    "notes": "Real-time search suggestion pipeline using Kinesis, Lambda, DocumentDB, and Redis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Device",
+      "notes": "End-user mobile application"
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Clickstream",
+      "notes": "Captures raw clickstream events"
+    },
+    {
+      "id": "2",
+      "service": "KinesisAnalytics",
+      "name": "Kinesis Data Analytics",
+      "notes": "Filters search events using SQL"
+    },
+    {
+      "id": "3",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Search Events",
+      "notes": "Holds filtered search keywords"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Transformer Lambda",
+      "notes": "Enriches keyword data via Search API"
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Search API (Enrichment)",
+      "notes": "Provides related brands and categories"
+    },
+    {
+      "id": "6",
+      "service": "DocumentDB",
+      "name": "Amazon DocumentDB",
+      "notes": "Stores transformed search documents"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Producer Lambda",
+      "notes": "Validates inventory on schedule"
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Inventory API",
+      "notes": "Checks item availability"
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "Redis Cache",
+      "notes": "Caches search suggestions"
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Search API (Serving)",
+      "notes": "Serves suggestions to mobile clients"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams user activity events"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Passes raw clickstream data"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes filtered search keywords"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers transformer function"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Queries search API for metadata"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns brands and categories"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Writes document record"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Scheduled pull of documents"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Checks stock status"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Populates Redis cache"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads active suggestions"
+    },
+    {
+      "source": "10",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns search suggestions to mobile user"
+    }
+  ]
+}

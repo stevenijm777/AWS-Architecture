@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Identified visual external actors on the left side of the whiteboard: 'CLI' (developers deploying code, mapped to UserCompanyDeveloper) and 'Browser' (end-users invoking applications, mapped to UserConsumerWeb).\n2. Identified AWS services drawn as individual nodes on the whiteboard:\n   - Top-left EC2: Web service handling CLI deployment requests.\n   - Top DynamoDB: Stores deployment progress/state.\n   - Middle SQS: Queue decoupling deployment requests.\n   - Top-right EC2: Backend service processing SQS messages and deploying Lambda functions.\n   - Bottom-middle EC2: Internal service processing browser requests, checking permissions, and invoking Lambdas.\n   - Right Lambda: Customer code execution running in a separate AWS account (divided by green line).\n3. Traced all physical directed arrows to establish data flows:\n   - Flow 0 (Deployment path): CLI -> EC2 -> DynamoDB & SQS -> EC2 -> Lambda.\n   - Flow 1 (Invocation path): Browser -> EC2 -> Lambda.",
+  "graph": {
+    "name": "Atlassian Forge Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=H2fOkeXxpyw",
+    "categories": "Compute, Serverless, Multi-Tenant SaaS",
+    "graph_usable": true,
+    "notes": "The architecture separates the core Atlassian Forge platform account from customer Lambda execution accounts using account boundaries and V8 isolates for tenant isolation."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "CLI",
+      "notes": "Developer interface for deploying custom code"
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerWeb",
+      "name": "Browser",
+      "notes": "End-user browser making application requests"
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Front-end deployment web service behind ALB"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores deployment state and tracking progress"
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers deployment requests to prevent rate limiting"
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Backend service reading deployment requests and creating Lambdas"
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Internal invocation service checking auth and locating Lambdas"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Runs customer JavaScript code inside V8 isolates across account boundary"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer deploys application code via CLI"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Deployment web service updates state in DynamoDB"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Deployment web service enqueues deployment request to SQS"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Backend worker polls deployment requests from SQS"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Backend worker provisions Lambda in customer account"
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Browser invokes application endpoint"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Invocation service authenticates request and triggers customer Lambda execution"
+    }
+  ]
+}

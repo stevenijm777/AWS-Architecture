@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "1. Identify external actors/sources drawn on the board: Satellite dish (ThirdParty), Mobile phone (UserConsumerMobile), and End User person icon (UserConsumerWeb).\n2. Identify AWS services drawn as boxes/icons: S3 (main bucket), S3 (Registry of Open Data), RDS (PostgreSQL GIS), Lambda, SageMaker, EC2, EKS, CloudFront.\n3. Identify connections based on drawn pink arrows:\n   - Satellite -> S3\n   - Mobile -> PostgreSQL (RDS)\n   - Lambda -> SageMaker\n   - Registry of Open Data (S3) -> SageMaker\n   - S3 <-> SageMaker (bidirectional inputs/outputs)\n   - RDS <-> SageMaker (bidirectional inputs/outputs)\n   - EC2 -> EKS -> CloudFront -> End User\n4. Sequence connections logically following data ingestion, processing, and serving phases.",
+  "graph": {
+    "name": "TCS DNA Geospatial Data Processing Architecture",
+    "link": "",
+    "categories": "Analytics & ML",
+    "graph_usable": true,
+    "notes": "Architecture for TCS Digital Platform for Next Gen Agriculture (DNA) performing scalable geospatial analysis on satellite data using AWS SageMaker and EKS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Satellite Data",
+      "notes": "Open domain satellite data from space agencies (ISRO/NASA)"
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Field Managers Mobile",
+      "notes": "Field-level data collected by field agents"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores input GIS data and processed images"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Registry of Open Data",
+      "notes": "Open spectral band dataset hosted on AWS S3"
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "PostgreSQL GIS Database",
+      "notes": "PostgreSQL database with PostGIS for field boundary and statistics data"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Triggers parallel processing jobs in SageMaker"
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "Executes parallel processing jobs for satellite data"
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Amazon EC2",
+      "notes": "Graviton-based compute instances hosting EKS worker nodes"
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "Amazon EKS",
+      "notes": "Deploys geospatial UI applications and data layers"
+    },
+    {
+      "id": "9",
+      "service": "CloudFront",
+      "name": "Amazon CloudFront",
+      "notes": "Caches map data layers to deliver efficient frontend experience"
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWeb",
+      "name": "End User",
+      "notes": "Agricultural stakeholders consuming data insights"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Satellite imagery ingested to S3"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Field GIS data saved to PostgreSQL database"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Lambda actuates SageMaker processing jobs"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker reads open spectral data bands"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "SageMaker takes inputs from S3"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "SageMaker reads GIS field boundary datasets"
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Processed output imagery stored back in S3"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Zonal statistics pushed back to PostgreSQL"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "EC2 nodes facilitate EKS cluster operation"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Data layers served through EKS to CloudFront"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "CloudFront serves map and application UI layers to end user"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "step_by_step_reasoning": "1. Identified system components from the image and audio transcript: AWS S3 (DATALAKE), EC2 (compute instances orchestrated by AWS Batch), AWS Batch (BATCH), Amazon FSx (FSx file storage), Amazon EventBridge (EVENTBRIDGE), AWS Lambda (LAMBDA), and Amazon OpenSearch/Elasticsearch (ELASTICSEARCH).\n2. Evaluated relationships and logical routing:\n   - Flow 0 (Event/Error Monitoring Flow): AWS Batch emits job status change events to EventBridge ('Events' arrow). EventBridge invokes a Lambda function, which indexes these event logs into OpenSearch (Elasticsearch) for visualization and alerting.\n   - Flow 1 (Data Processing & Sync Flow): AWS Batch orchestrates compute jobs (instantiating EC2 instances with mounted FSx storage). FSx reads/writes processing data, and results are synced back to the S3 Data Lake using Data Repository Tasks (DRT arrow).\n3. Verified all services against the strictly allowed vocabulary list (OpenSearch for Elasticsearch, S3, EC2, Batch, FSX, EventBridge, Lambda). Output formatted as valid JSON adhering to schema constraints.",
+  "graph": {
+    "name": "Biopharma MRI Data Processing and Curation Pipeline",
+    "link": "https://www.youtube.com/watch?v=EiljRL0977M",
+    "categories": "Analytics, Compute, Storage",
+    "graph_usable": true,
+    "notes": "Architecture for orchestrating, curating, and monitoring MRI data processing jobs at scale using AWS Batch, FSx, EventBridge, Lambda, and Elasticsearch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "DATALAKE",
+      "notes": "Stores raw MRI input data and accepts curated processing outputs."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Provisioned in large clusters (hundreds to thousands of instances) by AWS Batch as the compute layer with mounted FSx storage."
+    },
+    {
+      "id": "2",
+      "service": "Batch",
+      "name": "BATCH",
+      "notes": "Orchestrates the execution of multi-day batch processing jobs and sends state change events."
+    },
+    {
+      "id": "3",
+      "service": "FSX",
+      "name": "FSx",
+      "notes": "High-performance file storage mounted on EC2 instances for processing and output staging."
+    },
+    {
+      "id": "4",
+      "service": "EventBridge",
+      "name": "EVENTBRIDGE",
+      "notes": "Receives job state change events from AWS Batch."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Processes EventBridge notifications and writes log/status data into Elasticsearch."
+    },
+    {
+      "id": "6",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Indexes job status events and technical logs for data scientist monitoring and visualization dashboards."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "AWS Batch emits events on job status change to EventBridge."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "EventBridge triggers Lambda function with job events."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda indexes job events and logs into Elasticsearch for analysis and visualization."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "AWS Batch orchestrates processing jobs using FSx as mounted high-speed storage."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "FSx syncs curated output back into S3 Data Lake via Data Repository Task (DRT)."
+    }
+  ]
+}

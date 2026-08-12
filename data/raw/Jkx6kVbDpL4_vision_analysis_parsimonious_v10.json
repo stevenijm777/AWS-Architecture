@@ -1,0 +1,220 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts Nielsen Marketing Cloud's DataOut system, which processes and uploads segmentation data to over 100 ad networks. External files arrive from a file source into an input S3 bucket, while file metadata is sent through an SQS queue to an ingestion Lambda that writes to an RDS PostgreSQL database. An EMR Work Manager Lambda reads metadata from RDS to trigger a Spark EMR cluster, which reads from the input S3 bucket, formats the data, writes transformed files to a second S3 bucket, and reports status back to RDS. A Fan-out Work Manager Lambda then reads metadata from RDS and invokes concurrent Uploader Lambdas (which scale up to thousands) to fetch formatted files from S3 and push them to external Ad Networks (ThirdParty). To prevent database connection limits, status results from the Uploader Lambdas are sent to a buffer SQS queue, which a Batch Writer Lambda reads to update RDS in batches.",
+  "graph": {
+    "name": "Nielsen Marketing Cloud DataOut Architecture",
+    "link": "",
+    "categories": "Data Processing & Serverless",
+    "graph_usable": true,
+    "notes": "Handles 250 billion events per day using EMR and serverless Lambda functions, with buffer SQS queues for rate-limiting RDS updates."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "File Source",
+      "notes": "External source generating data files and file metadata"
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Input S3 Bucket",
+      "notes": "Stores raw incoming data files"
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Metadata Ingest Queue",
+      "notes": "Buffers incoming file metadata"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Metadata Processor Lambda",
+      "notes": "Processes incoming metadata and writes to RDS"
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "PostgreSQL Database",
+      "notes": "Central database storing file metadata and execution status"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "EMR Work Manager Lambda",
+      "notes": "Reads RDS metadata and triggers EMR processing jobs"
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "Spark EMR Cluster",
+      "notes": "Performs transformations and formatting on event files"
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Processed S3 Bucket",
+      "notes": "Stores transformed and formatted files ready for upload"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Fan-out Work Manager Lambda",
+      "notes": "Reads processed file metadata and triggers uploader Lambdas"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Uploader Lambdas",
+      "notes": "Scales up to thousands of concurrent instances to upload data to ad networks"
+    },
+    {
+      "id": "10",
+      "service": "SQS",
+      "name": "Status Buffer Queue",
+      "notes": "Buffers upload status reports to prevent RDS connection exhaustion"
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Status Batch Writer Lambda",
+      "notes": "Reads batch upload statuses from SQS and updates RDS"
+    },
+    {
+      "id": "12",
+      "service": "ThirdParty",
+      "name": "Ad Networks",
+      "notes": "External partner ad platforms receiving segmentation data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data files uploaded to input bucket"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "File metadata sent to SQS queue"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Metadata queue triggers processor Lambda"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda writes file metadata into RDS"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Work Manager Lambda polls/reads file metadata"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Work Manager Lambda triggers Spark EMR cluster"
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR reads raw files from S3"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EMR writes processed/formatted files to output S3 bucket"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "EMR updates processing status in RDS"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Fan-out Work Manager reads processed file metadata"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Invokes many concurrent Uploader Lambdas"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Uploader Lambdas fetch formatted data from S3"
+    },
+    {
+      "source": "9",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Uploader Lambdas send rate-limited data to partner Ad Networks"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Uploader Lambdas push success/retry status into buffer SQS queue"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Batch Writer Lambda polls status queue"
+    },
+    {
+      "source": "11",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Batch updates file processing status in RDS"
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "The architecture represents Cohesity's Data Management as a Service (Cohesity Helios) decomposed into a Control Plane and a Data Plane. In the Control Plane, EKS runs microservices for UI, management, and internal data processing, using KMS for encryption key management, Elasticsearch (OpenSearch) for log analytics and alerting, and Aurora for customer metadata storage. Intra-region communication from the control plane to the data plane (EC2) routes through AWS PrivateLink, while inter-region / cross-geo communication routes via Transit Gateway to S3 storage.",
+  "graph": {
+    "name": "Cohesity Data Management as a Service Architecture",
+    "link": "https://www.youtube.com/watch?v=E68ufJOduio",
+    "categories": "backup, data management, cloud security",
+    "graph_usable": true,
+    "notes": "Separates control plane (EKS, KMS, Elasticsearch, Aurora, PrivateLink, Transit Gateway) from data plane (EC2, S3) to achieve scalability and security."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "AWS Key Management Service used to encrypt data in flight and at rest across planes and tenant environments."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Amazon EKS hosting microservices for management UI, billing, and internal data processing."
+    },
+    {
+      "id": "2",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Elasticsearch service used for real-time analytics, indexing, and alerting on backup data."
+    },
+    {
+      "id": "3",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Amazon Aurora database storing core customer backup metadata and telemetry."
+    },
+    {
+      "id": "4",
+      "service": "PrivateLink",
+      "name": "PRIVATELINK",
+      "notes": "AWS PrivateLink providing private intra-region connectivity between control plane and data plane VPCs."
+    },
+    {
+      "id": "5",
+      "service": "TransitGateway",
+      "name": "TRANSIT GATEWAY",
+      "notes": "AWS Transit Gateway enabling secure cross-region and cross-geo communication over AWS backbone."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Data plane compute instances provisioned for isolated tenant environments."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 object storage for long-term customer backup data in the data plane."
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End user interacting with the platform via the Web UI interface."
+    }
+  ],
+  "edges": [
+    {
+      "source": "8",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User accesses the UI and management interface provided by EKS microservices."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "EKS integrates with KMS for encryption key management."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS microservices send log data and analytics queries to Elasticsearch."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EKS microservices connect to Aurora for metadata storage and state management."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Direct query path or reporting access to Aurora database records."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Elasticsearch routes control traffic internally via PrivateLink."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "PrivateLink connects Control Plane to EC2 instances in Data Plane within same region."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Aurora connects through Transit Gateway for cross-region data transfer."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transit Gateway routes backup data across regions to target S3 buckets."
+    }
+  ]
+}

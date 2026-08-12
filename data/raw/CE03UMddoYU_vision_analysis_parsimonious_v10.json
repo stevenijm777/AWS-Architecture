@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "1. **Identify Nodes**: \n   - `Sensors` (ThirdParty): Represented as external IoT sensors ('SENSORS' box).\n   - `API Gateway` (ApiGateway): AWS API Gateway receiving incoming data from sensors.\n   - `Transformer` (Lambda): AWS Lambda function performing data transformation.\n   - `Flow` (SQS): Amazon SQS FIFO queue for flow data.\n   - `Alarm` (SQS): Amazon SQS FIFO queue for alarm data.\n   - `PreProcessor` (Lambda): AWS Lambda pre-processing data from the queue.\n   - `ElasticCache` (ElastiCache): Amazon ElastiCache (Redis) used as an in-memory cache for decision-making.\n   - `Post Processor` (EC2): EC2 instance running post-processing batch jobs.\n   - `DynamoDB` (DynamoDB): Amazon DynamoDB for event data storage.\n   - `Aurora` (Aurora): Amazon Aurora Serverless for daily statistics storage.\n   - `End User App` (UserConsumerMobile): Mobile app / web portal icon at the top right.\n\n2. **Identify Edges & Flow**:\n   - Sensors send data to API Gateway.\n   - API Gateway triggers the Transformer Lambda.\n   - Transformer Lambda splits and enqueues data into Flow SQS and Alarm SQS.\n   - PreProcessor Lambda reads from Flow SQS.\n   - PreProcessor Lambda checks with ElastiCache to determine data relevance.\n   - Filtered data moves from PreProcessor Lambda to Post Processor EC2.\n   - Post Processor EC2 writes processed data to DynamoDB and Aurora.\n   - Data from DynamoDB is served to the end-user Mobile App.",
+  "graph": {
+    "name": "Vigod Water Management IoT Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=CE03UMddoYU",
+    "categories": "IoT / Serverless / Analytics",
+    "graph_usable": true,
+    "notes": "Architecture for ingesting, filtering, and storing 27M daily data points from IoT water sensors."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Sensors",
+      "notes": "100k IoT water sensors transmitting protocol data"
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Ingestion point for field sensors"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Transformer",
+      "notes": "Standardizes multi-protocol sensor data into flow and alarm segments"
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Flow Queue",
+      "notes": "SQS FIFO queue for flow metrics"
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Alarm Queue",
+      "notes": "SQS FIFO queue for alarm events"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "PreProcessor",
+      "notes": "Real-time decision engine to filter actionable time-series data"
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElasticCache",
+      "notes": "In-memory Redis cache used by PreProcessor"
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Post Processor",
+      "notes": "EC2 running batch jobs to process ~40% relevant data"
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores event data (e.g., lorry dumping, borewell start)"
+    },
+    {
+      "id": "9",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Aurora Serverless storing aggregated daily statistics"
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App / Web Portal",
+      "notes": "End-user interface displaying water usage visualizations"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sensors push raw readings to API Gateway"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway invokes Transformer Lambda"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transformer pushes flow data to Flow SQS"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Transformer pushes alarm data to Alarm SQS"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "PreProcessor reads data from Flow Queue"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "PreProcessor queries ElastiCache to evaluate data processing needs"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "PreProcessor passes filtered actionable data (approx 40%) to Post Processor"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Post Processor writes discrete event data to DynamoDB"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Post Processor writes daily aggregated data to Aurora"
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Data served to end users on mobile/web applications"
+    }
+  ]
+}

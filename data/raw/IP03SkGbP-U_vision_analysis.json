@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "1. Identifies entry routing with Amazon Route 53 distributing traffic using weighted policies (100% active region, 0% secondary region).\n2. Traffic reaches the Application Load Balancer (ALB) which distributes incoming requests to active compute services (ECS and EC2).\n3. Amazon ECS manages containerized auxiliary applications, pulling images from ECR and interacting with RDS databases.\n4. Core stock exchange matching systems run on EC2 and RDS.\n5. Cross-region disaster recovery mechanisms replicate state from EC2 (snapshots via Data Lifecycle Manager), RDS (cross-region read replicas), and ECR (container image replication) into the secondary AWS region.\n6. Amazon DynamoDB uses native Global Tables for automatic multi-region replication without requiring manual cross-region arrows.",
+  "graph": {
+    "name": "Astana International Exchange Multi-Region Architecture",
+    "link": "https://www.youtube.com/watch?v=IP03SkGbP-U",
+    "categories": "Financial Services, High Availability, Disaster Recovery",
+    "graph_usable": true,
+    "notes": "Fully cloud-operated stock exchange architecture featuring active-passive multi-region failover and cross-region state replication."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "Uses weighted routing policy (100% active, 0% standby) for high-level traffic control and failover."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Balances incoming web application traffic across ECS containers and EC2 instances."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs containerized auxiliary application microservices."
+    },
+    {
+      "id": "3",
+      "service": "ECR",
+      "name": "ECR",
+      "notes": "Stores container images and automatically replicates them to the secondary region."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Hosts the core NASDAQ matching engine system."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database supporting core and auxiliary exchange operations."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Uses native Global Tables feature for automatic multi-region synchronization."
+    },
+    {
+      "id": "7",
+      "service": "VPC",
+      "name": "2nd Region",
+      "notes": "Secondary AWS region designated as standby disaster recovery environment."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Directs 100% of primary active production traffic to ALB."
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Routes 0% traffic under normal operation; receives 100% upon failover."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Forwards application web requests to ECS container tasks."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Forwards core exchange requests to EC2 instances."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pulls container images from ECR."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Reads and writes auxiliary application data to RDS."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Replicates EC2 volume state to secondary region using AWS Data Lifecycle Manager snapshots."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Synchronizes database updates via RDS cross-region read replica."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Replicates ECR container image repositories across regions."
+    }
+  ]
+}

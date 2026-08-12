@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The visual architecture shows two user tiers (Enterprise and Standard Users) accessing a shared API Gateway and Business Logic layer. The Business Logic layer queries an I3 service (Fargate + DynamoDB) to route requests either to a shared multi-tenant Aurora database (encrypted with a Platform KMS key) or a customer-dedicated Aurora database (encrypted via a Customer-owned KMS key).",
+  "graph": {
+    "name": "Replicon Multi-Tenant SaaS Architecture with Customer-Managed Keys",
+    "link": "https://www.youtube.com/watch?v=8ZRWzn0G39g",
+    "categories": "Security & Multi-Tenancy",
+    "graph_usable": true,
+    "notes": "Architecture demonstrating tenant data isolation and customer-managed KMS integration."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Enterprise Users",
+      "notes": "Enterprise customers with regulatory compliance requirements."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerWeb",
+      "name": "Standard Users",
+      "notes": "Standard multi-tenant SaaS users."
+    },
+    {
+      "id": "2",
+      "service": "KMS",
+      "name": "Customer KMS Key",
+      "notes": "Customer-owned KMS key provisioned in customer's AWS account."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Shared entry point for all API traffic."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Business Logic",
+      "notes": "Shared application logic running on compute services."
+    },
+    {
+      "id": "5",
+      "service": "Fargate",
+      "name": "I3 Service (Fargate)",
+      "notes": "Inter-Infrastructure Intelligence routing API."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "I3 Store (DynamoDB)",
+      "notes": "Stores routing metadata mapping tenants to database instances."
+    },
+    {
+      "id": "7",
+      "service": "Aurora",
+      "name": "Dedicated Aurora DB",
+      "notes": "Enterprise dedicated database instance."
+    },
+    {
+      "id": "8",
+      "service": "Aurora",
+      "name": "Shared Aurora DB",
+      "notes": "Multi-tenant shared database instance."
+    },
+    {
+      "id": "9",
+      "service": "KMS",
+      "name": "Platform KMS Key",
+      "notes": "Replicon platform-managed KMS key for shared database encryption."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Enterprise user provisions CMK in their account."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Enterprise user accesses API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Standard user accesses API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes request to Business Logic."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Business Logic queries I3 service for routing details."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "I3 service fetches tenant lookup data."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Business Logic accesses dedicated Enterprise database."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Customer KMS key encrypts dedicated Aurora data."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Business Logic accesses shared Aurora database."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Platform KMS key encrypts shared Aurora data."
+    }
+  ]
+}

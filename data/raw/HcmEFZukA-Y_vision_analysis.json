@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "1. Identified system actors and services from the diagram and transcript: UserConsumerMobile ('Mobile Device'), UserConsumerPOS ('POS'), ThirdParty ('Digital Ledger'), ApiGateway ('API Gateway'), Pinpoint ('Pinpoint'), SQS ('SQS'), Lambda ('Lambda'), MongoDBAtlas ('Atlas MongoDB'), EventBridge ('EventBridge').\n2. Mapped visual arrows and transcript explanations into discrete workflows:\n - Flow 0: Phone number verification flow from Mobile Device to API Gateway to Pinpoint.\n - Flow 1: In-store barcode loading transaction from POS to external Digital Ledger.\n - Flow 2: Synchronization loop from Digital Ledger through API Gateway, SQS queue, and Lambda to update Atlas MongoDB.\n - Flow 3: Mobile wallet transaction flow from Mobile Device through API Gateway and Lambda to adjust Digital Ledger, update Atlas MongoDB, and emit events to EventBridge for the downstream loyalty ecosystem.",
+  "graph": {
+    "name": "7-Eleven Digital Wallet Architecture",
+    "link": "https://www.youtube.com/watch?v=HcmEFZukA-Y",
+    "categories": "Retail Digital Wallet Architecture",
+    "graph_usable": true,
+    "notes": "7-Eleven digital wallet architecture integrating physical POS, legacy closed-loop digital ledger, AWS serverless services, MongoDB Atlas, and EventBridge for customer notifications and loyalty."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Device",
+      "notes": "Customer mobile application used for wallet transactions and phone number verification."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerPOS",
+      "name": "POS",
+      "notes": "In-store Point of Sale terminal where cashiers scan barcodes and load balance."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Digital Ledger",
+      "notes": "External legacy closed-loop gift card system digitized into the wallet backend."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for mobile app API calls and webhooks from external ledger."
+    },
+    {
+      "id": "4",
+      "service": "Pinpoint",
+      "name": "Pinpoint",
+      "notes": "AWS service used to verify phone numbers for fraud prevention."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue buffering state changes and updates originating from the Digital Ledger."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Compute functions handling business logic, ledger sync, balance adjustments, and database updates."
+    },
+    {
+      "id": "7",
+      "service": "MongoDBAtlas",
+      "name": "Atlas MongoDB",
+      "notes": "Document database storing real-time customer wallet and profile state."
+    },
+    {
+      "id": "8",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Event bus emitting customer interaction events to downstream loyalty ecosystem."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile app sends phone verification request to API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway uses Pinpoint to verify phone number for fraud control."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "POS sends load request directly to external Digital Ledger during barcode scan."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Digital Ledger sends state change notification to API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway queues state change message in SQS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "SQS triggers Lambda function to consume ledger updates."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda writes updated balance/state into MongoDB Atlas."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile device initiates wallet operation (e.g. delivery order) via API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda function to execute transaction logic."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda calls Digital Ledger API to add/deduct balances."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda updates customer wallet document in MongoDB Atlas."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "control",
+      "notes": "Lambda publishes customer interaction events to EventBridge."
+    }
+  ]
+}

@@ -51,25 +51,21 @@ def save_progress(progress: dict[str, dict]) -> None:
 
 def get_missing_standard_ids(force: bool = False) -> list[str]:
     gt_dir = DATA_DIR / "cloudscape_gt"
-    pars_dir = DATA_DIR / "graphs_parsimonious"
-
-    pars_vids = set([f.stem for f in pars_dir.glob("*.graphml")]) if pars_dir.exists() else set()
-    gt_vids = set([f.stem for f in gt_dir.glob("*.graphml")]) if gt_dir.exists() else set()
-
-    pars_gt_vids = sorted(list(pars_vids & gt_vids))
+    gt_vids = sorted([f.stem for f in gt_dir.glob("*.graphml")]) if gt_dir.exists() else []
     std_vids = set([f.stem for f in GRAPHS_DIR.glob("*.graphml")]) if GRAPHS_DIR.exists() else set()
 
     target_ids = []
-    for vid in pars_gt_vids:
+    for vid in gt_vids:
+        if vid in std_vids and not force:
+            continue
         wb_path = GOOD_WHITEBOARD_DIR / f"{vid}.jpg"
         ts_path = RAW_DIR / f"{vid}_transcript.json"
-        out_graph = GRAPHS_DIR / f"{vid}.graphml"
 
         if wb_path.exists() and ts_path.exists():
-            if not out_graph.exists() or force:
-                target_ids.append(vid)
+            target_ids.append(vid)
 
     return target_ids
+
 
 
 def process_batch(video_ids: list[str], force: bool = False) -> None:

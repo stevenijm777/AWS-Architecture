@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows the interaction between Spot.io's SaaS infrastructure and a client's AWS environment for optimizing and managing Spot instances.\n\nSpot.io Side:\n1. EC2: Runs data collectors gathering metrics across regions/AZs/pools.\n2. Aurora: Stores 2 billion collected data points daily.\n3. SageMaker: Runs machine learning models on collected data to predict spot instance interruptions up to 1 hour in advance.\n4. EKS: Orchestrates and manages SaaS workload execution and cross-account operations.\n\nClient Side:\n5. CloudFormation: Deploys required IAM roles/policies and infrastructure inside the client account.\n6. IAM: Provides cross-account role with external ID for secure access by Spot.io data collectors and management engine.\n7. EKS: The client's Kubernetes cluster.\n8. EC2 (Spot Instance(s)): Worker nodes managed and proactively replaced before interruption.\n\nConnections and Flows:\n- Flow 0: Data collection & ML prediction - Spot.io EC2 data collectors use client IAM role to describe resources, store collected metrics into Aurora, and feed data into SageMaker.\n- Flow 1: Provisioning & Proactive spot replacement - Client deploys infrastructure via CloudFormation, IAM controls access to client EKS, Spot.io EKS manages client EKS, and client EKS scales/replaces Spot Instance(s).",
+  "graph": {
+    "name": "Spot.io Autonomous Spot Instance Management Architecture",
+    "link": "https://www.youtube.com/watch?v=A4Lfk1Zz1dE",
+    "categories": "Compute, Database, Machine Learning, Containers, Security",
+    "graph_usable": true,
+    "notes": "Shows how Spot.io uses predictive ML models on AWS to automatically manage and proactively swap client Spot instances with zero downtime."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "Data Collectors (Spot.io)",
+      "notes": "Runs data collection services gathering 2 billion data points daily across regions and availability zones."
+    },
+    {
+      "id": "1",
+      "service": "Aurora",
+      "name": "Aurora Database",
+      "notes": "Stores infrastructure and spot capacity pool metrics."
+    },
+    {
+      "id": "2",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Predicts spot instance interruptions 1 hour in advance with 85% accuracy."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS (Spot.io SaaS)",
+      "notes": "Manages Spot.io's internal containerized SaaS workload and cross-account management engine."
+    },
+    {
+      "id": "4",
+      "service": "CloudFormation",
+      "name": "CloudFormation",
+      "notes": "Deploys IAM policies and roles with external IDs in the customer account."
+    },
+    {
+      "id": "5",
+      "service": "IAM",
+      "name": "Cross-Account IAM Role",
+      "notes": "Secures access for Spot.io to describe and manage customer resources."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "EKS (Client)",
+      "notes": "Client Kubernetes cluster hosting application workloads."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Spot Instance(s)",
+      "notes": "Client worker nodes automatically managed and proactively replaced upon predicted interruption."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Spot.io data collectors leverage cross-account IAM role to describe client EC2, ASG, and container workloads."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stores 2 billion daily data points into Aurora."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Feeds real-time monitoring metrics into SageMaker ML models for interruption prediction."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Deploys and configures infrastructure resources in the client account."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Provides access permissions to manage client EKS cluster."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Spot.io engine communicates across accounts to trigger proactive instance replacement."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Client EKS scales and replaces Spot worker nodes proactively before interruption."
+    }
+  ]
+}

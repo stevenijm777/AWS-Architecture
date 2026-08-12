@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture represents Sony Music The Orchard's Kafka Data Highway built around Amazon MSK for real-time data replication and event-driven architecture. Real-time data flows into MSK from three sources: 1) Neo4j database hosted on EC2 streaming data via the Streams plugin, 2) Data Lake streaming social/consumption metrics via an S3 Kafka connector, and 3) Microservices on AWS Fargate pushing business object change events (such as album updates). For search and indexing, an Elasticsearch sink connector running on Fargate consumes origin topics from MSK, joins them on the fly, and indexes the joined data directly into OpenSearch for fast ranked searching. For event-driven workflows, MSK triggers a Lambda function for email notifications and sends HTTP requests via an HTTP Sink connector to an external CRM system to update landing pages.",
+  "graph": {
+    "name": "Sony Music The Orchard Kafka Data Highway Architecture",
+    "link": "https://www.youtube.com/watch?v=ItpY_KKR94k",
+    "categories": "Real-time Streaming, Search & Indexing, Event-Driven Architecture",
+    "graph_usable": true,
+    "notes": "Central MSK (Kafka Data Highway) connects data sources (Neo4j, Data Lake, Fargate microservices) with target consumers (OpenSearch via Fargate connector, Lambda notifications, external CRM via HTTP sink connector)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2 (NEO4J)",
+      "notes": "Hosts Neo4j containing the core domain knowledge graph/corpus."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "DATALAKE",
+      "notes": "Data lake containing streaming numbers, analytical metrics, and social metrics."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "FARGATE (Top)",
+      "notes": "Hosts microservices dealing with entity changes (e.g., album name or release date modifications)."
+    },
+    {
+      "id": "3",
+      "service": "MSK",
+      "name": "MSK",
+      "notes": "Central Amazon Managed Streaming for Apache Kafka cluster acting as the core message bus."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "FARGATE (Sync)",
+      "notes": "Runs the open-source Elasticsearch sink connector that consumes origin topics from MSK and joins them on the fly."
+    },
+    {
+      "id": "5",
+      "service": "OpenSearch",
+      "name": "OPENSEARCH",
+      "notes": "OpenSearch cluster providing quick search, boosting, and relevance ranking based on social and consumption metrics."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Serverless function reading from MSK topics to notify stakeholders when entity changes occur."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "HTTP SINK / CRM",
+      "notes": "External CRM updated via open-source HTTP Sink connector when release dates or album info change."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams plugin sends real-time database changes directly from Neo4j on EC2 into MSK topics."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "S3 Kafka connector pushes streaming metrics and social data into MSK."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "MSK streams origin topics to the Elasticsearch sink connector on Fargate."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Sink connector joins topics on the fly and indexes joined documents directly into OpenSearch."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Microservices on Fargate push business entity change events (e.g. release date change) to MSK."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda reads from specific MSK topics to trigger stakeholder email notifications."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "HTTP Sink connector routes event updates from MSK to external marketing CRM."
+    }
+  ]
+}

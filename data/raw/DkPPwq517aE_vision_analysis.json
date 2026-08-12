@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. **Identify Components**: From the whiteboard drawing and video transcript, we observe an end-user accessing a two-tier AWS architecture. The static frontend consists of AWS WAF, Amazon CloudFront, and Amazon S3 hosting an Angular web app. The backend entry point is Amazon API Gateway, routing to Amazon ECS running microservices on AWS Fargate, connected to Amazon RDS (MySQL) with Read Replicas. A scheduled task workflow at the bottom uses CloudWatch Events triggering a Fargate daemon every 1 minute, which sends tasks to an Amazon SQS queue, which are then consumed by ECS microservices.\n2. **Map Vocabulary**: Match every entity to the approved vocabulary list:\n- User -> `UserConsumerWeb`\n- WAF -> `WAF`\n- CLOUDFRONT -> `CloudFront`\n- S3 -> `S3`\n- API GATEWAY -> `ApiGateway`\n- ECS -> `ECS`\n- FARGATE -> `Fargate`\n- RDS -> `RDS`\n- CLOUDWATCH EVENTS -> `CloudWatch`\n- SQS -> `SQS`\n3. **Map Workflows and Edges**:\n- Flow 0 (Static Web Frontend Access): User -> WAF -> CloudFront -> S3.\n- Flow 1 (Backend API Request Handling): User -> API Gateway -> ECS -> RDS.\n- Flow 2 (Scheduled Event Processing & Decoupling): CloudWatch Events --(1 min)--> Fargate -> SQS -> ECS.",
+  "graph": {
+    "name": "Nimbos Cloud Automation Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=DkPPwq517aE",
+    "categories": "Web Applications, Serverless, Decoupled Architectures",
+    "graph_usable": true,
+    "notes": "Architecture of an internal automation platform hosted on AWS, featuring Angular static asset delivery through CloudFront/WAF/S3, REST APIs on API Gateway leading to ECS Fargate microservices and RDS MySQL with read replicas, and a scheduled background processing loop via CloudWatch Events, Fargate daemon, and SQS queue."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End user interacting with the Angular web frontend and REST API endpoints"
+    },
+    {
+      "id": "1",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "AWS WAF protecting CloudFront and S3 frontend from malicious traffic"
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "Amazon CloudFront CDN caching static assets and improving user performance"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket storing Angular frontend web application files"
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Amazon API Gateway serving as REST API endpoint manager"
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Amazon ECS cluster running microservices on AWS Fargate serverless infrastructure"
+    },
+    {
+      "id": "6",
+      "service": "Fargate",
+      "name": "FARGATE",
+      "notes": "AWS Fargate compute host running background scheduled daemon process"
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Amazon RDS MySQL database with auto-scaled Read Replicas"
+    },
+    {
+      "id": "8",
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH EVENTS",
+      "notes": "CloudWatch Events timer firing scheduled task triggers every 1 minute"
+    },
+    {
+      "id": "9",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Amazon SQS queue storing broken-down scheduled tasks for decoupled processing"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User accesses frontend via WAF security rule evaluation"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "WAF forwards valid request to CloudFront CDN"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront fetches static web application assets from S3 bucket"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User calls backend REST APIs via API Gateway"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes API requests to ECS microservices"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS microservices query and update MySQL RDS database and read replicas"
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch Events triggers scheduled daemon process every 1 minute"
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate daemon retrieves scheduled tasks and enqueues them into SQS"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS microservices pull tasks asynchronously from SQS queue based on auto-scaling demand"
+    }
+  ]
+}

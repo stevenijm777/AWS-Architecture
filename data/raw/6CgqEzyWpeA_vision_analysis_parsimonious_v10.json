@@ -1,0 +1,214 @@
+{
+  "step_by_step_reasoning": "1. Identify the primary external entry point: 'UserConsumerMobile' (represented as mobile/desktop client icons).\n2. Trace the front-end API path: Client requests go to API Gateway, which invokes a frontend Lambda function.\n3. Trace the asynchronous rendering queuing flow: The frontend Lambda sends rendering instructions to an SQS queue (bottom), which EC2 Auto Scaling workers consume.\n4. Trace the immediate response path: EC2 Auto Scaling workers send job confirmation/status to a response SQS queue (top), which the frontend Lambda reads to return a playlist link back to the Client.\n5. Trace video storage and distribution: EC2 Auto Scaling renders and uploads video segments to S3, which CloudFront caches and serves to the Client device.\n6. Trace auto-scaling mechanism: Step Functions triggers a scaling Lambda every 15 seconds, which reads CloudWatch metrics (pushed by EC2 Auto Scaling) and updates Auto Scaling capacity.\n7. Trace spot instance interruption flow: CloudWatch Events detects spot interruption warnings, triggering an interruption Lambda that signals the affected EC2 instance to drain and detach.",
+  "graph": {
+    "name": "SundaySky Rendering as a Service Ecosystem",
+    "link": "https://www.youtube.com/watch?v=6CgqEzyWpeA",
+    "categories": "Media & Entertainment, Serverless, Compute",
+    "graph_usable": true,
+    "notes": "Architecture for SundaySky's personalized video Rendering as a Service (RaaS) using spot instances, SQS queues, Step Functions, and API Gateway."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Client Device (Mobile / PC)",
+      "notes": "End-user device requesting personalized video rendering and watching playback"
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Handles client rendering requests with usage plans and API keys"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Frontend Lambda",
+      "notes": "Validates render requests, manages job submission and response handling"
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Rendering Instruction SQS Queue",
+      "notes": "Holds rendering instructions for engine workers"
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Response SQS Queue",
+      "notes": "Receives quick responses from rendering engines"
+    },
+    {
+      "id": "5",
+      "service": "AutoScaling",
+      "name": "EC2 Auto Scaling (Engine Service)",
+      "notes": "Fleet of EC2 spot instances performing video rendering jobs"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores uploaded video segments"
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Distributes video segments to end users"
+    },
+    {
+      "id": "8",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Triggers scaling Lambda periodically (every 15s)"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Scaling Lambda",
+      "notes": "Calculates required rendering capacity and updates Auto Scaling Group"
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "CloudWatch / Events",
+      "notes": "Collects rendering metrics and handles spot interruption event notifications"
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Spot Interruption Handler Lambda",
+      "notes": "Handles 2-minute spot interruption warnings to gracefully drain instances"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client sends video rendering request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway triggers Frontend Lambda"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Frontend Lambda pushes rendering instructions to SQS"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EC2 instances pull rendering jobs from SQS queue"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "EC2 instance responds immediately with job response"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Frontend Lambda pulls response from SQS"
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Frontend Lambda returns playlist URL to client device"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 instances render and upload video segments to S3"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront fetches video segments from S3 origin"
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Client streams video segments via CloudFront"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Step Functions triggers scaling Lambda every 15 seconds"
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Rendering instances push metrics to CloudWatch"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Scaling Lambda reads CloudWatch metrics"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Scaling Lambda adjusts capacity in Auto Scaling group"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "CloudWatch Events notifies spot interruption to handler Lambda"
+    },
+    {
+      "source": "11",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Handler Lambda signals instance to stop taking jobs and drain"
+    }
+  ]
+}

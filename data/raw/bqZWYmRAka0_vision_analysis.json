@@ -1,0 +1,178 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates DBS Bank's quantitative pricing engine built on AWS. Request traffic originates from traders on the internal trading platform via External Data context to an Application Load Balancer (ALB). The ALB forwards traffic to the Pricing Engine running on ECS. The Pricing Engine pushes job IDs to Redis Task Queues and stores trade/market payloads in Redis Payload cache. CPU and GPU Pricing Workers pull tasks from the Task Queues into Processing Queues, read payloads from Redis Payload, run mathematical computations, and write results back to Redis Payload. Results are retrieved by the Pricing Engine via Redis Pub/Sub notification or priority polling to return near-real-time pricing to traders. Node IDs are sequentially numbered, node services match the valid vocabulary, and all text is translated to English without control characters.",
+  "graph": {
+    "name": "DBS Bank Quantitative Pricing Engine Architecture",
+    "link": "https://www.youtube.com/watch?v=bqZWYmRAka0",
+    "categories": "AWS Containerized Dynamic Workload Architecture",
+    "graph_usable": true,
+    "notes": "In-house quantitative pricing engine operating on AWS. Scalable auto-scaling worker nodes (CPU/GPU up to 5,000 instances using Spot) achieve near real-time execution times down to 0.5 seconds."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Users",
+      "notes": "Traders triggering pricing requests from DBS internal trading platform."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "External Data",
+      "notes": "External market data context attached to pricing requests."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Routes incoming pricing traffic to the Pricing Engine."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "Pricing Engine",
+      "notes": "In-house pricing engine service hosted on Amazon ECS."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "Pricing Workers (CPU)",
+      "notes": "CPU worker task cluster running on ECS Auto Scaling Group with Spot instances."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "Pricing Workers (GPU)",
+      "notes": "GPU worker task cluster providing computational acceleration for intense workloads."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "Task Queues",
+      "notes": "Redis task queue data structure storing pending job IDs."
+    },
+    {
+      "id": "7",
+      "service": "ElastiCache",
+      "name": "Processing Queues",
+      "notes": "Redis processing queue tracking active tasks."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "Pub/Sub",
+      "notes": "Redis Pub/Sub mechanism for notifying the Pricing Engine upon job completion."
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "Payload",
+      "notes": "Redis payload cache storing input market data and computation results."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Traders submit pricing request attaching external market data context."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "External market context and request payload routed to ALB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB routes request to Pricing Engine."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Pricing Engine stores job ID into Task Queues."
+    },
+    {
+      "source": "3",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "Pricing Engine writes full payload into Redis Payload cache."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Tasks are popped from Task Queues into Processing Queues when picked up by workers."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "CPU Pricing Workers monitor Task Queues and pop available tasks."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "CPU Pricing Workers pull payload from Redis Payload, compute result, and store results back."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "meta",
+      "notes": "GPU Pricing Workers monitor dedicated GPU task queues."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "GPU Pricing Workers fetch payload, compute accelerated results, and write back to Redis Payload."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Worker publishes result-available notification to Redis Pub/Sub channel."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Pub/Sub channel notifies Pricing Engine that results are ready."
+    },
+    {
+      "source": "3",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pricing Engine retrieves completed results from Redis Payload to return to traders."
+    }
+  ]
+}

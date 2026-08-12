@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "1. Identify visual nodes from the world model: three client S3 buckets (CLIENT 1, CLIENT 2, CLIENT N), a central S3 ACCESS LOGS bucket, a Lambda parsing function, an OpenSearch (ELASTICSEARCH) cluster running anomaly detection, and an SNS notification topic.\n2. Map services to valid vocabulary: S3 -> S3, Lambda -> Lambda, ELASTICSEARCH -> OpenSearch, SNS -> SNS.\n3. Assign sequential string IDs to nodes starting from '0'.\n4. Map relationships and edge flows: S3 access logs flow from individual client buckets to S3 ACCESS LOGS. Log landing triggers Lambda function. Lambda enriches logs (GeoIP mapping, numeric country ID, client name) and pushes them to Elasticsearch. Elasticsearch anomaly detector evaluates access patterns and triggers SNS alerts upon anomaly detection.",
+  "graph": {
+    "name": "Mobilewala Log Anomaly Detection Architecture",
+    "link": "https://www.youtube.com/watch?v=8s0wGRkiDrw",
+    "categories": "Security, Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "Real-time S3 access log anomaly detection system processing 18-20 million log records per month using Lambda, Elasticsearch Anomaly Detector, and SNS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "CLIENT 1",
+      "notes": "Client data bucket generating S3 access logs."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "CLIENT 2",
+      "notes": "Client data bucket generating S3 access logs."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "CLIENT N",
+      "notes": "Client data bucket generating S3 access logs."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 ACCESS LOGS",
+      "notes": "Centralized bucket receiving 18-20 million S3 access log records monthly."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Parses log entries, uses GeoIP DB to extract country and numeric country ID, adds custom field CLIENT_NAME."
+    },
+    {
+      "id": "5",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Stores log records and runs built-in Anomaly Detector configured per client name and country ID."
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Sends email notifications to the service team upon detecting access anomalies."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Access logs delivered from CLIENT 1 to central S3 ACCESS LOGS bucket."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Access logs delivered from CLIENT 2 to central S3 ACCESS LOGS bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Access logs delivered from CLIENT N to central S3 ACCESS LOGS bucket."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Log file creation in S3 ACCESS LOGS triggers Lambda execution."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda inserts enriched log records with custom fields into Elasticsearch."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Elasticsearch anomaly detector triggers alert notifications via SNS upon suspicious activity."
+    }
+  ]
+}

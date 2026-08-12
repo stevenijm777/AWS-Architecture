@@ -1,0 +1,200 @@
+{
+  "step_by_step_reasoning": "The whiteboard architecture represents a self-service enterprise data engineering platform built on AWS. \n\n1. External Actors: 'USERS' (Data Engineers, Data Analysts, Data Scientists) interact with the web portal. Represented as `UserCompanyDeveloper`.\n2. Ingestion/Interface: Users log in through a web application hosted on `EC2` (middle-left), which sends requests to `EKS` (center orchestrator).\n3. Metadata & Queueing: `EKS` stores metadata in `RDS` (labeled POSTGRESQL) and sends job events to `SQS`.\n4. Orchestration & Provisioning: `EKS` processes messages from `SQS` and provisions infrastructure: `EMR` clusters, `Glue` data catalogs, `S3` buckets, worker `EC2` instances (bottom, running Airflow/NiFi), and sets up `IAM` policies (integrated with Ranger).\n5. Notifications & Approvals: `SES` sends approval and notification emails to users/data owners. Approval responses flow into `SQS` to trigger access setup.\n6. Data Cataloging: Data stored in `S3` updates `Glue` catalog, which feeds back metadata into `EKS` for data discovery.",
+  "graph": {
+    "name": "ZS Self-Service Enterprise Data Engineering Platform",
+    "link": "https://www.youtube.com/watch?v=JG5p-i8Cr2E",
+    "categories": "Data Engineering & Analytics Platform",
+    "graph_usable": true,
+    "notes": "Self-service data engineering and discovery platform using EKS for orchestration, SQS/SES for workflows/approvals, and automated resource provisioning."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Users (Engineers / Analysts)",
+      "notes": "Data engineers, analysts, and scientists requesting infrastructure or data access"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Self-Service Web Portal",
+      "notes": "Multi-tier web application for user requests"
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS Cluster",
+      "notes": "Hosts microservices for platform orchestration, compute management, and crawlers"
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "PostgreSQL Database",
+      "notes": "Stores request records and metadata"
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Triggers automated infrastructure provisioning workflows"
+    },
+    {
+      "id": "5",
+      "service": "SES",
+      "name": "SES Notifications",
+      "notes": "Sends provisioning completions and manual approval emails"
+    },
+    {
+      "id": "6",
+      "service": "IAM",
+      "name": "IAM / Apache Ranger",
+      "notes": "Manages roles, permissions, and fine-grained access control"
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "EMR Cluster",
+      "notes": "Provisioned analytics compute clusters"
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue Data Catalog",
+      "notes": "Central metadata catalog for dataset access and governance"
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Data storage for analytical datasets"
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "Provisioned EC2 (Airflow / NiFi)",
+      "notes": "Provisioned instances running containerized data pipeline tools"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User submits infrastructure or data request in web portal"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Web portal forwards request to EKS services"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS creates request record in PostgreSQL database"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EKS pushes workflow trigger event to SQS"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "EKS background job consumes message from SQS to start provisioning"
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "EKS provisions EMR cluster"
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "EKS registers databases in Glue catalog"
+    },
+    {
+      "source": "2",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "EKS creates S3 storage buckets"
+    },
+    {
+      "source": "2",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "EKS launches EC2 instances running Airflow or NiFi"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "EKS provisions IAM roles and Ranger policies for access control"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "10",
+      "type": "data",
+      "notes": "EKS triggers SES to send approval/notification emails"
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "11",
+      "type": "data",
+      "notes": "SES sends provisioning status and access information to user"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data owner approval response triggers subsequent queue event"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "S3 dataset metadata cataloged in Glue"
+    },
+    {
+      "source": "8",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS crawlers fetch Glue catalog updates for data discovery"
+    }
+  ]
+}

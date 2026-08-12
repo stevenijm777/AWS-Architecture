@@ -1,0 +1,184 @@
+{
+  "step_by_step_reasoning": "1. Visual Inventory and Node Extraction: Identified the UserConsumerMobile actor on the left, followed top-to-bottom and left-to-right processing components including Clickstream Kinesis Stream (Kinesis), Kinesis Data Analytics, Filtered Kinesis Stream (Kinesis), Transformer Lambda, Search API (ThirdParty lookup), DocumentDB, Producer Lambda, Inventory API (ThirdParty), ElastiCache Redis, and Search API (ThirdParty response).\n2. Note Assimilation: Extracted specs from transcript - DocumentDB stores ~650M documents, operates at <1000 TPS with 7-day TTL across 3 AZs; Producer Lambda runs on a schedule to check inventory via Inventory API before writing suggestions to Redis.\n3. Flow Segmentation:\n- Flow 0: Capture & Enrichment Pipeline - Clickstream data is ingested by Kinesis, filtered via Kinesis Analytics SQL, written to a second Kinesis stream, transformed by Lambda (calling Search API for metadata), and stored in DocumentDB.\n- Flow 1: Suggestion Generation & Cache Serving - Scheduled Producer Lambda reads documents from DocumentDB, checks Inventory API, writes suggestions to Redis, which serves responses through Search API back to the Mobile Device.\n4. Formatting & Schema Validation: Ensured all service names map strictly to the allowed vocabulary list, nodes use integer strings, and JSON contains no illegal control characters.",
+  "graph": {
+    "name": "Zulily Search Suggestion Architecture",
+    "link": "https://www.youtube.com/watch?v=Ccutfm_Srzw",
+    "categories": "Analytics & Streaming, Compute & Serverless, Databases",
+    "graph_usable": true,
+    "notes": "Architecture for streaming clickstream data, filtering search terms, enriching via external APIs, storing in DocumentDB, and caching stock-validated suggestions in ElastiCache for Redis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Device",
+      "notes": "Mobile app used by customers to navigate and search."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Clickstream Kinesis Stream",
+      "notes": "Ingests real-time clickstream events from mobile app users."
+    },
+    {
+      "id": "2",
+      "service": "KinesisAnalytics",
+      "name": "Kinesis Data Analytics",
+      "notes": "Executes real-time SQL queries to filter search keywords out of the main clickstream."
+    },
+    {
+      "id": "3",
+      "service": "Kinesis",
+      "name": "Filtered Kinesis Stream",
+      "notes": "Holds filtered search keyword events."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Transformer Lambda",
+      "notes": "Enriches search keywords by querying Search API and stores records in DocumentDB."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Search API (Lookup)",
+      "notes": "External Search API used by Transformer Lambda to fetch related brands and product categories."
+    },
+    {
+      "id": "6",
+      "service": "DocumentDB",
+      "name": "DocumentDB",
+      "notes": "Stores ~650 million search keyword documents across 3 AZs with a 7-day TTL at <1000 TPS."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Producer Lambda",
+      "notes": "Scheduled Lambda that pulls search documents and verifies stock availability."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Inventory API",
+      "notes": "External API queried to verify product availability before generating search suggestions."
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "Redis",
+      "notes": "Caches verified search suggestions for low-latency retrieval."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Search API (Response)",
+      "notes": "Serves final search suggestions from Redis to mobile app clients."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile app streams user interaction events to Clickstream Kinesis Stream."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Clickstream Kinesis Stream feeds events into Kinesis Data Analytics."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis Data Analytics outputs SQL-filtered search keywords to second Kinesis Stream."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Filtered Kinesis Stream triggers Transformer Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Transformer Lambda queries Search API for brand and category lookup."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Search API returns brand and product category details to Transformer Lambda."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Transformer Lambda writes enriched search keyword documents to DocumentDB."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Scheduled Producer Lambda pulls search keyword documents from DocumentDB."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Producer Lambda checks product inventory levels via Inventory API."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Inventory API returns product stock status to Producer Lambda."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Producer Lambda writes validated search suggestions into ElastiCache Redis."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Search API reads cached search suggestions from Redis."
+    },
+    {
+      "source": "10",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Search API returns search suggestions to the mobile application."
+    }
+  ]
+}

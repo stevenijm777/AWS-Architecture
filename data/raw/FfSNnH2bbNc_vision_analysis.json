@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1. Identified system components from World Model and transcript: Satellite (ThirdParty), EC2 SPOT (EC2), S3 (S3), RDS (RDS), ELASTICACHE (ElastiCache), AWS FARGATE (Fargate), LAMBDA (Lambda), and User (UserConsumerWeb).\n2. Assigned numeric node IDs sequentially from '0' to '7'.\n3. Traced three main logical flows:\n   - Flow 0: Ingestion pipeline where Satellite imagery is processed by EC2 Spot instances and stored into S3 (bulk data, ~5PB catalog, ~100GB/day) and RDS (metadata).\n   - Flow 1: Web tile generation where User requests map tiles from Fargate, which checks ElastiCache, queries RDS metadata, fetches imagery chunks from S3 via HTTP range requests, writes tiles back to ElastiCache, and serves them to the user.\n   - Flow 2: Time-series analysis where User sends custom field boundaries to Lambda, which queries RDS for metadata, pulls source imagery from S3, computes time-series greenness metrics, and returns the result to the user.\n4. Mapped edges with flow_id, seq, type, and descriptive notes while ensuring valid vocabulary and node fields.",
+  "graph": {
+    "name": "Indigo Carbon Satellite Imagery Architecture",
+    "link": "https://www.youtube.com/watch?v=FfSNnH2bbNc",
+    "categories": "Compute, Storage, Database, Analytics",
+    "graph_usable": true,
+    "notes": "Architecture for processing daily satellite imagery from NASA to calculate carbon credit metrics and field health time-series data for farmers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Satellite",
+      "notes": "External satellite imagery source providing daily corrected tiles."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 SPOT",
+      "notes": "Auto-scaling cluster of EC2 Spot instances that post-process raw satellite tiles."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Bulk storage holding ~5 PB of imagery data spanning 10-30 years, growing ~100 GB/day."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database storing imagery metadata and tile spatial references."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "AWS FARGATE",
+      "notes": "Fargate container service generating web map tiles on-the-fly using HTTP range requests."
+    },
+    {
+      "id": "5",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "Redis cache in ElastiCache storing pre-rendered common map tiles."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Series of Lambda functions performing custom field time-series calculations."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "Farmers and users interacting with the web application."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests modestly processed satellite tiles into EC2 Spot instances."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes post-processed bulk imagery output into S3."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Writes imagery metadata into RDS."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User app requests map tiles for specified layer and time frame."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate checks ElastiCache for pre-rendered map tiles."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fargate queries RDS to locate corresponding source imagery."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fargate retrieves image chunks from S3 using HTTP range requests."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fargate writes newly generated tiles into ElastiCache Redis cache."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fargate serves map tiles back to the user application."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "User submits custom field boundary geometry to Lambda."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda queries RDS metadata for field location imagery."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda fetches raw imagery from S3 for time-series computation."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda returns calculated time-series greenness curve data to user."
+    }
+  ]
+}

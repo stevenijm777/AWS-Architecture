@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identify Visual Actors and Nodes:\n   - SCANNER (Mobile device): Map to `UserConsumerMobile` actor.\n   - Top row AWS services: Fargate (`Fargate`), DynamoDB (`DynamoDB`), Lambda (`Lambda`).\n   - Middle/Bottom fan-out components: SNS (`SNS`), two SQS queues (`SQS`), two Fargate tasks (`Fargate`).\n   - WEBSITE (Desktop icon): Map to `UserConsumerWeb` actor.\n\n2. Trace Logical Connections:\n   - Mobile scanner sends scan data to the ingestion Fargate service.\n   - Fargate persists scans into DynamoDB.\n   - DynamoDB Streams trigger a Lambda function.\n   - Lambda publishes messages to SNS for fan-out messaging.\n   - SNS fans out messages to two SQS queues.\n   - Top SQS queue feeds a Fargate service that updates the public tracking Website.\n   - Bottom SQS queue feeds another Fargate service (e.g., image processing).",
+  "graph": {
+    "name": "Freightways Package Tracking Architecture",
+    "link": "https://www.youtube.com/watch?v=E8wYXtvGy5k",
+    "categories": "Application Integration, Serverless",
+    "graph_usable": true,
+    "notes": "Freightways processes over 50 million parcel scans annually using AWS Fargate, DynamoDB Streams, Lambda, SNS, and SQS for real-time tracking updates."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Scanner",
+      "notes": "Handheld scanning device used by drivers"
+    },
+    {
+      "id": "1",
+      "service": "Fargate",
+      "name": "Fargate (Ingestion API)",
+      "notes": "Consumes scans from handheld devices"
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Persists scan data and emits DynamoDB Streams"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Processes DynamoDB Stream records"
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Fans out messages to multiple queue subscribers"
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS (Web Service)",
+      "notes": "Queue for tracking website updates"
+    },
+    {
+      "id": "6",
+      "service": "Fargate",
+      "name": "Fargate (Web Service)",
+      "notes": "Processes tracking updates for website display"
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "Website",
+      "notes": "Public parcel tracking website"
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS (Image Processing)",
+      "notes": "Queue for image processing services"
+    },
+    {
+      "id": "9",
+      "service": "Fargate",
+      "name": "Fargate (Image Processing)",
+      "notes": "Processes images attached to scans"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Driver sends scan payload to Fargate API"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate writes scan data to DynamoDB"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB Stream triggers Lambda"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda publishes scan events to SNS"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "SNS forwards message to web processing SQS queue"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fargate polls SQS queue for web updates"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Updates tracking visibility on public website"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "SNS fans out message to image processing SQS queue"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate polls SQS queue to process scan images"
+    }
+  ]
+}

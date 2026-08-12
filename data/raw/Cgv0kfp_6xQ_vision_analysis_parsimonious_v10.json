@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts Snapchat's backend processing pipeline. Mobile clients (iOS and Android) connect via an EKS Gateway service. The send flow routes requests to a Media service, which stores media via CloudFront to S3, and calls a Friend Graph service leading to Snap DB (an EKS layer over DynamoDB). The receive/messaging flow uses a Messaging Service (MGS) in EKS that queries ElastiCache for active client connection IDs, talks to Snap DB, and delivers real-time notifications back to the Android client.",
+  "graph": {
+    "name": "Snapchat Scalable Messaging Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=Cgv0kfp_6xQ",
+    "categories": "Mobile Backend & Microservices",
+    "graph_usable": true,
+    "notes": "EKS handles gateway and microservices, backended by ElastiCache, DynamoDB, CloudFront, and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "iOS Client",
+      "notes": "Mobile client initiating snap uploads"
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Android Client",
+      "notes": "Recipient mobile client receiving snaps"
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "API Gateway (GW)",
+      "notes": "Ingress gateway running on EKS"
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Media Service",
+      "notes": "Handles media upload processing"
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Friend Graph Service",
+      "notes": "Manages social graph relations"
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "Snap DB Layer",
+      "notes": "Custom caching/abstraction layer on EKS"
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "Messaging Service (MGS)",
+      "notes": "Handles latency-sensitive message routing"
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "Amazon CloudFront",
+      "notes": "CDN for low-latency media delivery"
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Persistent storage for media files"
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "Amazon ElastiCache",
+      "notes": "Stores active user connection and server mappings"
+    },
+    {
+      "id": "10",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Primary NoSQL store for persistent metadata"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends snap data to gateway"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes upload to Media Service"
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers media payload to CloudFront"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Persists media file to S3 bucket"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Queries recipient information"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Updates state via Snap DB layer"
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Writes persistent metadata to DynamoDB"
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Looks up active connection ID"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads snap state metadata"
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes real-time notification to recipient"
+    }
+  ]
+}

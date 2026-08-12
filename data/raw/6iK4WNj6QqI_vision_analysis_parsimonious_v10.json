@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "1. Identify external actors: User icon at top center representing web/mobile fans purchasing tickets (UserConsumerWeb).\n2. Identify CDN layer: Dashed box labeled 'CDN' serving as the front entry point and router across regions (CloudFront).\n3. Identify core regional components:\n   - EKS (Amazon EKS) for web page rendering with Next.js.\n   - AppSync (AWS AppSync) for centralized GraphQL API and WebSockets.\n   - Lambda (AWS Lambda) for fast query operations.\n   - Step Functions (AWS StepFunctions) for multi-step purchase workflows.\n   - DynamoDB (Amazon DynamoDB) for session and order data storage, with cross-region global table replication.\n4. Trace data flows:\n   - User interacts with CDN.\n   - CDN routes page requests to EKS and API calls to AppSync.\n   - AppSync calls Lambda for single-step logic/queries and Step Functions for purchase workflows.\n   - Lambda reads/writes to DynamoDB.\n   - DynamoDB replicates across multi-region boundaries.",
+  "graph": {
+    "name": "Ticketmaster Multi-Region Active-Active Serverless Checkout Architecture",
+    "link": "https://www.youtube.com/watch?v=6iK4WNj6QqI",
+    "categories": "E-Commerce, Serverless, Multi-Region",
+    "graph_usable": true,
+    "notes": "Ticketmaster uses a multi-region active-active architecture powered by CloudFront latency/geo-routing, AppSync GraphQL API, EKS, Lambda, Step Functions, and DynamoDB Global Tables."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Fan / Client",
+      "notes": "End-user browsing and purchasing tickets"
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CDN",
+      "notes": "Handles latency/geo-routing and health checks across active-active regions"
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Runs Next.js web application for rendering pages"
+    },
+    {
+      "id": "3",
+      "service": "AppSync",
+      "name": "AppSync",
+      "notes": "GraphQL API layer with WebSockets for async purchase status subscription"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Handles single-step retrieve and transform queries"
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "Step Functions Purchase",
+      "notes": "Orchestrates multi-step checkout and payment execution processes"
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Global Tables replicating session and event data active-active across regions"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests page or submits API action via CDN"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes web page rendering requests to EKS Next.js app"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes API calls / mutations to AppSync GraphQL endpoint"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Executes single-step read/query logic in Lambda"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Executes complex purchase workflows in Step Functions"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads and updates session data in DynamoDB"
+    }
+  ]
+}

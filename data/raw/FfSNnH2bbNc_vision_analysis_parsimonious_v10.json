@@ -1,0 +1,147 @@
+{
+  "step_by_step_reasoning": "1. Identify nodes from the whiteboard:\n   - Satellite icon on top left: External third-party satellite data source ('ThirdParty').\n   - EC2 SPOT: Amazon EC2 spot instances ('EC2').\n   - S3: Amazon S3 storage ('S3').\n   - RDS: Amazon RDS database ('RDS').\n   - ELASTICACHE: Amazon ElastiCache ('ElastiCache').\n   - AWS FARGATE: AWS Fargate compute cluster ('Fargate').\n   - LAMBDA: AWS Lambda functions ('Lambda').\n   - User icon: End-user application / web consumers ('UserConsumerWeb').\n\n2. Trace connections:\n   - Data Ingestion: ThirdParty (Satellite) -> EC2 Spot -> S3 & RDS.\n   - Web Tile Serving: UserConsumerWeb <-> AWS Fargate <-> ElastiCache. AWS Fargate queries RDS for metadata and retrieves data from S3.\n   - Time Series Processing: UserConsumerWeb / Input -> Lambda. Lambda queries RDS and reads data from S3 to perform calculations.",
+  "graph": {
+    "name": "Indigo Carbon Satellite Imagery Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=FfSNnH2bbNc",
+    "categories": [
+      "Compute",
+      "Storage",
+      "Database",
+      "Analytics"
+    ],
+    "graph_usable": true,
+    "notes": "Architecture processes multi-petabyte satellite data using EC2 Spot, S3, RDS, AWS Fargate, ElastiCache, and Lambda."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Satellite Data Sources",
+      "notes": "Modestly processed satellite tiles from NASA/external sources"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Spot Cluster",
+      "notes": "Processes incoming satellite data tiles on-demand"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores large bulk image data"
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "Stores catalog metadata"
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Serves web tiles to end users"
+    },
+    {
+      "id": "5",
+      "service": "ElastiCache",
+      "name": "ElastiCache (Redis)",
+      "notes": "Caches commonly requested map tiles"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Computes time-series calculations over specified areas of interest"
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "Users / Web App",
+      "notes": "Farmers and users interacting with the application"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Satellite imagery ingested into EC2 Spot cluster"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Processed bulk images saved to S3"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Metadata stored in RDS"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests map imagery tiles"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate checks and stores cached tiles in ElastiCache"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fargate looks up tile metadata in RDS"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fargate reads partial imagery chunk via HTTP range request from S3"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests time-series for a field area of interest"
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda queries metadata in RDS"
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda reads imagery chunks from S3 to compute time-series summary"
+    }
+  ]
+}

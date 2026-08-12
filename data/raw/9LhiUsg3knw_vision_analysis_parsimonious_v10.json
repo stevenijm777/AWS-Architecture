@@ -1,0 +1,184 @@
+{
+  "step_by_step_reasoning": "1. Identify external actors at the bottom: UserConsumerMobile and UserConsumerWeb using mobile/web interfaces.\n2. Identify primary ingestion layer: EC2 (legacy app hosting) connected to CouchBase and Aurora for backend persistent storage.\n3. Identify task creation and synchronization components: EC2 pushes task creation to DynamoDB. AppSync distributes tasks to mobile and web clients.\n4. Identify asynchronous/batch processing: Fargate and RedShift process analytics and task priority updates, sending updates to DynamoDB.\n5. Identify helper compute functions: Two Lambda functions handle complex orchestration flows (one bridging AppSync to EC2, another bridging AppSync to DynamoDB).",
+  "graph": {
+    "name": "Musixmatch Task Distribution Architecture",
+    "link": "https://www.youtube.com/watch?v=9LhiUsg3knw",
+    "categories": "Media & Mobile Backend",
+    "graph_usable": true,
+    "notes": "Musixmatch architecture showing community/user feedback ingestion, task orchestration via AppSync and DynamoDB, with legacy EC2 backend and batch prioritization via Fargate/RedShift."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Users",
+      "notes": "End-users submitting lyrics synchronization feedback"
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerWeb",
+      "name": "Community & Internal Web Users",
+      "notes": "Curators and internal editors processing tasks"
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Legacy Application Servers",
+      "notes": "Dockerized app instances handling feedback ingestion"
+    },
+    {
+      "id": "3",
+      "service": "CouchBase",
+      "name": "User Data Store",
+      "notes": "NoSQL database for user-generated content"
+    },
+    {
+      "id": "4",
+      "service": "Aurora",
+      "name": "Editorial Data Store",
+      "notes": "Relational DB for core editorial catalog"
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "Task Database",
+      "notes": "Stores tasks assigned to community members"
+    },
+    {
+      "id": "6",
+      "service": "AppSync",
+      "name": "GraphQL API",
+      "notes": "Distributes and syncs tasks directly to users"
+    },
+    {
+      "id": "7",
+      "service": "Fargate",
+      "name": "Batch Ranking Tasks",
+      "notes": "Calculates content relevance and updates task priority"
+    },
+    {
+      "id": "8",
+      "service": "RedShift",
+      "name": "Analytics Warehouse",
+      "notes": "Analyzes streaming trends by country and language"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Publishing Lambda",
+      "notes": "Orchestrates complex writes back to EC2/Aurora"
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Task Resolver Lambda",
+      "notes": "Handles non-standard AppSync resolvers for DynamoDB"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User feedback sent from mobile app to EC2 backend"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 writes user-generated data to CouchBase"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EC2 queries editorial data from Aurora"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EC2 creates tasks in DynamoDB"
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Redshift analytics feed ranking scores into DynamoDB tasks"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fargate batch jobs reprioritize task catalog in DynamoDB"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "AppSync reads tasks from DynamoDB"
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "AppSync distributes tasks to mobile users"
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "AppSync distributes tasks to web operators"
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "AppSync triggers Lambda for complex workflows"
+    },
+    {
+      "source": "9",
+      "target": "2",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda publishes final output back to EC2 application layer"
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "AppSync invokes Lambda resolver"
+    },
+    {
+      "source": "10",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda performs atomic write into DynamoDB"
+    }
+  ]
+}

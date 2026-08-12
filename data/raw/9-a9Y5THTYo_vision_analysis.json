@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The architecture shows an automated AWS Account Vending Machine (AVM) and deployment workflow at Vitesco Technologies. First, an internal developer (User) submits an account provision request via a web portal, which hits API Gateway. API Gateway triggers the main Step Functions (AVM). The AVM Step Functions writes and updates target account configuration metadata (such as CIDR ranges and account IDs) into DynamoDB. It also invokes AWS Control Tower (via Service Catalog) to provision the baseline AWS Account. Once the account is created, AVM Step Functions invokes Step Functions (Blueprint) to configure IAM, Security, and Networking blueprints in the target AWS Account. After deployment completes, Step Functions (Blueprint) triggers SES (E-Mail) to notify the User with access credentials and instructions.",
+  "graph": {
+    "name": "Vitesco Technologies Automated AWS Account Vending Machine",
+    "link": "https://www.youtube.com/watch?v=9-a9Y5THTYo",
+    "categories": "Automated Landing Zone, Account Vending Machine, Multi-Account Governance",
+    "graph_usable": true,
+    "notes": "Over 850 accounts created. Blueprint changes deploy into customer accounts in less than 3 hours via CodePipeline, rolled out by environment stages (dev, QA, prod)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "USER",
+      "notes": "Internal user requesting AWS account access through self-developed web portal."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Receives account configuration request payload from web portal."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS (AVM)",
+      "notes": "Account Vending Machine orchestrator managing overall provisioning steps."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Stores target account configuration state, VPC CIDR ranges, and account IDs to guarantee idempotency."
+    },
+    {
+      "id": "4",
+      "service": "ControlTower",
+      "name": "CONTROL TOWER",
+      "notes": "Provisions foundational AWS account structure via custom Service Catalog wrapper."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS (BLUE PRINT)",
+      "notes": "Orchestrates deployment of standardized blueprints (IAM, Security, Networking)."
+    },
+    {
+      "id": "6",
+      "service": "SES",
+      "name": "E-MAIL",
+      "notes": "Sends email notification containing login details and owner responsibilities."
+    },
+    {
+      "id": "7",
+      "service": "Organizations",
+      "name": "AWS ACCOUNT",
+      "notes": "Target customer AWS account provisioned and configured according to corporate standards."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User submits account configuration request to API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers AVM Step Functions execution."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "AVM Step Functions writes desired state and account metadata to DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "AVM Step Functions requests base account creation via Control Tower."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "AVM Step Functions invokes Blueprint Step Functions once account creation starts."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Blueprint Step Functions rolls out IAM, Security, and Networking configurations into the target AWS Account."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "control",
+      "notes": "Blueprint Step Functions triggers email notification upon completion."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "SES delivers notification email with account access details to the User."
+    }
+  ]
+}

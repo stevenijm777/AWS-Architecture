@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "1. Identifies entities from visual inventory and audio transcript: SFDC (ThirdParty entry point), API Gateway, Lambda, DynamoDB, SNS, Transit Gateway, EKS, PrivateLink (Transit VPC), and PrivateLink (Customer VPC). The generic human User icon is pruned as per entry point rules.\n2. Defines two main logical flows:\n   - Flow 0 (Control Plane Provisioning): User configures connection via SFDC UI, sending a request through API Gateway to Lambda, which stores metadata in DynamoDB, provisions PrivateLink in Transit VPC, and triggers SNS notifications on state changes.\n   - Flow 1 (Data Plane Processing): Data from SFDC travels via encrypted VPN tunnel to Transit Gateway, then to multi-tenant EKS connection forwarders that look up metadata and route payload through PrivateLink in Transit VPC to Customer VPC PrivateLink.\n3. Validates service names against standard AWS service vocabulary list.",
+  "graph": {
+    "name": "Salesforce Private Connect Architecture",
+    "link": "https://www.youtube.com/watch?v=Cw26CrJUqv8",
+    "categories": "SaaS Integration, Serverless Control Plane, Cross-VPC Connectivity",
+    "graph_usable": true,
+    "notes": "Salesforce Private Connect enables secure, PCI/HIPAA-compliant, private connections between Salesforce DC and customer AWS VPCs using PrivateLink and EKS connection forwarders."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "SFDC",
+      "notes": "Salesforce Cloud / Data Center entry point"
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives connection setup/teardown requests from SFDC UI in Control Plane VPC"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Handles automation for setting up PrivateLink and updating DynamoDB metadata"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores customer connection metadata"
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Receives notifications for PrivateLink state changes"
+    },
+    {
+      "id": "5",
+      "service": "TransitGateway",
+      "name": "Transit Gateway",
+      "notes": "Terminates encrypted VPN tunnel from Salesforce DC and routes traffic"
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Hosts multi-tenant connection forwarders running in containers to route traffic based on customer metadata"
+    },
+    {
+      "id": "7",
+      "service": "PrivateLink",
+      "name": "PrivateLink (Transit VPC)",
+      "notes": "PrivateLink endpoint inside Salesforce Transit VPC"
+    },
+    {
+      "id": "8",
+      "service": "PrivateLink",
+      "name": "PrivateLink (Customer VPC)",
+      "notes": "PrivateLink service endpoint in Customer AWS VPC"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Salesforce UI sends connection setup request to API Gateway"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda function"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda stores customer connection metadata in DynamoDB"
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda provisions PrivateLink connection in Transit VPC"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "PrivateLink state changes trigger notifications to SNS"
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer data is sent over encrypted VPN tunnel to Transit Gateway"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transit Gateway forwards data to EKS connection forwarders"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS routes traffic to appropriate PrivateLink endpoint based on metadata"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "PrivateLink securely transfers traffic into Customer VPC"
+    }
+  ]
+}

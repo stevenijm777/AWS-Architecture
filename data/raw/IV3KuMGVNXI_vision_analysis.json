@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts Deep Instinct's edge-based architecture using Amazon CloudFront and Lambda@Edge for zero-day threat prevention updates and real-time analytics.\n\n1. **Nodes Identification**:\n- **Agent** (`UserCompanyAgent`): Endpoint agent sending GET requests for updates and threat intelligence.\n- **Viewer Request** (`LambdaAtEdge`): Lambda@Edge function intercepting viewer requests to process real-time stats and log update request counts.\n- **CloudFront** (`CloudFront`): Global CDN handling incoming agent traffic and origin interactions.\n- **Origin Response** (`LambdaAtEdge`): Lambda@Edge function intercepting origin responses to conditionally modify files returned to agents.\n- **DynamoDB (Stats)** (`DynamoDB`): DynamoDB table storing real-time statistical metrics.\n- **DynamoDB (Logs)** (`DynamoDB`): DynamoDB table storing request logs, counters, and agent update state.\n- **S3** (`S3`): Origin S3 bucket holding software updates and files.\n\n2. **Flow Segmentation**:\n- **Flow 0**: Agent GET request routing through CloudFront, intercepted by Viewer Request Lambda@Edge, which streams stats and logs to DynamoDB tables while forwarding origin requests to S3 and retrieving responses back.\n- **Flow 1**: Response customization where Origin Response Lambda@Edge reads state from DynamoDB to control rolling upgrades.",
+  "graph": {
+    "name": "Deep Instinct Real-time Analytics and Control with Lambda at Edge",
+    "link": "https://www.youtube.com/watch?v=IV3KuMGVNXI",
+    "categories": "CDN, Security, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture uses CloudFront and Lambda@Edge to handle millions of agent GET requests, logging statistics and managing rolling upgrades using DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "Agent",
+      "notes": "Deep Instinct client agents running on user devices, issuing signed requests."
+    },
+    {
+      "id": "1",
+      "service": "LambdaAtEdge",
+      "name": "Viewer Request",
+      "notes": "Lambda@Edge function triggered on incoming CloudFront viewer requests."
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Amazon CloudFront distribution serving requests and running edge functions."
+    },
+    {
+      "id": "3",
+      "service": "LambdaAtEdge",
+      "name": "Origin Response",
+      "notes": "Lambda@Edge function triggered on responses from origin to manipulate returned update files."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Top)",
+      "notes": "Stores real-time usage statistics."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Middle)",
+      "notes": "Stores agent request counts and tracking state for rolling rollouts."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Origin bucket hosting agent update files."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Agent sends GET requests with unique identifier headers to CloudFront."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Viewer Request Lambda writes real-time statistics directly to DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Viewer Request Lambda logs agent request count and state to DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront passes request to the S3 bucket origin."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 returns requested file payload to CloudFront."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Origin Response Lambda reads agent state from DynamoDB to determine whether to modify the update response."
+    }
+  ]
+}

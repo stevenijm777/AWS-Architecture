@@ -1,0 +1,218 @@
+{
+  "step_by_step_reasoning": "The architecture consists of three main operational tracks: short URL resolution at the edge, log processing pipeline into a data lake, and an admin management API with analytics querying capabilities.\n\n1. Edge URL Redirection Flow:\n   - Users scan QR codes / click shortened links, sending requests to CloudFront CDN (Node 1).\n   - CloudFront triggers Lambda@Edge (Node 2).\n   - Lambda@Edge queries DynamoDB Global Tables (Node 3) to retrieve destination URLs.\n   - Lambda@Edge returns the redirect response directly to Users (Node 0).\n\n2. Log Ingestion & Analytics Pipeline:\n   - CloudFront deposits raw access logs into S3 Logs Bucket (Node 4).\n   - S3 triggers Log Transformation Lambda (Node 5) which parses IP/User-Agent data (geo, device info).\n   - Transformed logs are sent to Kinesis Data Firehose (Node 6).\n   - Firehose delivers formatted logs to S3 Data Lake Bucket (Node 7).\n   - AWS Glue (Node 13) processes/catalogues Data Lake logs to optimize Athena queries.\n\n3. Admin Management & Analytics Path:\n   - Admin (Node 8) sends requests via API Gateway (Node 9).\n   - API Gateway triggers Backend Lambda (Node 10).\n   - Backend Lambda checks/manages permissions in RDS Aurora (Node 11).\n   - Backend Lambda writes/updates short URLs in DynamoDB (Node 3).\n   - Backend Lambda executes analytics queries using Athena (Node 12), which reads directly from S3 Data Lake (Node 7).",
+  "graph": {
+    "name": "Pernod Ricard Global URL Shortener Architecture",
+    "link": "https://www.youtube.com/watch?v=F4KDOGNpSoI",
+    "categories": "Serverless, Serverless Analytics, Global Edge Infrastructure",
+    "graph_usable": true,
+    "notes": "Pernod Ricard URL shortener service built on AWS serverless technologies, replacing a legacy solution and reducing costs ~100x while serving global QR code and NFC link redirects."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "USERS",
+      "notes": "End-user consumers scanning QR codes/NFC tags on bottles or clicking social media links."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "Global CDN serving as entry point for short URL requests and producing access logs."
+    },
+    {
+      "id": "2",
+      "service": "LambdaAtEdge",
+      "name": "LAMBDA@EDGE",
+      "notes": "Edge compute function that inspects requests and performs local DynamoDB lookups."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "DynamoDB Global Tables replicated across regions storing short-to-long URL mappings."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Logs Bucket",
+      "notes": "S3 bucket receiving raw CloudFront access logs."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Log Transformation Lambda",
+      "notes": "Transforms logs by converting IP to country/city and expanding User Agent metadata."
+    },
+    {
+      "id": "6",
+      "service": "Firehose",
+      "name": "FIREHOSE",
+      "notes": "Kinesis Data Firehose streaming enriched logs into the Data Lake."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Data Lake Bucket",
+      "notes": "Centralized S3 Data Lake storing processed logs for analytics."
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyDeveloper",
+      "name": "ADMIN",
+      "notes": "Internal admin/contributor users managing links and viewing analytics."
+    },
+    {
+      "id": "9",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "API Gateway serving backend routes for admin short URL creation and analytics queries."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Backend Lambda",
+      "notes": "Core backend function handling business logic, permissions, short link generation, and Athena queries."
+    },
+    {
+      "id": "11",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Amazon RDS Aurora storing user permissions and access policies."
+    },
+    {
+      "id": "12",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Interactive query engine executing SQL analytics queries against the S3 Data Lake."
+    },
+    {
+      "id": "13",
+      "service": "Glue",
+      "name": "GLUE",
+      "notes": "AWS Glue optimizing Data Lake file formats for fast and efficient Athena queries."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User request directed to CloudFront CDN."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudFront triggers Lambda@Edge function on viewer request."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda@Edge queries local DynamoDB region table for long URL lookup."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda@Edge returns HTTP redirect response back to user."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront writes standard access logs to S3 Logs Bucket."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 object creation triggers Log Transformation Lambda."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transformed log records sent to Kinesis Data Firehose stream."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Firehose delivers aggregated log batches into S3 Data Lake."
+    },
+    {
+      "source": "7",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "AWS Glue cataloging and compacting S3 Data Lake log data."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Admin sends API requests via API Gateway."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway routes request to Backend Lambda."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Backend Lambda verifies admin permissions in RDS Aurora."
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Backend Lambda creates/updates short URL entries in DynamoDB."
+    },
+    {
+      "source": "10",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "Backend Lambda triggers analytics queries in Athena."
+    },
+    {
+      "source": "12",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "5",
+      "type": "data",
+      "notes": "Athena queries raw/optimized log data directly from S3 Data Lake."
+    }
+  ]
+}

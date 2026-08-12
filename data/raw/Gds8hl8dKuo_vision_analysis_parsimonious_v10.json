@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "Analyzing the whiteboard diagram and transcript:\n1. Boundaries: The diagram centers on a primary 'AWS ACCOUNT' container box housing the core Fugue orchestration engine ('conductor'), with dashed lines pointing outwards to 'AWS ACCOUNT 1' and 'AWS ACCOUNT 2' (target managed accounts).\n2. External Entry Point: An external white arrow enters from outside the bottom boundary towards SQS. Based on the transcript ('people will send SQS messages for anything that they need from the conductor'), this represents requests from external engineers/developers (`UserCompanyDeveloper`).\n3. Internal AWS Components:\n   - Bottom SQS queue (labeled SQS) receiving commands from outside.\n   - EC2 instance ('conductor') running as part of an Auto Scaling group.\n   - KMS (green shield icon) used for decryption and security key management.\n   - S3 bucket storing compiled policy declarations/baselines.\n   - DynamoDB table serving as the persistence layer.\n   - Top SQS queue and SNS topic used for messaging, internal conductor operations, and real-time drift notifications.\n4. Tracing Flows:\n   - Incoming request: UserCompanyDeveloper -> SQS (bottom) -> EC2.\n   - Encryption/Auth check: KMS -> EC2.\n   - Downloading declarations/policies: S3 -> EC2.\n   - State persistence: EC2 -> DynamoDB.\n   - Notifications/messaging: EC2 -> SQS (top) and EC2 -> SNS.",
+  "graph": {
+    "name": "Fugue Automated Drift Detection and Enforcement Architecture",
+    "link": "https://www.youtube.com/watch?v=Gds8hl8dKuo",
+    "categories": "Security and Compliance",
+    "graph_usable": true,
+    "notes": "Architecture of Fugue conductor orchestrator running in a customer's AWS account to automatically provision infrastructure, enforce compliance baselines, and remediate drift."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "External User / Developer",
+      "notes": "Sends requests or infrastructure declarations into the conductor system."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "Incoming SQS Queue",
+      "notes": "Receives incoming command messages from external users."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Conductor (EC2 Instance)",
+      "notes": "Core orchestration engine running Fugue AMI inside an Auto Scaling group."
+    },
+    {
+      "id": "3",
+      "service": "KMS",
+      "name": "AWS KMS",
+      "notes": "Handles encryption for messages and infrastructure configuration data."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores compiled infrastructure declarations and compliance policies."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Serves as the persistence layer for the conductor engine."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "Internal Messaging SQS",
+      "notes": "Handles internal conductor message bus communication."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "SNS Topic",
+      "notes": "Sends real-time drift detection and notification alerts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "External user sends SQS message to trigger conductor operations."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 conductor processes incoming SQS request."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "meta",
+      "notes": "EC2 uses KMS for decrypting and authenticating requests."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Conductor downloads compiled infrastructure map and policy declarations from S3."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Conductor writes and reads system state to/from DynamoDB persistence layer."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Conductor pushes internal communication messages to SQS."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Conductor sends drift detection alerts via SNS topic."
+    }
+  ]
+}

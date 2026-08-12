@@ -1,0 +1,150 @@
+{
+  "step_by_step_reasoning": "1. Identified external entry point (ThirdParty cloud event streams) sending real-time security events into the 'COLLECT' Kinesis Data Streams.\n2. Ingestion flow moves data from 'COLLECT' Kinesis Data Streams into Amazon Neptune (primary graph storage for 50M+ resources) and forwards events to 'RULES' Kinesis Data Streams.\n3. Data from Neptune fans out into OpenSearch (Elasticsearch) and DynamoDB for search, reporting, and backing store requirements.\n4. Neptune and OpenSearch feed metrics into CloudWatch, which informs the SHARD controller loop back to Kinesis Data Streams for load distribution.\n5. 'RULES' Kinesis Data Streams evaluates security rules against Neptune graph state, persisting violation results into DynamoDB.\n6. DynamoDB triggers notifications sent to external ThirdParty integrations (Slack, Email, Splunk).",
+  "graph": {
+    "name": "CloudHealth by VMware - Real-time Security Monitoring Architecture",
+    "link": "https://www.youtube.com/watch?v=6EUknQqaV1w",
+    "categories": "Security & Monitoring",
+    "graph_usable": true,
+    "notes": "Scalable graph-based security analysis pipeline handling billions of events across multiple cloud providers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Cloud Event Streams",
+      "notes": "Activity logs and event streams from cloud providers"
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Collect)",
+      "notes": "Collect pipeline stream"
+    },
+    {
+      "id": "2",
+      "service": "Neptune",
+      "name": "Amazon Neptune",
+      "notes": "Graph database for interconnected resource dataset"
+    },
+    {
+      "id": "3",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Search and aggregation backing store"
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Monitors CPU, memory, and capacity metrics for sharding"
+    },
+    {
+      "id": "5",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Rules)",
+      "notes": "Rule execution pipeline stream"
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Persists state changes and security violations"
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Notifications (Slack / Email)",
+      "notes": "Real-time alert delivery channels"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Real-time security events ingested"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "50M+ evaluated resource states published to graph"
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Resource event propagation to rules pipeline"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Replicated data for search and analytics"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Persists resource configuration backing state"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Capacity and usage metrics"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Elasticsearch performance metrics"
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Sharder feedback loop to route data loads"
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Executes security checks against Neptune graph"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Persists detected security violations"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers real-time notifications to external channels"
+    }
+  ]
+}

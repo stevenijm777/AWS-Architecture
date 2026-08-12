@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. Identify all entities from the visual diagram and audio transcript, mapping them strictly to allowed AWS/User services.\n2. Map Users (UserConsumerWebMobile), CloudFront, WAF, Lambda (PATTERN MATCH), Kinesis Firehose (Firehose), S3, EC2 (INTERNET BOOKING SYSTEM), Lambda (TRANSFORM), Athena, and QuickSight.\n3. Identify connections for user requests flowing through CloudFront to WAF and Lambda@Edge for validation, sending logs to Kinesis Firehose, and storing them in S3.\n4. Map data processing pipeline: S3 triggers Lambda TRANSFORM to format logs into Parquet back in S3, which Athena queries, feeding dashboards in QuickSight.\n5. Map feedback edge from QuickSight manually updating the PATTERN MATCH Lambda function based on analyst insights.",
+  "graph": {
+    "name": "Vietjet Bot Protection Architecture",
+    "link": "https://www.youtube.com/watch?v=KQ6Fg206O9U",
+    "categories": "Security, Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture for bot mitigation and request analysis using CloudFront, AWS WAF, Lambda@Edge, Kinesis Firehose, S3 data lake, Athena, and QuickSight."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Users",
+      "notes": "End-user devices requesting ticket bookings."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "Content delivery network serving as primary entry point."
+    },
+    {
+      "id": "2",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "AWS WAF for protecting against common web exploits."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "PATTERN MATCH",
+      "notes": "Lambda@Edge running custom business logic to identify bot patterns."
+    },
+    {
+      "id": "4",
+      "service": "Firehose",
+      "name": "KINESIS",
+      "notes": "Kinesis Data Firehose streaming logs to storage."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central S3 bucket used as a data lake for log storage."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "INTERNET BOOKING SYSTEM",
+      "notes": "Backend booking system running on EC2 instances."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "TRANSFORM",
+      "notes": "Lambda function converting raw text logs into Parquet format."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Interactive query service analyzing Parquet logs in S3."
+    },
+    {
+      "id": "9",
+      "service": "QuickSight",
+      "name": "QUICKSIGHT",
+      "notes": "Business intelligence dashboards to visualize traffic and bot patterns."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests arrive at CloudFront."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudFront routes traffic through AWS WAF for web exploit checks."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "CloudFront triggers Lambda@Edge pattern match function for custom bot validation."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "WAF streams security logs to Kinesis Data Firehose."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Pattern match function streams log and bot match data to Kinesis Data Firehose."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Kinesis Data Firehose delivers aggregated logs to S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 triggers Lambda transformation function when new log files land."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda function writes transformed Parquet files back to S3."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Athena queries Parquet-formatted logs directly from S3."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Athena feeds query results to QuickSight dashboards."
+    },
+    {
+      "source": "9",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Insights from QuickSight are manually fed back to update pattern matching logic in Lambda@Edge."
+    }
+  ]
+}

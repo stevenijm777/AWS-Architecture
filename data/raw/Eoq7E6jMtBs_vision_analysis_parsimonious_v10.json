@@ -1,0 +1,202 @@
+{
+  "step_by_step_reasoning": "1. Identify Nodes: Visual elements drawn include Coach (web/desktop user icon), Member (mobile user icon), Chime SDK, Cognito, API Gateway, Lambda, Aurora, DynamoDB, Kinesis, and S3.\n2. Identify Actor Nodes: 'Member' is an external mobile end-user (UserConsumerMobile). 'Coach' represents internal/operational studio staff (UserCompanyDeveloper).\n3. Exact Services: Map Chime SDK to 'Chime', Kinesis to 'KinesisDataStream', API Gateway to 'ApiGateway', Lambda to 'Lambda', Aurora to 'Aurora', DynamoDB to 'DynamoDB', S3 to 'S3', Cognito to 'Cognito'.\n4. Map Edges based on arrows:\n   - Coach and Member authenticate via Cognito.\n   - Member interacts with API Gateway, triggering Lambda to read/write class info from Aurora and workout summaries from DynamoDB.\n   - Real-time video/audio and WebSocket heart rate streaming flow bidirectionally between Member, Chime SDK, and Coach.\n   - Heart rate and summary data streams from Member to Kinesis, which dumps into S3.",
+  "graph": {
+    "name": "Orange Theory Fitness OT Live Virtual Classes Architecture",
+    "link": "https://www.youtube.com/watch?v=Eoq7E6jMtBs",
+    "categories": "Media & Real-Time Streaming",
+    "graph_usable": true,
+    "notes": "OT Live architecture powering interactive, low-latency virtual fitness classes using AWS serverless and streaming services."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "MEMBER",
+      "notes": "Studio member using the mobile application"
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyDeveloper",
+      "name": "COACH",
+      "notes": "Studio coach leading the virtual class via web portal"
+    },
+    {
+      "id": "2",
+      "service": "Cognito",
+      "name": "COGNITO",
+      "notes": "User authentication for members and coaches"
+    },
+    {
+      "id": "3",
+      "service": "Chime",
+      "name": "CHIME SDK",
+      "notes": "Real-time audio, video, and WebSocket telemetry communication"
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "REST and WebSocket endpoints"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Serverless logic to process requests and business logic"
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Relational database holding class schedule and info"
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "NoSQL database storing member workout summaries"
+    },
+    {
+      "id": "8",
+      "service": "KinesisDataStream",
+      "name": "KINESIS",
+      "notes": "Real-time data stream for heart rate data and workout summaries"
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Data lake storage for analytical data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Member authenticates via Cognito"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Member requests class details via API Gateway"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "API Gateway triggers Lambda function"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda fetches class info from Aurora"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Aurora returns class information"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda returns response to API Gateway"
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "API Gateway returns class info to Member"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Coach authenticates via Cognito"
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Member sends video/audio and heart rate data to Chime SDK"
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Chime SDK streams member video and heart rate tiles to Coach"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Coach streams video and audio instructions to Chime SDK"
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Chime SDK streams coach feed and exercise video to Member"
+    },
+    {
+      "source": "0",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Member streams second-by-second telemetry and workout summary to Kinesis"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis persists data into S3 Data Lake"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda stores summary info in DynamoDB"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB provides summary info back for member mobile review"
+    }
+  ]
+}

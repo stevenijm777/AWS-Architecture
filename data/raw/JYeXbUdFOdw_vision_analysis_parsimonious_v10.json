@@ -1,0 +1,190 @@
+{
+  "step_by_step_reasoning": "1. Identify the visual layout: The whiteboard is divided into two main bounded sections: 'Data Ingestion' (top) and 'Data Retrieval' (bottom).\n2. Data Ingestion components: External CSV & Excel files arrive at an initial Amazon S3 bucket (Raw). An AWS Lambda function validates this data and writes it to a second Amazon S3 bucket (Validated). A second AWS Lambda processes/ingests the validated data into an AWS OpenSearch cluster.\n3. Data Retrieval components: A user actor interacts either with a web Front End (FE) or directly with a Back End (BE). The BE communicates with the AWS OpenSearch cluster and Amazon RDS for querying data. For large reports, generated reports are stored in an Amazon S3 bucket and notified to users via Amazon SES.\n4. Map all services to exact allowed strings: 'S3', 'Lambda', 'OpenSearch', 'RDS', 'SES', 'UserConsumerWeb', 'ThirdParty'.",
+  "graph": {
+    "name": "Novantec Trade Data Ingestion and Retrieval Architecture using AWS OpenSearch",
+    "link": "https://www.youtube.com/watch?v=JYeXbUdFOdw",
+    "categories": "Analytics & Data Processing",
+    "graph_usable": true,
+    "notes": "Data ingestion pipeline processes CSV/Excel files into OpenSearch using Lambda and S3. Data retrieval uses web/mobile frontends with Python backends querying OpenSearch and RDS, delivering large reports via S3 and SES."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "CSV & Excel Files",
+      "notes": "Raw trade data files uploaded by data providers"
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Amazon S3 (Raw Data)",
+      "notes": "Bucket storing initial raw CSV/Excel files"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AWS Lambda (Validation)",
+      "notes": "Validates incoming data files for discrepancies"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Amazon S3 (Validated Data)",
+      "notes": "Bucket storing validated trade data files"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "AWS Lambda (Processing & Ingestion)",
+      "notes": "Processes validated data and ingests into OpenSearch"
+    },
+    {
+      "id": "5",
+      "service": "OpenSearch",
+      "name": "AWS OpenSearch (Graviton2)",
+      "notes": "Cluster powered by Graviton2 instances for indexing and querying trade records"
+    },
+    {
+      "id": "6",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End user requesting trade data and reports via web or mobile"
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Front-End Application (FE)",
+      "notes": "Angular web frontend application"
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Back-End Application (BE)",
+      "notes": "Python backend application handling request routing and business logic"
+    },
+    {
+      "id": "9",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Relational database used for operational/relational data retrieval"
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Amazon S3 (Reports)",
+      "notes": "Bucket storing generated complex/large report files"
+    },
+    {
+      "id": "11",
+      "service": "SES",
+      "name": "Amazon SES",
+      "notes": "Sends download pre-signed URLs to users for requested reports"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Raw trade data uploaded to S3 raw bucket"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 triggers validation Lambda function"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Validated copy stored in validated S3 bucket"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers processing Lambda function"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Ingests aggregated/processed data into OpenSearch"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Web user sends request to Front End UI"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Front End responds to web browser"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Web browser or mobile app forwards request to Python Back End"
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Back End queries OpenSearch cluster"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Back End queries Amazon RDS"
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Back End returns queried data response to user"
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Back End uploads large generated reports into S3"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers intimation email with pre-signed URL via Amazon SES"
+    }
+  ]
+}

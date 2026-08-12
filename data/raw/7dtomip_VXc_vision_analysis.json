@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "1. Identified core actor 'Mobile' representing mobile client devices.\n2. Identified entry point Application Load Balancer ('ALB') routing requests to Amazon ECS.\n3. Identified Amazon ECS ('ECS') running game logic compute tasks on EC2 infrastructure.\n4. Identified databases: Amazon Aurora ('Aurora') for persistent player data and Amazon ElastiCache ('ElastiCache') for caching.\n5. Identified auto-scaling orchestration loop: ECS triggers Auto Scaling group -> Auto Scaling triggers CloudWatch Events on launch completion -> CloudWatch Events triggers Lambda -> Lambda updates ECS desired task count to scale within 2 minutes.\n6. Formatted node IDs sequentially and mapped services to valid vocabulary string list.\n7. Created flows for (0) Request Processing and (1) Auto-scaling Feedback Loop.",
+  "graph": {
+    "name": "Akatsuki Mobile Game Backend Architecture",
+    "link": "https://www.youtube.com/watch?v=7dtomip_VXc",
+    "categories": "Gaming, Compute, Serverless",
+    "graph_usable": true,
+    "notes": "Scalable backend architecture for mobile games handling over 1 million requests per minute and scaling up to 700+ containers within 2 minutes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile",
+      "notes": "Mobile game client sending API requests."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer receiving incoming game traffic."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Amazon ECS running game logic application containers."
+    },
+    {
+      "id": "3",
+      "service": "AutoScaling",
+      "name": "Auto Scaling",
+      "notes": "Auto Scaling group managing EC2 instances under load."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "CloudWatch Events detecting EC2 launch completion events."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "AWS Lambda function dynamically controlling ECS desired task count."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Amazon Aurora database storing core player data."
+    },
+    {
+      "id": "7",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Amazon ElastiCache storing cache and session data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile clients send API requests to ALB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB routes incoming requests down to ECS tasks."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS tasks read and write player data to Aurora."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "ECS tasks read and update cached data in ElastiCache."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Increased load triggers EC2 Auto Scaling."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "EC2 instance launch completion fires CloudWatch Event."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "CloudWatch Event triggers Lambda function."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda scales out ECS task count to match new EC2 capacity."
+    }
+  ]
+}

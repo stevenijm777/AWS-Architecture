@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Nextcaller's VeraCall phone fraud detection pipeline on AWS. In the primary request flow (Flow 0), incoming telephony SIP call metadata is sent JSON-encoded via API Gateway. API Gateway invokes a Custom Authorizer Lambda function, which queries DynamoDB to validate customer credentials and API keys. Upon successful authorization, the request moves to the main VeraCall Lambda function, which calls an Amazon SageMaker inference endpoint to compute a fraud prediction score in real time (~110ms turnaround) and returns the result back through API Gateway. In the asynchronous data processing flow (Flow 1), the VeraCall Lambda function puts call metadata into an SQS queue, which persists it into an encrypted S3 bucket. Data scientists then use SageMaker Jupyter notebooks and training jobs to fetch data from S3 and retrain the machine learning models.",
+  "graph": {
+    "name": "Nextcaller VeraCall Real-Time Phone Fraud Detection Architecture",
+    "link": "https://www.youtube.com/watch?v=K27WjYwyqw8",
+    "categories": "Security & Fraud Detection",
+    "graph_usable": true,
+    "notes": "Serverless architecture delivering call fraud prediction scores in ~110ms average latency."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "SIP Call Metadata",
+      "notes": "JSON-encoded telephony metadata sent by customer in real time."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for incoming call metadata and returning fraud risk scores."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Custom Authorizer Lambda",
+      "notes": "Authenticates incoming customer API keys."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores customer authentication information and API keys."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "VeraCall Lambda",
+      "notes": "Core business logic function running custom rule engine and coordinating inference."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Inference endpoint, Jupyter notebooks, and model training service."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers incoming call metadata asynchronously."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Encrypted S3 bucket storing customer call metadata for retraining."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer sends JSON-encoded SIP call metadata and API key."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway invokes Custom Authorizer Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Checks customer credentials in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Passes authenticated request to main VeraCall Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Queries SageMaker inference endpoint with call metadata for prediction."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns fraud risk score (0-100) back to customer via API Gateway."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends call metadata to SQS for asynchronous storage."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Delivers call metadata to encrypted S3 bucket."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker reads metadata from S3 for feature engineering and model retraining."
+    }
+  ]
+}
