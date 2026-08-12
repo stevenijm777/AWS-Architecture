@@ -1,0 +1,142 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Ingestion Kinesis</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Receives raw telemetry data streams from customer agents and appliances</data>
+    </node>
+    <node id="1">
+      <data key="d5">Ingestion ECS</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Pre-processes ingested telemetry data streams</data>
+    </node>
+    <node id="2">
+      <data key="d5">Data Lake S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">25 PB Data Lake bucket storing processed telemetry data</data>
+    </node>
+    <node id="3">
+      <data key="d5">Search ECS</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Receives user search requests, performs validation, and creates execution plan</data>
+    </node>
+    <node id="4">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Database for search metadata and state</data>
+    </node>
+    <node id="5">
+      <data key="d5">Scheduler Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Performs job shadowing and workload scheduling based on query data volume</data>
+    </node>
+    <node id="6">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Buffers search execution tasks</data>
+    </node>
+    <node id="7">
+      <data key="d5">Step Functions</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates search workflow and maintains execution state</data>
+    </node>
+    <node id="8">
+      <data key="d5">Filter Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Spins up thousands of Erlang-based worker Lambdas to filter, parse, and enrich requested data</data>
+    </node>
+    <node id="9">
+      <data key="d5">Search Results S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores intermediate search query results</data>
+    </node>
+    <node id="10">
+      <data key="d5">Search Kinesis</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Streams intermediate search results to aggregation phase</data>
+    </node>
+    <node id="11">
+      <data key="d5">Aggregator Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Aggregates intermediate search outputs into final query results</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Telemetry data streams into Ingestion ECS</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Pre-processed data is written to 25 PB S3 Data Lake</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Search request plan passed from Search ECS to Scheduler Lambda</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Scheduler Lambda enqueues tasks into SQS</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Scheduler Lambda directly triggers worker Filter Lambdas</data>
+      <data key="d10">3'</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SQS feeds work tasks to Step Functions</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Step Functions coordinates Filter Lambda executions</data>
+      <data key="d10">3</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Filter Lambdas write intermediate search output to S3</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Filter Lambdas stream search output to Search Kinesis</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="11" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Search Kinesis streams results to Aggregator Lambda</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">AlertLogic Search and Telemetry Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=PoYiSKUy8sE</data>
+    <data key="d2">System processes 25 PB of telemetry data. Lambda fleet scales from 0 to 55,000 concurrent executions per hour across 18M total executions during peak workloads.</data>
+    <data key="d3">Security Data Lake &amp; Serverless MapReduce Search Architecture</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

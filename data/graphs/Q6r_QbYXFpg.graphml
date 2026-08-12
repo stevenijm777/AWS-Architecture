@@ -1,0 +1,131 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">CONSOLE</data>
+      <data key="d6">S3</data>
+      <data key="d7">S3 bucket hosting the web console frontend for administrators and end-user self-service.</data>
+    </node>
+    <node id="1">
+      <data key="d5">COGNITO</data>
+      <data key="d6">Cognito</data>
+      <data key="d7">Handles authentication securely without storing customer credentials directly.</data>
+    </node>
+    <node id="2">
+      <data key="d5">SAML IdP</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Customer external SAML Identity Provider integrated with Directory Services.</data>
+    </node>
+    <node id="3">
+      <data key="d5">LAMBDA (Customer)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Deployed in customer environment via CloudFormation template to collect users and groups from Directory Services.</data>
+    </node>
+    <node id="4">
+      <data key="d5">API GATEWAY</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Receives user and group directory sync payloads from customer Lambda.</data>
+    </node>
+    <node id="5">
+      <data key="d5">LAMBDA (Backend)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Backend processing Lambda that performs CRUD operations, identifies user batch diffs, and queues tasks.</data>
+    </node>
+    <node id="6">
+      <data key="d5">RDS</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Relational database storing user/group data and operational state.</data>
+    </node>
+    <node id="7">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Buffers queued provisioning and modification tasks.</data>
+    </node>
+    <node id="8">
+      <data key="d5">LAMBDA (Worker)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Worker Lambda instances triggered by SQS to launch Step Function executions.</data>
+    </node>
+    <node id="9">
+      <data key="d5">STEP FUNCTIONS</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">State machine orchestrating provisioning, modifying, stopping, and terminating WorkSpaces with built-in wait states.</data>
+    </node>
+    <node id="10">
+      <data key="d5">WORKSPACES</data>
+      <data key="d6">WorkSpaces</data>
+      <data key="d7">Amazon WorkSpaces provisioned and managed within the customer environment.</data>
+    </node>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Cognito initiates SAML authentication request to customer's SAML IdP.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SAML IdP returns SAML assertions to Cognito.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Customer Lambda sends user and group info through API Gateway.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">API Gateway triggers backend Lambda function.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Backend Lambda executes CRUD operations on RDS database.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Backend Lambda pushes detected batch job diffs into SQS queue.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SQS queue triggers worker Lambda functions directly.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Worker Lambda launches Step Functions workflow executions.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Step Functions provisions and manages WorkSpaces inside the customer environment.</data>
+      <data key="d10">3</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Synchronet Amazon WorkSpaces Provisioning Automation Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=Q6r_QbYXFpg</data>
+    <data key="d2">Automates lifecycle provisioning of thousands of Amazon WorkSpaces using serverless architecture and Step Functions orchestration.</data>
+    <data key="d3">Automation &amp; Provisioning</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

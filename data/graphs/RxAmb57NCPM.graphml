@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Nakadi Event Bus</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Open-source distributed event bus abstraction over Kafka that batches events into 5-minute / 50MB files.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Archival S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores 5-minute/50MB batched event files written directly by Nakadi.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Archival Object Notification Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Receives S3 object creation notifications from the archival bucket to trigger the Partitioning Lambda.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Partitioning Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Invoked by SQS; partitions raw archival data into structured files for the RAW bucket.</data>
+    </node>
+    <node id="4">
+      <data key="d5">RAW S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores partitioned raw event data.</data>
+    </node>
+    <node id="5">
+      <data key="d5">RAW Object Notification Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Receives notifications upon raw object creation to invoke the Enrichment Lambda.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Enrichment Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Enriches message attributes with event type names and partition information before publishing to SNS.</data>
+    </node>
+    <node id="7">
+      <data key="d5">SNS Topic</data>
+      <data key="d6">SNS</data>
+      <data key="d7">Fans out enriched messages based on message attributes to downstream filtering queues and data lake pipelines.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Filtered Downstream SQS Queues</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Subscribed to SNS with message attribute filtering per event type, consumed by downstream Spark jobs.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Reformatting Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Reformats raw data lake event partitions from hourly to daily partitions.</data>
+    </node>
+    <node id="10">
+      <data key="d5">MAIN Ingestion SQS Queue</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Buffers reformatted partition messages before writing into the main serving bucket.</data>
+    </node>
+    <node id="11">
+      <data key="d5">MAIN S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Serves daily-partitioned data lake files for ad-hoc Presto queries.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Nakadi batches events into 5min/50MB files and writes to the archival bucket.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Object creation generates event notification to SQS.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SQS queue triggers Partitioning Lambda.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Partitioning Lambda writes partitioned event files into RAW bucket.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Object creation in RAW bucket generates event notification to SQS.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SQS queue triggers Enrichment Lambda.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda enriches attributes and publishes message to SNS.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SNS fans out messages filtered by event type to downstream SQS queues for Spark applications.</data>
+      <data key="d10">3'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SNS fans out unfiltered messages to Reformatting Lambda for data lake ingestion.</data>
+      <data key="d10">3''</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Reformatting Lambda passes reformatted data to SQS queue.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="11" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SQS queue delivers daily-partitioned data into MAIN S3 bucket for Presto querying.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Zalando Serverless Event Data Lake Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=RxAmb57NCPM</data>
+    <data key="d2">Zalando's serverless data lake processes 2M to 6M Lambda invocations per day, ingesting events from Nakadi into S3, enriching message attributes via Lambda and SNS, and partitioning data for downstream Spark processing and Presto ad-hoc queries.</data>
+    <data key="d3">Analytics, Serverless, Event Driven</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
