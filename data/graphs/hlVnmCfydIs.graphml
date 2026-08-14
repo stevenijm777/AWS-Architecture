@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">EVENT BRIDGE</data>
+      <data key="d6">EventBridge</data>
+      <data key="d7">Receives order data events from Shopify.</data>
+    </node>
+    <node id="1">
+      <data key="d5">KINESIS DATA FIREHOSE</data>
+      <data key="d6">Firehose</data>
+      <data key="d7">Streams real-time order data to Amazon S3.</data>
+    </node>
+    <node id="2">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores raw order data landed from Firehose and emits event triggers.</data>
+    </node>
+    <node id="3">
+      <data key="d5">LAMBDA</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Extracts order metadata to write to DynamoDB and interfaces between Connect and DynamoDB during call lookup.</data>
+    </node>
+    <node id="4">
+      <data key="d5">DYNAMODB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores customer order metadata and phone numbers for real-time lookup.</data>
+    </node>
+    <node id="5">
+      <data key="d5">CONNECT</data>
+      <data key="d6">Connect</data>
+      <data key="d7">Handles incoming customer calls, performs phone lookup, invokes Lex, and routes calls.</data>
+    </node>
+    <node id="6">
+      <data key="d5">PINPOINT</data>
+      <data key="d6">Pinpoint</data>
+      <data key="d7">Checks caller region/country code to adapt language options.</data>
+    </node>
+    <node id="7">
+      <data key="d5">LEX</data>
+      <data key="d6">Lex</data>
+      <data key="d7">Conversational bot that asks callers for their contact reason.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Streams incoming order data from EventBridge to Kinesis Data Firehose.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Delivers order data to S3 bucket.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">S3 object creation event triggers Lambda execution.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda extracts customer order metadata and stores it in DynamoDB.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="1">
+      <data key="d8">1</data>
+      <data key="d9">Lambda queries DynamoDB table for matching phone number.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda returns customer status metadata to Connect.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">DynamoDB returns provisions metadata back to Lambda.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Connect checks caller region via Pinpoint.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Connect triggers Lambda to perform caller phone number lookup.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Connect invokes Lex bot to determine contact reason.</data>
+      <data key="d10">5</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="7" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lex returns contact reason to Connect for routing to specialized agent queue.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Traeger Provisions Customer Support Personalization Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=hlVnmCfydIs</data>
+    <data key="d2">Architecture for personalizing customer support calls for Traeger Provisions by linking real-time order ingestion with Amazon Connect call routing.</data>
+    <data key="d3">Serverless, Customer Engagement, Ingestion &amp; Analytics</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
