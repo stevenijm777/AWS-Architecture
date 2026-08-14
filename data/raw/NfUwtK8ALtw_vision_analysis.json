@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture shows MX Player's video ingestion, transcoding, and content delivery pipeline.\n1. **Ingestion & Pre-Transcoding**: Content teams ingest videos from a CMS into an EC2-hosted transcoding API. The API triggers a pre-transcoding Spot Fleet (Auto Scaling) to perform basic checks, audio, and subtitle transcoding, while sending messages to an SQS queue and initializing tracking tasks in ElastiCache.\n2. **Transcoding**: The main Transcoding Spot Fleet (GPU/CPU instances in Auto Scaling) polls messages from SQS, fetches raw video files from S3, processes them (using advanced codecs like H.266/H.265/AV1), updates task completion status in ElastiCache, and writes transcoded media back to S3.\n3. **Content Delivery**: End users stream transcoded video content via CloudFront, which caches and serves media assets directly from the S3 origin bucket.",
+  "graph": {
+    "name": "MX Player Video Transcoding and Streaming Architecture",
+    "link": "https://www.youtube.com/watch?v=NfUwtK8ALtw",
+    "categories": "Media & Entertainment, Compute, Storage & Content Delivery",
+    "graph_usable": true,
+    "notes": "MX Player handles over 200k hours of video and 300M+ MAUs using AWS Auto Scaling Spot Fleets (scaling up to 3,000 instances) to process ~100k videos in SQS queue within an hour while utilizing H.266 compression to halve bandwidth requirements."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "CMS",
+      "notes": "Content Management System where content team ingests videos"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Ingestion API handling incoming transcoding requests"
+    },
+    {
+      "id": "2",
+      "service": "AutoScaling",
+      "name": "PRE TRANSCODING",
+      "notes": "Spot fleet of GPU/CPU instances doing basic video checks, audio, and subtitle transcoding"
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Holds task messages for video processing (handles 100k+ video queues)"
+    },
+    {
+      "id": "4",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "In-memory cache for tracking task state and completion"
+    },
+    {
+      "id": "5",
+      "service": "AutoScaling",
+      "name": "TRANSCODING",
+      "notes": "Large Spot Fleet (up to 3,000 GPU/CPU instances) executing multi-codec video transcoding (H.266, H.265, AV1)"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Object storage holding raw input video and transcoded output media"
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "CLOUD FRONT",
+      "notes": "CDN serving cached media content to end users"
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWebMobile",
+      "name": "USER",
+      "notes": "End users requesting video playback"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Content team ingests video data via CMS to the EC2 transcoding API"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "EC2 API invokes pre-transcoding workers"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "EC2 API sends processing message to SQS queue"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pre-transcoding worker creates task entry in ElastiCache"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "control",
+      "notes": "Pre-transcoding worker pushes completed pre-processing task message to SQS"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Transcoding Spot Fleet polls task messages from SQS"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transcoding workers fetch source videos from S3"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transcoding workers mark task as done in ElastiCache"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Transcoding workers write finished transcoded media files to S3"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests video stream from CloudFront CDN"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront fetches transcoded video files from S3 bucket origin"
+    }
+  ]
+}

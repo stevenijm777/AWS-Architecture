@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The architecture represents HomeGate's legacy-to-microservices ingestion pipeline for property listings. 1. A scheduled CloudWatch Event triggers the Dispatcher Fetcher Lambda. 2. The Fetcher Lambda queries data from the legacy Monolith DB. 3. The Fetcher Lambda stores/replicates this data into the Dispatcher DynamoDB table. 4. DynamoDB Streams capture changes and invoke the Dispatcher Stream Lambda. 5. The Stream Lambda filters/curates changes and sends relevant updates via HTTP POST to the API Gateway central endpoint. 6. API Gateway invokes the Importer Lambda. 7. The Importer Lambda stores the new listing in Importer DynamoDB. 8. The Importer Lambda initiates a Step Functions workflow for listing enrichment (geo-tagging, call tracking, image optimization, quality grading). 9. Upon workflow completion, Step Functions publishes an event to an SNS topic for downstream microservices to consume.",
+  "graph": {
+    "name": "Homegate Property Listing Ingestion Architecture",
+    "link": "https://www.youtube.com/watch?v=eEfWd4EgH_s",
+    "categories": "Serverless, Data Ingestion, Legacy Migration",
+    "graph_usable": true,
+    "notes": "HomeGate property listing ingestion system handling legacy synchronization and serverless microservice processing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudWatch",
+      "name": "CW EVENT",
+      "notes": "Scheduled event trigger for periodic fetching of legacy listing data."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Monolith DB",
+      "notes": "Legacy system database storing original property listings."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Dispatcher Fetcher Lambda",
+      "notes": "Pulls data from the legacy Monolith DB and writes it to Dispatcher DynamoDB."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Dispatcher DynamoDB",
+      "notes": "Data store for synchronized legacy property listings with DynamoDB Streams enabled."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Dispatcher Stream Lambda",
+      "notes": "Processes DynamoDB Stream events to evaluate and push relevant listing changes."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Central publishing API endpoint for HomeGate."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Importer Lambda",
+      "notes": "Entry point for the importer microservice; persists incoming listing data and triggers processing."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Importer DynamoDB",
+      "notes": "Internal data store for imported property listings."
+    },
+    {
+      "id": "8",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates multi-step listing ingestion workflow (geo-tagging, call tracking, image optimization, quality grading)."
+    },
+    {
+      "id": "9",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Publishes property listing publication events to downstream microservices such as search alerts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch Event triggers the fetcher Lambda on schedule."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetcher Lambda pulls property data from the legacy Monolith DB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fetcher Lambda writes data into Dispatcher DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "DynamoDB Stream triggers Dispatcher Stream Lambda on change."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Stream Lambda sends relevant property updates to API Gateway."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "API Gateway invokes Importer Lambda."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Importer Lambda saves the listing into Importer DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "control",
+      "notes": "Importer Lambda starts execution of Step Functions workflow."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Step Functions publishes completion event message to SNS topic."
+    }
+  ]
+}

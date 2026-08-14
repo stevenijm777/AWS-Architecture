@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "1. Identified client ingest sources from the diagram and transcript: Focus Camera (UserConsumerCamera), Mobile App (UserConsumerMobile), and Web Platform (UserConsumerWeb).\n2. Identified storage and queuing layer: S3 bucket for video storage and SQS for job queueing.\n3. Identified target tracking auto-scaling control loop: CloudWatch metrics queried by a custom Lambda function to calculate message-to-instance ratios, which then instructs the Spot Fleet (AutoScaling) group.\n4. Identified compute layer: EC2 worker instances pulled jobs from SQS, transcoded videos, and wrote playable video back to S3.\n5. Categorized edges into three distinct flows: Flow 0 for video upload & job queuing, Flow 1 for auto-scaling management, and Flow 2 for transcoding execution and playable video output storage.",
+  "graph": {
+    "name": "Hudl Sports Video Transcoding Architecture",
+    "link": "https://www.youtube.com/watch?v=KgRib8AM0fs",
+    "categories": "Media Processing & Auto Scaling",
+    "graph_usable": true,
+    "notes": "Hudl ingests coaching videos via mobile, web, and hardware camera apps into S3 while sending messages to prioritized SQS queues. A custom Lambda scaling function queries CloudWatch metrics to dynamically adjust a Spot Fleet Auto Scaling group. EC2 worker instances transcode jobs from SQS and save the output back to S3 within 2 minutes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerCamera",
+      "name": "Focus Camera",
+      "notes": "Dedicated Hudl Focus hardware camera for automated video capture."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App",
+      "notes": "Mobile app client used by coaches to upload video content."
+    },
+    {
+      "id": "2",
+      "service": "UserConsumerWeb",
+      "name": "Web Platform",
+      "notes": "Web interface client used to upload videos and trigger job queues."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores raw video uploads and transcoded playable video output within 2 minutes."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Multiple prioritized message queues handling up to 30,000 messages/minute based on user priority and job size."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Collects queue depth metrics used by Lambda for target tracking."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Evaluates SQS queue depth versus instance count and calculates target tracking ratio to trigger auto-scaling."
+    },
+    {
+      "id": "7",
+      "service": "AutoScaling",
+      "name": "Spot Fleet",
+      "notes": "Manages over 20 instance types across Spot Fleet, scaling up to 10,000+ instances during peak game nights."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Worker compute instances that process video transcoding tasks, reducing total compute costs by 28%."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile app uploads raw coaching video directly to S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Web platform uploads raw coaching video directly to S3."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Focus camera uploads raw video directly to S3."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Initiates upload and sends transcoding job message to prioritized SQS queue."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "SQS queue depth is monitored to determine pending job count."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "CloudWatch metrics are queried by Lambda to calculate ratio of messages to instances."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda invokes Spot Fleet Auto Scaling Group to scale instances in or out based on load ratio."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 worker instances pull queued transcoding messages from SQS."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transcoded video is written back into S3 bucket in playable format."
+    }
+  ]
+}

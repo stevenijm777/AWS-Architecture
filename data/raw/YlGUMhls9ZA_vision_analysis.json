@@ -1,0 +1,210 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows a central AWS account using a CloudWatch Events rule to trigger five distinct Lambda functions daily at 07:30 AM. Each Lambda function scans monitored AWS accounts via cross-account IAM role permissions (STS AssumeRole) to identify underutilized resources: EC2 instances, unused EBS volumes (deleting those without a 'preserve' tag), inactive RDS instances (no connections in 7 days), unused ELB load balancers, and S3 bucket metrics/lifecycle policies. DynamoDB stores account configurations and function toggles. Target resources in monitored accounts feed metrics to a local CloudWatch instance.",
+  "graph": {
+    "name": "Veolia Multi-Account AWS FinOps Resource Optimizer",
+    "link": "https://www.youtube.com/watch?v=YlGUMhls9ZA",
+    "categories": "FinOps, Serverless, Multi-Account Management, Optimization",
+    "graph_usable": true,
+    "notes": "Automated serverless solution to detect and clean up unused AWS resources across multi-account environments, saving ~10% annually on AWS spend."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Triggers execution of Lambda functions daily at 7:30 AM."
+    },
+    {
+      "id": "1",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores metadata and active Lambda function configurations per monitored AWS account."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "EC2 UNUSED",
+      "notes": "Identifies unused EC2 instances across monitored accounts."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "EBS UNUSED",
+      "notes": "Scans and deletes unused EBS volumes unless tagged with 'preserve'."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "RDS UNUSED",
+      "notes": "Checks RDS instances without active connections in the last 7 days."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "ELB UNUSED",
+      "notes": "Scans unused Classic, Application, and Network Load Balancers."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "S3 METRICS",
+      "notes": "Collects S3 bucket sizes, historical trends, and lifecycle policy usage using a custom Boto3 layer."
+    },
+    {
+      "id": "7",
+      "service": "IAM",
+      "name": "IAM Role",
+      "notes": "Provides cross-account STS AssumeRole permissions for scanning operations."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Target EC2 instances in monitored accounts."
+    },
+    {
+      "id": "9",
+      "service": "EBS",
+      "name": "EBS",
+      "notes": "Target EBS volumes in monitored accounts."
+    },
+    {
+      "id": "10",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Target RDS databases in monitored accounts."
+    },
+    {
+      "id": "11",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Target ELBs across Classic, Application, and Network types."
+    },
+    {
+      "id": "12",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Target S3 buckets in monitored accounts."
+    },
+    {
+      "id": "13",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Holds resource metrics for analysis in monitored accounts."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Triggers EC2 UNUSED Lambda scheduled at 07:30 AM."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Triggers EBS UNUSED Lambda scheduled at 07:30 AM."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0''",
+      "type": "control",
+      "notes": "Triggers RDS UNUSED Lambda scheduled at 07:30 AM."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "0'''",
+      "type": "control",
+      "notes": "Triggers ELB UNUSED Lambda scheduled at 07:30 AM."
+    },
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0''''",
+      "type": "control",
+      "notes": "Triggers S3 METRICS Lambda scheduled at 07:30 AM."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Executes describe API calls on target EC2 instances."
+    },
+    {
+      "source": "3",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Scans and deletes unpreserved unused EBS volumes."
+    },
+    {
+      "source": "4",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Checks RDS database connection metrics for inactivity over 7 days."
+    },
+    {
+      "source": "5",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Scans active and unused ELB statuses."
+    },
+    {
+      "source": "6",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Queries S3 bucket sizing, trends, and lifecycle policies."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Provides cross-account assume-role access policies to target resources."
+    },
+    {
+      "source": "9",
+      "target": "13",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "EBS metrics logged into CloudWatch."
+    },
+    {
+      "source": "10",
+      "target": "13",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "RDS connection metrics logged into CloudWatch."
+    },
+    {
+      "source": "11",
+      "target": "13",
+      "flow_id": 3,
+      "seq": "0''",
+      "type": "meta",
+      "notes": "ELB traffic metrics logged into CloudWatch."
+    }
+  ]
+}

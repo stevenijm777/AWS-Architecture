@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The architecture shows a multi-tenant event processing and customer engagement system from Capillary Technologies. First, configurers define events through ALB into a Kubernetes cluster (K8S) which writes event definitions and metadata into DynamoDB. Third-party systems send events to API Gateway, triggering a Webhook Lambda function that validates and verifies the tenant/event using metadata stored in DynamoDB before pushing the event payload to SQS. SQS triggers a Processor Lambda function, which persists raw/analyzed events into DynamoDB and streams actionable events into Kinesis. Finally, Workers consume events from Kinesis to trigger business actions (points allocation, promotions, messaging).",
+  "graph": {
+    "name": "Capillary Multi-Tenant Event Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=KywvGM6HVXI",
+    "categories": "SaaS / Event Processing / Multi-Tenant",
+    "graph_usable": true,
+    "notes": "Handles up to 10 million events a day with heavy burst volume support via serverless components."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Users / Configurers",
+      "notes": "Platform users defining custom tenant events and attributes."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer entry point for API access."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "K8S",
+      "notes": "Kubernetes cluster running event definition APIs."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Stores event metadata definitions and persistent processed event data."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Third-Party System",
+      "notes": "External client systems registering webhooks and sending runtime events."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Entry point for webhook event ingest."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "WEBHOOK",
+      "notes": "Validates tenant/event metadata against DynamoDB and pushes to queue. Scales rapidly during traffic bursts."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers incoming webhook events for downstream processing."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "PROCESSOR",
+      "notes": "Consumes SQS messages, persists data, and pushes stream events to Kinesis."
+    },
+    {
+      "id": "9",
+      "service": "Kinesis",
+      "name": "KINESIS",
+      "notes": "Streams processed events for async worker actions."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "WORKERS",
+      "notes": "Workers running inside platform that perform actions like point allocation and notifications."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Users define events via ALB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "ALB forwards configuration calls to K8S cluster."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "K8S saves event definition metadata to DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Third-party systems send runtime webhook events."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Webhook Lambda."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Webhook Lambda reads event metadata and authentication details from DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Webhook Lambda pushes verified events into SQS."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "SQS triggers Processor Lambda consumer."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Processor Lambda persists raw event data into DynamoDB for analytics."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Processor Lambda streams actionable events to Kinesis."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Workers consume events from Kinesis to trigger backend business logic."
+    }
+  ]
+}

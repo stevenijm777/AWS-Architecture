@@ -1,0 +1,224 @@
+{
+  "step_by_step_reasoning": "1. Identifies entry points for user data from mobile/web clients (User Devices / UserConsumerWebMobile).\n2. Logs flow into Input EKS microservices, then through Fluentd log collector to Raw S3.\n3. DynamoDB user attribute changes trigger DynamoDB Streams into Kinesis Data Streams/Firehose, landing in Raw S3.\n4. Lambda performs batch filtering on raw files in Raw S3 to isolate user activity logs.\n5. ETL Athena enriches raw data with mappings and outputs structured dataset into Gold S3.\n6. Advertisers set target rules in Admin portal, stored in Segment RDS.\n7. Evaluation EKS builds Athena queries using RDS metadata and queries Gold S3 via Query Athena.\n8. Evaluated user segment lists are stored in low-latency Segment DynamoDB.\n9. Ad Server queries Evaluation EKS and fetches user segments from Segment DynamoDB to return recommendations under 200ms.",
+  "graph": {
+    "name": "Buzzvil User Segment Processing Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=hFx0EF9KEZU",
+    "categories": "Analytics, Data Pipeline, Ad Tech, Serverless",
+    "graph_usable": true,
+    "notes": "Buzzvil's architecture for user activity log collection, serverless Athena ETL into Gold dataset, and sub-200ms targeted ad segment processing using EKS, RDS, and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User Devices",
+      "notes": "Incoming traffic from mobile SDKs, web browsers, and server-to-server integrations"
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "Input EKS",
+      "notes": "Microservices cluster running backend APIs that emit activity logs"
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Fluentd",
+      "notes": "Fluent Bit/Fluentd log collector daemon forwarding container logs"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Input DynamoDB",
+      "notes": "Stores user attribute data"
+    },
+    {
+      "id": "4",
+      "service": "Kinesis",
+      "name": "Kinesis Data Stream",
+      "notes": "Captures user attribute updates via DynamoDB Streams and streams them via Firehose to S3"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Filter Lambda",
+      "notes": "Batch processes raw log files to filter out unwanted request logs, reducing CPU load on log forwarders"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Raw S3 Bucket",
+      "notes": "Stores raw unfiltered logs and user attribute updates"
+    },
+    {
+      "id": "7",
+      "service": "Athena",
+      "name": "ETL Athena",
+      "notes": "Enriches raw logs with internal ID mapping metadata"
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Gold S3 Bucket",
+      "notes": "Stores curated, enriched gold user dataset ready for segmentation queries"
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyAgent",
+      "name": "Admin",
+      "notes": "Admin system where advertisers define targeting conditions and segment rules"
+    },
+    {
+      "id": "10",
+      "service": "UserCompanyAgent",
+      "name": "Ad Server",
+      "notes": "Serves ad recommendations requiring low-latency (100-200ms) segment targeting lookups"
+    },
+    {
+      "id": "11",
+      "service": "RDS",
+      "name": "Segment RDS",
+      "notes": "Stores segment metadata, conditions, and catalog rules"
+    },
+    {
+      "id": "12",
+      "service": "EKS",
+      "name": "Evaluation EKS",
+      "notes": "Runs periodic evaluation jobs that construct and submit Athena segment queries"
+    },
+    {
+      "id": "13",
+      "service": "DynamoDB",
+      "name": "Segment DynamoDB",
+      "notes": "Stores evaluated user segment membership data for fast ad server lookup"
+    },
+    {
+      "id": "14",
+      "service": "Athena",
+      "name": "Query Athena",
+      "notes": "Executes segment evaluation queries against the Gold S3 dataset"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User events and requests sent to microservices on EKS"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS containers output log streams to Fluentd"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fluentd pushes log files into Raw S3 bucket"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Filter Lambda processes raw batch files in S3 to extract clean activity logs"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "DynamoDB Streams publish user property updates to Kinesis"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis Firehose writes user property streams into Raw S3 bucket"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "ETL Athena queries raw dataset for transformation"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "ETL Athena writes enriched result files to Gold S3 bucket"
+    },
+    {
+      "source": "8",
+      "target": "14",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Gold S3 bucket serves as target data source for Query Athena"
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "Admin console writes segment targeting rules into Segment RDS"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Evaluation EKS fetches segment definitions from RDS"
+    },
+    {
+      "source": "12",
+      "target": "14",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "control",
+      "notes": "Evaluation EKS builds and triggers query execution on Query Athena"
+    },
+    {
+      "source": "12",
+      "target": "13",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Evaluation EKS writes segment calculation outputs to Segment DynamoDB"
+    },
+    {
+      "source": "10",
+      "target": "12",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "control",
+      "notes": "Ad Server sends evaluation requests to EKS"
+    },
+    {
+      "source": "10",
+      "target": "13",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ad Server reads target segment data from Segment DynamoDB with sub-200ms latency"
+    }
+  ]
+}

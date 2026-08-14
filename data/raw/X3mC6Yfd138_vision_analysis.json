@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "The architecture describes Predict HQ's demand intelligence platform on AWS. Fetcher ASG fetches ~7TB of raw data daily from external Data Sources and stores it in Data Stores (Kafka and Elasticsearch on EC2/RDS). Pipeline ASG pulls raw data from Data Stores, performs NLP and machine learning deduplication, and aggressively caches processed records into DynamoDB (using TTL to manage ~90M records) and Redis Cache. Customer ASG serves end customers via the Control Center web app, developer APIs (~25k req/min), AWS Data Exchange, and Snowflake.",
+  "graph": {
+    "name": "Predict HQ Demand Intelligence Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=X3mC6Yfd138",
+    "categories": "Big Data, Analytics, Caching, Machine Learning",
+    "graph_usable": true,
+    "notes": "Architecture showing data fetching, pipeline processing, caching, and multi-channel customer data delivery for Predict HQ."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "DATA SOURCES",
+      "notes": "Fetches paid datasets, public APIs, and manual data entries (~7TB/day)."
+    },
+    {
+      "id": "1",
+      "service": "AutoScaling",
+      "name": "FETCHER ASG",
+      "notes": "Auto Scaling Group containing microservices responsible for fetching raw data."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "DATA STORES",
+      "notes": "Data stores hosting Kafka and Elasticsearch on EC2."
+    },
+    {
+      "id": "3",
+      "service": "AutoScaling",
+      "name": "PIPELINE ASG",
+      "notes": "Auto Scaling Group running pipeline APIs for deduplication using NLP and ML."
+    },
+    {
+      "id": "4",
+      "service": "AutoScaling",
+      "name": "CUSTOMER ASG",
+      "notes": "Auto Scaling Group hosting customer-facing APIs serving ~25k requests per minute."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "DynamoDB table storing ~90 million cached records with TTL expiration."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "CACHE",
+      "notes": "Redis / ElastiCache cluster used for aggressive data caching."
+    },
+    {
+      "id": "7",
+      "service": "DataExchange",
+      "name": "DATA EXCHANGE",
+      "notes": "AWS Data Exchange used to share processed demand intelligence data."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "SNOWFLAKE",
+      "notes": "Snowflake data platform for sharing demand data with enterprise customers."
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyWebsite",
+      "name": "CONTROL CENTER",
+      "notes": "Web application UI allowing customers to visualize and manipulate data."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerDeveloper",
+      "name": "DEVELOPERS",
+      "notes": "Developers consuming raw APIs directly."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fetcher ASG fetches raw data (~7TB/day) from external data sources."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetcher ASG writes fetched raw data into Kafka and Elasticsearch data stores."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pipeline ASG pulls raw data from data stores for processing and deduplication using NLP/ML."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pipeline ASG caches processed records (about 90M) in DynamoDB with TTL expiry."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Pipeline ASG caches processed data in ElastiCache/Redis."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer ASG serves the Control Center web application for data visualization."
+    },
+    {
+      "source": "4",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Customer ASG serves developer API requests (25k req/min)."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Customer ASG shares data via AWS Data Exchange."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0'''",
+      "type": "data",
+      "notes": "Customer ASG shares data via Snowflake."
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+{
+  "step_by_step_reasoning": "The architecture depicted on the whiteboard and explained in the video consists of two primary operational flows for Traeger Provisions: order data ingestion and customer support personalization.\n\n1. Ingestion Flow (Flow 0):\n- EventBridge receives order data and streams it through Kinesis Data Firehose into an S3 bucket.\n- Landing data in S3 triggers an AWS Lambda function.\n- The Lambda function parses the order metadata and stores customer profile and order details into DynamoDB.\n\n2. Call Center Personalization Flow (Flow 1):\n- Incoming customer calls arrive at Amazon Connect.\n- Amazon Connect queries Amazon Pinpoint to determine call origin (e.g., country code / US localization).\n- Amazon Connect triggers AWS Lambda to query DynamoDB using the caller's phone number.\n- DynamoDB returns the customer metadata back to Lambda, which passes the customer classification to Amazon Connect.\n- Amazon Connect invokes Amazon Lex to determine the caller's intent/reason for contact.\n- Amazon Lex returns the intent to Amazon Connect to route the call to a specialized agent queue.",
+  "graph": {
+    "name": "Traeger Provisions Customer Support Personalization Architecture",
+    "link": "https://www.youtube.com/watch?v=hlVnmCfydIs",
+    "categories": "Serverless, Customer Engagement, Ingestion & Analytics",
+    "graph_usable": true,
+    "notes": "Architecture for personalizing customer support calls for Traeger Provisions by linking real-time order ingestion with Amazon Connect call routing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EventBridge",
+      "name": "EVENT BRIDGE",
+      "notes": "Receives order data events from Shopify."
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "KINESIS DATA FIREHOSE",
+      "notes": "Streams real-time order data to Amazon S3."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores raw order data landed from Firehose and emits event triggers."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Extracts order metadata to write to DynamoDB and interfaces between Connect and DynamoDB during call lookup."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Stores customer order metadata and phone numbers for real-time lookup."
+    },
+    {
+      "id": "5",
+      "service": "Connect",
+      "name": "CONNECT",
+      "notes": "Handles incoming customer calls, performs phone lookup, invokes Lex, and routes calls."
+    },
+    {
+      "id": "6",
+      "service": "Pinpoint",
+      "name": "PINPOINT",
+      "notes": "Checks caller region/country code to adapt language options."
+    },
+    {
+      "id": "7",
+      "service": "Lex",
+      "name": "LEX",
+      "notes": "Conversational bot that asks callers for their contact reason."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams incoming order data from EventBridge to Kinesis Data Firehose."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Delivers order data to S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 object creation event triggers Lambda execution."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda extracts customer order metadata and stores it in DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Connect checks caller region via Pinpoint."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Connect triggers Lambda to perform caller phone number lookup."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queries DynamoDB table for matching phone number."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB returns provisions metadata back to Lambda."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda returns customer status metadata to Connect."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "control",
+      "notes": "Connect invokes Lex bot to determine contact reason."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lex returns contact reason to Connect for routing to specialized agent queue."
+    }
+  ]
+}

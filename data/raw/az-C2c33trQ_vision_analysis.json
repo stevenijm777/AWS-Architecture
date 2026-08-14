@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Addictive's real-time analytics and predictive ML platform for mobile ad revenue optimization. 1. Streaming events (~30,000 events/sec) are ingested into a Kafka cluster (ThirdParty). 2. An EKS cluster running Kafka Streams processes the incoming streams, computing real-time aggregation counters sent to RDS and dumping raw event data lake material (~400 GB/day, ~120 TB total) into S3. 3. S3 data is processed by a second EKS cluster running hundreds of isolated Spark ML jobs on Spot instances per customer. 4. Spark ML outputs aggregated prediction metrics to RDS and raw per-user prediction data to RedShift. 5. A React-based Client Dashboard calls a Go API service hosted on a third EKS cluster, which queries RDS for fast aggregated metrics and RedShift for raw prediction data.",
+  "graph": {
+    "name": "Addictive Predictive Analytics and ML Platform",
+    "link": "https://www.youtube.com/watch?v=az-C2c33trQ",
+    "categories": "AdTech Data Analytics & Machine Learning",
+    "graph_usable": true,
+    "notes": "System processes ~30k events/sec, adding 400 GB daily to a 120 TB S3 data lake. Uses EKS with Spot instances running hundreds of isolated Spark clusters for resilient, cost-effective ML model processing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Kafka",
+      "notes": "Kafka cluster receiving mobile app user activity event streams (~30,000 events/s)."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "EKS (Kafka Streams)",
+      "notes": "Managed Kubernetes cluster running Kafka Streams applications for real-time aggregation and S3 raw ingestion."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 Data Lake storing raw user activity data (~400 GB added daily, managing ~120 TB total)."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS (Spark)",
+      "notes": "Managed Kubernetes cluster spawning hundreds of isolated Spark clusters on EC2 Spot instances for customer ML jobs."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database optimized for fast access to real-time aggregations and forecasting metrics."
+    },
+    {
+      "id": "5",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Data warehouse storing raw per-user prediction outputs for flexible querying."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "EKS (API)",
+      "notes": "Managed Kubernetes cluster running backend API endpoints written in Go."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "Client Dashboard",
+      "notes": "React Web Application dashboard displaying revenue per user forecasts to customers."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kafka Streams application consumes streaming events from Kafka."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kafka Streams writes raw event logs to S3 Data Lake."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Kafka Streams writes real-time aggregation metrics directly into RDS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Spark clusters pull raw data from S3 to execute ML algorithms."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Spark jobs output raw per-user predictions to Redshift."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Spark jobs output aggregated forecasting metrics to RDS."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "React Client Dashboard queries the Go API service."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Go API fetches fast aggregated metrics from RDS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Go API fetches flexible raw user prediction data from Redshift."
+    }
+  ]
+}

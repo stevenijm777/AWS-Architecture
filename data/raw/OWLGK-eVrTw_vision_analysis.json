@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows client applications (EC2 instance and Lambda function) connecting to a database proxy solution provided by Heimdall Data. Client database calls route through a Network Load Balancer (NLB) to an Auto Scaling group of Heimdall Proxy EC2 instances. The proxy instances maintain an L1 cache internally and connect to Amazon ElastiCache for a shared/synchronized cache layer. On cache misses, requests are forwarded to Amazon RDS. Management and cache configuration policies are managed via a central Management EC2 server on a separate control plane.",
+  "graph": {
+    "name": "Heimdall Data Proxy Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=OWLGK-eVrTw",
+    "categories": "Database Caching and Performance Optimization",
+    "graph_usable": true,
+    "notes": "Heimdall proxy transparently caches database queries across an Auto Scaling group using ElastiCache as L2 cache and connects to RDS for cache misses. Central management server handles control plane config."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "Clients Server",
+      "notes": "Dedicated client EC2 server making database calls."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Clients Lambda",
+      "notes": "Serverless client Lambda function making database calls."
+    },
+    {
+      "id": "2",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "Network Load Balancer acting as the transparent database endpoint for clients."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Proxy Instances",
+      "notes": "Auto Scaling Group containing Heimdall Proxy instances with L1 caching capability."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Management Server",
+      "notes": "Central management server managing cache rules, invalidations, and eviction policies on a decoupled control plane."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Backend relational database service."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "L2 synchronized distributed caching layer shared across all proxy instances."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client EC2 sends database query calls to NLB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Client Lambda sends database query calls to NLB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "NLB distributes database connection traffic to Heimdall proxy instances."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Proxy queries and synchronizes shared L2 cache in ElastiCache."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Proxy fetches uncached query results from RDS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Proxy instances connect to central management server for control plane configuration."
+    }
+  ]
+}

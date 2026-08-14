@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. Identify entities in the diagram: ECS (Ingestion), S3 bucket, Kafka cluster, EMR (AGG+ML), ECS (AGG+ML), Couchbase (AGG+ML), ECS (Profile), Couchbase/Elasticsearch (Profile), ECS (Serving), and Couchbase (Serving).\n2. Normalize service types against the allowed vocabulary list: ECS -> ECS, S3 -> S3, Kafka -> ThirdParty, EMR -> EMR, Couchbase / ElasticSearch -> CouchBase.\n3. Trace the data flow described in the audio and depicted visually:\n   - Ingestion ECS receives website event data, cleans it, and writes parallel outputs to S3 (raw historical storage) and Kafka (streaming backbone).\n   - Aggregation & ML layer reads events from Kafka and historical files from S3 to calculate real-time dynamic attributes via ECS and batch EMR processing, writing to Couchbase DB and outputting results back into Kafka.\n   - Profile layer consumes calculated attributes from Kafka into ECS (Profile), persists merged user profiles into Couchbase/Elasticsearch DB, and writes defined audience memberships back to Kafka.\n   - Serving layer consumes audience data from Kafka into ECS (Serving) and indexes it into Couchbase (Serving) for fast customer querying.",
+  "graph": {
+    "name": "OnePlus X Data Management Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=XqsgQxyZ2Tw",
+    "categories": "Data Processing & Streaming",
+    "graph_usable": true,
+    "notes": "Architecture for OnePlus X streaming data management platform processing event data to user profiles using ECS, Kafka, EMR, S3, and Couchbase."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ECS",
+      "name": "ECS (Ingestion)",
+      "notes": "Cleans, processes, and prepares incoming website user events for stream and batch storage."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores historical event data files used for long-term retention and EMR batch jobs."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Kafka",
+      "notes": "Central streaming backbone connecting ingestion, aggregation, profiling, and serving components."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "EMR (AGG+ML)",
+      "notes": "Dynamically spawned EMR clusters running ML and batch aggregation on S3 data."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS (AGG+ML)",
+      "notes": "Computes user attributes from event data streams in real time."
+    },
+    {
+      "id": "5",
+      "service": "CouchBase",
+      "name": "Couchbase (AGG+ML)",
+      "notes": "Database storing aggregated user attributes and features."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "ECS (Profile)",
+      "notes": "Combines user attributes from aggregation components to create profiles and audience groups."
+    },
+    {
+      "id": "7",
+      "service": "CouchBase",
+      "name": "Couchbase / Elasticsearch (Profile)",
+      "notes": "Storage for combined user profiles and audience criteria representations."
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "ECS (Serving)",
+      "notes": "Handles audience query execution and low-latency API access for end users."
+    },
+    {
+      "id": "9",
+      "service": "CouchBase",
+      "name": "Couchbase (Serving)",
+      "notes": "Stores indexed audience membership state for fast querying."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingestion service writes cleaned event data into S3."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingestion service pushes streaming events into Kafka."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Aggregation service streams incoming events from Kafka."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "EMR batch jobs load historical files from S3."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Aggregation service writes dynamic attributes to Couchbase DB."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Outputs calculated user attributes back to Kafka."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Profile service consumes calculated attributes from Kafka."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Profile service stores merged profiles into Couchbase/Elasticsearch."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Profile service pushes audience membership data back into Kafka."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Serving service reads audience membership updates from Kafka."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Serving service indexes audience membership state into Couchbase serving database."
+    }
+  ]
+}

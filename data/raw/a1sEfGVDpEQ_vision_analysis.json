@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "The architecture describes Swiss Post's centralized multi-account AWS security configuration and event processing system across >100 member accounts. \n1. Aggregation: Member Security Hub and GuardDuty instances send findings to centralized Security Hub and GuardDuty management instances.\n2. Policy-as-Code Configuration: A central S3 bucket stores JSON-based policies. A Configuration Lambda reads these policies to configure Security Hub baseline settings across member accounts.\n3. Filtering and Enrichment: Centralized Security Hub and GuardDuty forward findings to a Filtering Lambda function, which consults the S3 policy repository to filter out ignored findings and enrich relevant ones with context (UUIDs, account tags).\n4. Post-processing: Enriched findings are distributed downstream to Kinesis Firehose (for streaming to Splunk SIEM) and Step Functions (for auto-remediation).",
+  "graph": {
+    "name": "Swiss Post Multi-Account AWS Security Architecture",
+    "link": "https://www.youtube.com/watch?v=a1sEfGVDpEQ",
+    "categories": "Security & Compliance, Automation",
+    "graph_usable": true,
+    "notes": "Centralized security management and automated policy-driven event handling across more than 100 member AWS accounts."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "SecurityHub",
+      "name": "Security Hub (Members)",
+      "notes": "Deployed across >100 member accounts with >100 active security controls per account."
+    },
+    {
+      "id": "1",
+      "service": "GuardDuty",
+      "name": "GuardDuty (Members)",
+      "notes": "Monitors threat findings in member accounts."
+    },
+    {
+      "id": "2",
+      "service": "SecurityHub",
+      "name": "Security Hub (Management)",
+      "notes": "Central Security Hub account aggregating findings across all member accounts."
+    },
+    {
+      "id": "3",
+      "service": "GuardDuty",
+      "name": "GuardDuty (Management)",
+      "notes": "Central GuardDuty account aggregating threat findings across all member accounts."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Policy Repository",
+      "notes": "Central Policy-as-Code repository storing JSON security policy rules."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (Config)",
+      "notes": "Reads policies from S3 to automate configuration and baselining of Security Hub across member accounts."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Filtering & Enrichment)",
+      "notes": "Evaluates findings against S3 policies to ignore non-relevant events and enrich relevant ones with UUIDs and account tags."
+    },
+    {
+      "id": "7",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Executes automated remediation workflows for relevant security findings."
+    },
+    {
+      "id": "8",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Streams enriched security findings downstream to external Splunk SIEM."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Member Security Hub findings sent to Central Security Hub."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Member GuardDuty findings sent to Central GuardDuty."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Configuration Lambda reads JSON policies from S3 repository."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Configuration Lambda configures Security Hub settings on member accounts."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Central Security Hub forwards aggregated findings to Filtering Lambda."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Central GuardDuty forwards aggregated findings to Filtering Lambda."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Filtering Lambda queries S3 repository for filtering rules and tag metadata."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "Enriched findings sent to Step Functions for automated remediation."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Enriched findings delivered to Kinesis Firehose for SIEM ingestion."
+    }
+  ]
+}

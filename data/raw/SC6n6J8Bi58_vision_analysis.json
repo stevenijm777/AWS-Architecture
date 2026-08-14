@@ -1,0 +1,178 @@
+{
+  "step_by_step_reasoning": "1. **Identify Entities**: Extracted entities from visual base input and transcript: E-Scooter (UserConsumerIOT), MNO (ThirdParty), IPX (ThirdParty), NLB (NLB), ECS Control Plane (ECS), Direct Connect (DirectConnect), EC2 User Plane (EC2), Aurora (Aurora), API Gateway (ApiGateway), and Customer Backend (ThirdParty). The generic Admin human actor node is pruned per Node Rule 5.\n2. **Normalize Services**: MNO, IPX, and Customer Backend mapped to ThirdParty; E-Scooter mapped to UserConsumerIOT; AWS services mapped to their exact valid list names (NLB, ECS, DirectConnect, EC2, Aurora, ApiGateway).\n3. **Identify Flows & Sequences**:\n   - **Flow 0 (Session Control Plane)**: E-Scooter connects to MNO -> MNO sends GTP CreateSession to NLB -> NLB forwards to ECS Control Plane -> ECS reads SIM profiles from Aurora -> ECS pushes user plane config to EC2 User Plane -> Session response sent back to MNO.\n   - **Flow 1 (Device Management & Provisioning)**: Customer Backend configures SIM/policies via API Gateway -> API Gateway writes SIM configurations into Aurora.\n   - **Flow 2 (User Plane Data Payload Routing)**: E-Scooter transmits user data to MNO -> MNO forwards to IPX -> IPX routes over Direct Connect -> Direct Connect delivers to EC2 User Plane -> EC2 User Plane processes packets and forwards to Customer Backend.\n4. **Generate Nodes and Edges**: Assign zero-indexed IDs to nodes and build edge array maintaining logical sequential mapping.",
+  "graph": {
+    "name": "EMnify Cellular IoT Cloud Architecture",
+    "link": "https://www.youtube.com/watch?v=SC6n6J8Bi58",
+    "categories": "telecom",
+    "graph_usable": true,
+    "notes": "Architecture showing how EMnify connects global cellular IoT devices to customer backends using AWS control and user plane infrastructure."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "E-Scooter",
+      "notes": "Cellular IoT device reporting coordinates and battery level."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "MNO",
+      "notes": "Visited Mobile Network Operator (540+ operators in 180+ countries)."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "IPX",
+      "notes": "IP Exchange global private network for cellular roaming."
+    },
+    {
+      "id": "3",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "UDP Network Load Balancer receiving GTP CreateSession requests."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS Control Plane",
+      "notes": "Control plane application managing GTP session creation and policy lookups."
+    },
+    {
+      "id": "5",
+      "service": "DirectConnect",
+      "name": "Direct Connect",
+      "notes": "Connects IPX carriers to AWS VPC for secure roaming traffic."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 User Plane",
+      "notes": "Packet gateway cluster performing accounting, firewall, and high-speed packet processing."
+    },
+    {
+      "id": "7",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Stores SIM configurations and security policies."
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "REST API for device configuration, provisioning, and portal access."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Customer Backend",
+      "notes": "Customer application server hosted on AWS or on-premises."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "E-Scooter requests cellular network connection via visited MNO."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "MNO forwards GTP CreateSession request to NLB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "NLB balances GTP session request to ECS Control Plane."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Control Plane reads SIM configuration and security rules from Aurora."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Control Plane pushes user plane IP routing details to EC2 packet gateways."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "CreateSession response containing assigned IP address sent back to MNO."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer Backend provisions devices and defines security policies via API Gateway."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway updates SIM profiles in Aurora DB."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "E-Scooter transmits status and location telemetry data."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "MNO routes user packet tunnel over IPX network."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "IPX forwards user data into AWS Direct Connect."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Direct Connect delivers packet traffic to EC2 User Plane."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "EC2 User Plane processes firewall/accounting and forwards data to Customer Backend."
+    }
+  ]
+}

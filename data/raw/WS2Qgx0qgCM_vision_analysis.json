@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "The architecture shows Airbnb's multi-tenant Kubernetes cluster implementation on AWS EC2, demonstrating fine-grained IAM authentication for pods. 1) Node Identification: 'Control Plane' (ThirdParty) injects tokens into 'Pods' (ThirdParty) running on 'Kubernetes EC2' (EC2). 'Pods' request role assumption from 'STS' (STS) and 'IAM' (IAM). 'STS' emits auditing events to 'CloudTrail' (CloudTrail), which streams logs to 'Elasticsearch' (OpenSearch). 2) Edge Routing: Control plane injects signed tokens to pods -> pods submit tokens to STS and target IAM roles -> STS verifies permissions with IAM and returns temporary credentials to pods -> STS logs assume role events to CloudTrail -> CloudTrail feeds log streams to Elasticsearch for monitoring and alerting.",
+  "graph": {
+    "name": "Airbnb Fine-Grained Pod IAM Authentication Architecture",
+    "link": "https://www.youtube.com/watch?v=WS2Qgx0qgCM",
+    "categories": "Security, Compute, Logging",
+    "graph_usable": true,
+    "notes": "Architecture detailing fine-grained IAM role access for multi-tenant Kubernetes pods on EC2 using custom signed token injection, STS validation, and CloudTrail/Elasticsearch auditing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Control Plane",
+      "notes": "Kubernetes control plane running on a separate EC2 host that injects cryptographically signed service account tokens into pods."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Kubernetes EC2",
+      "notes": "Worker node host instances running multi-tenant Kubernetes pods."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Pods",
+      "notes": "Kubernetes pods isolated in specific namespaces (e.g., foo namespace) requesting fine-grained IAM permissions."
+    },
+    {
+      "id": "3",
+      "service": "STS",
+      "name": "STS",
+      "notes": "AWS Security Token Service that validates signed pod tokens and issues temporary credentials."
+    },
+    {
+      "id": "4",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "AWS IAM storing role definitions and trust policies that restrict role assumption to specific pod namespaces."
+    },
+    {
+      "id": "5",
+      "service": "CloudTrail",
+      "name": "CloudTrail",
+      "notes": "AWS CloudTrail collecting audit events for token creation and role assumption."
+    },
+    {
+      "id": "6",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Elasticsearch log analytics cluster used by engineers for access visibility, troubleshooting, and automated alerting."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Control plane injects cryptographically signed service account tokens into pods."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pod sends signed service account token to STS for verification."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Pod specifies designated IAM role (e.g., foo) to assume based on namespace identity."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "STS verifies token validity and checks IAM policy rules against pod namespace and name."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "STS returns temporary IAM credentials back to the pod upon successful validation."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "STS emits token creation and role assumption events to CloudTrail."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudTrail streams event logs into Elasticsearch for central auditing and automated error alerting."
+    }
+  ]
+}

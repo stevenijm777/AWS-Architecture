@@ -1,0 +1,92 @@
+{
+  "step_by_step_reasoning": "1. Identified the entry ingestion layer as EC2 Spot instances handling crawling of posts and comments.\n2. Identified the buffering and state coordination layer using Kinesis for stream data and SQS for task queuing.\n3. Identified the enrichment compute layer on EC2 Spot instances leveraging custom SageMaker AI models for sentiment, language, and brand tagging.\n4. Identified the storage layer utilizing Aurora and OpenSearch for persistence and search/insights.\n5. Mapped data flows sequentially from ingestion through buffering, enrichment, and storage with bidirectionality between enrichment and database storage as visually drawn.",
+  "graph": {
+    "name": "Launchmetrics Data Ingestion and Enrichment Architecture",
+    "link": "https://www.youtube.com/watch?v=PBa68gCG0Uk",
+    "categories": "Data Analytics, AI/ML, E-Commerce & Retail",
+    "graph_usable": true,
+    "notes": "Architecture processes ~8M posts and 70M comments per day. Spot instances reduce operational costs by ~75%, using Kinesis and SQS to statefully manage interruptions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2 Spot (Ingestion)",
+      "notes": "Crawls and ingests large volumes of fashion/beauty content including posts and comments."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Buffers ingestion stream data and preserves task state."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues ingestion task states to coordinate resilient processing across spot instance interruptions."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Spot (Enrichment)",
+      "notes": "Enriches ingested data using custom SageMaker AI models to identify brand, industry, sentiment, and language."
+    },
+    {
+      "id": "4",
+      "service": "Aurora",
+      "name": "Aurora + OpenSearch",
+      "notes": "Stores enriched data and meta-information for customer insight generation."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingestion nodes push stream content to Kinesis."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Ingestion nodes publish task state to SQS."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Enrichment nodes read stream content from Kinesis."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Enrichment nodes consume task messages from SQS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Enrichment nodes write enriched data to Aurora and OpenSearch."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enrichment nodes read state or historical data from Aurora and OpenSearch."
+    }
+  ]
+}

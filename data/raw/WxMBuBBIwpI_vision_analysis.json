@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "1. Visual and Audio Identification: Identified 6 primary architectural entities: WEB REQUESTS (UserConsumerWeb actor), ELB (ELB service), SPOT FLEET (AutoScaling service), EBS (EBS service), ECS (ECS service), and S3 (S3 service).\n2. Service Mapping: Standardized services against valid vocabulary list (UserConsumerWeb, ELB, AutoScaling, EBS, ECS, S3).\n3. Logical Routing & Flow Construction: Constructed Flow 0 for incoming web requests hitting ELB, routing to Spot Fleet, and logging locally to EBS. Constructed Flow 1 for orphaned EBS drives being mounted by ECS containers ('Spot Savior') post-spot instance retirement to finish log processing and upload final outputs to S3.",
+  "graph": {
+    "name": "Nextroll Spot Savior Architecture",
+    "link": "https://www.youtube.com/watch?v=WxMBuBBIwpI",
+    "categories": "Compute, Storage, Networking",
+    "graph_usable": true,
+    "notes": "Nextroll processes over 150B web requests daily using a Spot Fleet behind ELB. Logs (600TB uncompressed daily) are written to local EBS drives. When Spot instances terminate unexpectedly, an ECS container service ('Spot Savior') mounts orphaned EBS volumes, processes data according to manifest files, and uploads over 17 million files daily to S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "WEB REQUESTS",
+      "notes": "External web traffic sending over 150 billion requests per day."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Elastic Load Balancer receiving 150 billion web requests daily and balancing across Spot Fleet instances in multiple AZs and regions."
+    },
+    {
+      "id": "2",
+      "service": "AutoScaling",
+      "name": "SPOT FLEET",
+      "notes": "Spot Fleet deployed across multiple Availability Zones and regions to handle web requests efficiently."
+    },
+    {
+      "id": "3",
+      "service": "EBS",
+      "name": "EBS",
+      "notes": "Local EBS volumes where spot instances record ~600TB of uncompressed log data daily."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs the containerized 'Spot Savior' service that mounts orphaned EBS drives after spot instance retirement to complete log processing."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Target object storage receiving over 17 million processed log files daily."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Web traffic sends 150B requests per day to ELB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ELB distributes web requests across Spot Fleet instances."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Spot Fleet instances log processed request data to local EBS volumes."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Orphaned EBS drives from terminated spot instances are mounted by ECS containers ('Spot Savior')."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "ECS processes remaining log data and uploads over 17M files daily to S3."
+    }
+  ]
+}

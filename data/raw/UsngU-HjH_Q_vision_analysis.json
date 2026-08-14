@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1. Identify entities from World Model and transcript: Production House (ThirdParty), CBS Upstream Systems (ThirdParty), Unique ID system composed of API Gateway, Lambda, DynamoDB, SQS queue, Content Orchestration system (ThirdParty), S3 bucket, EC2 ASG message bus, Playout (ThirdParty), Scheduling (ThirdParty), and SAT (ThirdParty).\n2. Map service names strictly to allowed vocabulary.\n3. Establish logical flows: Flow 0 for metadata ingestion and Unique ID generation, Flow 1 for content orchestration and S3 storage, and Flow 2 for message bus distribution to downstream scheduling, playout, and satellite output.",
+  "graph": {
+    "name": "CBS Cloud-Based Media Supply Chain",
+    "link": "https://www.youtube.com/watch?v=UsngU-HjH_Q",
+    "categories": "Media & Entertainment, Serverless, Messaging",
+    "graph_usable": true,
+    "notes": "CBS media supply chain architecture featuring automated Unique ID generation via API Gateway, Lambda, and DynamoDB, decoupled via SQS to Content Orchestration and S3, with a message bus built on EC2 ASG routing to Playout and Satellite."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Production House",
+      "notes": "External third-party metadata producer."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "CBS Upstream Systems",
+      "notes": "Internal CBS source systems providing metadata."
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Front-end entry endpoint for the Unique ID generation service."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless function that processes metadata and generates unique identifiers."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Key-value database storing generated unique IDs and metadata records."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue holding messaging notifications for generated unique IDs."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Content Orchestration",
+      "notes": "Custom system creating asset shells, running quality checks, and ingesting video assets."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central media asset store with lifecycle policies to Glacier and Deep Archive."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2 ASG",
+      "notes": "Message bus running on EC2 Auto Scaling Group behind an Application Load Balancer for multi-protocol translation."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Playout",
+      "notes": "Downstream playout service retrieving content from S3."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Scheduling",
+      "notes": "Downstream scheduling platform receiving distribution messaging."
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "SAT",
+      "notes": "Satellite distribution system for global linear delivery."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Production House sends metadata to Unique ID service API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "CBS Upstream Systems send metadata to Unique ID service API Gateway."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda function for ID processing."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda writes unique ID details into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda pushes unique ID generation message to SQS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "SQS delivers unique ID event to Content Orchestration to construct asset shell."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Content Orchestration scans, quality checks, and writes finished content to S3."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "EC2 message bus notifies Playout system of available assets."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "EC2 message bus notifies Scheduling system of available assets."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Playout streams content out to Satellite."
+    }
+  ]
+}

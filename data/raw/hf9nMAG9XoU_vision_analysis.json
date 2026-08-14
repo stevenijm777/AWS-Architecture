@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "1. Identify core visual nodes from the visual inventory and transcript: Amplify (RCC Hours app), Step Functions (Diablo batch orchestration), Aurora MySQL (centerpiece store), Lambda Exporter (menu generator), Delivery Aggregator (third-party endpoint), API Gateway (webhook endpoint), and Lambda Webhook (audit processor).\n2. Normalize services against the allowed AWS list: Amplify -> Amplify, StepFunctions -> StepFunctions, Aurora -> Aurora, Lambda Exporter -> Lambda, Delivery Aggregator -> ThirdParty, API Gateway -> ApiGateway, Lambda Webhook -> Lambda.\n3. Assign sequential string IDs ('0' through '6') to nodes.\n4. Trace distinct logical flows:\n   - Flow 0: Store hours entry via Amplify writing to Aurora.\n   - Flow 1: Batch product, pricing, and tax updates orchestrated by Diablo Step Functions writing to Aurora.\n   - Flow 2: Menu exporter Lambda reading data from Aurora and pushing generated JSON menus to Delivery Aggregators.\n   - Flow 3: Delivery Aggregators returning status webhooks through API Gateway to the Webhook Lambda, which writes audit records into Aurora.",
+  "graph": {
+    "name": "Taco Bell Menu Middleware and Data Integration Platform",
+    "link": "https://www.youtube.com/watch?v=hf9nMAG9XoU",
+    "categories": "Application Integration, Databases, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture for Taco Bell's menu middleware, serving over 7,000 restaurants and generating roughly 40,000 menus (100GB of JSON menu payload) sent to delivery aggregators."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Amplify",
+      "name": "Amplify",
+      "notes": "Deploys the Restaurant Control Center (RCC) React web application used to update store hours."
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Powers 'Diablo' (Data Integration and Automation Batch Lambda Orchestration) using reusable Python step types to load product master, pricing, and tax data."
+    },
+    {
+      "id": "2",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Aurora MySQL database serving as the central middleware store containing restaurant hours, product data, and 100+ million pricing/tax combinations."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda (Exporter)",
+      "notes": "Generates 40,000 custom JSON menus totaling 100GB of data for delivery aggregator platforms."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "DELIVERY AGGREGATOR",
+      "notes": "External delivery partner platforms receiving generated menus and returning completion status webhooks."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives completion webhooks from external delivery aggregator platforms."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Webhook)",
+      "notes": "Processes completion webhooks to log execution status into Aurora audit tables."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Amplify app writes updated store hours into Aurora database tables."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Step Functions orchestrates batch loading of product, pricing, and tax data into Aurora."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Menu Exporter Lambda reads restaurant hours, products, and pricing data from Aurora."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Exporter Lambda pushes generated JSON menu files to Delivery Aggregators."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "Delivery Aggregators send processing status webhooks to API Gateway."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers the Webhook Lambda to process incoming delivery notifications."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Webhook Lambda records processing status and audit logs in Aurora."
+    }
+  ]
+}

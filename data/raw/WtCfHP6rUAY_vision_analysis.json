@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "The architecture represents Kupol's event-sourcing and CQRS system migrated to AWS serverless services. Incoming write requests are processed by the Lambda (Write) function, which writes events to the DynamoDB Event Store. Changes in the DynamoDB Event Store trigger a DynamoDB Stream that invokes the Lambda (Streamer) function. The streamer function publishes events to an SNS FIFO topic for fan-out and archives raw event data directly to S3. The SNS FIFO topic fans out events to an SQS FIFO queue inside the microservice context. The Lambda (Processor) function consumes messages from the SQS FIFO queue and writes updated projections into the DynamoDB Read Model. For read operations, queries are routed through the Lambda (Query) function, which reads projection data directly from the DynamoDB Read Model.",
+  "graph": {
+    "name": "Kupol Serverless CQRS and Event Sourcing Architecture",
+    "link": "https://www.youtube.com/watch?v=WtCfHP6rUAY",
+    "categories": "Serverless, Event-Driven Architecture, CQRS",
+    "graph_usable": true,
+    "notes": "Describes Kupol's serverless CQRS and event sourcing architecture on AWS using Lambda, DynamoDB, SNS FIFO, SQS FIFO, and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Lambda",
+      "name": "Lambda (Write)",
+      "notes": "Handles write requests/commands, validates them, and emits command events to the event store."
+    },
+    {
+      "id": "1",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Event Store)",
+      "notes": "Central event store table holding all system events."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda (Streamer)",
+      "notes": "Invoked via DynamoDB Streams to fan out events and store archives."
+    },
+    {
+      "id": "3",
+      "service": "SNS",
+      "name": "SNS FIFO",
+      "notes": "SNS FIFO topic ensuring ordered event publication for fan-out."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Long-term archive storage for raw event payload data."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS FIFO",
+      "notes": "SQS FIFO queue subscribing to SNS FIFO events for microservice ingestion."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Processor)",
+      "notes": "Processes events from SQS FIFO and updates projection models."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Read Model)",
+      "notes": "Read model projection database optimized for query access patterns."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda (Query)",
+      "notes": "Handles incoming CQRS read queries by querying the read model."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Write Lambda validates request and writes events to DynamoDB Event Store."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "DynamoDB Stream triggers the Streamer Lambda on new event writes."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Streamer Lambda publishes events to SNS FIFO topic for fan-out."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Streamer Lambda archives raw event data directly to S3."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "SNS FIFO fans out messages to subscriber SQS FIFO queue."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Processor Lambda polls messages from SQS FIFO queue."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Processor Lambda writes updated projection data to DynamoDB Read Model."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Query Lambda fetches projection data from DynamoDB Read Model."
+    }
+  ]
+}

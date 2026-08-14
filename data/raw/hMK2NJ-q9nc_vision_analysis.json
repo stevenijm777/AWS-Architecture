@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "1. **Node Identification & Pruning:**\n   - **S3**: AWS S3 bucket storing master files for all brands.\n   - **EC2 Instances (Top, Middle, Bottom)**: Three EC2 instances across three Availability Zones in AWS US East 1 running Evertz ORT software (each supporting 10 channels).\n   - **Direct Connect**: AWS Direct Connect transporting unicast playout signals back to on-premises locations using Evertz CloudBridge protocol.\n   - **TWD / CNN Center**: On-premises Techwood / CNN Center facility handling QC file uploads to S3 and local auto-changeover switching/compression.\n   - **NYC**: On-premises Hudson Yards / NYC satellite dish uplink facility receiving the BCP stream.\n   - **ATL**: On-premises Atlanta satellite dish uplink facility receiving the compressed feed from TWD / CNN Center for affiliate distribution.\n   - *Pruning Note*: CloudFormation and Auto Scaling Group are omitted per deployment layer pruning rules since CloudFormation is non-runtime template management and ASG is an infrastructure wrapper.\n\n2. **Flow Segmentation:**\n   - **Flow 0 (Master File Transfer)**: TWD / CNN Center uploads QC'd master video files via Aspera to S3.\n   - **Flow 1 (Linear Playout & Broadcast Delivery)**: S3 feeds master files to EC2 instances across three AZs for playout using Evertz ORT software. Playout signals travel via Direct Connect along two paths: BCP directly to NYC satellite uplink, and X-chain to Techwood / CNN Center for compression and distribution to the ATL satellite dish uplink.",
+  "graph": {
+    "name": "WarnerMedia HBO Cloud Linear Playout Architecture",
+    "link": "https://www.youtube.com/watch?v=hMK2NJ-q9nc",
+    "categories": "Media & Entertainment, Hybrid Cloud, Migration",
+    "graph_usable": true,
+    "notes": "Architecture showing WarnerMedia HBO's cloud linear playout system supporting 30 channels across three Availability Zones in AWS US East 1, feeding back to on-premises satellite uplinks via AWS Direct Connect."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "TWD / CNN Center",
+      "notes": "On-premises Techwood / CNN Center facility in Atlanta where master files are QC'd and local switching/compression occurs."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "AWS S3 bucket storing master files for all brands."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2 Top",
+      "notes": "EC2 instance running Evertz ORT software in AZ 1 handling 10 channels."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Middle",
+      "notes": "EC2 instance running Evertz ORT software in AZ 2 handling 10 channels."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Bottom",
+      "notes": "EC2 instance running Evertz ORT software in AZ 3 handling 10 channels."
+    },
+    {
+      "id": "5",
+      "service": "DirectConnect",
+      "name": "Direct Connect",
+      "notes": "AWS Direct Connect transporting unicast playout signals back to on-premises facilities via Evertz CloudBridge."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "NYC",
+      "notes": "On-premises Hudson Yards / NYC satellite dish uplink facility for BCP solution."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "ATL",
+      "notes": "On-premises Atlanta satellite dish uplink facility for distribution to affiliates."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Master files QC'd in Atlanta are transferred via Aspera up to S3 for storage."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Master files are transferred from S3 to EC2 running Evertz ORT software in AZ 1."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Master files are transferred from S3 to EC2 running Evertz ORT software in AZ 2."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Master files are transferred from S3 to EC2 running Evertz ORT software in AZ 3."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Unicast playout signal sent from EC2 in AZ 1 via Evertz CloudBridge to Direct Connect."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Unicast playout signal sent from EC2 in AZ 2 via Evertz CloudBridge to Direct Connect."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1''",
+      "type": "data",
+      "notes": "Unicast playout signal sent from EC2 in AZ 3 via Evertz CloudBridge to Direct Connect."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Direct Connect feeds BCP unicast playout signal directly to NYC satellite dish uplink."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Direct Connect sends X-chain unicast playout signal to Techwood / CNN Center."
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Techwood / CNN Center compresses and sends playout signal to Atlanta satellite dish uplink for affiliate distribution."
+    }
+  ]
+}

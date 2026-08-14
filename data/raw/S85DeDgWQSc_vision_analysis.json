@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates SDG&E's Intelligent Image Processing (IIP) platform. Visual input comes from two sources: Drones (UserCompanyDrone) and Mobile Phones in fleet vehicles (UserConsumerMobile), both ingesting images into Amazon S3 (S3). From S3, images are sent to Amazon Rekognition (Rekognition) for detecting large assets (e.g., poles, cross arms). Rekognition forwards images to Amazon Lookout for Vision (LookoutForVision) for small asset/damage detection (e.g., arresters, bushings). Both Rekognition and Lookout for Vision output inference results that are queried via Amazon Athena (Athena). Athena writes the refined predictions into Amazon Aurora PostgreSQL (Aurora). AWS Lambda (Lambda) fetches this data from Aurora and exposes it through Amazon API Gateway (ApiGateway) to End Users / Domain Experts (UserCompanyDomainExpert) who review and flag false positives/negatives.",
+  "graph": {
+    "name": "SDG&E Intelligent Image Processing (IIP)",
+    "link": "https://www.youtube.com/watch?v=S85DeDgWQSc",
+    "categories": "AI/ML, Utilities, Data Processing",
+    "graph_usable": true,
+    "notes": "Architecture for SDG&E's Intelligent Image Processing solution, utilizing machine learning models to identify utility assets and damage from drone and fleet mobile phone imagery."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDrone",
+      "name": "Drone",
+      "notes": "Captures field imagery of utility assets from multiple angles."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Phone",
+      "notes": "Mounted in fleet vehicles, capturing images from consistent angles."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Cost-effective image repository holding ~4 million images, ingesting data daily including cross-account replication from vendor drones."
+    },
+    {
+      "id": "3",
+      "service": "Rekognition",
+      "name": "Rekognition",
+      "notes": "Used for detecting large assets like utility poles and cross arms."
+    },
+    {
+      "id": "4",
+      "service": "LookoutForVision",
+      "name": "Lookout For Vision",
+      "notes": "Identifies small assets (arresters, bushings) and detects damages."
+    },
+    {
+      "id": "5",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Queries raw inference results in S3 and combines them with business logic."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "PostgreSQL database serving as the main data store for application predictions."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Executes application logic to fetch database records for presentation."
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Provides REST API endpoints for downstream user applications."
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyDomainExpert",
+      "name": "End Users",
+      "notes": "Knowledgeable users who identify false positives/negatives for feedback into model training."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Drone imagery uploaded into S3 via cross-account replication."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Fleet mobile phone imagery uploaded directly to S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Images sent to Rekognition for large asset detection."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Images passed to Lookout for Vision for small asset detection."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Large asset detection inference results made queryable via Athena."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Small asset and damage detection results queried via Athena."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Athena writes refined inference predictions into Aurora."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda reads prediction data from Aurora PostgreSQL."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda sends data payloads to API Gateway."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "API Gateway presents inference predictions to End Users."
+    }
+  ]
+}

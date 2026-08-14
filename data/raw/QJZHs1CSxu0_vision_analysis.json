@@ -1,0 +1,98 @@
+{
+  "step_by_step_reasoning": "The architecture diagram displays a real-time ad prediction and analytics system. 1. Ad Script (running on the user browser) calls the Decision Lambda worker to execute the head of a neural network for fast predictions (~100k per minute). 2. Ad Script interacts directly with DynamoDB for fast prediction context/data. 3. Ad interaction events are sent from Ad Script to SQS, which buffers them before storing them into S3 for business analytics and network re-training. 4. EKS enriches page, placement, and location contextual metadata into embeddings, storing them in DynamoDB. 5. DynamoDB updates/dimension data are also dumped into the S3 Data Lake.",
+  "graph": {
+    "name": "Define Media Machine Learning Ad Decision Architecture",
+    "link": "https://www.youtube.com/watch?v=QJZHs1CSxu0",
+    "categories": "Ad Tech, Machine Learning, Analytics",
+    "graph_usable": true,
+    "notes": "Define Media processes ~100,000 click-through rate predictions per minute using split neural network inference across EKS and AWS Lambda."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Ad Script",
+      "notes": "Runs in the user's browser, calling prediction services and sending interaction metrics."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Decision Lambda Worker",
+      "notes": "Performs ~100,000 predictions per minute by executing the head of the neural network."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores pre-computed network embeddings and contextual dimension data."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues user ad interaction events."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Stores interaction logs and enriched dimension data for business analytics and neural network training."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Enriches context (page, placement, location) into data embeddings for fast downstream evaluation."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Triggers decision worker for ad prediction."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads context embeddings and writes ad interaction state."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends ad interaction metrics to SQS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Persists interaction metrics into S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Writes enriched embedding data into DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transfers dimension data to S3 data lake."
+    }
+  ]
+}

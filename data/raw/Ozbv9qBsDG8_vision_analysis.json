@@ -1,0 +1,144 @@
+{
+  "step_by_step_reasoning": "1. Identified nodes from the visual architecture and transcript: CloudFormation (CFT), Customer Data Sources (EBS / RDS / DynamoDB), EventBridge on the customer side; KMS, IAM Role, S3 Data Bucket, Lambda Post-processing, SQS, Lambda Metadata, Metadata Engine (ThirdParty), and S3 Output Bucket on the Clumio account side.\n2. Service types mapped strictly against the permitted AWS/ThirdParty lists.\n3. Segmented workflows into logical flows: Flow 0 for onboarding via CloudFormation, Flow 1 for encrypted backup data ingestion and Lambda post-processing, Flow 2 for event-driven metadata extraction, processing, and output reporting.",
+  "graph": {
+    "name": "Clumio Backup as a Service AWS Architecture",
+    "link": "https://www.youtube.com/watch?v=Ozbv9qBsDG8",
+    "categories": "Backup & Archive, Storage, Security & Compliance",
+    "graph_usable": true,
+    "notes": "Architecture showing how Clumio ingests encrypted customer backups directly into S3, processes metadata via EventBridge and SQS into a Metadata Engine, and performs post-processing on backups using cross-account IAM roles and Lambda."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFormation",
+      "name": "CFT",
+      "notes": "CloudFormation template installed on customer side to set up event triggers and IAM roles."
+    },
+    {
+      "id": "1",
+      "service": "EBS",
+      "name": "EBS / RDS / DynamoDB",
+      "notes": "Customer data sources containing volumes, databases, and tables requiring backup."
+    },
+    {
+      "id": "2",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Captures configuration and environment state changes on the customer side."
+    },
+    {
+      "id": "3",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Provides key management for customer data encryption prior to transfer."
+    },
+    {
+      "id": "4",
+      "service": "IAM",
+      "name": "IAM Role",
+      "notes": "Cross-account IAM role providing permissions for Clumio to perform post-processing."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Data Bucket",
+      "notes": "Stores encrypted backup objects transferred directly from customer account."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda Post-processing",
+      "notes": "Performs compression, data optimization, indexing, and data integrity checks on S3 objects."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers incoming metadata event messages from EventBridge."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda Metadata",
+      "notes": "Processes metadata messages from SQS to analyze backup health and metrics."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Metadata Engine",
+      "notes": "Data engine storing analyzed metadata for creating customer reports and recommendations."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 Output Bucket",
+      "notes": "Stores generated compliance, audit, and cost recommendation reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CFT provisions IAM roles in destination account during onboarding."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer data sources send encrypted backup data directly into Clumio S3 Data Bucket."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda post-processing reads and operates on S3 backup objects."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Lambda assumes IAM role to operate across customer and Clumio accounts."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "EventBridge sends environment change events to SQS queue."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda Metadata consumes metadata messages from SQS queue."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda Metadata writes analyzed metadata to Metadata Engine."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Lambda Metadata writes report and recommendation outputs to S3 Output Bucket."
+    }
+  ]
+}

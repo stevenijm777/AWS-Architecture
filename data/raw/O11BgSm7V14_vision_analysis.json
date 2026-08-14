@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "1. Identify Nodes: Map components from the whiteboard visual inventory and spoken transcript to AWS/actor services. Node 0 is the external '3 mil Partner' (ThirdParty). Node 1 is the Ingestion Lambda function (Lambda). Node 2 is the Chunk Queue (SQS). Node 3 is the Processing & Enrichment Lambda function (Lambda). Node 4 is the Aurora DB (Aurora). Node 5 is the ML Endpoint (SageMaker). Node 6 is the Notification Topic (SNS). Node 7 is the Fanout Queue (SQS). Node 8 is the Talent Platform Containers (ECS).\n2. Identify Flows & Sequences:\n- Flow 0: Ingestion of job data from external partner endpoints via cron triggers, splitting large job payloads into chunks and queuing them in SQS (Partner -> Ingestion Lambda -> Chunk SQS).\n- Flow 1: Processing, ML enrichment, and persistence into relational storage (Chunk SQS -> Processing Lambda -> ML Endpoint -> Processing Lambda -> Aurora DB).\n- Flow 2: Event notification and distribution to downstream consumer containers (Processing Lambda -> SNS Topic -> Fanout Queue -> ECS Containers).\n3. Translate into valid JSON adhering strictly to structural, field type, and vocabulary rules.",
+  "graph": {
+    "name": "HeyJobs Serverless Job Data Ingestion and Processing Pipeline",
+    "link": "https://www.youtube.com/watch?v=O11BgSm7V14",
+    "categories": "Serverless Data Ingestion ML Processing Event-Driven Architecture",
+    "graph_usable": true,
+    "notes": "HeyJobs processes ~3 million job records daily using a serverless architecture, reducing costs by up to 30% while scaling dynamically."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Partner",
+      "notes": "External data partner providing endpoints with job listings (~3M records/day)."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "Triggered via cron/EventBridge, pulls raw payloads from partners and splits them into smaller chunks."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Chunk Queue",
+      "notes": "Queues smaller job data chunks to buffer spikes and control downstream load."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Processing & Enrichment Lambda",
+      "notes": "Consumes chunks from SQS, normalizes data schema, verifies quality, interacts with SageMaker for ML enrichment, and writes to DB/SNS."
+    },
+    {
+      "id": "4",
+      "service": "Aurora",
+      "name": "Aurora DB",
+      "notes": "Stores normalized and enriched job listing records."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "ML Endpoint",
+      "notes": "Uses NLP and ML models to enrich and categorize sparse job data."
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "Notification Topic",
+      "notes": "Receives notifications after data is processed and enriched, fanning out messages."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "Fanout Queue",
+      "notes": "Receives fanout messages from SNS for consumption by downstream services."
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "Talent Platform Containers",
+      "notes": "Containerized application consuming SQS messages and serving web frontend search/filtering."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingestion Lambda pulls raw data payloads from Partner endpoints."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingestion Lambda pushes data chunks to the SQS queue."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Processing Lambda consumes chunked messages from SQS."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Processing Lambda sends sparse job text to ML Endpoint for classification and NLP enrichment."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "ML Endpoint returns enriched categorization data back to Processing Lambda."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Processing Lambda stores enriched job records in Aurora DB."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Processing Lambda publishes notification event to SNS Topic upon successful processing."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS Topic fans out notifications to SQS queues."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS containers consume messages from SQS to update Talent Platform database and frontend search index."
+    }
+  ]
+}

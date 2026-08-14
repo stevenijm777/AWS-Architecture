@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "1. Identify entities from visual diagram and transcript:\n   - S3 (CONSOLE): Hosts web application frontend.\n   - Cognito (COGNITO): Manages authentication with federated identity provider.\n   - SAML IdP (ThirdParty): Customer's external identity provider.\n   - Lambda (Customer): Customer-hosted function gathering directory users/groups.\n   - ApiGateway (API GATEWAY): Endpoint for customer directory sync payloads.\n   - Lambda (Backend): Backend processing function doing CRUD and calculating diffs.\n   - RDS (RDS): Relational database storing state and user configuration.\n   - SQS (SQS): Message queue buffering batch jobs.\n   - Lambda (Worker): Worker function reading SQS queue and triggering workflows.\n   - StepFunctions (STEP FUNCTIONS): Workflow orchestrator for WorkSpaces lifecycle.\n   - WorkSpaces (WORKSPACES): Virtual desktop instances in customer environment.\n2. Organize logical flows:\n   - Flow 0: SAML Authentication between Cognito and customer SAML IdP.\n   - Flow 1: Directory data sync from customer Lambda through API Gateway to backend Lambda and RDS database.\n   - Flow 2: Provisioning pipeline from backend Lambda queuing to SQS, triggering worker Lambdas, executing Step Functions, and provisioning Amazon WorkSpaces.",
+  "graph": {
+    "name": "Synchronet Amazon WorkSpaces Provisioning Automation Architecture",
+    "link": "https://www.youtube.com/watch?v=Q6r_QbYXFpg",
+    "categories": "Automation & Provisioning",
+    "graph_usable": true,
+    "notes": "Automates lifecycle provisioning of thousands of Amazon WorkSpaces using serverless architecture and Step Functions orchestration."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "CONSOLE",
+      "notes": "S3 bucket hosting the web console frontend for administrators and end-user self-service."
+    },
+    {
+      "id": "1",
+      "service": "Cognito",
+      "name": "COGNITO",
+      "notes": "Handles authentication securely without storing customer credentials directly."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "SAML IdP",
+      "notes": "Customer external SAML Identity Provider integrated with Directory Services."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA (Customer)",
+      "notes": "Deployed in customer environment via CloudFormation template to collect users and groups from Directory Services."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Receives user and group directory sync payloads from customer Lambda."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "LAMBDA (Backend)",
+      "notes": "Backend processing Lambda that performs CRUD operations, identifies user batch diffs, and queues tasks."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database storing user/group data and operational state."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers queued provisioning and modification tasks."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "LAMBDA (Worker)",
+      "notes": "Worker Lambda instances triggered by SQS to launch Step Function executions."
+    },
+    {
+      "id": "9",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "State machine orchestrating provisioning, modifying, stopping, and terminating WorkSpaces with built-in wait states."
+    },
+    {
+      "id": "10",
+      "service": "WorkSpaces",
+      "name": "WORKSPACES",
+      "notes": "Amazon WorkSpaces provisioned and managed within the customer environment."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Cognito initiates SAML authentication request to customer's SAML IdP."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "SAML IdP returns SAML assertions to Cognito."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer Lambda sends user and group info through API Gateway."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers backend Lambda function."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Backend Lambda executes CRUD operations on RDS database."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Backend Lambda pushes detected batch job diffs into SQS queue."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "SQS queue triggers worker Lambda functions directly."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "Worker Lambda launches Step Functions workflow executions."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "control",
+      "notes": "Step Functions provisions and manages WorkSpaces inside the customer environment."
+    }
+  ]
+}

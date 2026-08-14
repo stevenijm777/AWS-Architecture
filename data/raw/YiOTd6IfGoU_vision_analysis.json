@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "1. Identified user source 'Internal Apps' (UserCompanyInternalPlatform) sending event data.\n2. Identified ingestion layer: Kinesis Firehose receiving around 20 million events/day in Avro format, outputting aggregated objects to 'S3 Raw'.\n3. Object creation in 'S3 Raw' triggers 'CloudWatch Events' (EventBridge), which initiates a 'Step Functions' workflow.\n4. 'Step Functions' triggers 'Lambda' functions to split events by data type, manage Athena/Glue partitions, and persist processed data.\n5. 'Lambda' writes structured data into 'S3 Data Lake' and updates indexes in 'Elasticsearch' (OpenSearch).\n6. 'S3 Data Lake' serves ad-hoc queries via 'Athena' and feeds an 'Airflow' ETL cluster.\n7. 'Airflow' runs hourly/daily ETL tasks to load aggregated data into 'Redshift'.\n8. 'Redshift' provides data for business intelligence dashboards in 'QuickSight'.",
+  "graph": {
+    "name": "Go Global Data Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=YiOTd6IfGoU",
+    "categories": "Data Analytics, Event-Driven Architecture, Serverless",
+    "graph_usable": true,
+    "notes": "Go Global processes ~20M daily events formatted in Avro. Data streams through Kinesis Firehose to raw S3, orchestrated via Step Functions and Lambda into an S3 Data Lake, Elasticsearch, and Redshift via Airflow ETL for QuickSight dashboards and Athena queries."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Internal Apps",
+      "notes": "Generates around 20 million Avro events per day"
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Single Firehose stream receiving all application events"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Raw",
+      "notes": "Stores aggregated raw event data objects"
+    },
+    {
+      "id": "3",
+      "service": "EventBridge",
+      "name": "CloudWatch Events",
+      "notes": "Triggered by S3 Raw object creation"
+    },
+    {
+      "id": "4",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates event processing lifecycle"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Splits data by type, updates partitions, and routes data to S3 and Elasticsearch"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Central storage for partitioned event data (~80 event types)"
+    },
+    {
+      "id": "7",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Performs interactive queries directly on S3 Data Lake"
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Indexes data for rapid search and operational debugging"
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Airflow",
+      "notes": "Runs hourly/daily ETL pipelines from S3 to Redshift"
+    },
+    {
+      "id": "10",
+      "service": "QuickSight",
+      "name": "QuickSight",
+      "notes": "Serves business intelligence dashboards"
+    },
+    {
+      "id": "11",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Data warehouse for aggregated reporting data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Internal Apps send event data to Kinesis Firehose."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis Firehose aggregates raw events and writes them to S3 Raw."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Object creation in S3 Raw triggers CloudWatch Events."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "CloudWatch Events triggers execution of Step Functions."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Step Functions invokes Lambda functions."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda splits data by type and writes it to S3 Data Lake."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda updates event indexes in Elasticsearch."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries structured data stored in S3 Data Lake."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Airflow extracts data from S3 Data Lake for ETL jobs."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Airflow loads transformed data into Redshift."
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "QuickSight queries aggregated data from Redshift."
+    }
+  ]
+}

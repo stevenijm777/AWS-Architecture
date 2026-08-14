@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "1. Visual Inventory & Identification: The whiteboard diagram shows Zalando's data lake architecture starting from Nakadi (ThirdParty) on the top left, writing to an Archival S3 Bucket (S3), which notifies an Archival Object Notification Queue (SQS), triggering a Partitioning Lambda (Lambda) that writes to a RAW S3 Bucket (S3). Next, object notifications go to a RAW Object Notification Queue (SQS) invoking an Enrichment Lambda (Lambda) that publishes to an SNS Topic (SNS). SNS fans out to Filtered Downstream SQS Queues (SQS) for Spark jobs and to a Reformatting Lambda (Lambda), which buffers messages into a MAIN Ingestion SQS Queue (SQS) before writing to the MAIN S3 Bucket (S3) for Presto queries.\n2. Node Normalization: All services match standard AWS/ThirdParty category values: ThirdParty for Nakadi, S3 for S3 buckets, SQS for queues, Lambda for compute functions, SNS for notification topic.\n3. Logical Edge Routing: Flow 0 processes event batching and initial partitioning into raw storage. Flow 1 enriches event attributes and fans out filtered streams. Flow 2 reformats partitions for long-term daily storage and Presto ad-hoc querying. Sequence prime notation ('3' and '3''') is used for parallel fanout paths from SNS.",
+  "graph": {
+    "name": "Zalando Serverless Event Data Lake Architecture",
+    "link": "https://www.youtube.com/watch?v=RxAmb57NCPM",
+    "categories": "Analytics, Serverless, Event Driven",
+    "graph_usable": true,
+    "notes": "Zalando's serverless data lake processes 2M to 6M Lambda invocations per day, ingesting events from Nakadi into S3, enriching message attributes via Lambda and SNS, and partitioning data for downstream Spark processing and Presto ad-hoc queries."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Nakadi Event Bus",
+      "notes": "Open-source distributed event bus abstraction over Kafka that batches events into 5-minute / 50MB files."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Archival S3 Bucket",
+      "notes": "Stores 5-minute/50MB batched event files written directly by Nakadi."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Archival Object Notification Queue",
+      "notes": "Receives S3 object creation notifications from the archival bucket to trigger the Partitioning Lambda."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Partitioning Lambda",
+      "notes": "Invoked by SQS; partitions raw archival data into structured files for the RAW bucket."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "RAW S3 Bucket",
+      "notes": "Stores partitioned raw event data."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "RAW Object Notification Queue",
+      "notes": "Receives notifications upon raw object creation to invoke the Enrichment Lambda."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Enrichment Lambda",
+      "notes": "Enriches message attributes with event type names and partition information before publishing to SNS."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "SNS Topic",
+      "notes": "Fans out enriched messages based on message attributes to downstream filtering queues and data lake pipelines."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "Filtered Downstream SQS Queues",
+      "notes": "Subscribed to SNS with message attribute filtering per event type, consumed by downstream Spark jobs."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Reformatting Lambda",
+      "notes": "Reformats raw data lake event partitions from hourly to daily partitions."
+    },
+    {
+      "id": "10",
+      "service": "SQS",
+      "name": "MAIN Ingestion SQS Queue",
+      "notes": "Buffers reformatted partition messages before writing into the main serving bucket."
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "MAIN S3 Bucket",
+      "notes": "Serves daily-partitioned data lake files for ad-hoc Presto queries."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Nakadi batches events into 5min/50MB files and writes to the archival bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Object creation generates event notification to SQS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "SQS queue triggers Partitioning Lambda."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Partitioning Lambda writes partitioned event files into RAW bucket."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Object creation in RAW bucket generates event notification to SQS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SQS queue triggers Enrichment Lambda."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda enriches attributes and publishes message to SNS."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3'",
+      "type": "data",
+      "notes": "SNS fans out messages filtered by event type to downstream SQS queues for Spark applications."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3''",
+      "type": "data",
+      "notes": "SNS fans out unfiltered messages to Reformatting Lambda for data lake ingestion."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reformatting Lambda passes reformatted data to SQS queue."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "SQS queue delivers daily-partitioned data into MAIN S3 bucket for Presto querying."
+    }
+  ]
+}

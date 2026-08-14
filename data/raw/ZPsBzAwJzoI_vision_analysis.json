@@ -1,0 +1,182 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Nagra's forensic watermarking solution on AWS for both VOD and live content distribution. VOD processing begins in S3 where raw video is ingested, converted by AWS Elemental MediaConvert into A and B watermarked variants, and stored back in S3. Live video starts from an external camera feed into AWS Elemental MediaConnect, which passes it to AWS Elemental MediaLive to produce dual A/B watermarked channels, then to AWS Elemental MediaPackage for packaging. Both live and VOD channels feed into Amazon CloudFront. Player clients (Player 1, Player 2) request content through CloudFront, which triggers Lambda@Edge to select specific A/B segment sequences per session. Lambda@Edge queries Amazon DynamoDB to verify if the session is blacklisted. An external Nagra Detection Service (DS) extracts watermarks from pirated streams and populates blacklisted session tokens directly into DynamoDB to stop playout.",
+  "graph": {
+    "name": "Nagra NexGuard Forensic Watermarking Architecture",
+    "link": "https://www.youtube.com/watch?v=ZPsBzAwJzoI",
+    "categories": "Media & Entertainment, Security, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture for session-based forensic watermarking on live and VOD streaming media with active session blacklisting capability."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores input video files and generated A/B watermarked VOD variants"
+    },
+    {
+      "id": "1",
+      "service": "MediaConvert",
+      "name": "MediaConvert",
+      "notes": "Processes VOD files into A and B watermarked variants"
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CloudFront CDN",
+      "notes": "Delivers personalized A/B chunk sequences to end-user players"
+    },
+    {
+      "id": "3",
+      "service": "LambdaAtEdge",
+      "name": "Lambda@Edge",
+      "notes": "Executes request-level session parsing and A/B sequence selection at edge"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB Table",
+      "notes": "Stores blacklisted session tokens for real-time blocking"
+    },
+    {
+      "id": "5",
+      "service": "MediaPackage",
+      "name": "MediaPackage",
+      "notes": "Packages live video streams as origin for CloudFront"
+    },
+    {
+      "id": "6",
+      "service": "MediaLive",
+      "name": "MediaLive",
+      "notes": "Encodes live video streams into distinct A and B watermarked channels"
+    },
+    {
+      "id": "7",
+      "service": "MediaConnect",
+      "name": "MediaConnect",
+      "notes": "Ingests incoming live video stream feed"
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWebMobile",
+      "name": "Player 1",
+      "notes": "Client player device receiving unique sequence (e.g., ABAB)"
+    },
+    {
+      "id": "9",
+      "service": "UserConsumerWebMobile",
+      "name": "Player 2",
+      "notes": "Client player device receiving unique sequence (e.g., ABBA)"
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Detection Service",
+      "notes": "Nagra forensic watermark detection service identifying illicit stream sessions"
+    },
+    {
+      "id": "11",
+      "service": "UserConsumerCamera",
+      "name": "Camera Feed",
+      "notes": "Live camera video feed source"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "S3 supplies input video file to MediaConvert"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "MediaConvert uploads generated A/B watermarked variants back to S3"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 serves as origin to CloudFront for VOD content"
+    },
+    {
+      "source": "11",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Live video stream input feeds into MediaConnect"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "MediaConnect routes live feed to dual MediaLive encoding channels"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "MediaLive sends A/B watermarked live streams to MediaPackage"
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "MediaPackage serves live video stream origin to CloudFront"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudFront triggers Lambda@Edge during request handling"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda@Edge queries DynamoDB to check session blacklisting status"
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront delivers personalized A/B video sequence to Player 1"
+    },
+    {
+      "source": "2",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "data",
+      "notes": "CloudFront delivers distinct A/B video sequence to Player 2"
+    },
+    {
+      "source": "10",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Detection Service populates identified illicit session info into DynamoDB blacklist"
+    }
+  ]
+}

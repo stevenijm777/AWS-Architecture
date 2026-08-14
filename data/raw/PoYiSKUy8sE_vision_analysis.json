@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents AlertLogic's telemetry data ingestion and highly scalable MapReduce search system built on AWS. The ingestion path consists of Ingestion Kinesis receiving raw telemetry from customer agents, passing it to Ingestion ECS for pre-processing, and persisting it to a 25 PB S3 Data Lake. The search processing workflow starts at Search ECS which receives search queries and passes execution planning to a Scheduler Lambda. The Scheduler Lambda enqueues tasks into SQS and directly triggers worker Filter Lambdas, while SQS triggers Step Functions to manage execution state and coordinate the Filter Lambdas. The worker Filter Lambdas scale up to tens of thousands of instances using Erlang runtime to filter and enrich search results. Intermediate results are written to an S3 bucket and streamed via Search Kinesis to an Aggregator Lambda for final aggregation.",
+  "graph": {
+    "name": "AlertLogic Search and Telemetry Architecture",
+    "link": "https://www.youtube.com/watch?v=PoYiSKUy8sE",
+    "categories": "Security Data Lake & Serverless MapReduce Search Architecture",
+    "graph_usable": true,
+    "notes": "System processes 25 PB of telemetry data. Lambda fleet scales from 0 to 55,000 concurrent executions per hour across 18M total executions during peak workloads."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Ingestion Kinesis",
+      "notes": "Receives raw telemetry data streams from customer agents and appliances"
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "Ingestion ECS",
+      "notes": "Pre-processes ingested telemetry data streams"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Data Lake S3",
+      "notes": "25 PB Data Lake bucket storing processed telemetry data"
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "Search ECS",
+      "notes": "Receives user search requests, performs validation, and creates execution plan"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Database for search metadata and state"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Scheduler Lambda",
+      "notes": "Performs job shadowing and workload scheduling based on query data volume"
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers search execution tasks"
+    },
+    {
+      "id": "7",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates search workflow and maintains execution state"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Filter Lambda",
+      "notes": "Spins up thousands of Erlang-based worker Lambdas to filter, parse, and enrich requested data"
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Search Results S3",
+      "notes": "Stores intermediate search query results"
+    },
+    {
+      "id": "10",
+      "service": "Kinesis",
+      "name": "Search Kinesis",
+      "notes": "Streams intermediate search results to aggregation phase"
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Aggregator Lambda",
+      "notes": "Aggregates intermediate search outputs into final query results"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Telemetry data streams into Ingestion ECS"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pre-processed data is written to 25 PB S3 Data Lake"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Search request plan passed from Search ECS to Scheduler Lambda"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Scheduler Lambda enqueues tasks into SQS"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "SQS feeds work tasks to Step Functions"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Step Functions coordinates Filter Lambda executions"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3'",
+      "type": "control",
+      "notes": "Scheduler Lambda directly triggers worker Filter Lambdas"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Filter Lambdas write intermediate search output to S3"
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Filter Lambdas stream search output to Search Kinesis"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Search Kinesis streams results to Aggregator Lambda"
+    }
+  ]
+}

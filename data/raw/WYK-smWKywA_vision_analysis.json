@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "1. Analyzed the visual whiteboard architecture and audio transcript for the Singapore Exchange (SGX) Investor Portal.\n2. Identified all active runtime components and matched them to the strict valid vocabulary list:\n   - USERS -> UserConsumerWeb\n   - CLOUDFRONT -> CloudFront\n   - WAF -> WAF\n   - LAMBDA@EDGE -> LambdaAtEdge\n   - S3 -> S3\n   - API GW -> ApiGateway\n   - LAMBDA -> Lambda\n   - ELASTICACHE -> ElastiCache\n   - ELB -> ELB\n   - EC2 -> EC2\n   - DX -> DirectConnect\n   - DC -> OnPremDC\n3. Mapped the flows into two distinct logical workflows:\n   - Flow 0: Frontend Single Page Application delivery (CloudFront, WAF, Lambda@Edge, S3 to USERS).\n   - Flow 1: Backend API authentication and hybrid microservice request processing (USERS -> API GW -> Lambda authorizer -> ElastiCache -> ELB -> EC2 -> DirectConnect -> DC).",
+  "graph": {
+    "name": "Singapore Exchange Investor Portal Architecture",
+    "link": "https://www.youtube.com/watch?v=WYK-smWKywA",
+    "categories": "Fintech / Capital Markets",
+    "graph_usable": true,
+    "notes": "Architecture for SGX's investor portal using AWS CloudFront, Lambda@Edge, API Gateway, Lambda authorizer, ElastiCache, EC2, and Direct Connect for hybrid integration with the on-premises data center."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "USERS",
+      "notes": "Retail investors accessing the SGX investor portal web application."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "AWS CloudFront CDN serving static frontend artifacts."
+    },
+    {
+      "id": "2",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "AWS WAF protecting CloudFront with security rules and IP filtering."
+    },
+    {
+      "id": "3",
+      "service": "LambdaAtEdge",
+      "name": "LAMBDA@EDGE",
+      "notes": "Lambda@Edge for edge compute, custom routing, and security headers."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 storing static web assets, encrypted with KMS."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Amazon API Gateway serving as the backend entry point with mutual TLS / client certs."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Lambda authorizer executing step zero authentication checks."
+    },
+    {
+      "id": "7",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "Amazon ElastiCache for storing and validating active session state."
+    },
+    {
+      "id": "8",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Elastic Load Balancing distributing authenticated API requests to backend EC2 services."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Amazon EC2 hosting microservices that manage user sessions and business logic."
+    },
+    {
+      "id": "10",
+      "service": "DirectConnect",
+      "name": "DX",
+      "notes": "AWS Direct Connect providing dedicated connectivity between AWS VPC and on-premises DC."
+    },
+    {
+      "id": "11",
+      "service": "OnPremDC",
+      "name": "DC",
+      "notes": "On-premises Data Center hosting legacy exchange core backends and databases."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "WAF filters and protects traffic entering CloudFront."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront serves static single page application assets back to the user's web browser."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "CloudFront triggers Lambda@Edge for edge routing and inserting security headers."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "CloudFront retrieves web artifacts from S3."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User browser sends session and API requests to API Gateway."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway invokes Lambda authorizer as step zero authentication."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda authorizer checks session state in ElastiCache."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "API Gateway forwards authenticated requests to ELB."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "ELB routes API requests to backend microservices on EC2."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "EC2 microservices read and write session data in ElastiCache."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Direct Connect links AWS backend services to the on-premises Data Center."
+    }
+  ]
+}

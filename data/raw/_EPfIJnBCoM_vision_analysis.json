@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "1. Identify all architecture components visual in the whiteboard diagram and described in the audio transcript:\n   - Mobile Device (UserConsumerMobile): Customer mobile interface used to view usage, access web portal, or display barcodes.\n   - ELB (ELB): Elastic Load Balancer routing web traffic from mobile devices to the app tier.\n   - Retailer (R) (ThirdParty): Retail partners like Walgreens or CVS where barcodes are scanned for cash payments.\n   - EC2 App Server (EC2): Compute instance executing business rules and payment logic.\n   - Utility Company (UTIL) (ThirdParty): Utility company system receiving processed payment notifications.\n   - Meter (M) (ThirdParty): Physical home utility meter controlled by the utility company.\n   - Database (RDS/SQL Server) & EC2 DB Host (EC2): Windows EC2 instance hosting SQL Server in a multi-AZ HA setup.\n   - S3 (S3): Object storage receiving database backups with cross-region replication for DR.\n\n2. Trace and define logical flows:\n   - Flow 0 (Web Payment): Mobile Device -> ELB -> EC2 App Server -> Utility Company -> Meter.\n   - Flow 1 (Retail Checkout Payment): Mobile Device -> Retailer -> EC2 App Server.\n   - Flow 2 (Database Backup & Disaster Recovery): Database -> EC2 DB Host -> S3.",
+  "graph": {
+    "name": "PAYGO Prepaid Utility Architecture",
+    "link": "https://www.youtube.com/watch?v=_EPfIJnBCoM",
+    "categories": "Prepaid Utilities, Payment Processing, Disaster Recovery",
+    "graph_usable": true,
+    "notes": "PAYGO architecture on AWS enabling real-time utility usage tracking, payment processing via web or retail checkout, and high availability/disaster recovery using EC2 multi-AZ stacks and S3 cross-region replication."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Device",
+      "notes": "Customer smartphone or web device used to view utility usage and present checkout barcodes."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Load balancer entry point for utility web portals."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Retailer (R)",
+      "notes": "Participating retail store (e.g. Walgreens, CVS) where customers pay using printed or mobile barcodes."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 App Server",
+      "notes": "EC2 app tier evaluating payment rules, customer validation, and routing payment data."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Utility Company (UTIL)",
+      "notes": "Utility system that receives payment confirmation and sends signals to customer meters."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Meter (M)",
+      "notes": "Physical utility meter on customer home, turning on within ~25 seconds of payment received."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "Database",
+      "notes": "SQL Server database running on Windows OS within EC2."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 DB Host",
+      "notes": "Host compute instance running SQL Server in a multi-AZ HA architecture."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 bucket storing database backups, replicated across regions for disaster recovery."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer accesses utility website via smartphone"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ELB routes web traffic to EC2 application server"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EC2 app server transmits payment details to utility company"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Utility company communicates with customer home meter to restore power"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer presents barcode on mobile device at participating retailer"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Retailer scans barcode and sends transaction to EC2 app server for business rule checks"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "SQL Server database runs hosted on Windows EC2 host instance"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 database host backs up data to S3 for cross-region replication"
+    }
+  ]
+}

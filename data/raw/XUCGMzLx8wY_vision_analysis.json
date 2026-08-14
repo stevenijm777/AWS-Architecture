@@ -1,0 +1,120 @@
+{
+  "step_by_step_reasoning": "1. **Identify Nodes**: We extract all visual icons and explicitly discussed services in the architecture:\n   - EC2 running Apache Airflow (Workflow Orchestrator)\n   - Kafka (Third-Party Data Stream for training data and reaction streams)\n   - SageMaker (ML Model Training)\n   - Lambda (Reverse Proxy / Traffic Allocator)\n   - ECS (Container Cluster holding dynamic model containers m1, m2, m3 and MAB container)\n   - S3 (Storage for trained model artifacts)\n   - ECR (Registry for model API images)\n2. **Categorize Services**: Map all nodes strictly to valid AWS service names or `ThirdParty` for external services like Kafka.\n3. **Map Workflows and Flows**:\n   - Flow 0 (Model Training and Artifact Delivery): EC2 (Airflow) triggers SageMaker; Kafka feeds training data into SageMaker; SageMaker exports trained model artifacts to S3; S3 provides model artifacts to ECS; ECR provides container images to ECS.\n   - Flow 1 (Inference and Dynamic Traffic Allocation): Kafka feeds user reaction data to MAB inside ECS; MAB updates recalculated dynamic weights to Lambda; Lambda routes prediction requests dynamically to model containers in ECS.",
+  "graph": {
+    "name": "MyTona ML Offer Architecture",
+    "link": "https://www.youtube.com/watch?v=XUCGMzLx8wY",
+    "categories": "Mobile Gaming, Machine Learning, Traffic Allocation",
+    "graph_usable": true,
+    "notes": "MyTona ML Offer is an in-game purchase recommendation architecture. It uses SageMaker triggered by Airflow on EC2 for model training, S3 and ECR for model/image delivery, ECS for model API and Multi-Armed Bandit hosting, Kafka for streaming reaction data, and Lambda as a reverse proxy for dynamic traffic allocation."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2 (Airflow)",
+      "notes": "EC2 instance running Apache Airflow, acting as a workflow manager to trigger daily model training."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "KAFKA",
+      "notes": "Kafka cluster providing streaming data for model training and real-time user reaction data."
+    },
+    {
+      "id": "2",
+      "service": "SageMaker",
+      "name": "SAGEMAKER",
+      "notes": "Amazon SageMaker used for training ML recommendation models daily."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "AWS Lambda function acting as a reverse proxy to dynamically allocate prediction traffic."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Amazon ECS cluster hosting recommender model containers (m1, m2, m3) and the Multi-Armed Bandit (MAB) container."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket storing trained model artifacts exported from SageMaker."
+    },
+    {
+      "id": "6",
+      "service": "ECR",
+      "name": "AMAZON ECR",
+      "notes": "Amazon ECR storing model API container images used by ECS."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Airflow on EC2 triggers the daily model training workflow in SageMaker."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kafka streams user interaction and training data into SageMaker."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker stores completed model outputs in S3."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 delivers model artifacts to assemble model API containers in ECS."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Amazon ECR provides API container images to the ECS cluster."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kafka streams real-time user reaction data to the Multi-Armed Bandit (MAB) container in ECS."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "The MAB container periodically recalculates dynamic weights and updates the Lambda reverse proxy."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda proxy allocates incoming prediction requests across model containers (m1, m2, m3) in ECS based on assigned weights."
+    }
+  ]
+}

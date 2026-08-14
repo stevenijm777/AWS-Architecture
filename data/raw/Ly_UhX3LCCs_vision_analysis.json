@@ -1,0 +1,124 @@
+{
+  "step_by_step_reasoning": "The architecture shows a multi-account media exchange system spanning Publisher (PUB), Exchange (MX), and Subscriber (SUB) AWS accounts. 1. Publisher uploads files from Publisher S3 Bucket to Exchange S3 Bucket in MX account. 2. Subscriber reads/pulls files from Exchange S3 Bucket into Subscriber S3 Bucket. 3. S3 object creation triggers EventBridge in MX account, which routes notifications to Publisher Events (PUB account). 4. SNS in MX account publishes notifications to Subscriber Events (SUB account) to initiate downstream tasks (e.g., transcoding). 5. Access logs are stored in Access Logs S3 Bucket in MX account for audit/reporting. 6. KMS provides shared AES-256 encryption key management across publisher and subscriber accounts.",
+  "graph": {
+    "name": "AWS Multi-Account Media Exchange Architecture",
+    "link": "https://www.youtube.com/watch?v=Ly_UhX3LCCs",
+    "categories": "Media & Entertainment, Security & Cross-Account Data Transfer",
+    "graph_usable": true,
+    "notes": "Architecture for secure, scalable cross-account file transfer using S3, EventBridge, SNS, and KMS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "Publisher S3 Bucket",
+      "notes": "S3 bucket in Publisher (PUB) account containing original media content."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Publisher Events",
+      "notes": "Publisher event handling workflow in PUB account."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Exchange S3 Bucket",
+      "notes": "Central cross-account exchange bucket in MX account acting as secure transfer staging."
+    },
+    {
+      "id": "3",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Serverless event bus routing S3 object creation events."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Notification service publishing transfer events to subscriber workflows."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "Access Logs S3 Bucket",
+      "notes": "Stores S3 access logs for reporting and auditing object access."
+    },
+    {
+      "id": "6",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Manages AES-256 encryption keys shared between publisher and subscriber."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Subscriber S3 Bucket",
+      "notes": "S3 bucket in Subscriber (SUB) account receiving transferred assets."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Subscriber Events",
+      "notes": "Subscriber event handling workflow in SUB account triggering processing like transcoding."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Publisher copies media files into the exchange S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Subscriber reads and downloads media files from the exchange S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Object creation in Exchange S3 Bucket triggers EventBridge."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "EventBridge sends object creation notifications to Publisher Events."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "SNS notifies Subscriber Events workflow upon file availability."
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Access logs provided for reporting and auditing object operations."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Shared KMS encryption and decryption trust across PUB and SUB accounts."
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "1. Mapped all visual components from the whiteboard diagram and transcript to valid vocabulary items:\n   - User icon mapped to UserConsumerWebMobile (representing mobile, web, TV, SMS users).\n   - AWS WAF mapped to WAF.\n   - Application Load Balancer mapped to ALB.\n   - AWS Fargate mapped to Fargate.\n   - MemoryDB Redis mapped to MemoryDB.\n   - AWS VPN mapped to VPN.\n   - On-Premises system mapped to OnPremDC.\n   - CloudWatch mapped to CloudWatch.\n   - Kinesis Data Firehose mapped to Firehose.\n   - S3 bucket mapped to S3.\n2. Identified three main operational flows:\n   - Flow 0: Session management originating from On-Premises editorial systems through VPN and Fargate backend to MemoryDB.\n   - Flow 1: High-concurrency voting flow from users through WAF (geo-filtering), ALB, Fargate frontend, and MemoryDB (Lua scripts) back to users.\n   - Flow 2: Monitoring and logging flow streaming logs from ALB/Fargate to CloudWatch, Firehose, and S3 storage.",
+  "graph": {
+    "name": "Mediaset Amici Voting Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=QnwfcDZkwh8",
+    "categories": "Media & Entertainment, High-Throughput Voting System, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture designed by Mediaset for handling spiky live TV show voting loads with latency under 10ms processing millions of votes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Users",
+      "notes": "Voters accessing via mobile apps, web, connected TVs, or SMS"
+    },
+    {
+      "id": "1",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "Validates user location to restrict voting to allowed regions (Italy)"
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Distributes incoming web traffic to containerized application frontends"
+    },
+    {
+      "id": "3",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Runs separate frontend and private backend container services; handles authentication and business checks"
+    },
+    {
+      "id": "4",
+      "service": "MemoryDB",
+      "name": "MemoryDB Redis",
+      "notes": "Stores active session state and contestant counters; processes vote logic using single-threaded Lua scripts (<10ms target)"
+    },
+    {
+      "id": "5",
+      "service": "VPN",
+      "name": "VPN",
+      "notes": "Secure tunnel connecting broadcast studio to private backend services in AWS"
+    },
+    {
+      "id": "6",
+      "service": "OnPremDC",
+      "name": "On-Premises",
+      "notes": "Editorial control systems used to manage voting sessions and view real-time results"
+    },
+    {
+      "id": "7",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Aggregates application and infrastructure logs for real-time operational dashboards"
+    },
+    {
+      "id": "8",
+      "service": "Firehose",
+      "name": "Data Firehose",
+      "notes": "Streams log data continuously from CloudWatch to long-term storage"
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores audit and certification log data for long-term retention"
+    }
+  ],
+  "edges": [
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Editorial team sends session open/close commands"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "VPN routes session management commands to private Fargate backend service"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Backend service initializes session state and contestant list in MemoryDB"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User submits vote request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "WAF passes geo-verified traffic to load balancer"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB routes voting request to frontend Fargate container service"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fargate executes Lua script on MemoryDB to process vote, update counters, and check limits"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "MemoryDB returns voting outcome and remaining quota back to Fargate"
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "ALB sends access logs to CloudWatch"
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Fargate containers emit application logs to CloudWatch"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "CloudWatch streams logs into Kinesis Data Firehose"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Firehose writes log stream to S3 bucket for long-term storage"
+    }
+  ]
+}

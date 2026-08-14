@@ -1,0 +1,106 @@
+{
+  "step_by_step_reasoning": "1. Identified core system components from the whiteboard visual inventory and audio transcript: CI/CD / Laptop (ThirdParty developer build environment), Cognito (Cognito developer authentication), S3 (S3 test execution bundle storage), Lambda (Lambda running parallel Puppeteer/Jest headless browser tests), DynamoDB (DynamoDB for test execution reports), and CloudWatch (CloudWatch for infrastructure monitoring).\n2. Assigned sequential numeric string IDs ('0' through '5') to all nodes.\n3. Segmented logical workflows into flows:\n   - Flow 0: Developer authentication via Cognito.\n   - Flow 1: Execution bundle upload to S3, parallel trigger of ~700 Lambda invocations, bundle download within Lambda, and returning test results via JSON payload back to the build environment.\n   - Flow 2: Operational telemetry and execution status reporting to DynamoDB and CloudWatch.",
+  "graph": {
+    "name": "Wix SLED Parallel End-to-End Testing Architecture",
+    "link": "https://www.youtube.com/watch?v=hbz63Ve-eIY",
+    "categories": "Testing Framework, Serverless Compute, Continuous Integration",
+    "graph_usable": true,
+    "notes": "SLED is Wix's end-to-end testing framework executing around 1.2 million browser-based test runs per week using Lambda, S3, Cognito, DynamoDB, and CloudWatch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "CI/CD / Laptop",
+      "notes": "Developer workstation or CI/CD runner executing tests using Jest and Puppeteer libraries."
+    },
+    {
+      "id": "1",
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "Authenticates developer identity using Google sign-in integration."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores compressed execution bundle files identified by unique IDs (e.g., 'xyz')."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Executes ~700 parallel headless browser tests per build using custom Chromium and Jest layers."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores reporting and execution history for performance optimization."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Monitors test infrastructure health, uptime, and runtime logs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Authenticates developer session prior to triggering tests."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Uploads execution bundle (xyz) containing test code and dependencies."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Triggers ~700 parallel Lambda instances passing the bundle ID."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Lambda downloads the test bundle (xyz) from S3."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda returns test outcome JSON payload back to local runner/CI."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Reports test summary and infrastructure execution metrics."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Sends performance logs and system health metrics to CloudWatch."
+    }
+  ]
+}

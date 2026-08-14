@@ -1,0 +1,114 @@
+{
+  "step_by_step_reasoning": "1. Identified the primary entities on the visual architecture diagram: Client Display (UserConsumerWeb), EC2 host (EC2) running Node.js and adapter microservices, Amazon RDS (RDS) hosting Postgres, Amazon Cognito (Cognito) handling authentication, OSDU API Gateway (ApiGateway), and S3 Bucket (S3) for seismic data storage.\n2. Defined Flow 0 for Authentication & Project Management: Login request flows from Client Display to EC2 reverse proxy, then to Cognito. Node.js on EC2 queries project configuration and RBAC rights stored in RDS Postgres.\n3. Defined Flow 1 for Seismic Search & Data Retrieval: Search queries flow from Client Display through EC2 adapter microservices to OSDU API Gateway. Parallel byte-offset trace requests flow from EC2 adapter to S3, data returns to EC2 where vector AVX compression is applied, and compressed payloads are sent back to Client Display for WebAssembly decompression and HTML5 Canvas rendering.",
+  "graph": {
+    "name": "INT IVAAP Architecture with AWS and OSDU Integration",
+    "link": "https://www.youtube.com/watch?v=QM96Fv_NAnw",
+    "categories": "Geoscience Data Visualization",
+    "graph_usable": true,
+    "notes": "IVAAP is a client-server web application by INT providing high-performance visualization for massive geoscience and seismic data via microservice adapters and OSDU APIs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "CLIENT DISPLAY",
+      "notes": "Browser client executing code and decompressing seismic data via WebAssembly for HTML5 Canvas display."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Runs IVAAP reverse proxy, Node.js backend for configuration, and custom microservice adapters using vector AVX instructions for data compression."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "PostgreSQL database instance storing project configurations, data source mapping, and RBAC policies."
+    },
+    {
+      "id": "3",
+      "service": "Cognito",
+      "name": "COGNITO",
+      "notes": "Handles user authentication and account management."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "OSDU consortium API endpoint backed by Elasticsearch for data search."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Object storage housing massive seismic data files accessed via parallel byte-offset queries."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client sends login request to IVAAP reverse proxy on EC2."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Reverse proxy routes user authentication request to Cognito."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Node.js instance queries RDS PostgreSQL for project settings and role-based access controls."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client issues dataset search/fetch query."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Adapter microservice queries OSDU search APIs via API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Adapter computes byte offsets and issues parallel range requests to S3."
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 returns raw trace data to EC2 adapter microservice for AVX compression."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EC2 returns compressed data to browser client for Wasm decompression."
+    }
+  ]
+}

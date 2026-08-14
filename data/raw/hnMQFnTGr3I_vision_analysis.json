@@ -1,0 +1,182 @@
+{
+  "step_by_step_reasoning": "The architecture diagram and transcript describe Nanit's baby monitor system, which processes short video segment uploads for sleep insight analysis and handles live video streaming. 1. CAMERA registers with CONTROL PLANE via ALB, with state stored in RDS. 2. Recorded video segments are uploaded directly to S3 via pre-signed URLs. 3. S3 upload notifications trigger LAMBDA, which enqueues object keys into SQS FIFO. 4. VIDEO ANALYSIS service in EKS consumes messages from SQS FIFO, downloads videos, processes them on GPUs, and writes sleep insights to RDS. 5. MOBILE app connects via ALB to view insights. 6. For live streaming, direct peer-to-peer connection is used if CAMERA and MOBILE are on the same Wi-Fi network; otherwise, CAMERA queries ROUTE 53 for node IP and streams to VIDEO STREAMING service in EKS.",
+  "graph": {
+    "name": "Nanit Video Ingestion and Live Streaming Architecture",
+    "link": "https://www.youtube.com/watch?v=hnMQFnTGr3I",
+    "categories": "Video Streaming, IoT, Microservices, AI/ML",
+    "graph_usable": true,
+    "notes": "Nanit architecture for smart baby video streaming and GPU-accelerated sleep insight video analysis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerCamera",
+      "name": "CAMERA",
+      "notes": "Smart baby monitor camera generating video segments and live video streams."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "MOBILE",
+      "notes": "Mobile app used by parents to view insights and watch live or playback video streams."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores short video segments uploaded directly from cameras via pre-signed URLs."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Triggered by S3 object upload notifications to push S3 keys to SQS FIFO."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS FIFO",
+      "notes": "FIFO queue buffering video segment keys for analysis."
+    },
+    {
+      "id": "5",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Queried by cameras to obtain public node IP addresses for EKS cluster streaming."
+    },
+    {
+      "id": "6",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer routing camera and mobile traffic to control plane."
+    },
+    {
+      "id": "7",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Container cluster hosting Video Analysis, Video Streaming, and Control Plane services."
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "VIDEO ANALYSIS",
+      "notes": "EKS microservice running computer vision algorithms on GPU nodes to produce sleep insights."
+    },
+    {
+      "id": "9",
+      "service": "EKS",
+      "name": "VIDEO STREAMING",
+      "notes": "EKS microservice processing incoming live streams relayed from cameras."
+    },
+    {
+      "id": "10",
+      "service": "EKS",
+      "name": "CONTROL PLANE",
+      "notes": "Control plane service managing camera registration, S3 presigned URLs, and mobile requests."
+    },
+    {
+      "id": "11",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "RDS database cluster storing camera state and generated sleep insights."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Camera registers with system through Application Load Balancer."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "ALB forwards registration request to Control Plane service inside EKS."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Control Plane saves camera state in RDS database cluster."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Camera uploads recorded video segment directly to S3 using presigned URL."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "S3 object creation notification triggers Lambda function."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Lambda function enqueues video object key into SQS FIFO queue."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Video Analysis microservice receives event messages from SQS FIFO and downloads video."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Video Analysis microservice saves computed sleep insights into RDS database."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Mobile app sends request via ALB to Control Plane to view insights or pull live stream."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Camera queries Route 53 to resolve public IP address for streaming node in EKS."
+    },
+    {
+      "source": "0",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Camera streams live video directly to Video Streaming microservice in EKS."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Camera streams live video directly to Mobile app when on the same Wi-Fi network."
+    }
+  ]
+}

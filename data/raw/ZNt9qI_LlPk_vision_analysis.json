@@ -1,0 +1,122 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts Autodesk's serverless data pipeline. Incoming data (ranging from 1 TB to 13 TB daily) lands in S3. S3 sends an event notification to SNS, which triggers processing Lambdas. The processing Lambdas cleanse and enrich the data, utilizing an internal retry loop upon failures. Once processed, metadata is written to DynamoDB. An ECS service reads this metadata from DynamoDB to perform batch processing, aggregating JSON output into Parquet format, and writes the final Parquet files back to S3. In the event of persistent processing failure, the processing Lambda triggers SNS, which invokes an Error Handling Lambda to copy the problematic file back into S3 for investigation. Generic human user actors are pruned according to node rules.",
+  "graph": {
+    "name": "Autodesk Serverless Big Data Pipeline",
+    "link": "https://www.youtube.com/watch?v=ZNt9qI_LlPk",
+    "categories": "Big Data, Serverless, Data Pipeline",
+    "graph_usable": true,
+    "notes": "Data pipeline processing between 1 TB and 13 TB of daily incoming data using S3, SNS, Lambda, DynamoDB, and ECS for batch Parquet conversion."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Data Bucket",
+      "notes": "Stores incoming raw data (1-13 TB/day) and final batch parquet output files."
+    },
+    {
+      "id": "1",
+      "service": "SNS",
+      "name": "Notification Topic",
+      "notes": "Handles event notifications for incoming files and routes error notifications."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Processing Lambda",
+      "notes": "Cleanses and enriches incoming data with built-in internal retry logic."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Metadata Store",
+      "notes": "Stores processed metadata with high throughput and low latency."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "Batch Processing ECS",
+      "notes": "Async RESTful Web API service that batches JSON outputs into Parquet format."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Error Handling Lambda",
+      "notes": "Triggered on processing failures to isolate erroneous files back in S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 triggers event notification to SNS upon receiving raw data."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS triggers invocation of data processing Lambdas."
+    },
+    {
+      "source": "2",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "meta",
+      "notes": "Internal retry mechanism within Processing Lambda on transient failure."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Processing Lambda writes extracted metadata into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "ECS reads metadata from DynamoDB to execute batch processing."
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "ECS writes final batch Parquet formatted files back to S3."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Processing Lambda publishes failure event to SNS after retries are exhausted."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS triggers Error Handling Lambda."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Error Handling Lambda copies erroneous file back to S3 for investigation."
+    }
+  ]
+}

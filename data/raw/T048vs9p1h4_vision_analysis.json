@@ -1,0 +1,206 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents a serverless compute grid at DBS Bank used for pricing exotic option trades. Input data and job requests enter via an API Gateway. API Gateway writes non-sensitive input data to S3 (INPUT) and sends notifications to Amazon SNS. SNS fans out messages to three separate SQS queues representing different priority tiers: SQS (HIGH) for traders, SQS (MED) for back-office users, and SQS (LOW) for batch jobs. Each queue triggers dedicated AWS Lambda functions with provisioned concurrency configured for each tier (300, 200, and 100 respectively) to ensure quality of service. EFS (BINARY) is mounted to the Lambdas to supply financial model binaries and eliminate cold starts. The outputs and function execution statuses are stored in DynamoDB, while execution logs are aggregated into Elasticsearch (OpenSearch) for end-to-end task monitoring.",
+  "graph": {
+    "name": "DBS Bank Serverless Compute Grid Architecture",
+    "link": "https://www.youtube.com/watch?v=T048vs9p1h4",
+    "categories": "Serverless, Compute Grid, Financial Services",
+    "graph_usable": true,
+    "notes": "Serverless compute grid architecture used by DBS Bank to process pricing for exotic option trades."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API",
+      "notes": "Primary API endpoint receiving job submission requests from trading platforms (e.g., Murex)."
+    },
+    {
+      "id": "1",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Pub/Sub topic fanning out job execution tasks to priority queues."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS (HIGH)",
+      "notes": "High priority message queue reserved for trader job submissions."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS (MED)",
+      "notes": "Medium priority message queue reserved for back-office user submissions."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS (LOW)",
+      "notes": "Low priority message queue reserved for batch calculation jobs."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "LAMBDA (300)",
+      "notes": "Lambda function execution layer allocated with a provisioned concurrency of 300 for high priority tasks."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA (200)",
+      "notes": "Lambda function execution layer allocated with a provisioned concurrency of 200 for medium priority tasks."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA (100)",
+      "notes": "Lambda function execution layer allocated with a provisioned concurrency of 100 for low priority tasks."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 (INPUT)",
+      "notes": "Stores non-sensitive input computation data."
+    },
+    {
+      "id": "9",
+      "service": "EFS",
+      "name": "EFS (BINARY)",
+      "notes": "Shared file storage mounted on Lambda instances to store heavy financial model binaries, avoiding cold starts."
+    },
+    {
+      "id": "10",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "High-throughput NoSQL database storing calculation results and tracking Lambda execution status."
+    },
+    {
+      "id": "11",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Centralized search and analytics store for aggregating Lambda logs for end-to-end monitoring."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway writes non-sensitive job input data to S3 (INPUT)."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers job distribution via SNS."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "SNS routes high priority trader requests to SQS (HIGH)."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "control",
+      "notes": "SNS routes medium priority back-office requests to SQS (MED)."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2''",
+      "type": "control",
+      "notes": "SNS routes low priority batch requests to SQS (LOW)."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "SQS (HIGH) triggers Lambda instances configured with provisioned concurrency 300."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "control",
+      "notes": "SQS (MED) triggers Lambda instances configured with provisioned concurrency 200."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0''",
+      "type": "control",
+      "notes": "SQS (LOW) triggers Lambda instances configured with provisioned concurrency 100."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EFS (BINARY) file system mounted directly to Lambda functions to provide model binaries."
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "LAMBDA (300) writes trade calculation output and execution status to DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "LAMBDA (200) writes trade calculation output and execution status to DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2''",
+      "type": "data",
+      "notes": "LAMBDA (100) writes trade calculation output and execution status to DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "LAMBDA (300) sends log telemetry to Elasticsearch for monitoring."
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "LAMBDA (200) sends log telemetry to Elasticsearch for monitoring."
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0''",
+      "type": "meta",
+      "notes": "LAMBDA (100) sends log telemetry to Elasticsearch for monitoring."
+    }
+  ]
+}

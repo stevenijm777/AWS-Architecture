@@ -1,0 +1,120 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts Samsung Health's high-scale backend handling 35,000 requests per second. Traffic enters via API Gateway, which connects to an internal Network Load Balancer (NLB) using VPC Link. The NLB forwards traffic to target groups across EKS clusters using port forwarding to NodePorts. On the observability side, CloudWatch collects infrastructure metrics and receives logs from Fluentd daemonsets on EKS, streaming them to Elasticsearch (OpenSearch). Application microservices also report performance traces directly to AWS X-Ray.",
+  "graph": {
+    "name": "Samsung Health Microservices Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=S-JSSZZaa94",
+    "categories": "Compute, Networking, Operations",
+    "graph_usable": true,
+    "notes": "Samsung Health handles over 35,000 requests per second using EKS microservices, NLB port forwarding via NodePorts, CloudWatch, Elasticsearch, and AWS X-Ray."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Serves as the main entry point connecting external requests securely to internal VPC resources via VPC Link."
+    },
+    {
+      "id": "1",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "Network Load Balancer that routes incoming traffic to multiple application ports on EKS using target groups."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS (Top)",
+      "notes": "Managed Kubernetes cluster running microservice pods exposed via NodePort service definitions."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS (Bottom)",
+      "notes": "Managed Kubernetes cluster running microservice pods exposed via NodePort service definitions."
+    },
+    {
+      "id": "4",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Receives log data streamed from CloudWatch for central log monitoring and Kibana visualization."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Collects infrastructure and service metrics, and ingests container logs pushed by Fluentd daemonsets."
+    },
+    {
+      "id": "6",
+      "service": "XRay",
+      "name": "AWS X-Ray",
+      "notes": "Used for application performance management and distributed microservice tracing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway routes incoming client traffic to NLB via VPC Link."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "NLB forwards requests to the top EKS cluster node ports."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "NLB forwards requests to the bottom EKS cluster node ports."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Fluentd daemonset on top EKS cluster sends application logs to CloudWatch Logs."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "Fluentd daemonset on bottom EKS cluster sends application logs to CloudWatch Logs."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "CloudWatch streams log data into Elasticsearch for indexing and search."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Microservices in top EKS cluster send trace metadata to AWS X-Ray."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "Microservices in bottom EKS cluster send trace metadata to AWS X-Ray."
+    }
+  ]
+}
