@@ -14,114 +14,97 @@
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
     <node id="0">
-      <data key="d5">Web/Mobile Users</data>
-      <data key="d6">UserConsumerWeb</data>
-      <data key="d7">External end users accessing the e-commerce website/app</data>
-    </node>
-    <node id="1">
       <data key="d5">ALB</data>
       <data key="d6">ALB</data>
-      <data key="d7">Routes incoming traffic to User-Item or Cart-Item microservices</data>
+      <data key="d7">Application Load Balancer distributing requests to recommendation services</data>
+    </node>
+    <node id="1">
+      <data key="d5">ECS (User-Item)</data>
+      <data key="d6">ECS</data>
+      <data key="d7">User-Item recommendation service running on ECS Fargate</data>
     </node>
     <node id="2">
-      <data key="d5">ECS (User-Item API)</data>
-      <data key="d6">ECS</data>
-      <data key="d7">Fargate container microservice serving User-Item recommendations</data>
-    </node>
-    <node id="3">
       <data key="d5">DynamoDB</data>
       <data key="d6">DynamoDB</data>
-      <data key="d7">Stores pre-calculated user recommendation results</data>
+      <data key="d7">Stores precomputed user-item recommendation results</data>
+    </node>
+    <node id="3">
+      <data key="d5">EC2 (User-Item Training)</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Batch training instance for user-item recommendations</data>
     </node>
     <node id="4">
-      <data key="d5">EC2 (User-Item Retraining)</data>
-      <data key="d6">EC2</data>
-      <data key="d7">Daily batch training job producing user recommendation results</data>
-    </node>
-    <node id="5">
       <data key="d5">CloudWatch Schedule</data>
       <data key="d6">CloudWatch</data>
-      <data key="d7">Schedules daily retraining tasks</data>
+      <data key="d7">Scheduled rule triggering daily model retraining</data>
+    </node>
+    <node id="5">
+      <data key="d5">ECS (Cart-Item)</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Cart-Item recommendation service running on ECS Fargate</data>
     </node>
     <node id="6">
-      <data key="d5">ECS (Cart-Item API)</data>
-      <data key="d6">ECS</data>
-      <data key="d7">Fargate container microservice serving Cart-Item recommendations</data>
-    </node>
-    <node id="7">
       <data key="d5">S3</data>
       <data key="d6">S3</data>
-      <data key="d7">Stores trained ML model artifacts</data>
+      <data key="d7">Bucket storing trained ML model artifacts</data>
     </node>
-    <node id="8">
-      <data key="d5">EC2 (Cart-Item Retraining)</data>
+    <node id="7">
+      <data key="d5">EC2 (Cart-Item Training)</data>
       <data key="d6">EC2</data>
-      <data key="d7">Daily batch training job producing ML model artifacts</data>
+      <data key="d7">Batch training instance for cart-item ML model</data>
     </node>
     <edge source="0" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9">User sends request to e-commerce site</data>
+      <data key="d9">ALB routes user-item recommendation requests to ECS</data>
       <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="1" target="2" id="0">
+    <edge source="0" target="5" id="0">
       <data key="d8">0</data>
-      <data key="d9">ALB routes request to User-Item ECS service</data>
+      <data key="d9">ALB routes cart-item recommendation requests to ECS</data>
       <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="1" target="6" id="0">
-      <data key="d8">2</data>
-      <data key="d9">ALB routes request to Cart-Item ECS service</data>
-      <data key="d10">1</data>
-      <data key="d11">data</data>
-    </edge>
-    <edge source="2" target="3" id="0">
-      <data key="d8">0</data>
-      <data key="d9">ECS queries DynamoDB for user recommendation results</data>
+    <edge source="2" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">User-Item ECS service reads recommendation results from DynamoDB</data>
       <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EC2 writes batch recommendation results into DynamoDB</data>
+      <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
     <edge source="4" target="3" id="0">
       <data key="d8">1</data>
-      <data key="d9">EC2 writes calculated recommendation results into DynamoDB</data>
-      <data key="d10">1</data>
+      <data key="d9">CloudWatch triggers scheduled batch retraining on EC2</data>
+      <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="5" target="4" id="0">
-      <data key="d8">1</data>
-      <data key="d9">CloudWatch Schedule triggers daily User-Item EC2 retraining job</data>
-      <data key="d10">0</data>
-      <data key="d11">meta</data>
-    </edge>
-    <edge source="5" target="8" id="0">
-      <data key="d8">3</data>
-      <data key="d9">CloudWatch Schedule triggers daily Cart-Item EC2 retraining job</data>
-      <data key="d10">0</data>
-      <data key="d11">meta</data>
+    <edge source="6" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">New ECS containers load updated ML model from S3</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
     </edge>
     <edge source="7" target="6" id="0">
-      <data key="d8">3</data>
-      <data key="d9">New ECS task loads latest ML model from S3 on startup</data>
-      <data key="d10">3</data>
+      <data key="d8">2</data>
+      <data key="d9">EC2 uploads retrained model artifacts to S3</data>
+      <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="8" target="7" id="0">
-      <data key="d8">3</data>
-      <data key="d9">EC2 writes updated ML model artifact to S3</data>
+    <edge source="7" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">EC2 triggers deployment/rolling update on ECS</data>
       <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="8" target="6" id="0">
-      <data key="d8">3</data>
-      <data key="d9">EC2 triggers rolling redeployment of ECS tasks</data>
-      <data key="d10">2</data>
-      <data key="d11">meta</data>
-    </edge>
-    <data key="d0">StockUp Recommendation Engine Architecture</data>
-    <data key="d1">https://www.youtube.com/watch?v=CDCLwX2fo2g</data>
-    <data key="d2">Whiteboard showing two recommendation system architectures (User-Item vs. Cart-Item) using ECS, DynamoDB, S3, EC2, and CloudWatch Schedule under an ALB.</data>
-    <data key="d3">Machine Learning &amp; Analytics</data>
+    <data key="d0">Ztore Machine Learning Recommendation Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=kYJv8y76p8M</data>
+    <data key="d2">Recommendation system using ALB, ECS Fargate, DynamoDB, S3, EC2 batch training, and CloudWatch Events/Schedule.</data>
+    <data key="d3">Machine Learning &amp; Recommendation Engine</data>
     <data key="d4">True</data>
   </graph>
 </graphml>

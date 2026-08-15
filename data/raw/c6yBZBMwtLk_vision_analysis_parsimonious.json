@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows a video ingestion and on-demand clipping workflow. Starting on the left (on-premises), live camera feeds go to two AWS Elemental Live appliances for redundancy. These stream to AWS Elemental MediaPackage, which writes video segments to an Amazon S3 bucket. Below, an on-premises MAM system communicates bi-directionally with Amazon API Gateway to trigger video processing jobs. API Gateway invokes AWS Step Functions, which orchestrates reading video files from the top S3 bucket, logging state/metadata to Amazon DynamoDB, and instructing AWS Elemental MediaConvert to generate clips and poster images stored into a final origin S3 bucket.",
+  "graph": {
+    "name": "RSI Serverless MAM Architecture",
+    "link": "",
+    "categories": "Media & Entertainment, Serverless",
+    "graph_usable": true,
+    "notes": "Hybrid media workflow combining on-premises live encoders with AWS serverless video clipping and distribution pipeline."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerCamera",
+      "name": "Live Video Source",
+      "notes": "SDI stream sources"
+    },
+    {
+      "id": "1",
+      "service": "ElementalLive",
+      "name": "Elemental Live Primary",
+      "notes": "On-premises live encoder 1"
+    },
+    {
+      "id": "2",
+      "service": "ElementalLive",
+      "name": "Elemental Live Secondary",
+      "notes": "On-premises live encoder 2"
+    },
+    {
+      "id": "3",
+      "service": "MediaPackage",
+      "name": "AWS Elemental MediaPackage",
+      "notes": "Records incoming live streams"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "14-Day Rolling Archive S3",
+      "notes": "Stores 14-day chunks playlist"
+    },
+    {
+      "id": "5",
+      "service": "MAM",
+      "name": "On-Premises MAM",
+      "notes": "Media asset management backend and client"
+    },
+    {
+      "id": "6",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Entry point for editing requests"
+    },
+    {
+      "id": "7",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Workflow orchestrator"
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores workflow events and metadata"
+    },
+    {
+      "id": "9",
+      "service": "MediaConvert",
+      "name": "AWS Elemental MediaConvert",
+      "notes": "Transcoding and clipping service"
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Origin S3 Bucket",
+      "notes": "Origin server for web/mobile players"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Live SDI feed to primary appliance"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Live SDI feed to secondary appliance"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Streams to MediaPackage"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Streams to MediaPackage"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Saves chunked playlist into S3"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers edit/clip events via API Gateway"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Returns responses back to MAM"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Passes metadata to Step Functions"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Step Functions reads video files from archive S3"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Logs event states and metadata to DynamoDB"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Sends transcoding/cutting order to MediaConvert"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Stores finished renditions and posters to origin S3"
+    }
+  ]
+}

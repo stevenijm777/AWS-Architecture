@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows a recommendation system divided into two sections: User-Item on the left and Cart-Item on the right. At the top center is an ALB distributing traffic to both User-Item ECS and Cart-Item ECS. At the bottom center, CloudWatch Schedule triggers the left EC2 instance, which trains models/results and writes them to DynamoDB, which is read by User-Item ECS. On the right side, an EC2 instance retrains the cart-to-item model, saves the model artifacts into S3, and triggers a redeployment/update to Cart-Item ECS, which in turn loads the model from S3.",
+  "graph": {
+    "name": "Ztore Machine Learning Recommendation Architecture",
+    "link": "https://www.youtube.com/watch?v=kYJv8y76p8M",
+    "categories": "Machine Learning & Recommendation Engine",
+    "graph_usable": true,
+    "notes": "Recommendation system using ALB, ECS Fargate, DynamoDB, S3, EC2 batch training, and CloudWatch Events/Schedule."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer distributing requests to recommendation services"
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "ECS (User-Item)",
+      "notes": "User-Item recommendation service running on ECS Fargate"
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores precomputed user-item recommendation results"
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 (User-Item Training)",
+      "notes": "Batch training instance for user-item recommendations"
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch Schedule",
+      "notes": "Scheduled rule triggering daily model retraining"
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS (Cart-Item)",
+      "notes": "Cart-Item recommendation service running on ECS Fargate"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Bucket storing trained ML model artifacts"
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 (Cart-Item Training)",
+      "notes": "Batch training instance for cart-item ML model"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "ALB routes user-item recommendation requests to ECS"
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB routes cart-item recommendation requests to ECS"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudWatch triggers scheduled batch retraining on EC2"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 writes batch recommendation results into DynamoDB"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "User-Item ECS service reads recommendation results from DynamoDB"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 uploads retrained model artifacts to S3"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 triggers deployment/rolling update on ECS"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "New ECS containers load updated ML model from S3"
+    }
+  ]
+}

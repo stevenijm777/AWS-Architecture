@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "The architecture diagram is divided into two logical sections: 'MEMBERS' (representing multiple AWS accounts) and 'MANAGEMENT' (a central security account).I first identified all distinct AWS service icons and labels on the whiteboard to create the nodes. These include two 'SECURITY HUB' icons (one in 'MEMBERS', one in 'MANAGEMENT'), two 'GUARDDUTY' icons (one in 'MEMBERS', one in 'MANAGEMENT'), two 'LAMBDA' icons, an 'S3' bucket, 'STEP FUNCTIONS', and 'KINESIS FIREHOSE'.I then extracted the connections (edges) based on the visible arrows drawn on the whiteboard. The direction of the arrows was strictly followed as per the 'visual-first' rule, even if the transcript might imply a different data flow (e.g., Lambda accessing S3 for policies, but the visual shows an arrow from Lambda to S3).The transcript provided additional context for each service's role: the member accounts aggregate findings to the centralized Security Hub and GuardDuty in the management account. The top Lambda configures member accounts, interacting with S3 for policies. The bottom Lambda filters and enriches findings received from Management Security Hub and GuardDuty, also interacting with S3 for policies. Finally, this processed data is sent to Step Functions for auto-remediation and to Kinesis Firehose for SIEM integration.Although the transcript mentioned an SNS topic, no visual representation of SNS was present on the whiteboard, so it was omitted as per the 'visual-first' and 'omit floating text' rules.Flow IDs and sequence numbers were assigned to represent the logical progression of operations, starting with initial configuration and findings aggregation, then processing, and finally output to consumers.",
+  "graph": {
+    "name": "AWS Security Foundation Architecture",
+    "link": "Not provided in prompt",
+    "categories": "Security, Management, Automation",
+    "graph_usable": true,
+    "notes": "Centralized security management for over 100 AWS member accounts. Security findings are aggregated from member accounts to a management account, then filtered, enriched, and routed for automated remediation and SIEM integration. Policies for configuration and filtering are stored in S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "SecurityHub",
+      "name": "Security Hub (Members)",
+      "notes": "Security Hub instance in a member account, aggregates local findings."
+    },
+    {
+      "id": "1",
+      "service": "GuardDuty",
+      "name": "GuardDuty (Members)",
+      "notes": "GuardDuty instance in a member account, generates security findings."
+    },
+    {
+      "id": "2",
+      "service": "SecurityHub",
+      "name": "Security Hub (Management)",
+      "notes": "Centralized Security Hub in the management account, aggregates findings from all member accounts."
+    },
+    {
+      "id": "3",
+      "service": "GuardDuty",
+      "name": "GuardDuty (Management)",
+      "notes": "Centralized GuardDuty in the management account, aggregates findings from all member accounts."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda (Config)",
+      "notes": "Serverless function for configuring Security Hub and baselining findings in member accounts based on policies."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "Policy Repository",
+      "notes": "S3 bucket storing JSON-based security policies for configuration and filtering."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Filter/Enrich)",
+      "notes": "Serverless function that filters and enriches relevant security findings based on policies from S3."
+    },
+    {
+      "id": "7",
+      "service": "StepFunctions",
+      "name": "Step Functions (Autoremediation)",
+      "notes": "Workflow service to orchestrate automated remediation actions for relevant findings."
+    },
+    {
+      "id": "8",
+      "service": "Kinesis Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Delivers enriched security findings to external SIEM systems (e.g., Splunk)."
+    }
+  ],
+  "edges": [
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda (Config) interacts with S3 Policy Repository."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Findings from Security Hub in member accounts are sent to the central Security Hub."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Findings from GuardDuty in member accounts are sent to the central GuardDuty."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Aggregated findings from Management Security Hub are sent to Lambda (Filter/Enrich)."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Aggregated findings from Management GuardDuty are sent to Lambda (Filter/Enrich)."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda (Filter/Enrich) interacts with S3 Policy Repository to retrieve policies."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Relevant and enriched findings are sent to Step Functions for auto-remediation."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Relevant and enriched findings are sent to Kinesis Firehose for SIEM integration."
+    }
+  ]
+}

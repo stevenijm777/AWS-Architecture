@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Identify nodes from the whiteboard:\n   - S3 (Green bucket icon, labeled 'S3')\n   - EKS (Orange Kubernetes icon, labeled 'EKS')\n   - HPC NODE (Compute icon, labeled 'HPC NODE', mapped to EC2)\n   - CLOUDWATCH (Red icon, labeled 'CLOUDWATCH', mapped to CloudWatch)\n   - LAMBDA (Bottom orange icon, labeled 'LAMBDA', mapped to Lambda)\n   - LAMBDA (Top orange icon, labeled 'LAMBDA', mapped to Lambda)\n   - SNS (Pink/red icon, labeled 'SNS', mapped to SNS)\n   - DYNAMODB (Purple database icon, labeled 'DYNAMODB', mapped to DynamoDB)\n2. Identify directed edges based on visible drawn arrows:\n   - EKS -> HPC NODE (arrow down)\n   - HPC NODE -> S3 (curved arrow left/up)\n   - HPC NODE -> CLOUDWATCH (arrow right/up)\n   - CLOUDWATCH -> LAMBDA (bottom) (arrow right/down)\n   - LAMBDA (bottom) -> DYNAMODB (arrow down/left)\n   - LAMBDA (bottom) -> SNS (arrow up/right)\n   - SNS -> LAMBDA (top) (arrow up/left)\n3. Sequence the flows logically starting from the orchestration/compute pipeline through monitoring, alerting, and data persistence.",
+  "graph": {
+    "name": "OnScale: Cloud HPC Orchestration",
+    "link": "https://www.youtube.com/watch?v=kYJ4h4q3s4g",
+    "categories": "Compute, HPC, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture for orchestrating massive parallel HPC simulations using EKS, EC2, CloudWatch, Lambda, DynamoDB, and SNS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores input simulation data and output results"
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Orchestrates and spins up right-sized HPC nodes"
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "HPC NODE",
+      "notes": "High-performance computing instances executing simulations"
+    },
+    {
+      "id": "3",
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH",
+      "notes": "Ingests log streams and metrics from HPC nodes"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA (Bottom)",
+      "notes": "Triggered by CloudWatch logs to process simulation status"
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Stores simulation run records and timestamps"
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Distributes notification events for downstream processing"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA (Top)",
+      "notes": "Processes queued SNS events"
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EKS spins up HPC nodes"
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "HPC node writes simulation results back to S3"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "HPC node streams execution logs and status to CloudWatch"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudWatch triggers Lambda on pattern match"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda records start/end timestamps and metadata in DynamoDB"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda publishes notification message to SNS"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "SNS triggers additional Lambdas for further processing"
+    }
+  ]
+}
