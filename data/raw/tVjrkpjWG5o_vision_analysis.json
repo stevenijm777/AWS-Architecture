@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Identified all visual components from the diagram: DATAMART USER (actor mapped to UserCompanyAnalyst), PRESTO (ThirdParty), EC2 (compute hosting ETL microservices), S3 (object storage for raw sensor files), HIVE (ThirdParty for transformation), EMR FS (EMR storage layer for consistent S3 access), RDS MYSQL (RDS database for well metadata), and EMR HDFS (EMR cluster file system).\n2. Analyzed the visual edges to define sequential workflows: Flow 0 for Data Ingestion/ETL (EC2 -> S3, EC2 -> HIVE, HIVE -> EMR FS) and Flow 1 for Data Analytics Querying (DATAMART USER -> PRESTO, PRESTO -> EC2 for auth/microservices, PRESTO -> EMR FS, PRESTO -> RDS MYSQL).\n3. Enforced strict service name mapping according to the valid vocabulary rules, ensured sequential integer string IDs, and added detailed notes from the transcript.",
+  "graph": {
+    "name": "Payson Drilling Data Mart Architecture",
+    "link": "https://www.youtube.com/watch?v=tVjrkpjWG5o",
+    "categories": "Analytics & Data Lakes, Energy & Utilities",
+    "graph_usable": true,
+    "notes": "Architecture illustrating Payson's unified drilling data mart platform leveraging Presto on EMR, Hive ETL workflows, RDS MySQL metadata storage, and EMRFS for queryable sensor data in S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAnalyst",
+      "name": "DATAMART USER",
+      "notes": "Contractors and operators responsible for drilling oil and gas wells, accessing Presto via JDBC/ODBC drivers."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "PRESTO",
+      "notes": "Apache Presto interface running on EMR providing a unified query view across sensor data and metadata."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Compute instances running microservices including authentication plugins and the Datamart ETL orchestration service."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores high-volume raw sensor data (500 channels at 1-second frequency across over 700,000 wells)."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "HIVE",
+      "notes": "Data processing component commanded by ETL microservices to create tables around raw S3 files and perform transformations."
+    },
+    {
+      "id": "5",
+      "service": "EMR",
+      "name": "EMR FS",
+      "notes": "Consistent S3 view layer storing high-volume sensor data loaded by Hive for querying via Presto."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "RDS MYSQL",
+      "notes": "MySQL database storing frequently changing well metadata across 700,000 database instances in a star schema."
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "EMR HDFS",
+      "notes": "Hadoop Distributed File System component within the EMR cluster environment."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Datamart ETL microservice on EC2 accesses raw sensor files stored in S3."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "EC2 orchestrator commands Hive to transform data and create a Hive table around S3 files."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Hive loads transformed sensor data into EMRFS."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Datamart users query the unified dataset via Presto using JDBC/ODBC."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Presto invokes custom authentication and authorization microservices running on EC2."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Presto queries high-volume sensor data residing in EMRFS."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Presto queries frequently changing well metadata stored in RDS MySQL."
+    }
+  ]
+}

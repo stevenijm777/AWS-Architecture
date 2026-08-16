@@ -1,0 +1,184 @@
+{
+  "step_by_step_reasoning": "The architecture describes Eyeota's machine learning model lifecycle and production inference platform on AWS. S3 stores code DAGs, PySpark scripts, and raw data. Apache Airflow running on EC2 orchestrates two main workflows: Model Training & Evaluation and Production Inference. In the training pipeline, Airflow triggers AWS Glue to pre-process data and extract features, which feeds into SageMaker for model training/tuning and batch evaluation on held-out datasets. Metrics from Glue and SageMaker training are collected in Amazon CloudWatch and visualized via an EC2-hosted metrics tool. Approved models are saved to S3 for production deployment. In the production inference pipeline, Airflow triggers Glue to pre-process unlabeled datasets, which are then processed by SageMaker batch inference using the selected models from S3. Output labels are written back to S3 for downstream consumption.",
+  "graph": {
+    "name": "Eyeota Machine Learning Model Lifecycle and Production Inference Architecture",
+    "link": "https://www.youtube.com/watch?v=sQsAGl7mSQs",
+    "categories": "Machine Learning, Analytics, Orchestration",
+    "graph_usable": true,
+    "notes": "The diagram details Eyeota's ML pipeline on AWS for audience data marketplace processing, utilizing Apache Airflow on EC2 to orchestrate AWS Glue, SageMaker, S3, and CloudWatch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Data and Code",
+      "notes": "Stores raw data from supply-side partners as well as Airflow DAGs, PySpark scripts, and SageMaker notebooks."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Airflow",
+      "notes": "Runs Apache Airflow to orchestrate data processing and inference pipelines for both training and batch workloads."
+    },
+    {
+      "id": "2",
+      "service": "Glue",
+      "name": "Glue Pre-processing (Training)",
+      "notes": "Executes PySpark scripts for feature selection and pre-processing on training data."
+    },
+    {
+      "id": "3",
+      "service": "SageMaker",
+      "name": "SageMaker Training",
+      "notes": "Performs model training and hyperparameter tuning across hundreds of training jobs."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker Batch Inference (Eval)",
+      "notes": "Runs batch evaluation on held-out datasets to assess model performance."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Collects operational and performance metrics from training and inference pipelines."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 Metrics Viz",
+      "notes": "Hosts an internal metrics visualization tool on EC2 to analyze performance metrics and select models."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Selected Models",
+      "notes": "Stores selected trained models approved for production deployment."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue Pre-processing (Inference)",
+      "notes": "Handles pre-processing for unlabeled production datasets."
+    },
+    {
+      "id": "9",
+      "service": "SageMaker",
+      "name": "SageMaker Batch Inference (Prod)",
+      "notes": "Executes batch inference on production unlabeled datasets using selected models from S3."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 Generated Labels",
+      "notes": "Stores output generated labels for downstream distribution."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Raw data and PySpark scripts from S3 are fed into Glue for feature selection and pre-processing."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Airflow orchestrates and triggers the model training pre-processing job in Glue."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pre-processed feature data flows into SageMaker for model training and tuning."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Trained model artifacts pass to SageMaker batch evaluation on held-out datasets."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Glue pushes pre-processing operational metrics to CloudWatch."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "SageMaker pushes training and tuning performance metrics to CloudWatch."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "CloudWatch streams metrics to the internal visualization tool hosted on EC2."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Optimal models selected via the visualization dashboard are saved to S3."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Airflow triggers the production batch inference pipeline starting with Glue pre-processing."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Inference pre-processing operational metrics are pushed to CloudWatch."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pre-processed unlabeled production data is passed to SageMaker batch inference."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Selected production model artifacts are retrieved from S3 by SageMaker batch inference."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Generated labels output by SageMaker batch inference are stored in S3 for downstream distribution."
+    }
+  ]
+}

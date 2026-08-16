@@ -1,0 +1,172 @@
+{
+  "step_by_step_reasoning": "1. Identified all 9 visual entities from the whiteboard image and transcript: Email Inbox (ThirdParty), Pre-processing Lambda (Lambda), S3 Bucket (S3), Comprehend (Comprehend), Textract (Textract), SageMaker (SageMaker), Post-processing Lambda (Lambda), DynamoDB (DynamoDB), and SageMaker Ground Truth (SageMakerGroundTruth).\n2. Constructed individual nodes with sequential string IDs (\"0\" to \"8\") mapping to valid AWS and ThirdParty services from the vocabulary list.\n3. Segmented workflows into logical flow sequences:\n   - Flow 0: Document Intake & Ingestion from Email Inbox to S3 via Pre-processing Lambda.\n   - Flow 1: AI/ML Text Extraction & Classification (Textract, SageMaker, Comprehend) reading from and writing back to S3.\n   - Flow 2: Post-processing aggregation, synonym mapping, and persistence into DynamoDB.\n   - Flow 3: Human-in-the-loop model feedback/retraining via SageMaker Ground Truth for low-confidence documents.\n4. Mapped all edges strictly matching visual arrows and explicit audio descriptions while maintaining unidirectional flow rules.",
+  "graph": {
+    "name": "InnoWisdom - Intelligent Document Processing Platform",
+    "link": "https://www.youtube.com/watch?v=yXpd8gPfows",
+    "categories": "AI/ML, Document Processing, Serverless Architecture",
+    "graph_usable": true,
+    "notes": "An Intelligent Document Processing (IDP) platform built on AWS serverless and AI/ML services for extracting and standardizing insurance policy data."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Email Inbox",
+      "notes": "External email source where insurance policy documents and attachments are received."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Pre-processing Lambda",
+      "notes": "Pulls emails and attachments from the inbox and kicks off the processing flow."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central storage bucket for raw input files, intermediate processing outputs, and final extraction payloads."
+    },
+    {
+      "id": "3",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Performs classification and named entity recognition (e.g., dates, names, organizations)."
+    },
+    {
+      "id": "4",
+      "service": "Textract",
+      "name": "Textract",
+      "notes": "Extracts text and table structures from standard policy documents page by page."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Runs custom trained ML models for extracting data from highly specialized or complex form formats."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Post-processing Lambda",
+      "notes": "Stitches multi-page table extractions together and normalizes field synonyms."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores synonym lookup tables and structured output data."
+    },
+    {
+      "id": "8",
+      "service": "SageMakerGroundTruth",
+      "name": "SageMaker Ground Truth",
+      "notes": "Routes low-confidence document extractions to domain experts for manual labeling and model retraining."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pre-processing Lambda retrieves emails and attachments from the inbox."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pre-processing Lambda stores original document files (PDF, Word, Excel) into S3."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Pre-processing Lambda triggers the downstream AI/ML extraction stage."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Textract reads input document files from S3."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Textract outputs page-level extraction results back to S3."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "SageMaker custom model reads document inputs from S3 for custom format processing."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "SageMaker custom model saves extraction results back to S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Comprehend reads extracted text from S3 to perform classification and entity recognition."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Comprehend stores classification and entity recognition results into S3."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Triggers Post-processing Lambda once processing stages are complete."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Post-processing Lambda queries DynamoDB for synonym mappings and writes finalized data."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB returns synonym dictionary data to Post-processing Lambda."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Low-accuracy extraction results are sent to SageMaker Ground Truth for SME review and model retraining."
+    }
+  ]
+}

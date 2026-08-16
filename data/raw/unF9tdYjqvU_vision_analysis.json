@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "The architecture shows Nextthink Experience's multi-region multi-tenant routing solution. Users query Route 53 (latency-based DNS) to receive the IP address of the nearest API Gateway (Region A). When an HTTP request reaches API Gateway, it invokes a Lambda function. Lambda queries a DynamoDB Global Table to look up the association between tenant UID and its designated home region. If the customer's EKS cluster resides in Region A, Lambda routes directly to local EKS. If the customer is hosted in another region (e.g., Region C), Lambda forwards the request through Transit Gateway in Region A, across Transit Gateway inter-region peering to Transit Gateway in Region C, and finally to the target EKS cluster in Region C.",
+  "graph": {
+    "name": "Nextthink Experience Multi-Region Multi-Tenant Request Routing",
+    "link": "https://www.youtube.com/watch?v=unF9tdYjqvU",
+    "categories": "Networking, Compute, Multiregion",
+    "graph_usable": true,
+    "notes": "Architecture uses Route 53 latency routing, DynamoDB Global Tables for tenant-region mapping, and inter-region Transit Gateway peering to route client traffic to tenant home EKS clusters."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "USERS",
+      "notes": "Client actors sending DNS queries and HTTP requests."
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Provides latency-based DNS routing to direct clients to the nearest regional API Gateway."
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Entry point in Region A receiving incoming HTTP requests from users."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Serverless function in Region A evaluating tenant UID to determine destination region."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Global Table storing tenant UID to AWS region mappings across all regions."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "EKS (Region A)",
+      "notes": "Kubernetes cluster hosting HTTP endpoints for tenants assigned to Region A."
+    },
+    {
+      "id": "6",
+      "service": "TransitGateway",
+      "name": "TRANSIT GW (Region A)",
+      "notes": "Transit Gateway in Region A handling cross-region inter-peering traffic."
+    },
+    {
+      "id": "7",
+      "service": "TransitGateway",
+      "name": "TRANSIT GW (Region B)",
+      "notes": "Transit Gateway in Region B for cross-region routing."
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "EKS (Region B)",
+      "notes": "Kubernetes cluster hosting HTTP endpoints in Region B."
+    },
+    {
+      "id": "9",
+      "service": "TransitGateway",
+      "name": "TRANSIT GW (Region C)",
+      "notes": "Transit Gateway in Region C receiving cross-region traffic from Region A."
+    },
+    {
+      "id": "10",
+      "service": "EKS",
+      "name": "EKS (Region C)",
+      "notes": "Kubernetes cluster hosting HTTP endpoints for tenants assigned to Region C."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Users request DNS resolution from Route 53 using latency-based routing."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route 53 returns IP address of the closest API Gateway endpoint."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends HTTP request directly to API Gateway in Region A."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda function to perform tenant region lookup."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queries DynamoDB Global Table to associate tenant UID with target region."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "If tenant belongs to Region A, Lambda routes request directly to Region A EKS cluster."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3'",
+      "type": "control",
+      "notes": "If tenant belongs to a remote region, Lambda sends request to local Transit Gateway."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Inter-region peering transfers traffic from Region A Transit Gateway to Region C Transit Gateway."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Transit Gateway in Region C delivers call to EKS cluster in Region C."
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "1. Identify all 9 active AWS component nodes from the visual diagram and audio transcript: S3 (vendor catalog storage), Step Functions (pipeline orchestration), SageMaker (custom NER ML models), DynamoDB (structured attribute store), OpenSearch/Elasticsearch (search engine), Neptune (knowledge graph), API Gateway (entry point for UI), Lambda (backend logic and pipeline execution), and Kinesis (clickstream data capture).\n2. Establish flow 0 for catalog processing: Step Functions triggers/reads unstructured data from S3, SageMaker processes catalogs and interacts with S3/Step Functions, and Step Functions saves converted structured attribute data into DynamoDB via Lambda.\n3. Establish flow 1 for stream sync: DynamoDB Streams triggers Lambda functions to push data updates to OpenSearch for search indexing and Neptune for knowledge graph triplets.\n4. Establish flow 2 for search & recommendation retrieval: API Gateway receives requests from the web UI and invokes Lambda, which queries OpenSearch for free-text search, DynamoDB for product attributes, and Neptune for graph recommendations.\n5. Establish flow 3 for real-time user feedback: Kinesis captures user navigation events and forwards them to Lambda to update interaction patterns in the database ecosystem.",
+  "graph": {
+    "name": "Novartis Buying Engine Architecture",
+    "link": "https://www.youtube.com/watch?v=vp8oPiHN4cA",
+    "categories": "Healthcare & Life Sciences, ML & AI, E-Commerce",
+    "graph_usable": true,
+    "notes": "Architecture for Novartis Buying Engine, an internal procurement portal that uses ML pipelines (SageMaker, Step Functions) and multi-database indexing (DynamoDB, Elasticsearch, Neptune) for search and recommendations."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores unstructured vendor catalogs."
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "Orchestrates machine learning pipelines for catalog structuring."
+    },
+    {
+      "id": "2",
+      "service": "SageMaker",
+      "name": "SAGEMAKER",
+      "notes": "Runs custom Named Entity Recognition (NER) models to extract product attributes."
+    },
+    {
+      "id": "3",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Acts as the search engine for free-text queries on the portal."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Primary database storing structured product attribute data."
+    },
+    {
+      "id": "5",
+      "service": "Neptune",
+      "name": "NEPTUNE",
+      "notes": "Graph database storing triplets for product recommendations."
+    },
+    {
+      "id": "6",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "API gateway interfacing the custom frontend shopping portal with backend Lambda functions."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Executes backend logic for search, product lookup, recommendations, and stream processing."
+    },
+    {
+      "id": "8",
+      "service": "Kinesis",
+      "name": "KINESIS",
+      "notes": "Captures real-time anonymized user clickstream and navigation interaction data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step Functions reads unstructured vendor catalogs stored in S3."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "SageMaker processes vendor catalogs stored in S3 using custom NER pipelines."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "SageMaker pipeline status and output events managed via Step Functions and Lambda."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Step Functions writes converted structured product attribute data into DynamoDB via Lambda."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "DynamoDB Streams triggers Lambda to sync structured product updates into Elasticsearch."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "DynamoDB Streams triggers Lambda to create/update product triplets in Neptune."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway receives frontend user interactions and invokes Lambda."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda queries Elasticsearch for user free-text searches."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda fetches product attribute details from DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda fetches product recommendations and complementary items from Neptune."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kinesis streams anonymized user navigation events into Lambda to continuously update recommendations."
+    }
+  ]
+}

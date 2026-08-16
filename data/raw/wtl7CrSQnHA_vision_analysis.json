@@ -1,0 +1,204 @@
+{
+  "step_by_step_reasoning": "1. Identifies entities from the World Model and transcript: Clinic (ThirdParty), Kafka (ThirdParty), Kinesis Data Streams, Lambda 1, Kinesis Data Firehose, Glue, Data Center (OnPremDC), S3, Kinesis Data Analytics, Lambda 2, SageMaker, Elasticsearch (OpenSearch), and User (UserCompanyAnalyst).\n2. Establishes flows:\n   - Flow 0: Near-real-time streaming pipeline from dialysis devices in Clinic -> Kafka -> Kinesis Data Streams -> Lambda 1 -> Kinesis Data Analytics -> Lambda 2 -> SageMaker (for inference) -> Lambda 2 -> Elasticsearch -> User.\n   - Flow 1: Data lake storage pipeline from Lambda 1 -> Kinesis Data Firehose -> S3.\n   - Flow 2: Static clinical feature ingestion from Data Center (EDW) -> Glue -> S3 -> Kinesis Data Analytics.\n3. Validates service types against allowed lists and maps Elasticsearch to OpenSearch, Data Center to OnPremDC, and clinical users to UserCompanyAnalyst.",
+  "graph": {
+    "name": "Fresenius Medical Care Intradialytic Hypotension Prediction Architecture",
+    "link": "https://www.youtube.com/watch?v=wtl7CrSQnHA",
+    "categories": "Healthcare Near-Real-Time Analytics Predictive Modeling",
+    "graph_usable": true,
+    "notes": "This architecture processes real-time telemetry from dialysis machines alongside static clinical data from an enterprise data warehouse to predict intradialytic hypotension incidents using SageMaker and visualize risk scores in Elasticsearch/Kibana."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Clinic",
+      "notes": "Houses dialysis devices generating patient telemetry every 10 seconds."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Kafka",
+      "notes": "Kafka topics staging real-time dialysis machine payloads."
+    },
+    {
+      "id": "2",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams",
+      "notes": "Ingests data from Kafka via Kinesis Kafka Connector."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda 1",
+      "notes": "Processes Kinesis data streams and routes payloads to analytics and data lake."
+    },
+    {
+      "id": "4",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Buffers dynamic stream payloads for ingestion into S3 big data lake."
+    },
+    {
+      "id": "5",
+      "service": "OnPremDC",
+      "name": "Data Center",
+      "notes": "Hosts enterprise data warehouse containing static clinical datasets."
+    },
+    {
+      "id": "6",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Extracts clinical datasets from EDW, builds static features, and loads to S3."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Big data lake storage for analytics, machine learning, and static clinical features."
+    },
+    {
+      "id": "8",
+      "service": "KinesisAnalytics",
+      "name": "Kinesis Data Analytics",
+      "notes": "Combines dynamic machine data and static clinical data to build full ML features in near real time."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Lambda 2",
+      "notes": "Receives compiled feature lists, invokes SageMaker for inference, and writes prediction results to Elasticsearch."
+    },
+    {
+      "id": "10",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Hosts predictive ML model for intradialytic hypotension risk scoring."
+    },
+    {
+      "id": "11",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Stores inference results and powers Kibana dashboards."
+    },
+    {
+      "id": "12",
+      "service": "UserCompanyAnalyst",
+      "name": "Clinical User",
+      "notes": "Monitors patient risk probabilities near real time via Kibana."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Transmits dialysis machine payloads to Kafka topics every 10 seconds."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Consumes machine payloads via Kinesis Kafka Connector."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Streams messages to Lambda for processing."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Forwards stream payloads to Kinesis Data Analytics."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Routes machine streams to Kinesis Data Firehose for data lake ingestion."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes stream data into S3 data lake."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Extracts clinical datasets from enterprise data warehouse."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Builds static features and loads them into S3."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Provides static clinical feature datasets to Kinesis Data Analytics."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends complete list of features to Lambda 2."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Invokes SageMaker endpoint with patient feature vector."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns intradialytic hypotension probability inference results."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Writes prediction and feature results to Elasticsearch."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Visualizes patient risk probabilities in Kibana for clinical user groups."
+    }
+  ]
+}

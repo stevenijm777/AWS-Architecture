@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1. Identified all architecture components from the visual diagram and transcript: DFD Website, CMS, Search UI, Advisor Portal, Health Information Platform, API Gateway, Kendra, Static Resource, S3 Bucket, Dynamic Resource, Lambda crawler, and DynamoDB queue/state store. 2. Pruned generic human stick figure actors (Patient and Clinician) per edge and node pruning guidelines. 3. Normalized all non-AWS or generic web components to 'ThirdParty' or 'UserConsumerWeb'. 4. Established sequential flows: Flow 0 for web portal & platform content access, Flow 1 for Kendra query processing via API Gateway to Search UI, Flow 2 for dynamic resource crawling with Lambda, DynamoDB, S3, and Kendra ingestion, and Flow 3 for Kendra built-in static resource crawling.",
+  "graph": {
+    "name": "Orion Health Digital Front Door Architecture",
+    "link": "https://www.youtube.com/watch?v=vr00Jg_G6qs",
+    "categories": "Healthcare, Intelligent Search, Web Applications",
+    "graph_usable": true,
+    "notes": "Orion Health's Digital Front Door (DFD) architecture uses Amazon Kendra for NLP-powered searching across millions of healthcare documents, combining built-in static crawling and custom Lambda dynamic web crawling via S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "DFD Website",
+      "notes": "Digital Front Door patient web portal providing 24/7 access to health information and services."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "CMS",
+      "notes": "Content Management System storing website content for DFD Website."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Search UI",
+      "notes": "Web search component embedded in the DFD Website."
+    },
+    {
+      "id": "3",
+      "service": "UserConsumerWeb",
+      "name": "Advisor Portal",
+      "notes": "Clinician web portal for managing patient records and pre-filtering care."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Health Information Platform",
+      "notes": "Backend platform containing clinician patient records."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Exposes Amazon Kendra search index APIs to the Search UI."
+    },
+    {
+      "id": "6",
+      "service": "Kendra",
+      "name": "Kendra",
+      "notes": "Amazon Kendra intelligent search index scaling across 1M+ healthcare documents with natural language processing."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Static Resource",
+      "notes": "Static web resources directly crawled by Kendra's built-in web crawler."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket storing dynamic crawled documents for Kendra ingestion."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Dynamic Resource",
+      "notes": "Dynamic healthcare websites and resources crawled by custom Lambda worker."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Custom serverless crawler fetching dynamic web resources and populating S3."
+    },
+    {
+      "id": "11",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DynamoDB database acting as a state store and queue for the Lambda crawler."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "DFD Website pulls content from CMS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Advisor Portal pulls patient records from Health Information Platform."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "DFD Website embeds Search UI component."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kendra search index provides query capabilities via API Gateway (1M+ documents)."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "API Gateway feeds Kendra search results to Search UI."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Custom Lambda crawler fetches data from dynamic web resources."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Lambda custom crawler uses DynamoDB as a queue and state manager."
+    },
+    {
+      "source": "10",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda stores extracted dynamic documents into S3 bucket."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kendra seamlessly pulls crawled dynamic documents from S3 into search index."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "Kendra built-in web crawler directly crawls static resources."
+    }
+  ]
+}

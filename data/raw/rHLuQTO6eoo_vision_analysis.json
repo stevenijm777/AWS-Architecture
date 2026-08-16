@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "1. Identify entities from the video visual topology and transcript: Mobile SDK (UserConsumerMobile), Public ELB (ELB), Private ELB (ELB), EKS Cluster (EKS), Queue (ThirdParty - NSQ running on spot instances), DynamoDB (DynamoDB), OLAP DB (ThirdParty - ClickHouse), S3 (S3), and Athena (Athena).\n2. Establish flows based on transcript and visual arrows:\n   - Flow 0 (Write Path): Mobile SDK -> Public ELB -> EKS validation microservices -> QUEUE -> EKS queue consumers -> DynamoDB, OLAP DB, S3.\n   - Flow 1 (Read Path): Internal systems -> Private ELB -> EKS microservices -> Read from DynamoDB and OLAP DB.\n   - Flow 2 (Troubleshooting/Replay): Athena queries S3 logs/metadata for root cause analysis and connects back to the analytical database/queue stream for replaying.",
+  "graph": {
+    "name": "Insider Multi-Channel Data Ingestion Architecture",
+    "link": "https://www.youtube.com/watch?v=rHLuQTO6eoo",
+    "categories": "Analytics, Data Pipelines, Microservices, Serverless",
+    "graph_usable": true,
+    "notes": "Consolidated compute architecture on Amazon EKS using spot instances and managed node groups to process 50k write rps and 100k read rps across multi-channel traffic."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile SDK",
+      "notes": "Sends end-user application event streams and telemetry."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "Public ELB",
+      "notes": "Handles ~50,000 write requests/sec incoming traffic; provisioned by EKS."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "Private ELB",
+      "notes": "Internal gateway serving product teams with ~100,000 read requests/sec."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Hosts ingestion validators, queue consumers auto-scaled by HPA on queue depth, and data retrieval APIs."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "QUEUE",
+      "notes": "NSQ messaging queue running on EC2 Spot instances acting as a buffer."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "NoSQL data store for fast key-value lookup."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "OLAP DB",
+      "notes": "ClickHouse database for real-time analytical processing and reporting."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Persists raw incoming traffic along with rich metadata for auditing and replay."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Performs ad-hoc SQL troubleshooting queries against S3 log data and aids in replaying historical traffic."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile SDK sends mobile event payload to Public ELB."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Public ELB forwards write requests to validation microservices inside EKS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS validation services perform light validation checks and push messages to NSQ QUEUE."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EKS consumers dynamically scaled by queue depth pull messages from NSQ QUEUE."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "EKS consumers persist validated operational data into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "data",
+      "notes": "EKS consumers write analytics data to ClickHouse OLAP DB."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4''",
+      "type": "data",
+      "notes": "EKS consumers dump raw traffic logs and metadata to Amazon S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Internal products query data through Private ELB into EKS microservices."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS microservices fetch operational data records from DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "EKS microservices fetch analytics data records from ClickHouse OLAP DB."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries raw traffic logs and metadata stored in S3 for troubleshooting."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Athena replay output streams back into analytics and storage target pipelines."
+    }
+  ]
+}

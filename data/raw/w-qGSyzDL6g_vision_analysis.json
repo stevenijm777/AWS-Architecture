@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Zillow's near real-time speech-to-text and machine learning inference pipeline. Audio conversations are transcribed and redacted by AWS Transcribe, then buffered by Amazon Kinesis Data Firehose (1-minute buffer) into Amazon S3. S3 bucket notifications trigger an AWS Lambda function, which submits inference jobs to AWS Batch. AWS Batch manages job queues and scales Amazon ECS compute clusters running deep learning container images stored in Amazon ECR (built and pushed via GitLab pipelines). Model predictions are published near real-time via Amazon SNS to downstream subscribers, while simultaneously buffered by another Firehose stream into an S3 Data Lake for analytics.",
+  "graph": {
+    "name": "Zillow Real-Time ML Inference Architecture from Call Transcripts",
+    "link": "https://www.youtube.com/watch?v=w-qGSyzDL6g",
+    "categories": "AI/ML, Serverless, Data Streaming",
+    "graph_usable": true,
+    "notes": "Zillow uses AWS Transcribe, Kinesis Data Firehose, S3, Lambda, AWS Batch, ECS, and SNS to perform near real-time ML inference on phone call transcripts, achieving up to 75% compute cost savings by auto-scaling compute from zero to peak traffic."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Transcribe",
+      "name": "Transcribe",
+      "notes": "Converts phone call speech to text using the Redaction API to remove PII such as names, emails, and phone numbers."
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Firehose",
+      "notes": "Buffers transcript streams for 1 minute before writing chunked files to S3."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores 1-minute transcript text files emitted by Kinesis Data Firehose."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Triggered by S3 bucket events to retrieve container info from ECR and submit jobs to AWS Batch."
+    },
+    {
+      "id": "4",
+      "service": "Batch",
+      "name": "Batch",
+      "notes": "Orchestrates ML inference job queues and container runs for transformer-based deep learning models."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Compute cluster auto-scaled up during high traffic and down to zero at night by AWS Batch."
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Delivers near real-time predictions to downstream subscriber teams within 5 minutes of call ending."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "GitLab",
+      "notes": "CI/CD pipeline combining Python code and S3 model weights to build image containers."
+    },
+    {
+      "id": "8",
+      "service": "ECR",
+      "name": "ECR",
+      "notes": "Stores container images tagged to specific GitLab commits and model weight versions."
+    },
+    {
+      "id": "9",
+      "service": "Firehose",
+      "name": "FH",
+      "notes": "Buffers model prediction streams before writing to long-term storage."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Persistent data lake for data scientists to run analytics using Spark and Presto."
+    }
+  ],
+  "edges": [
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "GitLab pipeline builds container images and pushes them to ECR."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "AWS Batch pulls model container image definitions from ECR."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Transcribe sends redacted conversation text to Kinesis Data Firehose."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Firehose outputs 1-minute transcript files into S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 file upload triggers Lambda function execution."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda submits inference job to AWS Batch job queue."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "AWS Batch dynamically scales ECS compute cluster up/down and schedules tasks."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Inference predictions from ECS tasks are published to SNS topic."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4'",
+      "type": "data",
+      "notes": "AWS Batch outputs prediction data into Firehose."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5'",
+      "type": "data",
+      "notes": "Firehose writes prediction streams into S3 Data Lake."
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Purolator's serverless package processing pipeline. It consists of an entry API Gateway routing payloads into three distinct processing paths: 1) Package intent metadata sent via an SQS queue to an INGEST Lambda function writing to RDS; 2) Package lifecycle events (pickup, delivery, disruption scans) sent via another SQS queue to an EVENT PROC Lambda function updating RDS; 3) Captured package dimension images stored in an S3 bucket triggering an IMAGE PROC Lambda function which updates RDS with image references.",
+  "graph": {
+    "name": "Purolator Package Ingestion and Event Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=wE3TmHxyRdA",
+    "categories": "E-commerce & Logistics, Serverless, Event-Driven Architecture",
+    "graph_usable": true,
+    "notes": "Architectural overview of Purolator's serverless package handling pipeline capable of processing 5 million package events daily, decoupling ingestion, lifecycle event processing, and package dimension image metadata into RDS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "GATEWAY",
+      "notes": "API Gateway fronting incoming traffic from handheld devices, external systems, and facility scanners."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "SQS Ingest",
+      "notes": "SQS queue buffering incoming package creation intent messages."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS Event",
+      "notes": "SQS queue buffering status and tracking lifecycle events (pickup, facility scans, delivery status)."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket storing images captured during redimensioning and reweighing scans."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "INGEST",
+      "notes": "Ingestion Lambda processing package creation declarations."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "EVENT PROC",
+      "notes": "Event Processing Lambda executing tailored business logic for varied package lifecycle events."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "IMAGE PROC",
+      "notes": "Image Processing Lambda handling image metadata and creating image links in RDS."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Amazon RDS database acting as the single source of truth for package status and history."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Gateway routes initial package intent metadata JSON into the SQS Ingest queue."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "SQS Ingest queue triggers INGEST Lambda."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "INGEST Lambda writes initial relational package records into RDS."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Gateway receives lifecycle event updates from driver handhelds and forwards them to SQS Event queue."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SQS Event queue triggers EVENT PROC Lambda."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EVENT PROC Lambda updates package event states in RDS."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Gateway uploads captured package scan images to S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 image creation triggers IMAGE PROC Lambda."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "IMAGE PROC Lambda writes a reference link to the S3 image into RDS."
+    }
+  ]
+}

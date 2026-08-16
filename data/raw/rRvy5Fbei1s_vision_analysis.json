@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents Dentsu's tracking and tracing system for European tobacco supply chain messages. It is divided into three sections: INGEST, PROCESSING, and REPORTING. In INGEST, API Gateway routes inbound traffic (6,000 calls/sec) to an Ingest Lambda function (.NET Core) for validation. Validated messages are saved to Ingest S3 and state is written to DynamoDB, while events are queued into SQS. In PROCESSING, SQS triggers Processing Lambda, which updates non-SQL data in DynamoDB. EC2 instances process non-SQL data from DynamoDB for cost and performance efficiency, preparing SQL structures which are placed into Processing S3. In REPORTING, Data Pipeline orchestrates COPY commands to load S3 data into Redshift fact tables, which are then rendered in QuickSight using SPICE for analytics.",
+  "graph": {
+    "name": "Dentsu Tobacco Track and Trace Architecture",
+    "link": "https://www.youtube.com/watch?v=rRvy5Fbei1s",
+    "categories": "Serverless, Data Pipeline, Analytics, Supply Chain",
+    "graph_usable": true,
+    "notes": "System handles 150 billion packs over 5 years with 6,000 requests/sec and 6MB message sizes."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Receives inbound traffic of up to 6,000 calls per second."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "LAMBDA (Ingest)",
+      "notes": "Runs .NET Core with heavy parallelism to validate 200,000 records per 6MB message."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (Ingest)",
+      "notes": "Stores validated raw incoming messages."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers validation events/messages for downstream processing."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA (Processing)",
+      "notes": "Processes queued messages in the processing pipeline."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Stores high-throughput non-SQL tracking data."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Heavy compute layer used for cost-effective transformation of non-SQL data into SQL structure."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 (Processing)",
+      "notes": "Stores transformed data ready for bulk loading into Redshift."
+    },
+    {
+      "id": "8",
+      "service": "DataPipeline",
+      "name": "DATA PIPELINE",
+      "notes": "Orchestrates fact table preparation and Redshift ingestion workflows."
+    },
+    {
+      "id": "9",
+      "service": "RedShift",
+      "name": "REDSHIFT",
+      "notes": "Columnar data warehouse containing prepared fact tables."
+    },
+    {
+      "id": "10",
+      "service": "QuickSight",
+      "name": "QUICKSIGHT",
+      "notes": "Visualizes fast fact tables using SPICE engine."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway pushes incoming API calls to Ingest Lambda."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingest Lambda writes validation state and records to DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Ingest Lambda stores raw message payloads in S3."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1''",
+      "type": "control",
+      "notes": "Ingest Lambda enqueues validation events to SQS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "SQS triggers Processing Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Processing Lambda writes processed metadata and state to DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EC2 reads non-SQL data from DynamoDB to convert it into SQL structure."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EC2 writes structured data to S3 processing bucket."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Data Pipeline triggers COPY command execution to load S3 data into Redshift."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Data is bulk loaded from S3 processing bucket into Redshift."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Redshift loads fact tables into QuickSight SPICE for dashboard visualization."
+    }
+  ]
+}

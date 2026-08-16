@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "1. Identify entities visually drawn on the board and mentioned in the transcript: DEVELOPERS (UserCompanyDeveloper), GITHUB (ThirdParty), LAMBDA (Lambda), SQS (SQS), ECS FARGATE Scanner (Fargate), EC2 (EC2), AURORA (Aurora), ECS FARGATE Compute Engine (Fargate), and ES (OpenSearch).\n2. Formulate sequential execution flows based on visual arrows and transcript explanations:\n   - Flow 0: Code push, webhook handling, queueing, code cloning, and scanning report submission.\n   - Flow 1: Backend processing where EC2 writes reports into Aurora, Compute Engine polls Aurora, processes metrics, updates Aurora, and populates Elasticsearch.\n   - Flow 2: Developers querying analysis results via EC2 UI/API.\n3. Construct nodes and edges adhering strictly to the schema, service vocabulary, sequence numbers, and flow identifiers.",
+  "graph": {
+    "name": "SonarSource - SonarCloud AutoScan Architecture",
+    "link": "https://www.youtube.com/watch?v=u3ZwnulzLnU",
+    "categories": "DevOps & CI/CD, Serverless Compute, Database",
+    "graph_usable": true,
+    "notes": "Architecture for SonarCloud AutoScan at SonarSource, processing up to 150k analyses per week using AWS Lambda, SQS, ECS Fargate, Aurora, and Elasticsearch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "DEVELOPERS",
+      "notes": "Developers who push code to GitHub and review code quality metrics via UI/API."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "GITHUB",
+      "notes": "External source code repository hosting platform."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Receives GitHub webhook events, performs triage, and creates analysis requests."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Amazon SQS queue leveling load and triggering auto-scaling for scanner Fargate tasks."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "ECS FARGATE (Scanner)",
+      "notes": "Fargate cluster that polls SQS, clones repositories from GitHub into ephemeral storage, runs code analysis, and posts reports."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "EC2 instances hosting the API to ingest raw reports and serving UI/API requests for users."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Amazon Aurora database storing raw/processed analysis reports and acting as a task buffer."
+    },
+    {
+      "id": "7",
+      "service": "Fargate",
+      "name": "ECS FARGATE (Compute Engine)",
+      "notes": "Compute Engine on ECS Fargate polling Aurora, computing code quality metrics, and updating database."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "ES",
+      "notes": "Elasticsearch cluster storing shared data formatted for fast search and optimization."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developers push code commits to the GitHub repository."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "GitHub repository sends a webhook event to AWS Lambda on code push."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda triages the event and puts an analysis request into the SQS queue."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "ECS Fargate scanner service polls SQS for incoming analysis tasks."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "ECS Fargate task clones the code directly from GitHub into ephemeral storage."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fargate scanner sends the completed raw analysis report to EC2 via API."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 API writes the incoming raw report into the Aurora database."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Compute Engine Fargate tasks poll Aurora database to extract raw reports."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Aurora delivers report payload to Compute Engine for analysis."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Compute Engine writes computed code quality metrics back to Aurora."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Compute Engine pushes optimized search data to Elasticsearch."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developers query completed code quality results via EC2 UI or API."
+    }
+  ]
+}

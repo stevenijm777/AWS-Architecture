@@ -1,0 +1,143 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">API GATEWAY</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Receives inbound traffic of up to 6,000 calls per second.</data>
+    </node>
+    <node id="1">
+      <data key="d5">LAMBDA (Ingest)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Runs .NET Core with heavy parallelism to validate 200,000 records per 6MB message.</data>
+    </node>
+    <node id="2">
+      <data key="d5">S3 (Ingest)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores validated raw incoming messages.</data>
+    </node>
+    <node id="3">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Buffers validation events/messages for downstream processing.</data>
+    </node>
+    <node id="4">
+      <data key="d5">LAMBDA (Processing)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Processes queued messages in the processing pipeline.</data>
+    </node>
+    <node id="5">
+      <data key="d5">DYNAMO DB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores high-throughput non-SQL tracking data.</data>
+    </node>
+    <node id="6">
+      <data key="d5">EC2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Heavy compute layer used for cost-effective transformation of non-SQL data into SQL structure.</data>
+    </node>
+    <node id="7">
+      <data key="d5">S3 (Processing)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores transformed data ready for bulk loading into Redshift.</data>
+    </node>
+    <node id="8">
+      <data key="d5">DATA PIPELINE</data>
+      <data key="d6">DataPipeline</data>
+      <data key="d7">Orchestrates fact table preparation and Redshift ingestion workflows.</data>
+    </node>
+    <node id="9">
+      <data key="d5">REDSHIFT</data>
+      <data key="d6">RedShift</data>
+      <data key="d7">Columnar data warehouse containing prepared fact tables.</data>
+    </node>
+    <node id="10">
+      <data key="d5">QUICKSIGHT</data>
+      <data key="d6">QuickSight</data>
+      <data key="d7">Visualizes fast fact tables using SPICE engine.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">API Gateway pushes incoming API calls to Ingest Lambda.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingest Lambda writes validation state and records to DynamoDB.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingest Lambda stores raw message payloads in S3.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingest Lambda enqueues validation events to SQS.</data>
+      <data key="d10">1''</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SQS triggers Processing Lambda.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Processing Lambda writes processed metadata and state to DynamoDB.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EC2 reads non-SQL data from DynamoDB to convert it into SQL structure.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">EC2 writes structured data to S3 processing bucket.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Data is bulk loaded from S3 processing bucket into Redshift.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Data Pipeline triggers COPY command execution to load S3 data into Redshift.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Redshift loads fact tables into QuickSight SPICE for dashboard visualization.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Dentsu Tobacco Track and Trace Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=rRvy5Fbei1s</data>
+    <data key="d2">System handles 150 billion packs over 5 years with 6,000 requests/sec and 6MB message sizes.</data>
+    <data key="d3">Serverless, Data Pipeline, Analytics, Supply Chain</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

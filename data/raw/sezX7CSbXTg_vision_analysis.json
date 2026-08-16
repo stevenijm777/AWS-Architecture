@@ -1,0 +1,98 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts Taco Bell's Order Middleware system for delivery aggregator integration. 1. Delivery Aggregator (ThirdParty) receives orders and sends an order event webhook to AWS API Gateway. 2. API Gateway (ApiGateway) directly forwards the event to Amazon EventBridge via HTTP API direct integration. 3. EventBridge (EventBridge) routes the event to AWS Step Functions to trigger the order fulfillment workflow. 4. EventBridge/Step Functions invoke AWS Lambda to execute business logic. 5. Lambda (Lambda) validates and creates the order in Taco Bell's (ThirdParty) in-store POS system. 6. Lambda sends confirmation back to the Delivery Aggregator (ThirdParty). Generic human actors (Customer, Driver) drawn on the board have been pruned per Rule 5, leaving entry points and core runtime components.",
+  "graph": {
+    "name": "Taco Bell Order Middleware Architecture",
+    "link": "https://www.youtube.com/watch?v=sezX7CSbXTg",
+    "categories": "Serverless, Integration, Event-Driven Architecture",
+    "graph_usable": true,
+    "notes": "Taco Bell's serverless Order Middleware handles order ingestion from delivery aggregators to restaurant POS systems, handling peak throughputs of 300,000 orders per hour across 7,000 stores."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Delivery Aggregator",
+      "notes": "External third-party delivery aggregator platform that receives customer orders and routes events to Taco Bell."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "AWS HTTP API Gateway configured with direct integration to EventBridge without intermediate Lambdas."
+    },
+    {
+      "id": "2",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Central event bus for routing inbound order events and driver proximity updates."
+    },
+    {
+      "id": "3",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "State machine orchestrating the order lifecycle, utilizing callback task tokens while awaiting driver arrival."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless functions executing store validation, order creation, driver callback responses, and kitchen release triggers."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Taco Bell POS",
+      "notes": "In-store POS and kitchen technology system that receives cooked order commands."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Delivery Aggregator sends new order event webhook to API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway uses direct integration to forward order event to EventBridge."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "EventBridge triggers Step Functions state machine workflow."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "EventBridge routes event to execute Lambda for order processing."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda verifies product availability and pushes order into Taco Bell store POS."
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Lambda notifies Delivery Aggregator that order has been accepted."
+    }
+  ]
+}

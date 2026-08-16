@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture represents Mahindra Electric's NEMO IoT platform on AWS. Electric vehicles send real-time telemetry over MQTT/TCP IP to an ELB, which load balances traffic to an EC2 broker. The broker pushes the message stream into Amazon Kinesis (retained for 3 days). A Lambda function picks up records from Kinesis for dual processing paths: 1) Urgent alerts (like geofencing alerts) are pushed to SNS to notify Fleet Operators in real-time. 2) Operational and telemetry data is stored in an S3 data lake. AWS Glue scans, transforms, and curates this data (e.g., driver ratings) and writes it back to S3. Amazon Athena then queries this curated S3 data to render dashboard insights and analytics for Fleet Operators.",
+  "graph": {
+    "name": "Mahindra Electric Connected Vehicle Architecture",
+    "link": "https://www.youtube.com/watch?v=wbh51O3QrE4",
+    "categories": "IoT / Telemetry Data Analytics",
+    "graph_usable": true,
+    "notes": "Architecture processes millions of e-kilometers of vehicle data for real-time alerting and long-term fleet analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerEdge",
+      "name": "Electric Vehicle",
+      "notes": "3-wheelers and 4-wheelers pushing telemetry data via MQTT / TCP IP."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Entry load balancer handling incoming vehicle connection traffic."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Broker",
+      "notes": "EC2 instance running an MQTT/TCP broker."
+    },
+    {
+      "id": "3",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Data stream retaining telemetry payloads for up to 3 days."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Processes Kinesis events; splits immediate alerts from long-term storage."
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Notification service delivering critical vehicle alerts."
+    },
+    {
+      "id": "6",
+      "service": "UserCompanyAnalyst",
+      "name": "Fleet OP",
+      "notes": "Fleet operators monitoring real-time notifications and fleet insights."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Single source of truth data lake holding terabytes of telemetry data."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Scans, curates, and transforms raw data (e.g. driver rating algorithms)."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Interactive query engine driving operational dashboards."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Telemetry sent over MQTT or TCP/IP"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes incoming load to broker"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes message payload to Kinesis stream"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Triggers Lambda for processing incoming events"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends geofencing and vehicle alert events to SNS"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Delivers real-time notifications to Fleet Operator"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Stores telemetry data into S3 data lake bucket"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue scans raw telemetry data from S3"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Glue writes curated data (e.g. driver rating reports) back to S3"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Athena queries structured and curated telemetry data in S3"
+    },
+    {
+      "source": "9",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Presents query results and dashboard insights to Fleet Operator"
+    }
+  ]
+}

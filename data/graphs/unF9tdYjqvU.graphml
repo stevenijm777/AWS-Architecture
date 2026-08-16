@@ -1,0 +1,131 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">USERS</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">Client actors sending DNS queries and HTTP requests.</data>
+    </node>
+    <node id="1">
+      <data key="d5">ROUTE 53</data>
+      <data key="d6">Route53</data>
+      <data key="d7">Provides latency-based DNS routing to direct clients to the nearest regional API Gateway.</data>
+    </node>
+    <node id="2">
+      <data key="d5">API GATEWAY</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Entry point in Region A receiving incoming HTTP requests from users.</data>
+    </node>
+    <node id="3">
+      <data key="d5">LAMBDA</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Serverless function in Region A evaluating tenant UID to determine destination region.</data>
+    </node>
+    <node id="4">
+      <data key="d5">DYNAMODB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Global Table storing tenant UID to AWS region mappings across all regions.</data>
+    </node>
+    <node id="5">
+      <data key="d5">EKS (Region A)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Kubernetes cluster hosting HTTP endpoints for tenants assigned to Region A.</data>
+    </node>
+    <node id="6">
+      <data key="d5">TRANSIT GW (Region A)</data>
+      <data key="d6">TransitGateway</data>
+      <data key="d7">Transit Gateway in Region A handling cross-region inter-peering traffic.</data>
+    </node>
+    <node id="7">
+      <data key="d5">TRANSIT GW (Region B)</data>
+      <data key="d6">TransitGateway</data>
+      <data key="d7">Transit Gateway in Region B for cross-region routing.</data>
+    </node>
+    <node id="8">
+      <data key="d5">EKS (Region B)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Kubernetes cluster hosting HTTP endpoints in Region B.</data>
+    </node>
+    <node id="9">
+      <data key="d5">TRANSIT GW (Region C)</data>
+      <data key="d6">TransitGateway</data>
+      <data key="d7">Transit Gateway in Region C receiving cross-region traffic from Region A.</data>
+    </node>
+    <node id="10">
+      <data key="d5">EKS (Region C)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Kubernetes cluster hosting HTTP endpoints for tenants assigned to Region C.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Users request DNS resolution from Route 53 using latency-based routing.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="0" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">User sends HTTP request directly to API Gateway in Region A.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Route 53 returns IP address of the closest API Gateway endpoint.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">API Gateway triggers Lambda function to perform tenant region lookup.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda queries DynamoDB Global Table to associate tenant UID with target region.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">If tenant belongs to Region A, Lambda routes request directly to Region A EKS cluster.</data>
+      <data key="d10">3</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">If tenant belongs to a remote region, Lambda sends request to local Transit Gateway.</data>
+      <data key="d10">3'</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Inter-region peering transfers traffic from Region A Transit Gateway to Region C Transit Gateway.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="10" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Transit Gateway in Region C delivers call to EKS cluster in Region C.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Nextthink Experience Multi-Region Multi-Tenant Request Routing</data>
+    <data key="d1">https://www.youtube.com/watch?v=unF9tdYjqvU</data>
+    <data key="d2">Architecture uses Route 53 latency routing, DynamoDB Global Tables for tenant-region mapping, and inter-region Transit Gateway peering to route client traffic to tenant home EKS clusters.</data>
+    <data key="d3">Networking, Compute, Multiregion</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

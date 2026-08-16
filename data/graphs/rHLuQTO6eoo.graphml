@@ -1,0 +1,139 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Mobile SDK</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">Sends end-user application event streams and telemetry.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Public ELB</data>
+      <data key="d6">ELB</data>
+      <data key="d7">Handles ~50,000 write requests/sec incoming traffic; provisioned by EKS.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Private ELB</data>
+      <data key="d6">ELB</data>
+      <data key="d7">Internal gateway serving product teams with ~100,000 read requests/sec.</data>
+    </node>
+    <node id="3">
+      <data key="d5">EKS</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Hosts ingestion validators, queue consumers auto-scaled by HPA on queue depth, and data retrieval APIs.</data>
+    </node>
+    <node id="4">
+      <data key="d5">QUEUE</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">NSQ messaging queue running on EC2 Spot instances acting as a buffer.</data>
+    </node>
+    <node id="5">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">NoSQL data store for fast key-value lookup.</data>
+    </node>
+    <node id="6">
+      <data key="d5">OLAP DB</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">ClickHouse database for real-time analytical processing and reporting.</data>
+    </node>
+    <node id="7">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Persists raw incoming traffic along with rich metadata for auditing and replay.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Athena</data>
+      <data key="d6">Athena</data>
+      <data key="d7">Performs ad-hoc SQL troubleshooting queries against S3 log data and aids in replaying historical traffic.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Mobile SDK sends mobile event payload to Public ELB.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Public ELB forwards write requests to validation microservices inside EKS.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Internal products query data through Private ELB into EKS microservices.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EKS validation services perform light validation checks and push messages to NSQ QUEUE.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EKS consumers persist validated operational data into DynamoDB.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="1">
+      <data key="d8">1</data>
+      <data key="d9">EKS microservices fetch operational data records from DynamoDB.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EKS consumers write analytics data to ClickHouse OLAP DB.</data>
+      <data key="d10">4'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="6" id="1">
+      <data key="d8">1</data>
+      <data key="d9">EKS microservices fetch analytics data records from ClickHouse OLAP DB.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EKS consumers dump raw traffic logs and metadata to Amazon S3.</data>
+      <data key="d10">4''</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EKS consumers dynamically scaled by queue depth pull messages from NSQ QUEUE.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Athena queries raw traffic logs and metadata stored in S3 for troubleshooting.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Athena replay output streams back into analytics and storage target pipelines.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Insider Multi-Channel Data Ingestion Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=rHLuQTO6eoo</data>
+    <data key="d2">Consolidated compute architecture on Amazon EKS using spot instances and managed node groups to process 50k write rps and 100k read rps across multi-channel traffic.</data>
+    <data key="d3">Analytics, Data Pipelines, Microservices, Serverless</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
