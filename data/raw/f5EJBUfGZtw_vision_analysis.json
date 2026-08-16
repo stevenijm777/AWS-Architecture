@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identify nodes from visual evidence and transcript:\n   - External input: 'Expedia Group' (ThirdParty).\n   - Batch processing layer: 'S3' (data lake bucket), 'EC2' (custom Parquet/bookmark transformation host), 'Glue' (ETL service), and 'S3 (CSV)' (destination bucket formatted for Salesforce).\n   - Real-time processing layer: 'ECS' (running Kafka consumer), 'Aurora' (MySQL engine for aggregation/sorting), 'Lambda' (processing logic), 'SQS' (queueing messages), and destination 'Salesforce' (Einstein Analytics reporting engine).\n2. Construct logical flows:\n   - Flow 0 (Batch pipeline): Expedia Group -> S3 ingestion bucket -> EC2 / Glue (parallel branches) -> S3 (CSV) output bucket.\n   - Flow 1 (Real-time stream): ECS -> Aurora -> Lambda -> SQS -> Salesforce.\n3. Validate attributes against schemas and allowed vocabulary list.",
+  "graph": {
+    "name": "Expedia Group Integration with Salesforce Einstein Analytics",
+    "link": "https://www.youtube.com/watch?v=f5EJBUfGZtw",
+    "categories": "Batch Processing, Real-Time Streaming, Data Lake & Analytics",
+    "graph_usable": true,
+    "notes": "Architecture processes 500 to 800 million rows per day via batch processing (top layer) and 5 to 10 million events per day via real-time streaming (bottom layer) to populate Salesforce Einstein Analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Expedia Group",
+      "notes": "Source applications (on-prem and cloud) providing booking and partner data in diverse formats (Parquet, CSV, JSON)."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Data ingestion layer / data lake bucket receiving daily batch data from Expedia Group applications."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Handles custom processing and transformations (e.g., Parquet file bookmarking) where Glue had limitations."
+    },
+    {
+      "id": "3",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Serverless ETL service used to transform heterogeneous source data into a unified structure."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (CSV)",
+      "notes": "Output bucket storing transformed CSV files suitable for Salesforce Einstein Analytics."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs Kafka consumer tasks processing 5 to 10 million real-time events per day."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "MySQL-compatible database engine used for aggregating and sorting real-time streaming data."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Executes data processing functions and prepares queueable messages."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Message queue holding event payloads before final ingestion into Salesforce."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Salesforce",
+      "notes": "Salesforce Einstein Analytics reporting engine destination providing business insights."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Expedia applications ingest heterogeneous batch data daily into S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 data routed to EC2 for Parquet and custom transformations."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "S3 data routed to AWS Glue for standard ETL transformations."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EC2 outputs converted CSV data into destination S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Glue writes transformed CSV data into destination S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "ECS Kafka consumer processes streaming events and writes to Aurora."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Aggregated data from Aurora is processed by Lambda."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queues formatted messages into SQS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Messages from SQS are pushed into Salesforce Einstein Analytics."
+    }
+  ]
+}

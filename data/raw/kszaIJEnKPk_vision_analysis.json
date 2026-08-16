@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. Visual Analysis & Node Inventory: Identified primary architectural components on the whiteboard including Mobile App (UserConsumerMobile), AppSync, Lambda (API business logic), DynamoDB (central data store), ResMed Device (ThirdParty IoT device), Kinesis, Stream Processing Lambda (drawn as Greek letter λ), SNS, CloudFront, and S3. Generic human actor 'User' was pruned per pruning rules in favor of client entrypoint Mobile App.\n2. Service Mapping & Vocabulary Rules: Normalized services against the valid vocabulary list. ResMed Device mapped to 'ThirdParty'. AppSync, Lambda, DynamoDB, Kinesis, SNS, CloudFront, and S3 mapped to their exact AWS service names. Patient mobile device mapped to 'UserConsumerMobile'.\n3. Note Enrichment: Integrated transcript metrics such as 60 million daily Lambda invocations, 4,000 peak concurrent Lambdas, 30 countries/20 languages localization support, and sub-10 second end-to-end data processing latency.\n4. Edge Routing & Flow Identification: Structured architecture into 4 distinct workflows:\n- Flow 0: Mobile GraphQL request/response via AppSync, VTL routing to primary Lambda, and DynamoDB storage.\n- Flow 1: ResMed IoT medical device publishing real-time telemetry into Kinesis, which writes into DynamoDB.\n- Flow 2: DynamoDB Streams triggering Stream Processing Lambda to evaluate sleep metrics and dispatch alerts via SNS to Mobile App.\n- Flow 3: Mobile App retrieving localized static content from S3 delivered through CloudFront.",
+  "graph": {
+    "name": "ResMed MyAir Serverless Architecture",
+    "link": "https://www.youtube.com/watch?v=kszaIJEnKPk",
+    "categories": "Healthcare, IoT, Serverless, Mobile Backend",
+    "graph_usable": true,
+    "notes": "Serverless architecture for ResMed's MyAir patient engagement platform, handling IoT sleep therapy data from medical devices and mobile application users."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App",
+      "notes": "Patient engagement application (MyAir) supporting 30 countries and 20 languages."
+    },
+    {
+      "id": "1",
+      "service": "AppSync",
+      "name": "AppSync",
+      "notes": "Managed GraphQL server providing synchronization infrastructure out of the box."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Executes business logic with ~60 million daily invocations and peak concurrency of 4,000 instances."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Centralized database storing patient engagement data and real-time IoT telemetry."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "ResMed Device",
+      "notes": "Medical IoT device capturing sleep apnea therapy data."
+    },
+    {
+      "id": "5",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Real-time streaming ingestion pipeline for IoT medical device data."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Stream Processing Lambda",
+      "notes": "Triggered by DynamoDB Streams to analyze sleep performance data and detect anomalies."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Publishes push notifications and emails for sleep analysis alerts."
+    },
+    {
+      "id": "8",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN serving static application content, utilizing edge routing logic to reduce assets by 10x."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores static content including videos, images, and localized assets."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile App communicates over GraphQL to AppSync."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "AppSync routes requests to Lambda via VTL (Velocity Translation Language)."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda executes business logic and performs reads/writes on DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "AppSync synchronizes and returns GraphQL response to Mobile App."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "ResMed IoT device publishes real-time therapy data to Kinesis."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis streams transformed data into DynamoDB via Lambda polling and statistical analysis."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "DynamoDB Streams triggers Lambda when new data arrives."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stream Processing Lambda interrogates sleep data and sends notification payload to SNS."
+    },
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "SNS sends push notifications/emails to user's mobile app."
+    },
+    {
+      "source": "0",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile App requests static content (videos, images, localized assets) from CloudFront."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront retrieves requested static assets from S3 bucket."
+    }
+  ]
+}

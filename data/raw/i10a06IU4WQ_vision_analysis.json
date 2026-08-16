@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Pinterest's data access authorization architecture using an internal Token Vending Service and AWS STS. Users authenticate via Kerberos to big data services running on EC2 instances (such as Hadoop). The EC2 credentials provider invokes the Token Vending Service (ThirdParty service). The Token Vending Service looks up user groups in LDAP and translates them into AWS IAM Managed Policies (MP1 and MP2). It then calls AWS STS AssumeRole, passing the base IAM role and managed policies as session policies to generate scoped temporary credentials. These scoped tokens govern access to specific target Amazon S3 buckets.",
+  "graph": {
+    "name": "Pinterest Dynamic S3 Data Access via STS Token Vending",
+    "link": "https://www.youtube.com/watch?v=i10a06IU4WQ",
+    "categories": "Security, Big Data, Access Control",
+    "graph_usable": true,
+    "notes": "Pinterest architecture using a custom Token Vending Service on EC2 with AWS STS and IAM Managed Policies to dynamically control access to S3 buckets based on internal LDAP groups."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "User",
+      "notes": "Internal user or service account authenticating to big data clusters."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "EC2 instances hosting data engineering services like Hadoop, Spark, and Presto with custom credential provider."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "TOKEN VENDING",
+      "notes": "Pinterest Token Vending Service that bridges internal LDAP groups with AWS IAM session policies."
+    },
+    {
+      "id": "3",
+      "service": "STS",
+      "name": "STS",
+      "notes": "AWS Security Token Service used to generate scoped temporary access credentials via AssumeRole."
+    },
+    {
+      "id": "4",
+      "service": "IAM",
+      "name": "MP1",
+      "notes": "Managed Policy 1 defining session permissions for the first dataset."
+    },
+    {
+      "id": "5",
+      "service": "IAM",
+      "name": "MP2",
+      "notes": "Managed Policy 2 defining session permissions for the second dataset."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 (Top)",
+      "notes": "Amazon S3 bucket storing dataset 1."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 (Bottom)",
+      "notes": "Amazon S3 bucket storing dataset 2."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User authenticates to EC2 Hadoop cluster using Kerberos."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "EC2 credentials provider requests scoped tokens from Token Vending Service."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Token Vending calls AssumeRole on STS passing base IAM role and managed policies."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Token Vending maps user LDAP groups to Managed Policy 1."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Token Vending maps user LDAP groups to Managed Policy 2."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Base IAM role permissions intersect with Managed Policy 1."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "EC2 uses STS temporary credentials constrained by Managed Policy 2."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Managed Policy 1 permits access to the top S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Managed Policy 2 permits access to the bottom S3 bucket."
+    }
+  ]
+}

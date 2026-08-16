@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "The architecture shows a B2B multi-tenant construction site monitoring and image obfuscation pipeline built on AWS serverless services. 1. Cameras from construction sites globally upload images via SFTP (AWS Transfer Family). 2. AWS Transfer Family stores these images into an Ingestion S3 Bucket. 3. S3 triggers an Instant Lambda function which calls Amazon Rekognition to immediately identify and blur faces and license plates. 4. Parallel/Batch processing runs nightly via a Batch Lambda function invoking Amazon Rekognition Custom Labels (trained on construction workers with helmets/vests). 5. Processed images from both instant and batch workflows are saved into a Platform S3 Bucket. 6. Tenants access the obfuscated images and construction time-lapses via a Web Application hosted on/connected to the Platform S3 bucket.",
+  "graph": {
+    "name": "Global DataNet - Construction Site Image Obfuscation Architecture",
+    "link": "https://www.youtube.com/watch?v=aY-wF9g0qkM",
+    "categories": "AI/ML, Serverless, Storage",
+    "graph_usable": true,
+    "notes": "Serverless multi-tenant architecture ingesting ~86,000 images per day worldwide, achieving a 47% cost reduction compared to on-premise solutions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerCamera",
+      "name": "Camera",
+      "notes": "Uploads ~86,000 images per day from construction sites worldwide"
+    },
+    {
+      "id": "1",
+      "service": "TransferFamily",
+      "name": "SFTP",
+      "notes": "AWS Transfer Family SFTP endpoint receiving camera image uploads"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Ingestion S3 Bucket",
+      "notes": "Initial ingestion storage bucket for raw construction site images"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Instant Lambda",
+      "notes": "Triggers immediately upon image upload for real-time processing"
+    },
+    {
+      "id": "4",
+      "service": "Rekognition",
+      "name": "Instant Rekognition",
+      "notes": "Detects coordinates of persons and license plates to blur them immediately"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Batch Lambda",
+      "notes": "Runs nightly batch jobs for specialized worker image processing"
+    },
+    {
+      "id": "6",
+      "service": "Rekognition",
+      "name": "Rekognition Custom Labels",
+      "notes": "Custom ML model trained to accurately detect construction workers wearing helmets and hi-vis vests"
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Platform S3 Bucket",
+      "notes": "Stores processed/blurred images and serves tenant platform frontend"
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWeb",
+      "name": "Web Application",
+      "notes": "Tenant website platform for viewing construction progress, time lapse, and historical archive"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Camera uploads site photos to SFTP endpoint"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "SFTP transfers received images into the ingestion S3 bucket"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 image creation event triggers Instant Lambda function"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Instant Lambda invokes Rekognition to locate faces and license plates"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Real-time blurred images stored into platform S3 bucket"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Batch Lambda reads images from ingestion S3 bucket on a nightly schedule"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Batch Lambda passes images to Rekognition Custom Labels model"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Worker-blurred processed images saved to platform S3 bucket"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Platform S3 website serves project imagery to tenant web application"
+    }
+  ]
+}

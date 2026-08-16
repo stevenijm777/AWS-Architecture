@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identify the overall system context: Cookpad's security log monitoring architecture divided into Collection, Retention, and Analysis phases.\n2. Collection phase nodes: EC2 (0), Firehose (1), CloudTrail (2), ThirdParty service (3), and Lambda Collection (4).\n3. Retention phase node: Central S3 bucket (5) storing ~330M logs / 270GB monthly.\n4. Analysis phase nodes: Lambda Top (6) for real-time alerting, Lambda Middle (7) for feeding search engine, OpenSearch/Elasticsearch (8) for log indexing, and Athena (9) for ad-hoc queries.\n5. Map edges directly from the visual diagram and audio transcript to model data and control flows.",
+  "graph": {
+    "name": "Cookpad Log Collection, Retention, and Analysis Architecture",
+    "link": "https://www.youtube.com/watch?v=qN5-v4NlKac",
+    "categories": "Security Monitoring & Log Analytics",
+    "graph_usable": true,
+    "notes": "Serverless security log monitoring architecture handling 330 million logs (270 GB) per month at extremely low cost (~$2/month)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Sends syslog messages from instances to Kinesis Data Firehose."
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Firehose",
+      "notes": "Streams syslog messages directly into Amazon S3."
+    },
+    {
+      "id": "2",
+      "service": "CloudTrail",
+      "name": "CloudTrail",
+      "notes": "Delivers AWS API and management audit logs directly into Amazon S3."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "3rd Party Service",
+      "notes": "External third-party services generating log events."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda Collection",
+      "notes": "Transforms third-party log data before storing it in S3."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central log retention store with S3 Lifecycle policies for cost optimization (~330M logs / 270 GB)."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda Analysis Top",
+      "notes": "Performs near real-time analysis and sends alerts (e.g., Slack notifications)."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda Analysis Middle",
+      "notes": "Processes S3 logs for ingestion into search and visualization tools."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Indexes log data for search capabilities via Graylog / Elasticsearch."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Performs direct ad-hoc SQL queries on long-term log data stored in S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 sends syslogs to Firehose."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Firehose writes log stream to S3."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudTrail delivers audit logs directly to S3."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Third-party service triggers Lambda function for log ingestion."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda Collection writes transformed third-party logs to S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "New log object in S3 triggers Lambda for real-time alert processing."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "control",
+      "notes": "New log object in S3 triggers Lambda for indexing."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda forwards log data to Elasticsearch/OpenSearch."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries raw log data stored in S3."
+    }
+  ]
+}

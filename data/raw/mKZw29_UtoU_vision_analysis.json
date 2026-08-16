@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The architecture process begins with external parking sensors sending real-time occupancy data to Amazon Kinesis Data Firehose. Firehose triggers an ingestion Lambda function every minute, which cleans and exports historical parquet data to Amazon S3 and updates real-time occupancy state in Amazon DynamoDB (configured with a 1-week TTL). SageMaker consumes historical data from S3 for machine learning model training. AWS Step Functions orchestrates model training and endpoint deployments in SageMaker as well as triggering related Lambda tasks. AWS CodeCommit maintains code repositories and CloudFormation templates, triggering deployment pipelines to update both the ingestion and API Lambda functions. User requests arrive via Amazon API Gateway to an API Lambda function, which queries SageMaker endpoints for future occupancy predictions or DynamoDB for real-time occupancy data.",
+  "graph": {
+    "name": "Meriad Parking Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=mKZw29_UtoU",
+    "categories": "AI/ML, Serverless, Big Data",
+    "graph_usable": true,
+    "notes": "Architecture designed for IEM Mobilità to process real-time parking data, store historical records, train SageMaker forecasting models, and serve API requests."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Parking",
+      "notes": "External parking sensors sending occupancy data"
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Ingests real-time streaming data from parking systems"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda (Ingestion)",
+      "notes": "Triggers every minute to clean data, write to DynamoDB, and export to S3"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores historical parquet data for model training"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "Dynamo DB",
+      "notes": "Stores real-time occupancy data with a 1-week TTL"
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Trains ML models and hosts endpoints for long-term parking occupancy predictions"
+    },
+    {
+      "id": "6",
+      "service": "StepFunctions",
+      "name": "Step Function",
+      "notes": "Orchestrates ML pipeline steps including data prep, model training, and endpoint deployment"
+    },
+    {
+      "id": "7",
+      "service": "CodeCommit",
+      "name": "Code Commit",
+      "notes": "Stores IaC CloudFormation templates, Lambda code, and SageMaker algorithms"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda (API)",
+      "notes": "Processes API requests from API Gateway by querying SageMaker endpoints or DynamoDB"
+    },
+    {
+      "id": "9",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Entry point for public end users requesting occupancy predictions or real-time state"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Parking systems send occupancy data to Kinesis Firehose"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Kinesis Firehose triggers ingestion Lambda every minute"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ingestion Lambda exports historical parquet data to S3"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Ingestion Lambda writes real-time occupancy state to DynamoDB"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "SageMaker consumes historical data from S3 for training ML models"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions triggers model training and endpoint deployment in SageMaker"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Step Functions triggers data cleaning and preparation Lambda functions"
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "CodeCommit deploys updated code and infrastructure updates to ingestion Lambda"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "CodeCommit deploys updated code and infrastructure updates to API Lambda"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway routes user requests to API Lambda"
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Lambda queries SageMaker endpoint for forecasting predictions"
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1'",
+      "type": "data",
+      "notes": "API Lambda retrieves real-time occupancy data from DynamoDB"
+    }
+  ]
+}

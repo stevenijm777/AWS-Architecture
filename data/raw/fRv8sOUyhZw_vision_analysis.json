@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "The architecture details a migration and synchronization pipeline from an legacy on-premises IBM DB2 monolith database to AWS microservices (DynamoDB and Elasticsearch). The architecture is divided into two distinct flows: 1) Initial Batch Migration (Flow 0) where AWS DMS copies data from IBM DB2 to S3, an ephemeral Amazon EMR cluster running Spark cleanses and transforms the data, and writes the results directly into DynamoDB and Elasticsearch. 2) Real-time Change Data Capture Sync (Flow 1) where change events from DB2 are streamed into Amazon Kinesis, consumed by Lambda 1 to update DynamoDB, and then propagated via DynamoDB Streams to Lambda 2 which keeps Elasticsearch updated in near real-time.",
+  "graph": {
+    "name": "Euler Hermes Database Migration and Real-Time Sync Architecture",
+    "link": "https://www.youtube.com/watch?v=fRv8sOUyhZw",
+    "categories": "Database Migration, Data Analytics, Serverless Real-Time Streaming",
+    "graph_usable": true,
+    "notes": "Architecture designed for transforming a legacy monolith on IBM DB2 into AWS microservices. Uses AWS DMS for initial batch full dump to S3 and EMR Spark ETL into DynamoDB and Elasticsearch. Real-time updates are streamed via Kinesis and Lambda, and synced to Elasticsearch via DynamoDB Streams."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "IBM DB2",
+      "notes": "On-premises legacy source database."
+    },
+    {
+      "id": "1",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "AWS Database Migration Service used for batch data extraction and CDC streaming."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket holding initial full dataset export."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Ephemeral EMR cluster running Spark ETL job for data cleansing and validation."
+    },
+    {
+      "id": "4",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Kinesis data stream receiving commit log event changes from DMS."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda 1",
+      "notes": "Node.js Lambda function consuming CDC events from Kinesis stream."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Primary target key-value database serving microservices."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda 2",
+      "notes": "Lambda function triggered by DynamoDB Streams to update search indexes."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Search database powering low-latency search queries."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "DMS extracts full batch data from IBM DB2 database."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "DMS writes raw initial batch files into Amazon S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ephemeral EMR cluster reads full load batch data from S3."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Spark job cleanses data and writes initial dataset into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "Spark job writes cleansed search data directly into Elasticsearch."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Commit log change events from IBM DB2 are streamed into Kinesis."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda 1 subscribes to and processes real-time change events from Kinesis stream."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda 1 transforms and applies real-time data updates into DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "DynamoDB Streams triggers Lambda 2 upon updates in DynamoDB table."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda 2 synchronizes real-time updates to Elasticsearch indexes."
+    }
+  ]
+}

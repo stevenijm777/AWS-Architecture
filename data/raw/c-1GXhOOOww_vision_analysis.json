@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "1. Identified all architecture components from the visual diagram and transcript: actors (Tenant/Customer, Third-Party Reseller), global edge distribution (CloudFront CDN), storage (S3), API management (API Gateway, AppSync), serverless compute (Lambda), database (DynamoDB), and messaging (SQS).\n2. Verified all node services against the valid vocabulary list.\n3. Defined flows:\n- Flow 0: Onboarding / Tenant Setup and async processing via CDN, AppSync, Lambda, SQS, and DynamoDB.\n- Flow 1: Third-Party Reseller REST API requests routed through CloudFront to API Gateway and AppSync.\n- Flow 2: Static asset fetching from S3 bucket via CloudFront CDN.\n- Flow 3: AppSync direct DynamoDB pipeline resolvers.",
+  "graph": {
+    "name": "Anchor Multi-Tenant Ticketing Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=c-1GXhOOOww",
+    "categories": "Serverless, Multi-Tenancy, E-Commerce",
+    "graph_usable": true,
+    "notes": "Anchor's serverless multi-tenant platform handles ticketing and event check-ins across multiple channels including mobile, web, and third-party OTAs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Tenant / Customer",
+      "notes": "End users and tenants accessing web and mobile experiences."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerAPI",
+      "name": "Third-Party Reseller",
+      "notes": "OTAs such as Expedia, Viator, and GetYourGuide making reseller requests."
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CDN",
+      "notes": "Global entry point routing traffic to static assets or API layer."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Hosts static website assets, images, and event descriptions."
+    },
+    {
+      "id": "4",
+      "service": "AppSync",
+      "name": "APPSYNC",
+      "notes": "GraphQL gateway for dynamic content and data manipulation."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "REST API gateway exposing endpoints for third-party reseller OTAs."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Serverless compute running subroutines for ticketing, check-ins, and fan-out tasks."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Multi-tenant database partitioned by tenant keys."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue for async task processing, notifications, and post-experience follow-ups."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Tenant/Customer initiates onboarding or dynamic requests via CDN."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CDN forwards GraphQL requests to AppSync."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "AppSync triggers Lambda resolvers to fan out subroutines."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda places messages into SQS for async processing."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "SQS triggers Lambda for asynchronous reprocessing."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda interacts with DynamoDB to complete tenant configuration or booking."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Third-party reseller calls REST API endpoint via CDN."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "CDN forwards reseller API traffic to API Gateway."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "API Gateway routes requests into AppSync GraphQL pipeline."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "CDN requests static web assets from S3."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 returns static assets back to CDN to serve clients."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "AppSync directly queries DynamoDB using pipeline resolvers."
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents Fyber's real-time and batch data processing pipeline for ad events. 1. Ad request events stream into Kafka and are ingested by a Spark Streaming application that writes raw Parquet files to an S3 Raw Bucket. 2. Apache Airflow triggers Spark jobs running on an Amazon EKS cluster (utilizing Spotinst for spot auto-scaling), which reads raw data from S3 and writes aggregated data into both an S3 Aggregated Bucket and Cassandra. 3. Airflow also triggers EMR to process data from the S3 Aggregated Bucket and load it into Druid for multidimensional analytics. 4. Presto queries snapshot data directly from the S3 Aggregated Bucket. 5. Finally, Cassandra, Presto, and Druid feed into the Dashboard UI to serve various query workloads (fast historical metrics, user snapshot analysis, and multi-dimensional slicing/dicing).",
+  "graph": {
+    "name": "Fyber Data Processing and Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=lHM96P5kP2k",
+    "categories": "Data Processing, Analytics, Containers",
+    "graph_usable": true,
+    "notes": "Fyber processes ~15 million ad events per second. Migrating Spark workloads from Hadoop/Yarn to EKS with Spotinst achieved ~90% cost savings."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Kafka",
+      "notes": "Ingests 15 million ad request events per second."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Spark Streaming",
+      "notes": "Reads real-time data from Kafka and writes Parquet to S3."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Raw Bucket",
+      "notes": "Stores raw event data in Parquet format."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Spark EKS Spotinst",
+      "notes": "Runs Spark jobs on Kubernetes with Spotinst spot instance auto-scaling."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Airflow",
+      "notes": "Orchestrates and triggers Spark on EKS and EMR workflows."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Aggregated Bucket",
+      "notes": "Stores aggregated event data."
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Reads aggregated data from S3 and populates Druid."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Druid",
+      "notes": "Powers 50+ dimensional ad performance analysis."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Cassandra",
+      "notes": "Stores high-speed historical aggregated metrics, returning queries in milliseconds."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Presto",
+      "notes": "Database query engine executing fast snapshot queries on S3."
+    },
+    {
+      "id": "10",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Dashboard UI",
+      "notes": "Analytics interface displaying visualizations powered by Cassandra, Presto, and Druid."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kafka streams ad request events into Spark Streaming."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Spark Streaming writes raw Parquet files to S3."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Airflow schedules and triggers Spark jobs on EKS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Spark on EKS reads raw event data from S3."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Spark on EKS writes aggregated data back into S3."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Spark on EKS writes metrics into Cassandra."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Airflow triggers EMR processing jobs."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR reads aggregated data from S3."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR loads processed multidimensional data into Druid."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Presto queries aggregated snapshot data directly from S3."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Cassandra serves fast metric lookups to Dashboard UI."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Presto serves snapshot queries to Dashboard UI."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1''",
+      "type": "data",
+      "notes": "Druid feeds multidimensional analytics to Dashboard UI."
+    }
+  ]
+}

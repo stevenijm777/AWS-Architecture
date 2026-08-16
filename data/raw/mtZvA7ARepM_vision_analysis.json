@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The architecture diagram presents a CQRS (Command Query Responsibility Segregation) pattern implemented on AWS by Temenos. Requests enter through AWS API Gateway. Transaction processing follows the command path via Elastic Load Balancing (ELB) to Fargate containers, persisting transactional state to Amazon RDS. Fargate concurrently emits event streams to Amazon Kinesis, which triggers an Event Processor Lambda to update a read-optimized query model in Amazon DynamoDB. Read query traffic is routed directly from API Gateway to a Query Lambda, which reads from DynamoDB.",
+  "graph": {
+    "name": "Temenos Serverless & Container Banking Architecture",
+    "link": "https://www.youtube.com/watch?v=mtZvA7ARepM",
+    "categories": "Banking Software, CQRS, Serverless, Microservices",
+    "graph_usable": true,
+    "notes": "Architecture processes up to 50,000 transactions/second split between OLTP updates in RDS and CQRS read offloading in DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Central entry point routing incoming requests to either transaction write paths or query read paths."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Balances transactional write traffic to backend container images in Fargate."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "FARGATE",
+      "notes": "Hosts core transaction processing logic containers with automated elastic scaling."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database performing OLTP operations for transactional persistence."
+    },
+    {
+      "id": "4",
+      "service": "KinesisDataStream",
+      "name": "KINESIS",
+      "notes": "Streaming data service receiving business and data events emitted by Fargate."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (Event Processor)",
+      "notes": "Processes Kinesis event streams to build and update the query-optimized read model."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "NoSQL database storing query-optimized read models to offload query load from RDS."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Query)",
+      "notes": "Executes rapid read queries directly against the optimized model in DynamoDB."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway routes write/transaction requests to the Elastic Load Balancer."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ELB forwards request traffic to container tasks running on Fargate."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fargate container logic persists transactional data directly into RDS."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fargate emits business/data events onto the Kinesis event stream."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Kinesis stream triggers the Event Processor Lambda function."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Event Processor Lambda writes the query-optimized view into DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway routes query workload requests directly to Query Lambda."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Query Lambda interrogates DynamoDB for high-speed query responses."
+    }
+  ]
+}

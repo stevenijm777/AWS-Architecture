@@ -1,0 +1,212 @@
+{
+  "step_by_step_reasoning": "1. Transcribe visual elements and audio context: The architecture demonstrates DDoS mitigation and traffic routing for William Hill. CloudFront serves as the entry point paired with Shield Advanced and AWS WAF. Route 53 directs traffic split between ELB (non-sensitive traffic) and an EC2 instance hosting F5 Big-IP (sensitive traffic).\n2. Downstream routing from ELB and EC2 connects both via Direct Connect (DX) to On-Premises application servers and via VPC Peering to AWS channel VPCs.\n3. Continuous improvement feedback loop: CloudFront logs traffic to an S3 bucket, which is pulled by On-Premises analysis servers. Flagged IPs are written to DynamoDB with expiration dates, triggering a Lambda function to dynamically update WAF filter rules.\n4. Map all services strictly to valid vocabulary terms and structure nodes and sequential flow edges accordingly. Ensure zero control characters or formatting syntax errors.",
+  "graph": {
+    "name": "William Hill Multi-Layer DDoS Mitigation and Routing Architecture",
+    "link": "https://www.youtube.com/watch?v=d0EE1HuZSEU",
+    "categories": "DDoS Mitigation, Hybrid Cloud, Dynamic Threat Protection",
+    "graph_usable": true,
+    "notes": "Architecture showcases edge protection using CloudFront, AWS WAF, and Shield Advanced, coupled with on-premises log analysis and dynamic DynamoDB/Lambda WAF rule updates."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Front-end CDN mitigating DDoS at edge."
+    },
+    {
+      "id": "1",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "AWS Web Application Firewall creating filters for layer 7 attacks."
+    },
+    {
+      "id": "2",
+      "service": "ShieldAdvanced",
+      "name": "Shield Advanced",
+      "notes": "Mitigates layer 3/4 DDoS attacks (SYN/ACK floods) and basic layer 7 floods."
+    },
+    {
+      "id": "3",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "Hosted zones routing traffic based on sensitivity."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores CloudFront access logs."
+    },
+    {
+      "id": "5",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Handles non-sensitive application traffic inside main VPC."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Hosts F5 Big-IP WAF for extra inspection of sensitive traffic inside main VPC."
+    },
+    {
+      "id": "7",
+      "service": "DirectConnect",
+      "name": "DX",
+      "notes": "AWS Direct Connect providing low-latency link to on-premises data center."
+    },
+    {
+      "id": "8",
+      "service": "VPCPeering",
+      "name": "VPC Peering",
+      "notes": "Connects main VPC to application channel VPCs."
+    },
+    {
+      "id": "9",
+      "service": "OnPremDC",
+      "name": "ON-PREM",
+      "notes": "Hosts legacy application servers and threat analytics engines."
+    },
+    {
+      "id": "10",
+      "service": "VPC",
+      "name": "VPC",
+      "notes": "Target channel account VPCs hosting application backends."
+    },
+    {
+      "id": "11",
+      "service": "DynamoDB",
+      "name": "Dynamo DB",
+      "notes": "Stores malicious IP addresses with expiration TTL."
+    },
+    {
+      "id": "12",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Inspects DynamoDB for new/expired IPs and updates WAF rules."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudFront evaluates incoming traffic against WAF rules."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront forwards validated traffic to Route 53."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Route 53 routes non-sensitive traffic to ELB."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Route 53 routes sensitive traffic to EC2 (F5 Big-IP)."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "ELB forwards traffic towards Direct Connect for on-premises backend."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "ELB forwards traffic via VPC Peering to channel VPCs."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3''",
+      "type": "data",
+      "notes": "EC2 (F5 Big-IP) forwards inspected traffic towards Direct Connect."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3'''",
+      "type": "data",
+      "notes": "EC2 (F5 Big-IP) forwards inspected traffic via VPC Peering to channel VPCs."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Direct Connect routes backend requests to on-premises application servers."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "data",
+      "notes": "VPC Peering delivers backend requests to application channel VPCs."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront sends traffic access logs to S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "On-premises analysis servers ingest logs from S3 for threat detection."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "On-premises analytics writes identified malicious IPs to DynamoDB with expiration TTL."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "DynamoDB table updates trigger Lambda function."
+    },
+    {
+      "source": "12",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "Lambda updates WAF block rules with new or expired IP addresses."
+    }
+  ]
+}

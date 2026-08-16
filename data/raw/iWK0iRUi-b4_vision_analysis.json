@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents Snyk's integration with AWS CodePipeline to perform automated vulnerability scanning on developer source code artifacts. The process is divided into two primary logical flows: setup/configuration (Flow 0) and build scanning execution (Flow 1). In Flow 0, AWS CodePipeline redirects initial user setup requests to Snyk's API Gateway, which authenticates the user and records mapping details in DynamoDB. In Flow 1, build execution creates source code artifacts in S3 and invokes a Snyk entrypoint Lambda function. Lambda posts state events to EventBridge, which triggers Step Functions to perform scanning logic on the S3 artifacts and return vulnerability report status back to CodePipeline.",
+  "graph": {
+    "name": "Snyk Security Integration for AWS CodePipeline",
+    "link": "https://www.youtube.com/watch?v=iWK0iRUi-b4",
+    "categories": "Security, CI/CD, DevSecOps",
+    "graph_usable": true,
+    "notes": "Architecture illustrating Snyk security scanning integration into AWS CodePipeline."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CodePipeline",
+      "name": "CodePipeline (Customer)",
+      "notes": "Customer's CodePipeline instance where developers define build pipelines."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 Objects",
+      "notes": "Stores source code manifest and package dependency artifacts for scanning."
+    },
+    {
+      "id": "2",
+      "service": "CodePipeline",
+      "name": "CodePipeline (AWS)",
+      "notes": "AWS CodePipeline service executing build runs and Snyk action integrations."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Snyk API Gateway endpoint for customer setup and authentication."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores customer account metadata and pipeline association configuration."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates scanning workflow logic across package manifests."
+    },
+    {
+      "id": "6",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Captures event state during pipeline build execution."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Snyk entrypoint function invoked during pipeline execution."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CodePipeline directs setup requests to Snyk API Gateway endpoint."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway processes metadata and persists customer configuration into DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Customer pipeline execution initiates AWS CodePipeline run."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pipeline creates a copy of source code artifacts in the customer S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Pipeline execution directly triggers Snyk entrypoint Lambda function."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda function writes pipeline state information into EventBridge."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "EventBridge triggers Step Functions workflow to process security checks."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Step Functions return vulnerability assessment report to CodePipeline."
+    }
+  ]
+}

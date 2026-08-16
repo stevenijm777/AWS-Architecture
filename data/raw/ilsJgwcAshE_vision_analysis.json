@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "1. Identify entities visually present in the architecture diagram and discussed in the transcript: Venue / Camera (UserConsumerCamera), CloudPort Live (EKS), Automation (EC2), S3 bucket (S3), Asset Processing (EC2), Playout (EC2), Primary Hitless Switcher (EC2), Secondary Hitless Switcher in secondary AZ (EC2), Direct Connect (DirectConnect), and Head End (UserCompanyHeadEnd).\n2. Normalize services to the valid vocabulary list.\n3. Map logical connections across workflows: Live feed ingest (Flow 0), Asset fetching and graphics integration (Flow 1), and Hitless failover distribution to the head end (Flow 2).\n4. Formulate exact flow_ids, sequence numbers, and edge types based on visual arrows and audio explanation.",
+  "graph": {
+    "name": "Amagi Cloud Playout Architecture for Linear Broadcast",
+    "link": "https://www.youtube.com/watch?v=ilsJgwcAshE",
+    "categories": "Media & Entertainment",
+    "graph_usable": true,
+    "notes": "Amagi leverages AWS compute, storage, and networking to power over 400 linear broadcast TV channels with active-active hitless redundancy across availability zones."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerCamera",
+      "name": "Venue / Camera",
+      "notes": "Live event venue capturing camera feeds (e.g. sporting events, news, shows)"
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "CLOUDPORT LIVE",
+      "notes": "Kubernetes cluster on AWS receiving live feeds via Zixi, SRT, or Direct Connect"
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "AUTOMATION",
+      "notes": "EC2 cluster running channel scheduling and automation management"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 storing graphics, VOD files, and closed captioning assets"
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "ASSET PROCESSING",
+      "notes": "EC2 engine rendering graphic overlays, tickers, and lower-thirds"
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "PLAYOUT",
+      "notes": "CPU-only EC2 compute running the main cloud playout engine"
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "HITLESS SWITCHER",
+      "notes": "Primary Hitless Switcher handling seamless stream switching"
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "HITLESS (Secondary AZ)",
+      "notes": "Redundant Hitless Switcher deployed in a separate Availability Zone for high availability"
+    },
+    {
+      "id": "8",
+      "service": "DirectConnect",
+      "name": "DIRECT CONNECT",
+      "notes": "AWS Direct Connect dedicated connection to deliver linear feeds"
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyHeadEnd",
+      "name": "Head End",
+      "notes": "Broadcast satellite/cable head end receiving linear stream"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Camera sends live stream feed via Zixi/SRT/Direct Connect into CloudPort Live"
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudPort Live streams live event video feed to Playout"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Automation service triggers playout schedule for broadcast"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Asset processing fetches graphics, captions, and VOD files from S3"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Asset Processing applies graphics and overlays to the active playout stream"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Playout streams output to primary Hitless Switcher"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Playout streams output concurrently to redundant Hitless Switcher in secondary AZ"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Primary stream routed into Direct Connect link"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Secondary AZ stream routed into Direct Connect for zero-frame loss redundancy"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Direct Connect delivers linear broadcast feed directly to Head End"
+    }
+  ]
+}

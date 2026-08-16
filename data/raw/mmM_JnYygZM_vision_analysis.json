@@ -1,0 +1,158 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Shopline's e-commerce platform integration with an acquired POS system. Key elements include: 1) Authentication and API access where POS Client authenticates against an ECS SSO gateway (using OpenID) and POS Admin invokes API Gateway (Open API), protected by AWS WAF and AWS Shield. 2) Data synchronization flow between Couchbase (POS DB) and MongoDB (Internal Shopline DB) via Kafka and an ECS Proxy worker. 3) Top-level data lake storage/monitoring using CloudWatch and S3 for analytics.",
+  "graph": {
+    "name": "Shopline POS Integration Architecture",
+    "link": "https://www.youtube.com/watch?v=mmM_JnYygZM",
+    "categories": "e-commerce, authentication, database synchronization",
+    "graph_usable": true,
+    "notes": "Architecture showing Shopline's e-commerce platform integration with a POS system, including authentication via ECS SSO and API Gateway, and bidirectional database synchronization between Couchbase and MongoDB using Kafka and an ECS Proxy worker."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "MongoDBAtlas",
+      "name": "MongoDB",
+      "notes": "Internal database storing core e-commerce platform data"
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "ECS PROXY",
+      "notes": "Proxy worker microservice on ECS facilitating sync with Kafka"
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Kafka",
+      "notes": "Streaming broker bridging external Couchbase and internal ECS Proxy worker"
+    },
+    {
+      "id": "3",
+      "service": "CouchBase",
+      "name": "Couchbase",
+      "notes": "Database storing POS system transactional and client data"
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS SSO",
+      "notes": "SSO gateway microservice running on ECS supporting OpenID Connect"
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API GW OPEN API",
+      "notes": "Fully managed API Gateway exposing Open API with token-based auth"
+    },
+    {
+      "id": "6",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "AWS WAF providing web application security for API Gateway"
+    },
+    {
+      "id": "7",
+      "service": "Shield",
+      "name": "SHIELD",
+      "notes": "AWS Shield providing DDoS protection for API Gateway"
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "POS CLIENT",
+      "notes": "POS Mobile Application used in physical retail stores"
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "POS ADMIN",
+      "notes": "POS Admin web application accessing Open API endpoints"
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "CW",
+      "notes": "CloudWatch service logging platform and POS activity data"
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 data lake storing user behavior and POS transaction data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Couchbase sends synchronization updates to Kafka streaming service"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kafka streams updates to ECS Proxy worker"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS Proxy worker pushes platform changes back to Kafka"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Kafka synchronizes platform updates into Couchbase"
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "POS Client authenticates against ECS SSO Gateway via OpenID protocol"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "ECS SSO Gateway returns authentication tokens to POS Client"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "POS Admin invokes Open API endpoints hosted on API Gateway"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "AWS WAF filters web traffic protecting API Gateway"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "AWS Shield provides DDoS protection for API Gateway"
+    }
+  ]
+}

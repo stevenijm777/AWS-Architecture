@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "1. Identified core components from visual inventory and audio transcript: CloudWatch event trigger, Monitoring Lambda, DynamoDB database, Allocation/De-allocation Lambda, and EC2 application instances representing the hot encoder pool.\n2. Validated all service names against the strict AWS vocabulary list: CloudWatch, Lambda, DynamoDB, EC2.\n3. Defined Flow 0 for scheduled capacity monitoring: CloudWatch fires every minute, triggering Monitoring Lambda, which calls Allocation/De-allocation Lambda if adjustments are necessary.\n4. Defined Flow 1 for dynamic user-driven allocation: User activity writes to DynamoDB, streaming updates to Allocation/De-allocation Lambda, which provisions/ configures the EC2 hot pool instances.",
+  "graph": {
+    "name": "Grabyo Serverless Hot Pool Orchestration and Video Encoding Architecture",
+    "link": "https://www.youtube.com/watch?v=ktonI7J3kLY",
+    "categories": "Media & Entertainment, Compute, Serverless",
+    "graph_usable": true,
+    "notes": "Grabyo uses a serverless orchestration layer featuring CloudWatch, Lambda, and DynamoDB Streams to manage a hot pool of EC2 instances running custom video processing and encoding logic."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Fires scheduled events every 1 minute to initiate health and capacity monitoring."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Monitoring Lambda",
+      "notes": "Checks instance health and evaluates capacity requirements (over/under provisioning)."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores UI interaction states and triggers downstream allocation via DynamoDB Streams."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Allocation/De-allocation Lambda",
+      "notes": "Orchestrates EC2 hot spare assignment and EC2 provisioning/de-allocation requests."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 (Upper)",
+      "notes": "Compute instance running custom video processing logic for live streams."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 (Lower)",
+      "notes": "Compute instance running custom video processing logic for live streams."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch triggers Monitoring Lambda every minute."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Monitoring Lambda invokes Allocation/De-allocation Lambda if scaling adjustments are required."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "DynamoDB Streams triggers Allocation/De-allocation Lambda upon object updates from user interactions."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Allocation/De-allocation Lambda configures or provisions upper EC2 instance."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Allocation/De-allocation Lambda configures or provisions lower EC2 instance."
+    }
+  ]
+}

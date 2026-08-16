@@ -1,0 +1,110 @@
+{
+  "step_by_step_reasoning": "1. Identify the user client (UserConsumerWeb) accessing PropertyFinder (PF.AE) via Application Load Balancer (ALB).\n2. ALB routes incoming web traffic into pods hosted on EC2 Spot instances within the EKS cluster boundary.\n3. The microservices workload runs 100% on EC2 Spot instances across three Availability Zones for redundancy.\n4. When AWS issues a 2-minute spot termination notice, EventBridge catches the event and triggers an AWS Lambda function.\n5. The Lambda function initiates node draining and scales up the Auto Scaling Group, migrating/rescheduling running pods from the terminating instance (EC2 SPOT 2) to adjacent spot nodes (EC2 SPOT 1 and EC2 SPOT 3).",
+  "graph": {
+    "name": "PropertyFinder EKS Spot Architecture",
+    "link": "https://www.youtube.com/watch?v=cnZeOytEkIM",
+    "categories": "compute,containers,serverless",
+    "graph_usable": true,
+    "notes": "PropertyFinder runs 100% of its microservices production workloads on EC2 Spot instances inside Amazon EKS. EventBridge and Lambda handle spot interruption events to automatically drain terminating nodes and scale up replacements, saving up to 50% on infrastructure costs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "USER",
+      "notes": "End user accessing the PropertyFinder website (PF.AE)."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer routing incoming traffic into EKS ingress controller."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Amazon EKS cluster hosting ~20 microservice container instances and ~2,000 containers daily."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 SPOT 1",
+      "notes": "EC2 Spot instance running in Availability Zone 1."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 SPOT 2",
+      "notes": "EC2 Spot instance running in Availability Zone 2."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 SPOT 3",
+      "notes": "EC2 Spot instance running in Availability Zone 3."
+    },
+    {
+      "id": "6",
+      "service": "EventBridge",
+      "name": "EVENT BRIDGE",
+      "notes": "Listens for EC2 Spot Instance Interruption Warning events."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Function invoked upon spot interruption to trigger auto-scaling and node draining."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends web requests (PF.AE) to ALB."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB routes website traffic to pod running on EC2 Spot instance in EKS."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "EventBridge receives 2-minute spot interruption notice and invokes Lambda function."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda triggers node draining and Auto Scaling Group scale-up for terminating instance."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Workload failover/rescheduling to EC2 Spot instance 1 in another AZ."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "control",
+      "notes": "Workload failover/rescheduling to EC2 Spot instance 3 in another AZ."
+    }
+  ]
+}

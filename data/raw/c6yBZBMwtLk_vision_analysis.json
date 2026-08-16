@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates a hybrid live media ingestion and clip editing pipeline for RSI (Radio Televisione Svizzera). It is divided into two main processing flows:\n\n1. **Live Stream Ingestion Flow (Flow 0)**: On-premises live camera feeds are ingested by dual redundant Elemental Live appliances for high availability. These appliances stream live video streams across the network perimeter into AWS MediaPackage. MediaPackage records the live streams into an S3 bucket (Live Storage) as 14-day rolling video chunk playlists.\n\n2. **Clip Editing & Publishing Flow (Flow 1)**: An on-premises MAM (Multimedia Asset Manager) platform allows operators to select clip edit points (in/out timestamps, logo overlays, target resolution variants). Edit events are dispatched via API Gateway into AWS Step Functions for orchestration. API Gateway logs initial request metadata into DynamoDB. Step Functions fetches chunk source files from S3 Live Storage, orchestrates transcoding requests to AWS MediaConvert, and updates workflow execution status and debugging metadata in DynamoDB. MediaConvert renders the clip variants and poster images, writing them directly into the S3 Origin Server bucket for consumption by external media players.",
+  "graph": {
+    "name": "RSI Live Video Ingestion and Dynamic Clipping Architecture",
+    "link": "https://www.youtube.com/watch?v=c6yBZBMwtLk",
+    "categories": "Media & Entertainment, Hybrid Cloud, Serverless",
+    "graph_usable": true,
+    "notes": "Hybrid architecture combining on-premises live video acquisition with AWS serverless video editing, transcoding, and publishing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerCamera",
+      "name": "Live Video Feed",
+      "notes": "SDI live video camera feed from TV and web channels."
+    },
+    {
+      "id": "1",
+      "service": "ElementalLive",
+      "name": "Elemental Live 1",
+      "notes": "Primary on-premises Elemental Live hardware appliance for live encoding."
+    },
+    {
+      "id": "2",
+      "service": "ElementalLive",
+      "name": "Elemental Live 2",
+      "notes": "Secondary redundant on-premises Elemental Live appliance for high availability."
+    },
+    {
+      "id": "3",
+      "service": "MAM",
+      "name": "MAM (Backend & Client)",
+      "notes": "On-premises Multimedia Asset Manager for metadata management and editor client UI."
+    },
+    {
+      "id": "4",
+      "service": "MediaPackage",
+      "name": "AWS MediaPackage",
+      "notes": "Receives live video streams and ingests them into S3 storage."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Live Storage)",
+      "notes": "Stores rolling 14-day chunk playlists of live video streams."
+    },
+    {
+      "id": "6",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for clip editing events dispatched from the MAM."
+    },
+    {
+      "id": "7",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates payload validation, edit timecode extraction, overlay positioning, and MediaConvert jobs."
+    },
+    {
+      "id": "8",
+      "service": "MediaConvert",
+      "name": "AWS MediaConvert",
+      "notes": "Transcodes cut video segments into HD, SD, MD variants and generates poster images."
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores platform event metadata, workflow status, and debugging logs."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 (Origin Server)",
+      "notes": "Origin bucket serving transcoded video clips and poster images to web/mobile players."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends live SDI video stream to primary Elemental Live encoder."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Sends live SDI video stream to redundant Elemental Live encoder."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams primary live encoded video feed across boundary to AWS MediaPackage."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Streams secondary live encoded video feed across boundary to AWS MediaPackage."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Records and chunks video streams into 14-day rolling playlist files in S3."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "MAM client sends clip editing event payload to API Gateway."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Step Functions state machine with clip metadata."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "API Gateway logs initial event entry into DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Step Functions reads source video chunk metadata from live storage S3 bucket."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Step Functions submits transcoding job request to MediaConvert."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3'",
+      "type": "meta",
+      "notes": "Step Functions updates workflow execution state in DynamoDB for real-time monitoring."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "MediaConvert exports rendered clip variants and poster images to origin S3 bucket."
+    }
+  ]
+}

@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "1. **Identify Components**: Map visual icons from the whiteboard and verbal descriptions to exact AWS/ThirdParty service names from the valid list: Kinesis (Kinesis), Report Enrichment (ThirdParty), Kinesis Firehose (Firehose), S3 Data Lake (S3), Athena (Athena), Lambda (Lambda), Redshift (Redshift), and RDS (RDS).\n2. **Identify Flows**:\n   - **Flow 0 (Ingestion & Processing Pipeline)**: Speed test reports (~4,000/sec) enter Kinesis. The data moves to Report Enrichment, which reads fact table dimensions from RDS. Enriched JSON is sent to Kinesis Firehose, which batches and compresses it into the S3 Data Lake (5 PB). New S3 object drops trigger a Lambda function that converts data to CSV and loads it into Redshift. Aggregated analytics in Redshift are written back to RDS.\n   - **Flow 1 (Interactive Querying & Retroactive Reprocessing)**: Athena queries raw JSON directly in S3. S3 historical data can retroactively trigger Lambda for re-processing into Redshift.\n3. **Format strictly**: Ensure valid JSON output without control tokens or unescaped characters.",
+  "graph": {
+    "name": "Ookla Speedtest Data Ingestion and Analytics Pipeline",
+    "link": "https://www.youtube.com/watch?v=kHPGZOpbnok",
+    "categories": "Analytics, Data Lake, Serverless",
+    "graph_usable": true,
+    "notes": "Ookla ingests ~4,000 Speedtest reports per second into AWS Kinesis. The architecture processes, enriches, and stores over 5 PB of data in an S3 Data Lake, using Lambda, Redshift, Athena, and RDS for near real-time analytics and customer insights."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Ingests ~4,000 reports/sec with 24-hour retention for decoupled async processing."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Report Enrichment",
+      "notes": "Enriches measurement data by matching reports with fact table dimensions."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Batches and compresses enriched JSON data before sending to S3."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Stores over 5 PB of uncompressed newline-separated JSON data."
+    },
+    {
+      "id": "4",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Runs ad-hoc SQL queries directly on the S3 Data Lake for data exploration."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Normalizes JSON data to CSV format and can be triggered in batch or retroactively."
+    },
+    {
+      "id": "6",
+      "service": "Redshift",
+      "name": "Redshift",
+      "notes": "Data warehouse performing long-term aggregation and analytics."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores dimension fact tables and receives aggregated insights to expose via Speedtest Intelligence."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kinesis streams reports to the Report Enrichment service."
+    },
+    {
+      "source": "7",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Report Enrichment reads fact table dimensions (carrier, device, geographic place) from RDS."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Report Enrichment writes enriched JSON reports to Kinesis Firehose."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Kinesis Firehose compresses and dumps newline-separated JSON into S3 Data Lake."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "New objects landing in S3 trigger Lambda execution."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda transforms data into CSV and loads it into Redshift."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Redshift writes aggregated insights and analysis back to RDS."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries raw JSON fields directly in the S3 Data Lake."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda can be triggered retroactively on historical data in S3 Data Lake."
+    }
+  ]
+}

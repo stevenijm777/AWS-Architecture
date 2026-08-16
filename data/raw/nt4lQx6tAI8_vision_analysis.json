@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The user is asking for an accurate transcription of the Dow Jones NewsGrid architecture from the video and whiteboard drawing. 1. Identify nodes: USERS (UserConsumerWebMobile), ROUTE 53 (Route53), ELB (ELB), COGNITO (Cognito), EC2 Left (EC2), EC2 Right (EC2), APPSYNC (AppSync), DYNAMODB (DynamoDB), LAMBDA (Lambda), ELASTIC SEARCH (OpenSearch - using valid vocabulary item OpenSearch). 2. Define sequential node IDs (0 through 9). 3. Identify flows: Flow 0 for user DNS routing, load balancing, authentication, and application server access across AZs; Flow 1 for AppSync GraphQL data queries to DynamoDB and Elasticsearch; Flow 2 for DynamoDB Streams triggering Lambda to update Elasticsearch indices; Flow 3 for AppSync MQTT real-time subscription push updates back to users.",
+  "graph": {
+    "name": "Dow Jones NewsGrid AWS Architecture",
+    "link": "https://www.youtube.com/watch?v=nt4lQx6tAI8",
+    "categories": "Media & Content Handling, Serverless & Web Applications",
+    "graph_usable": true,
+    "notes": "Dow Jones powers its NewsGrid editorial platform using AWS AppSync, EC2, DynamoDB, Lambda, and Elasticsearch, achieving high availability and disaster recovery across AWS regions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "USERS",
+      "notes": "Global users accessing the NewsGrid application on desktop and mobile devices."
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Handles DNS routing and disaster recovery region determination (Virginia vs. Oregon)."
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Elastic Load Balancer routing incoming HTTP requests."
+    },
+    {
+      "id": "3",
+      "service": "Cognito",
+      "name": "COGNITO",
+      "notes": "Enforces user authentication using Cognito and Okta as an identity provider."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 (Left)",
+      "notes": "Application server running in Availability Zone 1."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 (Right)",
+      "notes": "Redundant application server running in Availability Zone 2."
+    },
+    {
+      "id": "6",
+      "service": "AppSync",
+      "name": "APPSYNC",
+      "notes": "Core GraphQL API handling queries, mutations, and real-time MQTT subscriptions."
+    },
+    {
+      "id": "7",
+      "service": "OpenSearch",
+      "name": "ELASTIC SEARCH",
+      "notes": "Elasticsearch cluster used for search, sorting, and advanced filtering."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Processes background jobs and syncs DynamoDB Stream updates into Elasticsearch."
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Primary persistent data store replicated across regions via Global Tables."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Users query Route 53 to resolve active regional target."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Users connect directly to Elastic Load Balancer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "ELB validates user session with Cognito/Okta."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "ELB routes authenticated traffic to EC2 instance in AZ 1."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "ELB routes authenticated traffic to EC2 instance in AZ 2."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 proxies queries and mutations to AppSync API."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "EC2 proxies queries and mutations to AppSync API."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "AppSync writes and reads primary data from DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "AppSync queries Elasticsearch for search and filtering functionality."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "DynamoDB Streams trigger Lambda function on database mutations."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda indexes updated records into Elasticsearch."
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "AppSync pushes real-time article updates to users via MQTT protocol."
+    }
+  ]
+}

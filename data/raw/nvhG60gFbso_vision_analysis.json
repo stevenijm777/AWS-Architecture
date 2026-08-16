@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The architecture diagram and transcript depict JFrog's SaaS offering on AWS, highlighting public access and private access routes for customers. Public traffic enters via a Public NLB into an EKS cluster housing isolated customer namespaces. For private access, AWS customers connect through a VPC Endpoint to AWS PrivateLink, which routes into a Private NLB and the EKS cluster. On-premises environments connect via Direct Connect and Transit Gateway (or directly through EC2) to the VPC Endpoint. The EKS cluster interacts with Amazon RDS for metadata and Amazon S3 for binary artifact storage.",
+  "graph": {
+    "name": "JFrog SaaS Architecture with AWS PrivateLink",
+    "link": "https://www.youtube.com/watch?v=nvhG60gFbso",
+    "categories": "DevOps, Security, Hybrid Cloud",
+    "graph_usable": true,
+    "notes": "Demonstrates public and private connectivity options to JFrog SaaS on AWS using PrivateLink, Direct Connect, and Transit Gateway for secure artifact management."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "OnPremDC",
+      "name": "ON PREMISES",
+      "notes": "Customer on-premises data center running workloads needing secure access to JFrog Artifactory."
+    },
+    {
+      "id": "1",
+      "service": "DirectConnect",
+      "name": "DIRECT CONNECT",
+      "notes": "AWS Direct Connect providing dedicated network connection from on-premises to AWS."
+    },
+    {
+      "id": "2",
+      "service": "TransitGateway",
+      "name": "TRANSIT GATEWAY",
+      "notes": "AWS Transit Gateway interconnecting VPCs and on-premises network via Direct Connect."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "PROD",
+      "notes": "Customer AWS production workload running on EC2."
+    },
+    {
+      "id": "4",
+      "service": "PrivateLink",
+      "name": "VPC ENDPOINT",
+      "notes": "VPC Endpoint configured in customer VPC for private access."
+    },
+    {
+      "id": "5",
+      "service": "PrivateLink",
+      "name": "VPC PRIVATELINK",
+      "notes": "AWS PrivateLink endpoint on the JFrog SaaS VPC side."
+    },
+    {
+      "id": "6",
+      "service": "NLB",
+      "name": "PUBLIC NLB",
+      "notes": "Public Network Load Balancer handling public internet requests to *.jfrog.io."
+    },
+    {
+      "id": "7",
+      "service": "NLB",
+      "name": "PRIVATE NLB",
+      "notes": "Private Network Load Balancer receiving traffic from PrivateLink."
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Amazon EKS cluster hosting customer isolated namespaces running JFrog Artifactory."
+    },
+    {
+      "id": "9",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Amazon RDS database storing artifact metadata."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 storing artifact binary layers (e.g., Docker layers)."
+    }
+  ],
+  "edges": [
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Public domain requests routed from Public NLB into EKS cluster namespace."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EKS retrieves artifact metadata from RDS."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS fetches binary artifact layers from S3."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "RDS metadata references binary objects stored in S3."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "On-premises traffic routed via Direct Connect."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Direct Connect routes traffic to Transit Gateway."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Direct Connect routes traffic to AWS production VPC workload."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transit Gateway routes on-premises traffic to VPC Endpoint."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Production EC2 instances route traffic to VPC Endpoint."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "VPC Endpoint forwards requests across AWS PrivateLink to SaaS side."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "PrivateLink delivers requests into Private NLB."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Private NLB routes traffic into EKS cluster customer namespace."
+    }
+  ]
+}

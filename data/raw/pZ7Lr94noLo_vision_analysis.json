@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Aventry's virtual event platform. Requests enter via front-end and reach Lambda 1, which communicates with AWS Chime SDK for real-time video/audio meeting orchestration. Meeting events are pushed from Chime to SQS 1 and stored in S3 1 for post-event analytics. Active meeting state is stored in DynamoDB 1. When recording starts, Chime sends messages to SQS 2, which triggers Lambda 2 to spawn ECS tasks in Fargate. Fargate uses FFmpeg and virtual browsers to render/encode recordings, managing container state via DynamoDB 2, and exporting completed recording files to S3 2.",
+  "graph": {
+    "name": "Aventry Virtual Events Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=pZ7Lr94noLo",
+    "categories": "Media & Entertainment, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture for Aventry virtual events using AWS Chime SDK for real-time meetings and Fargate container instances for video recording rendering."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Lambda",
+      "name": "Lambda 1",
+      "notes": "Handles messaging and processing requests coming from the front-end application via API Gateway."
+    },
+    {
+      "id": "1",
+      "service": "Chime",
+      "name": "Chime",
+      "notes": "Handles real-time audio/video meetings, TURN services, and WebRTC media streams via Chime SDK."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS 1",
+      "notes": "Receives real-time event notifications from Chime (joins, leaves, mic toggles, etc.)."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 1",
+      "notes": "Stores archived event logs for post-event attendee interaction analytics."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB 1",
+      "notes": "Serves as a real-time session store to manage active meeting state."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS 2",
+      "notes": "Queues recording trigger messages initiated when hosts start recording."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda 2",
+      "notes": "Triggered by SQS 2 to spawn container task instances on AWS Fargate."
+    },
+    {
+      "id": "7",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Runs ECS containers with a virtual browser and FFmpeg encoding to record and process meeting video."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB 2",
+      "notes": "Tracks and manages container state lifecycle (spawn, running, teardown)."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 2",
+      "notes": "Stores completed recorded video files for video-on-demand playback."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Lambda invokes Chime SDK to create meeting sessions and add attendees."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Chime reads and updates active meeting session state stored in DynamoDB 1."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Chime emits event notifications to SQS 1."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Event messages from SQS 1 are stored in S3 1 for analytics."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Chime triggers SQS 2 when a host requests to record the meeting."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "SQS 2 triggers Lambda 2 to process the recording workflow."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda 2 spawns ECS container tasks in Fargate."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Fargate updates and tracks container state in DynamoDB 2."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fargate exports finalized MP4/video files to S3 2 for playback."
+    }
+  ]
+}

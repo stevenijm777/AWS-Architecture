@@ -1,0 +1,128 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents Flutura's industrial IoT and machine learning architecture on AWS. Sensor and control system data from gas fields (PRODUCTION) is sent via MQTT connectors to Amazon MSK (Kafka). AWS Lambda triggers every minute to execute a Spark data parsing job on an EMR cluster. The Spark job parses, cleans, and validates streaming data from MSK, writing parsed time-series data to OpenTSDB/HBase backed by S3 storage, and publishing parsed messages back to another MSK topic. Machine learning models and rule engines running on EC2 instances consume real-time streaming data from MSK, historical data from storage, and asset metadata/digital twin configurations from an RDS PostgreSQL database. Model predictions and set point optimizations are written back to PRODUCTION field control systems to create a closed feedback loop.",
+  "graph": {
+    "name": "Flutura Industrial IoT and ML Predictive Maintenance Architecture",
+    "link": "https://www.youtube.com/watch?v=q_5U7z_vNug",
+    "categories": "IoT, Machine Learning, Big Data Analytics",
+    "graph_usable": true,
+    "notes": "Architecture ingests ~1 billion records per day from oil and gas production field control systems, evaluating over 50,000 rules per minute for anomaly prediction and closed-loop control."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "PRODUCTION",
+      "notes": "Field control systems and edge devices in oil and gas production."
+    },
+    {
+      "id": "1",
+      "service": "MSK",
+      "name": "MSK",
+      "notes": "Managed Streaming for Apache Kafka, managing inbound raw sensor streams and outbound parsed topics."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Scheduled Lambda function triggering EMR Spark processing jobs every minute."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "EMR cluster running Spark parser and OpenTSDB on HBase for time-series processing."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "EC2 instances running ML model execution engines, rule evaluation engine (50k+ rules/min), and web application."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket serving as persistent underlying storage for OpenTSDB time-series database."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "DATABASE",
+      "notes": "PostgreSQL database containing equipment contextual metadata and digital twin configurations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Edge devices stream raw sensor data via MQTT to MSK Kafka topic."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "MSK event state triggers Lambda function execution."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda invokes Spark parsing job on the EMR cluster."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Spark job on EMR consumes raw message streams from MSK topic."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "EMR parser writes cleaned and validated data back to a separate MSK Kafka topic."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "EMR writes structured time-series data to S3 via OpenTSDB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 instances read historical data from EMR/S3 for model evaluation."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 fetches equipment digital twin and contextual metadata from PostgreSQL database."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Closed-loop feedback writes set point predictions back to production control systems."
+    }
+  ]
+}

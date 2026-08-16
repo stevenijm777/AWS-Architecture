@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Ounass's machine learning-based recommendation system pipeline built on AWS. The system is split into two major workflows: a scheduled batch training and deployment workflow managed by AWS Step Functions, and a real-time recommendation inference flow for web clients. In the automated pipeline (Flow 0), EventBridge triggers a Step Functions State Machine periodically. The State Machine coordinates three stages: 1) triggering a Data Processing Lambda that queries user browsing history via Athena, storing query results into Amazon S3; 2) launching a SageMaker training job running BlazingText (word2vec) reading from S3 to generate product item vectors; 3) deploying/updating a SageMaker real-time endpoint with the updated model. In the real-time serving workflow (Flow 1), a Web Client browsing product pages triggers an API request through API Gateway to a Serving Lambda function, which queries the deployed SageMaker endpoint to return similar recommended items based on vector distance back to the user interface.",
+  "graph": {
+    "name": "Ounass Machine Learning Recommendation System Architecture",
+    "link": "https://www.youtube.com/watch?v=c8615P0yfi8",
+    "categories": "Machine Learning & Personalization",
+    "graph_usable": true,
+    "notes": "Architecture powers real-time product recommendations for the Ounass luxury e-commerce platform using SageMaker BlazingText (word2vec) trained on browsing history, orchestrated periodically by Step Functions and EventBridge, yielding a 0.6% conversion rate increase."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EventBridge",
+      "name": "EVENT BRIDGE",
+      "notes": "Periodically triggers the state machine workflow based on a scheduled rule."
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "STATE MACHINE",
+      "notes": "Orchestrates the multi-stage machine learning workflow (data fetching, training, endpoint deployment)."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "LAMBDA (Data Processing)",
+      "notes": "First step in state machine workflow; invokes Athena to perform data lake querying."
+    },
+    {
+      "id": "3",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Queries user browsing history datasets stored in the data lake."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores processed training datasets exported from Athena and trained model artifacts."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SAGEMAKER (Training)",
+      "notes": "Runs BlazingText (word2vec) training job to convert browsing history into product vector representations."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "SAGEMAKER (Endpoint)",
+      "notes": "Hosts the real-time SageMaker model endpoint for serving item recommendations."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA (Serving)",
+      "notes": "Invoked by API Gateway to call the SageMaker endpoint with product IDs and fetch recommendations."
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Exposes recommendation API endpoints and routes requests from frontend web clients."
+    },
+    {
+      "id": "9",
+      "service": "UserConsumerWeb",
+      "name": "Web Client",
+      "notes": "Ounass e-commerce web platform where users browse products and view recommendations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "EventBridge rule triggers the State Machine workflow on a periodic schedule."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "State Machine invokes the Data Processing Lambda function."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Data Processing Lambda executes query against Athena."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Athena writes query results (browsing history dataset) into S3."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "State Machine triggers SageMaker model training job upon data preparation completion."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "SageMaker reads training dataset from and writes trained model vectors to S3."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "control",
+      "notes": "State Machine triggers deployment/update of SageMaker real-time endpoint."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "control",
+      "notes": "SageMaker training outputs update configuration for the SageMaker endpoint."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Web Client sends request with product ID to API Gateway when user views a product."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway routes recommendation request to the serving Lambda."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Serving Lambda queries SageMaker real-time endpoint with product ID to get similar product recommendations."
+    }
+  ]
+}

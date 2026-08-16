@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The architecture shows an AWS-based cloud HPC orchestration system for computer-aided engineering simulations. The simulation input is loaded into Amazon S3, which triggers job scheduling via Amazon EKS. EKS provisions right-sized HPC compute nodes (EC2). During simulation execution, the HPC nodes stream logs directly to Amazon CloudWatch and output final results back to Amazon S3. CloudWatch triggers a downstream processing Lambda function upon detecting log alerts. This lower Lambda records execution status and duration into Amazon DynamoDB and publishes messages to Amazon SNS. Amazon SNS then triggers a second (upper) Lambda function for downstream asynchronous task execution.",
+  "graph": {
+    "name": "OnScale Cloud HPC Orchestration Architecture",
+    "link": "https://www.youtube.com/watch?v=bxvZBfbyhiA",
+    "categories": "Compute, HPC, Serverless, Storage",
+    "graph_usable": true,
+    "notes": "An AWS architecture for scaling parametric engineering simulations using Kubernetes (EKS) for dynamic HPC node creation and Serverless (Lambda, SNS, DynamoDB) driven by CloudWatch telemetry for spiky workload handling."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores encrypted simulation input data and final output results."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "Amazon EKS",
+      "notes": "Kubernetes cluster orchestrating and spinning up dynamically right-sized HPC nodes."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "HPC Node",
+      "notes": "Compute node executing high-performance engineering simulations."
+    },
+    {
+      "id": "3",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Ingests streaming logs from HPC nodes and fires pattern-matching alerts."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Status Processing Lambda",
+      "notes": "Triggered by CloudWatch alerts; updates status records and publishes to SNS."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Task Execution Lambda",
+      "notes": "Triggered by SNS to perform secondary asynchronous processing tasks."
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "Amazon SNS",
+      "notes": "Pub/Sub messaging service queuing downstream notifications and actions."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores simulation start/end metadata and execution metrics by UUID."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 job submission schedules container provisioning in EKS."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "EKS provisions right-sized HPC compute node."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "HPC node writes encrypted simulation result outputs back to S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "HPC node streams execution logs into CloudWatch."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudWatch alert pattern triggers Lambda function for processing."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda records job start/end timestamps and status in DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "control",
+      "notes": "Lambda publishes event notification to SNS topic."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "SNS notification triggers upper Lambda function for further downstream handling."
+    }
+  ]
+}

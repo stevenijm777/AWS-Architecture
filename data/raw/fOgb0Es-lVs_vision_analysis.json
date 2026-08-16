@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture represents Deluxe's video processing and distribution pipeline (Deluxe One). Mezzanine media files (250GB+) are uploaded by ThirdParty Content Suppliers to an S3 Ingest bucket. Files are archived into an S3 Glacier Archive bucket, while Ingest triggers events processed by Lambda (Events). The Lambda event layer triggers processing workflows on an EC2-based containerized Processing fleet. When distribution orders arrive, archived assets are pulled into the Processing fleet for transcoding. The processed media is deposited into an S3 Distribution bucket, which delivers content to Consumer TV OTT distribution endpoints. The entire architecture is governed by AWS Organizations security controls separating compute and storage tiers with KMS encryption and VFS access control.",
+  "graph": {
+    "name": "Deluxe One Media Processing and Distribution Architecture",
+    "link": "https://www.youtube.com/watch?v=fOgb0Es-lVs",
+    "categories": "Media & Entertainment, Content Distribution, Serverless",
+    "graph_usable": true,
+    "notes": "Deluxe One media workflow handles mezzanine files (~250GB+) ingested from content suppliers, archived to Glacier, processed by containerized microservices fleets (~1,800 containers across AZs), and distributed to OTT endpoints."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Content Supplier",
+      "notes": "Studios providing mezzanine source media assets (~250GB+)."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Ingest",
+      "notes": "S3 bucket for initial asset ingestion."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Archive",
+      "notes": "S3 Glacier bucket for long-term media asset archiving."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Distribution",
+      "notes": "S3 bucket storing final transcoded assets ready for distribution."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Events",
+      "notes": "Event handler publishing events to an AMQ-backed pub/sub event bus."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Processing",
+      "notes": "Worker fleet running ~1,800 Docker containers across AZs performing microservice transcoding/conformance."
+    },
+    {
+      "id": "6",
+      "service": "Organizations",
+      "name": "Security",
+      "notes": "Security account abstraction tier enforcing account isolation, KMS rotating key protection, and Virtual File System (VFS) access."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerTV",
+      "name": "Consumer TV",
+      "notes": "End distribution targets such as Amazon Prime Video, iTunes, and OTT TV endpoints."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Content Supplier uploads mezzanine video files into the Ingest S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingested assets are moved into Glacier Archive."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Ingest operations trigger pipeline events."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Event bus routes pipeline instructions to the Processing worker fleet."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Assets are retrieved from Glacier Archive into Processing compute fleet upon distribution order."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Transcoded and processed media files are stored in the Distribution S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Distribution bucket delivers processed media to OTT Consumer TV platforms."
+    }
+  ]
+}
