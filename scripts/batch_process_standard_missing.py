@@ -14,6 +14,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
+import networkx as nx
 from rich.console import Console
 from rich.panel import Panel
 
@@ -49,10 +50,28 @@ def save_progress(progress: dict[str, dict]) -> None:
         console.print(f"[yellow]⚠ Failed to save progress checkpoint: {e}[/]")
 
 
+def is_valid_graphml(path: Path) -> bool:
+    """A graph counts as done only if it exists, is non-empty and actually parses.
+
+    A failed export used to leave a zero-byte file behind, which made this
+    script treat the video as completed and never retry it.
+    """
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    try:
+        nx.read_graphml(path)
+        return True
+    except Exception:
+        return False
+
+
 def get_missing_standard_ids(force: bool = False) -> list[str]:
     gt_dir = DATA_DIR / "cloudscape_gt"
     gt_vids = sorted([f.stem for f in gt_dir.glob("*.graphml")]) if gt_dir.exists() else []
-    std_vids = set([f.stem for f in GRAPHS_DIR.glob("*.graphml")]) if GRAPHS_DIR.exists() else set()
+    std_vids = (
+        {f.stem for f in GRAPHS_DIR.glob("*.graphml") if is_valid_graphml(f)}
+        if GRAPHS_DIR.exists() else set()
+    )
 
     target_ids = []
     for vid in gt_vids:
@@ -86,7 +105,7 @@ def process_batch(video_ids: list[str], force: bool = False) -> None:
 
         if not force and vid in progress and progress[vid].get("status") == "success":
             out_graph = GRAPHS_DIR / f"{vid}.graphml"
-            if out_graph.exists():
+            if is_valid_graphml(out_graph):
                 console.print(f"[green]✓[/] Already completed in checkpoint. Skipping.")
                 success_count += 1
                 continue

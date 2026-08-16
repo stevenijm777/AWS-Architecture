@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -214,6 +215,77 @@ def create_graph_from_cloudscape_json(
     return G
 
 
+# Graph-level keys reserved by networkx's GraphML reader/writer.
+_GRAPHML_RESERVED_KEYS = frozenset({"node_default", "edge_default"})
+
+
+def _graphml_safe(value: Any) -> Any:
+    """
+    Coerce an attribute into a type the GraphML writer accepts.
+
+    GraphML only supports scalars. Lists and dicts (which Gemini occasionally
+    returns for fields like ``notes`` or ``categories``) make ``write_graphml``
+    raise, so they are flattened instead of aborting the whole export.
+    """
+    if isinstance(value, bool) or isinstance(value, (str, int, float)):
+        return value
+    if value is None:
+        return ""
+    if isinstance(value, (list, tuple, set)):
+        items = list(value)
+        if all(isinstance(x, (str, int, float, bool)) for x in items):
+            return ", ".join(str(x) for x in items)
+        return json.dumps(items, ensure_ascii=False)
+    if isinstance(value, dict):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+def sanitize_for_graphml(G: nx.MultiDiGraph) -> tuple[nx.MultiDiGraph, list[str]]:
+    """
+    Return a copy of ``G`` whose attributes are all GraphML-serializable.
+
+    Also returns the list of attribute paths that had to be coerced, so callers
+    can record them as provenance instead of silently changing the data.
+    """
+    H = G.copy()
+    coerced: list[str] = []
+
+    for key, value in list(H.graph.items()):
+        if key in _GRAPHML_RESERVED_KEYS:
+            # Writer control structures (set by read_graphml), not user data:
+            # they must stay dicts or nx.write_graphml breaks.
+            continue
+        safe = _graphml_safe(value)
+        if safe is not value:
+            H.graph[key] = safe
+            coerced.append(f"graph.{key}")
+
+    for node, attrs in H.nodes(data=True):
+        for key, value in list(attrs.items()):
+            safe = _graphml_safe(value)
+            if safe is not value:
+                attrs[key] = safe
+                coerced.append(f"node[{node}].{key}")
+
+    # read_graphml returns a plain DiGraph when the file has no parallel edges,
+    # so the multigraph-only ``keys`` argument cannot be assumed here.
+    if H.is_multigraph():
+        edge_iter = ((u, v, k, d) for u, v, k, d in H.edges(keys=True, data=True))
+    else:
+        edge_iter = ((u, v, None, d) for u, v, d in H.edges(data=True))
+
+    for u, v, k, attrs in edge_iter:
+        label = f"{u}->{v}" if k is None else f"{u}->{v}#{k}"
+        for key, value in list(attrs.items()):
+            safe = _graphml_safe(value)
+            if safe is not value:
+                attrs[key] = safe
+                coerced.append(f"edge[{label}].{key}")
+
+    return H, coerced
+
+
 def export_graphml(
     G: nx.MultiDiGraph,
     video_id: str,
@@ -222,15 +294,34 @@ def export_graphml(
     """
     Export the graph as a standard ``.graphml`` file (Cloudscape-compatible).
 
+    The write is atomic: it goes to a temporary file in the same directory and
+    is only moved into place once it succeeds, so a failed export can never
+    leave a truncated or zero-byte ``.graphml`` behind.
+
     Returns
     -------
     Path
         Path to the saved GraphML file.
     """
     output_dir = output_dir or GRAPHS_DIR
+    output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / f"{video_id}.graphml"
+    tmp_path = output_dir / f".{video_id}.graphml.tmp"
 
-    nx.write_graphml(G, str(output_path))
+    safe_graph, coerced = sanitize_for_graphml(G)
+    if coerced:
+        preview = ", ".join(coerced[:5])
+        suffix = f" (+{len(coerced) - 5} more)" if len(coerced) > 5 else ""
+        console.print(
+            f"[yellow]⚠[/] Coerced {len(coerced)} non-scalar attribute(s) for GraphML: {preview}{suffix}"
+        )
+
+    try:
+        nx.write_graphml(safe_graph, str(tmp_path))
+        os.replace(tmp_path, output_path)
+    except Exception:
+        tmp_path.unlink(missing_ok=True)
+        raise
 
     console.print(f"[green]✓[/] Graph exported → [bold]{output_path}[/]")
     return output_path
