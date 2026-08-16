@@ -54,13 +54,12 @@ VIDEO_FORMAT: str = os.getenv(
 
 
 # ── Gemini ──────────────────────────────────────────────────
-# Usable Gemini Models include:
-# - gemini-2.5-flash                  (Recommended default, fast, multimodal & balanced)
-# - gemini-2.5-pro                    (High intelligence, complex reasoning, coding)
-# - gemini-2.0-flash                  (Multimodal, high speed, bypasses daily quota of 2.5 Flash)
-# - gemini-2.0-flash-lite-preview-02-05 (Extremely fast, lightweight tasks)
-# - gemini-2.0-pro-exp-02-05          (Experimental high intelligence model)
-# - gemini-1.5-flash                  (Standard flash model)
-# - gemini-1.5-pro                    (Standard pro model, large context window)
-GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
+# The default must match what .env actually sets, otherwise anyone running
+# without a .env silently evaluates on a different model than the reports claim.
+# Usable Gemini models include:
+# - gemini-3.6-flash                  (current default: fast, multimodal, used for all runs since Aug 2026)
+# - gemini-3.5-flash                  (previous default)
+# - gemini-2.5-flash / gemini-2.5-pro (older generation, higher latency on vision)
+# - gemini-2.0-flash                  (multimodal, high speed, separate daily quota)
+GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 

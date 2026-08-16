@@ -54,6 +54,14 @@ GRAPH_DIRS = [
 ]
 
 
+def _display_path(path: Path) -> str:
+    """Path relative to the project root when possible, absolute otherwise."""
+    try:
+        return str(path.resolve().relative_to(PROJECT_ROOT))
+    except ValueError:
+        return str(path)
+
+
 def git_commit() -> str:
     try:
         out = subprocess.run(
@@ -221,12 +229,12 @@ def main() -> None:
 
     snap = build_snapshot()
 
-    out_path = Path(args.out) if args.out else REPORTS_DIR / f"baseline_{snap['generated_on']}.json"
+    out_path = Path(args.out).resolve() if args.out else REPORTS_DIR / f"baseline_{snap['generated_on']}.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(snap, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print_summary(snap)
-    console.print(f"\n[green]✓[/] Snapshot saved → [bold]{out_path.relative_to(PROJECT_ROOT)}[/]\n")
+    console.print(f"\n[green]✓[/] Snapshot saved → [bold]{_display_path(out_path)}[/]\n")
 
 
 if __name__ == "__main__":

@@ -38,6 +38,40 @@ from scripts.core.graph_builder import (
 
 console = Console()
 
+# Compilation/special episodes aggregate several architectures into one video,
+# so a single whiteboard frame cannot represent them.
+SPECIAL_TITLE_KEYWORDS = (
+    "spotlight", "greatest hits", "bloopers", "reprise",
+    "(special)", "(special episode)",
+)
+MAX_DURATION_SEC = 12 * 60
+
+
+def _parse_duration(duration_str: str) -> int | None:
+    """Parse ``MM:SS`` or ``HH:MM:SS`` into seconds. Returns None if unparseable."""
+    try:
+        parts = [int(p) for p in str(duration_str).strip().split(":")]
+    except (ValueError, AttributeError):
+        return None
+    if len(parts) == 2:
+        return parts[0] * 60 + parts[1]
+    if len(parts) == 3:
+        return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    return None
+
+
+def is_special_video(
+    title: str,
+    duration_sec: float | None = None,
+    duration_str: str | None = None,
+) -> bool:
+    """Single rule for skipping compilations, specials and over-long videos."""
+    if any(k in (title or "").lower() for k in SPECIAL_TITLE_KEYWORDS):
+        return True
+    if duration_sec is None and duration_str is not None:
+        duration_sec = _parse_duration(duration_str)
+    return duration_sec is not None and duration_sec > MAX_DURATION_SEC
+
 
 def run_pipeline(
     url: str,
@@ -82,7 +116,13 @@ def run_pipeline(
         else:
             info = {"id": video_id, "title": f"Video {video_id}", "duration": 0}
         title = info.get("title", "Untitled")
-        
+
+        # The fast path used to bypass this check entirely, so a cached
+        # compilation episode would go straight to the vision API.
+        if is_special_video(title, duration_sec=info.get("duration")):
+            console.print(f"[bold red]✗ Pipeline skipped: '{title}' is a special, compilation, or long video.[/]")
+            return None
+
         with open(transcript_path, "r", encoding="utf-8") as f:
             segments = json.load(f)
         frames = []
@@ -104,17 +144,7 @@ def run_pipeline(
                     if not matches.empty:
                         title = str(matches.iloc[0]["title"])
                         duration_str = str(matches.iloc[0]["duration"])
-                        is_special = False
-                        if any(k in title.lower() for k in ["spotlight", "greatest hits", "bloopers", "reprise", "(special)", "(special episode)"]):
-                            is_special = True
-                        else:
-                            parts = duration_str.strip().split(":")
-                            if len(parts) == 2 and int(parts[0]) >= 12:
-                                is_special = True
-                            elif len(parts) == 3 and (int(parts[0]) > 0 or int(parts[1]) >= 12):
-                                is_special = True
-                                
-                        if is_special:
+                        if is_special_video(title, duration_str=duration_str):
                             console.print(f"[bold red]✗ Pipeline skipped: '{title}' is a special, compilation, or long video.[/]")
                             return None
                 except Exception:
@@ -126,13 +156,7 @@ def run_pipeline(
         duration_sec = info.get("duration", 0)
         
         # Verify downloaded metadata
-        is_special = False
-        if any(k in title.lower() for k in ["spotlight", "greatest hits", "bloopers", "reprise", "(special)", "(special episode)"]):
-            is_special = True
-        elif duration_sec > 12 * 60:
-            is_special = True
-            
-        if is_special:
+        if is_special_video(title, duration_sec=duration_sec):
             console.print(f"[bold red]✗ Pipeline skipped: '{title}' is a special, compilation, or long video.[/]")
             return None
             
@@ -187,10 +211,12 @@ def run_pipeline(
             )
             return None
 
-    # Automatically select the best whiteboard frame locally if not already done
+    # Select the best whiteboard frame locally. Only useful in --skip-vision:
+    # when vision runs, the approved frame from good_whiteboard/ is used instead
+    # (see below), so selecting here would just discard the result.
     pizarra_dir = FRAMES_DIR / f"{video_id}_pizarra"
     best_occl_path = pizarra_dir / "best_whiteboard.jpg"
-    if not best_occl_path.exists() or force:
+    if skip_vision and (not best_occl_path.exists() or force):
         console.print("[dim]Running frame selector locally to find best whiteboard...[/]")
         try:
             from scripts.core.frame_selector import select_best_frame
