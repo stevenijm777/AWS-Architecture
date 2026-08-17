@@ -1,0 +1,272 @@
+[
+  {
+    "start": 0.0,
+    "end": 13.0,
+    "text": "Welcome to This is My Architecture. I am Han from AWS and today we are joined by Josh from Veritiv."
+  },
+  {
+    "start": 13.0,
+    "end": 15.0,
+    "text": "Welcome Josh and thank you for joining us."
+  },
+  {
+    "start": 15.0,
+    "end": 16.0,
+    "text": "Thanks Han."
+  },
+  {
+    "start": 16.0,
+    "end": 21.0,
+    "text": "Before we get into your architecture, can you tell me a little bit about Veritiv?"
+  },
+  {
+    "start": 21.0,
+    "end": 31.0,
+    "text": "So Veritiv is a Fortune 500 company that distributes products to other businesses within facility solutions, packaging, print and publishing."
+  },
+  {
+    "start": 31.0,
+    "end": 36.0,
+    "text": "And then we also have some services around supply chain management and logistics."
+  },
+  {
+    "start": 36.0,
+    "end": 41.0,
+    "text": "Wow. So you must be experiencing quite a bit of a demand. How do you handle that?"
+  },
+  {
+    "start": 41.0,
+    "end": 44.0,
+    "text": "Yes. Yeah. And actually with COVID-19 and the impact there,"
+  },
+  {
+    "start": 44.0,
+    "end": 58.0,
+    "text": "the need to have time in your more accurate analytics on our orders and as well as our demand was huge for our senior leadership to be able to make key decisions for the company's future."
+  },
+  {
+    "start": 58.0,
+    "end": 70.0,
+    "text": "Okay. So my team was actually tasked to look at how we produce our sales and our demand today at an invoice level and take a step back and look at it from a different perspective."
+  },
+  {
+    "start": 70.0,
+    "end": 75.0,
+    "text": "So we brought in and utilized AWS's architecture and services to do that."
+  },
+  {
+    "start": 75.0,
+    "end": 79.0,
+    "text": "Cool. So how do you orchestrate all of that data set together?"
+  },
+  {
+    "start": 79.0,
+    "end": 89.0,
+    "text": "So today what we have is we actually have an on-premises database that stores our sales data at that invoice level and some other key attributes."
+  },
+  {
+    "start": 89.0,
+    "end": 90.0,
+    "text": "Okay."
+  },
+  {
+    "start": 90.0,
+    "end": 99.0,
+    "text": "That data is actually piped through our VPN and we use DMS and CDC to be able to pull that data out of our VPN."
+  },
+  {
+    "start": 99.0,
+    "end": 118.0,
+    "text": "So we have to pull that data and then populate it into our Redshift cluster that then makes it available to not only our data lake and read back completely in, but also other analytics and reports outside of our lake."
+  },
+  {
+    "start": 118.0,
+    "end": 125.0,
+    "text": "So once we have that data in, now we are, we started receiving files, flat files, things of that nature at the order level."
+  },
+  {
+    "start": 125.0,
+    "end": 126.0,
+    "text": "Okay."
+  },
+  {
+    "start": 126.0,
+    "end": 132.0,
+    "text": "And some of that demand from our ERP system that came into our drop bucket, our S3 drop bucket here."
+  },
+  {
+    "start": 132.0,
+    "end": 139.0,
+    "text": "When those files landed, they actually kick off an SQS that handles all of our messaging services."
+  },
+  {
+    "start": 139.0,
+    "end": 140.0,
+    "text": "Okay."
+  },
+  {
+    "start": 140.0,
+    "end": 147.0,
+    "text": "And at that point SQS will launch what we call our initiator Lambda job."
+  },
+  {
+    "start": 147.0,
+    "end": 157.0,
+    "text": "This Lambda job actually talks to DynamoDB and it pulls the metadata and some other key information about these files that are coming in through this pipeline."
+  },
+  {
+    "start": 157.0,
+    "end": 158.0,
+    "text": "Okay."
+  },
+  {
+    "start": 158.0,
+    "end": 170.0,
+    "text": "Once it's done, the Lambda will, from that information, be able to understand how to populate our data lake and push that information into the appropriate structures."
+  },
+  {
+    "start": 170.0,
+    "end": 171.0,
+    "text": "I see."
+  },
+  {
+    "start": 171.0,
+    "end": 174.0,
+    "text": "Within our raw and refined buckets."
+  },
+  {
+    "start": 174.0,
+    "end": 186.0,
+    "text": "Once we're out into the refined and raw buckets here in our data lake, we have a trigger on our S3 bucket that's event driven and it will launch our next Lambda job."
+  },
+  {
+    "start": 186.0,
+    "end": 194.0,
+    "text": "And this Lambda jobs are actually, is, is our complex Lambda job that does not only the merging of both data sets."
+  },
+  {
+    "start": 194.0,
+    "end": 200.0,
+    "text": "So we merge our order cells that come in through one pipeline as well as our inventory cells that comes through the other."
+  },
+  {
+    "start": 200.0,
+    "end": 206.0,
+    "text": "And we apply some different logic and, and some rules and exceptions that we have in orders."
+  },
+  {
+    "start": 206.0,
+    "end": 208.0,
+    "text": "It also then will create a new file."
+  },
+  {
+    "start": 208.0,
+    "end": 215.0,
+    "text": "And that file, we apply some Python stats model packages and things like that to create a demand."
+  },
+  {
+    "start": 215.0,
+    "end": 222.0,
+    "text": "And to fan that data out to be able to look at what not only our current, but maybe our future demands going to be."
+  },
+  {
+    "start": 222.0,
+    "end": 235.0,
+    "text": "Once that completes, that is fed into Redshift again, at which point our business users and all of our leaderships can use many different tools to be able to query and get that data out on a daily basis."
+  },
+  {
+    "start": 235.0,
+    "end": 236.0,
+    "text": "That's amazing."
+  },
+  {
+    "start": 236.0,
+    "end": 239.0,
+    "text": "So what benefits did you saw out of this architecture?"
+  },
+  {
+    "start": 239.0,
+    "end": 249.0,
+    "text": "So one of the biggest benefits was, especially with this solution, was that we had a very small focused team that could work in an agile method."
+  },
+  {
+    "start": 249.0,
+    "end": 250.0,
+    "text": "Okay."
+  },
+  {
+    "start": 250.0,
+    "end": 259.0,
+    "text": "And we were able to use a lot of these services and really find the best tool for the job when it came to an AWS service without increasing spend and cost."
+  },
+  {
+    "start": 259.0,
+    "end": 260.0,
+    "text": "Right."
+  },
+  {
+    "start": 260.0,
+    "end": 262.0,
+    "text": "The other thing is speed to business."
+  },
+  {
+    "start": 262.0,
+    "end": 271.0,
+    "text": "These type of solutions, and specifically this solution, we were able to deliver within four to five weeks, whereas other more traditional type of routes would take longer."
+  },
+  {
+    "start": 271.0,
+    "end": 276.0,
+    "text": "So overall, great, great performance as well."
+  },
+  {
+    "start": 276.0,
+    "end": 277.0,
+    "text": "That's amazing."
+  },
+  {
+    "start": 277.0,
+    "end": 280.0,
+    "text": "Well, what is next for Verityv?"
+  },
+  {
+    "start": 280.0,
+    "end": 289.0,
+    "text": "So next for us is to really focus on our data lake and these processes, mature it, grow it, increase our cloud solution presence."
+  },
+  {
+    "start": 289.0,
+    "end": 299.0,
+    "text": "Also, we are implementing things today, such as cloud formation for these things to automate them more and move us closer to a DevOps solution."
+  },
+  {
+    "start": 299.0,
+    "end": 300.0,
+    "text": "I see."
+  },
+  {
+    "start": 300.0,
+    "end": 305.0,
+    "text": "Lastly, we have some SageMaker and machine learning type of work going on right now."
+  },
+  {
+    "start": 305.0,
+    "end": 306.0,
+    "text": "That's amazing."
+  },
+  {
+    "start": 306.0,
+    "end": 312.0,
+    "text": "So thank you so much for going over your architecture and taking through your cloud journey."
+  },
+  {
+    "start": 312.0,
+    "end": 313.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 313.0,
+    "end": 317.0,
+    "text": "And thank you for watching This Is My Architecture."
+  }
+]

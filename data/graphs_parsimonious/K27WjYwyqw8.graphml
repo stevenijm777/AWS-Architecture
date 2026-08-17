@@ -14,114 +14,103 @@
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
     <node id="0">
-      <data key="d5">Source DB</data>
+      <data key="d5">Customer</data>
       <data key="d6">ThirdParty</data>
-      <data key="d7">Transactional source databases.</data>
+      <data key="d7">Sends real-time JSON-encoded SIP call metadata and receives a fraud risk score.</data>
     </node>
     <node id="1">
-      <data key="d5">AWS Glue</data>
-      <data key="d6">Glue</data>
-      <data key="d7">Ingests data from source databases.</data>
+      <data key="d5">API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Ingests metadata requests and handles API routing.</data>
     </node>
     <node id="2">
-      <data key="d5">Amazon Redshift</data>
-      <data key="d6">RedShift</data>
-      <data key="d7">Stores 3 months of historical data.</data>
+      <data key="d5">Authorizer Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Custom authorizer that authenticates credentials using DynamoDB.</data>
     </node>
     <node id="3">
-      <data key="d5">Amazon S3</data>
-      <data key="d6">S3</data>
-      <data key="d7">Data lake for raw address data.</data>
+      <data key="d5">Vera Call Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">The main product Lambda that evaluates the rules engine, requests predictions from SageMaker, and forwards metadata to SQS.</data>
     </node>
     <node id="4">
-      <data key="d5">Amazon DynamoDB</data>
+      <data key="d5">DynamoDB</data>
       <data key="d6">DynamoDB</data>
-      <data key="d7">Stores reference data for rapid access.</data>
+      <data key="d7">Stores customer credentials and API keys.</data>
     </node>
     <node id="5">
-      <data key="d5">Amazon SageMaker</data>
+      <data key="d5">SageMaker</data>
       <data key="d6">SageMaker</data>
-      <data key="d7">Trains models and serves inference endpoints.</data>
+      <data key="d7">Hosts the prediction endpoint and manages model notebook/training jobs.</data>
     </node>
     <node id="6">
-      <data key="d5">Mobile App</data>
-      <data key="d6">UserConsumerMobile</data>
-      <data key="d7">Client app used by delivery drivers.</data>
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queues incoming metadata to decouple storage from real-time evaluation.</data>
     </node>
     <node id="7">
-      <data key="d5">Amazon API Gateway</data>
-      <data key="d6">ApiGateway</data>
-      <data key="d7">Exposes inference REST API.</data>
-    </node>
-    <node id="8">
-      <data key="d5">AWS Lambda</data>
-      <data key="d6">Lambda</data>
-      <data key="d7">Invokes SageMaker endpoint.</data>
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Encrypted S3 bucket storing customer metadata for training.</data>
     </node>
     <edge source="0" target="1" id="0">
       <data key="d8">1</data>
-      <data key="d9">Extracts source data.</data>
+      <data key="d9">Sends SIP metadata payload.</data>
       <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
     <edge source="1" target="2" id="0">
       <data key="d8">1</data>
-      <data key="d9">Loads data to Redshift.</data>
+      <data key="d9">Triggers authorization check.</data>
       <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="1" target="3" id="0">
+    <edge source="2" target="4" id="0">
       <data key="d8">1</data>
-      <data key="d9">Saves raw data to S3.</data>
+      <data key="d9">Looks up credentials in DynamoDB.</data>
       <data key="d10">3</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="1" target="4" id="0">
+    <edge source="2" target="3" id="0">
       <data key="d8">1</data>
-      <data key="d9">Saves reference data.</data>
+      <data key="d9">Passes request to Vera Call Lambda.</data>
       <data key="d10">4</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="2" target="5" id="0">
+    <edge source="3" target="5" id="0">
       <data key="d8">1</data>
-      <data key="d9">Fetches data for model building.</data>
-      <data key="d10">6</data>
-      <data key="d11">data</data>
-    </edge>
-    <edge source="3" target="2" id="0">
-      <data key="d8">1</data>
-      <data key="d9">Queries data using Redshift Spectrum.</data>
+      <data key="d9">Invokes SageMaker endpoint for fraud risk prediction.</data>
       <data key="d10">5</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="5" target="2" id="0">
+    <edge source="3" target="0" id="0">
       <data key="d8">1</data>
-      <data key="d9">Interacts with data warehouse.</data>
-      <data key="d10">7</data>
+      <data key="d9">Returns response with risk score to the customer.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Pushes call metadata asynchronously to SQS queue.</data>
+      <data key="d10">1</data>
       <data key="d11">data</data>
     </edge>
     <edge source="6" target="7" id="0">
       <data key="d8">2</data>
-      <data key="d9">Sends geocoding requests.</data>
-      <data key="d10">1</data>
-      <data key="d11">data</data>
-    </edge>
-    <edge source="7" target="8" id="0">
-      <data key="d8">2</data>
-      <data key="d9">Triggers Lambda function.</data>
+      <data key="d9">Persists metadata in encrypted S3 bucket.</data>
       <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="8" target="5" id="0">
+    <edge source="7" target="5" id="0">
       <data key="d8">2</data>
-      <data key="d9">Invokes prediction model.</data>
+      <data key="d9">SageMaker retrieves stored metadata from S3 to retrain models.</data>
       <data key="d10">3</data>
       <data key="d11">data</data>
     </edge>
-    <data key="d0">Aramex Address Geocoding Architecture</data>
-    <data key="d1">https://www.youtube.com/watch?v=kYv_8kE76K8</data>
-    <data key="d2">Serverless address geocoding and machine learning training pipeline using SageMaker and Redshift.</data>
-    <data key="d3">Machine Learning, Logistics</data>
+    <data key="d0">NextCaller Phone Fraud Detection</data>
+    <data key="d1" />
+    <data key="d2">Serverless architecture for real-time SIP metadata fraud detection and automatic machine learning model retraining.</data>
+    <data key="d3">Security, Machine Learning</data>
     <data key="d4">True</data>
   </graph>
 </graphml>

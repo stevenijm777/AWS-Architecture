@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "The architecture tracks speedtest data from consumers into a processing pipeline. Consumers send reports to an API Server (EC2) which ingests them into Kinesis. The data is enriched using facts from RDS, then forwarded to Kinesis Firehose, which stores them in an S3 Data Lake. From S3, a Lambda function triggers to normalize data into CSVs and loads them into Redshift. Aggregated insights from Redshift are written back to RDS to be served to consumers through the API. Additionally, Athena is used to query the S3 Data Lake directly.",
+  "graph": {
+    "name": "Ookla Speedtest Data Pipeline Architecture",
+    "link": "https://www.youtube.com/watch?v=FqSPh9YfL-4",
+    "categories": "Data Analytics, Serverless, Real-Time Ingestion",
+    "graph_usable": true,
+    "notes": "Ookla uses a Kinesis and Lambda-driven serverless pipeline to ingest, enrich, and analyze 4,000 speedtest reports per second, processing over 5 PB of data."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Consumers",
+      "notes": "End-users performing Speedtests"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "API Server",
+      "notes": "Receives speedtest reports and exposes intelligence product"
+    },
+    {
+      "id": "2",
+      "service": "Kinesis",
+      "name": "Kinesis Stream",
+      "notes": "Provides 24-hour data retention and asynchronous queueing"
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "Holds dimension fact tables and stores aggregated speedtest insights"
+    },
+    {
+      "id": "4",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Gathers, compresses, and writes reports to S3"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Stores over 5 PB of uncompressed newline-separated JSON data"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Normalizes JSON into CSV for Redshift"
+    },
+    {
+      "id": "7",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Performs long-term aggregation and data warehousing"
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Queries historical JSON data in S3 directly"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reports sent to API"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "API drops reports to Kinesis"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Data enriched using facts from RDS"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Enriched data written to Firehose"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Writes JSON to S3"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers on new S3 objects"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Loads normalized CSV to Redshift"
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Aggregates written back to RDS"
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Insights served to consumers"
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries data lake directly"
+    }
+  ]
+}
