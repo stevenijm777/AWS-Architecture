@@ -1,0 +1,130 @@
+{
+  "step_by_step_reasoning": "The architecture shows a multi-region global file locking mechanism for Nasuni's edge appliances. Amazon Route 53 handles DNS routing. Edge appliances connect to Route 53 for location/health checks and send file lock requests directly to an Elastic Load Balancer (ELB) in the primary region. Each region consists of an ELB, EC2 instances, and a DynamoDB table for low-latency lock state storage. Cross-region DynamoDB replication synchronizes locks between regions. A central AWS Lambda function monitors health and controls ELB request acceptance and consistency checking during failover events.",
+  "graph": {
+    "name": "Nasuni Global File Locking Architecture",
+    "link": "",
+    "categories": "Storage & Global Systems",
+    "graph_usable": true,
+    "notes": "Multi-region active-passive file locking architecture with Route 53 DNS failover and DynamoDB global replication."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "Edge Appliance (Primary)",
+      "notes": "On-premises or cloud edge appliance sending file lock requests"
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "Amazon Route 53",
+      "notes": "DNS routing and active-passive health checking"
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "ELB (Primary Region)",
+      "notes": "Load balances requests in primary region"
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 (Primary Region)",
+      "notes": "Runs file locking service logic"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Primary Region)",
+      "notes": "Stores file lock state records"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Orchestrates failover and consistency logic between regions"
+    },
+    {
+      "id": "6",
+      "service": "ELB",
+      "name": "ELB (Secondary Region)",
+      "notes": "Load balances requests in secondary region"
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 (Secondary Region)",
+      "notes": "Runs file locking service logic in secondary region"
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB (Secondary Region)",
+      "notes": "Replicated file lock state database"
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyEdge",
+      "name": "Edge Appliance (Secondary)",
+      "notes": "Edge appliance connected to secondary region"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries DNS and checks health status"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends file lock request"
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Instructs ELB to accept/reject incoming traffic during failover"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Manages secondary region ELB state during failover"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Monitors primary DynamoDB replication status"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Monitors secondary DynamoDB replication status"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Replicates lock tables between regions"
+    }
+  ]
+}

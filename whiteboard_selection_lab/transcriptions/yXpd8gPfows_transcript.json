@@ -1,0 +1,237 @@
+[
+  {
+    "start": 0.0,
+    "end": 9.0,
+    "text": "Welcome to Dicima Architecture. My name is Andrea and I'm here with Phil from InnoWisdom."
+  },
+  {
+    "start": 9.0,
+    "end": 13.0,
+    "text": "Hi Phil, welcome to the show. Hi. What do you guys do?"
+  },
+  {
+    "start": 13.0,
+    "end": 16.0,
+    "text": "So we develop AI and ML solutions for our clients."
+  },
+  {
+    "start": 16.0,
+    "end": 21.0,
+    "text": "Great. So today we're here to talk about your IDP platform, which is Intelligent Document Processing."
+  },
+  {
+    "start": 21.0,
+    "end": 23.0,
+    "text": "Tell our viewers what is that?"
+  },
+  {
+    "start": 23.0,
+    "end": 28.0,
+    "text": "So it allows insurance companies to understand what's inside policy documents,"
+  },
+  {
+    "start": 28.0,
+    "end": 31.0,
+    "text": "so they know it's there and they can use it in their business."
+  },
+  {
+    "start": 31.0,
+    "end": 37.0,
+    "text": "Let's dive straight into the architecture. Assume that I am a company requesting a quote."
+  },
+  {
+    "start": 37.0,
+    "end": 40.0,
+    "text": "So talk us through the flow from the intake station."
+  },
+  {
+    "start": 40.0,
+    "end": 49.0,
+    "text": "So the first bit is the pre-processing and Lambda kicks that off by going to the inbox and getting the email and all the attachments."
+  },
+  {
+    "start": 49.0,
+    "end": 50.0,
+    "text": "Okay."
+  },
+  {
+    "start": 50.0,
+    "end": 53.0,
+    "text": "And then puts that into S3."
+  },
+  {
+    "start": 53.0,
+    "end": 57.0,
+    "text": "I see. And what different types of intake attachments do you get?"
+  },
+  {
+    "start": 57.0,
+    "end": 65.0,
+    "text": "Typically, the PDF, Word file, Excel, that kind of thing. But we can do more if needed."
+  },
+  {
+    "start": 65.0,
+    "end": 71.0,
+    "text": "Okay. So that's the first stage. Walk us through the logic. I do see AIML in the middle."
+  },
+  {
+    "start": 71.0,
+    "end": 74.0,
+    "text": "Where does that come into the context of the use case?"
+  },
+  {
+    "start": 74.0,
+    "end": 79.0,
+    "text": "So the next stage is kicked off by the Lambda and it starts a step function."
+  },
+  {
+    "start": 79.0,
+    "end": 80.0,
+    "text": "Okay."
+  },
+  {
+    "start": 80.0,
+    "end": 90.0,
+    "text": "And then based on what kind of document it is, what line of business it is, it will use either Textract or Custom Model to work and extract the text from the document."
+  },
+  {
+    "start": 90.0,
+    "end": 94.0,
+    "text": "Okay. And what order do they use these?"
+  },
+  {
+    "start": 94.0,
+    "end": 106.0,
+    "text": "So most of the time we'll be using Textract and we'll use a custom model for very specific, like if it's very specific form data in a very specific format, we can hardly tune a model to that exact."
+  },
+  {
+    "start": 106.0,
+    "end": 111.0,
+    "text": "I see. And where do you take the information from and then where do you put it in?"
+  },
+  {
+    "start": 111.0,
+    "end": 122.0,
+    "text": "So everything works around S3. So Textract will load those documents from S3, do what it needs to do, and it will output its results to S3."
+  },
+  {
+    "start": 122.0,
+    "end": 127.0,
+    "text": "I see. And does it work the same way with your custom model in SageMaker?"
+  },
+  {
+    "start": 127.0,
+    "end": 134.0,
+    "text": "Yeah, exactly. There it goes in, model runs, and then the results come back out and stored back to S3."
+  },
+  {
+    "start": 134.0,
+    "end": 143.0,
+    "text": "I see. So for most cases you can deal with the intake forms through Textract, but some custom intakes require that custom model for SageMaker."
+  },
+  {
+    "start": 143.0,
+    "end": 147.0,
+    "text": "And then I do see Comprehend. Walk us through that. Where does that come in?"
+  },
+  {
+    "start": 147.0,
+    "end": 156.0,
+    "text": "So we use that for classification and also named entity recognition. Basically that allows us to work out if it's a person, if it's a location, organization,"
+  },
+  {
+    "start": 156.0,
+    "end": 165.0,
+    "text": "or a date. Again, it works in a similar format. It will load the files from S3."
+  },
+  {
+    "start": 165.0,
+    "end": 172.0,
+    "text": "Okay. Actually the results from the other stages. And then process it and then put the results back into S3."
+  },
+  {
+    "start": 172.0,
+    "end": 180.0,
+    "text": "I see. So you have a pre-processing stage. I do see a step function. And then I assume this is the post-processing."
+  },
+  {
+    "start": 180.0,
+    "end": 182.0,
+    "text": "Yeah. Walk us through that."
+  },
+  {
+    "start": 182.0,
+    "end": 191.0,
+    "text": "So the heart of this is a Lambda again. So that Lambda will load the final results from all the different stages and work out what to do with it."
+  },
+  {
+    "start": 191.0,
+    "end": 198.0,
+    "text": "So for example, Textract, when it has extracted a document, it will extract it per page at a time."
+  },
+  {
+    "start": 198.0,
+    "end": 208.0,
+    "text": "But things like tables can span multiple pages. So in that Lambda, we're stitching that all back together to understand really the whole of that table and all the different values within it, for example."
+  },
+  {
+    "start": 208.0,
+    "end": 217.0,
+    "text": "The other thing we're doing is looking for synonyms. So for example, different styles of documents from different insurers will come through."
+  },
+  {
+    "start": 217.0,
+    "end": 228.0,
+    "text": "And they'll have policy number, policy num, policy hash. They're all the same thing. We've got it here, but we still need to bring them all back together to that one data point."
+  },
+  {
+    "start": 228.0,
+    "end": 229.0,
+    "text": "So that's what the synonym is about."
+  },
+  {
+    "start": 229.0,
+    "end": 231.0,
+    "text": "Okay. And where do you store that information?"
+  },
+  {
+    "start": 231.0,
+    "end": 233.0,
+    "text": "So we store them in DynamoDB."
+  },
+  {
+    "start": 233.0,
+    "end": 234.0,
+    "text": "Okay."
+  },
+  {
+    "start": 234.0,
+    "end": 237.0,
+    "text": "So the Lambda will load that from DynamoDB."
+  },
+  {
+    "start": 237.0,
+    "end": 248.0,
+    "text": "I see. And so let's assume an intake comes in and this is information you've never processed before. So you may not have the synonyms in the DynamoDB. How do you train that model?"
+  },
+  {
+    "start": 248.0,
+    "end": 273.0,
+    "text": "So the first thing is we're monitoring in the process, the accuracy, and if it's poor, we'll send it to SageMaker. Ground truth. What that means is we can then send it to a subject matter expert that can understand that document, labour that document up to us, and we can retrain the models as needed, particularly this model. But you may do things with these two models. Also, we can put new synonyms into that database."
+  },
+  {
+    "start": 273.0,
+    "end": 282.0,
+    "text": "Okay, wonderful. So thank you, Phil, for walking us through this architecture where you're using the power of AI ML to be able to extract information from the intake forms. Thank you so much."
+  },
+  {
+    "start": 282.0,
+    "end": 283.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 283.0,
+    "end": 285.0,
+    "text": "And thank you for watching. This is my architecture."
+  }
+]

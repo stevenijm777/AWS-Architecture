@@ -1,0 +1,182 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Nagra's A/B forensic watermarking solution for VOD and live video streams. VOD content flows from S3 to MediaConvert and back to S3 as dual A/B variants. Live video flows from a camera feed to MediaConnect, MediaLive (split into A/B channels), and MediaPackage. CloudFront serves video segments to end-user Players, leveraging Lambda@Edge for token-based sequence selection and DynamoDB for session blacklisting managed by the Detection Service (DS).",
+  "graph": {
+    "name": "Nagra Forensic Watermarking Architecture",
+    "link": "",
+    "categories": "Media & Entertainment",
+    "graph_usable": true,
+    "notes": "Parsimonious model based on whiteboard visual details."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Content Storage",
+      "notes": "Stores input files and A/B variant segments for VOD"
+    },
+    {
+      "id": "1",
+      "service": "MediaConvert",
+      "name": "MediaConvert",
+      "notes": "Generates A/B watermarking video variants for VOD"
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN distributing video content to end-user players"
+    },
+    {
+      "id": "3",
+      "service": "LambdaAtEdge",
+      "name": "Lambda@Edge",
+      "notes": "Inserts sequence tokens and queries session status"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores session blacklisting information"
+    },
+    {
+      "id": "5",
+      "service": "MediaConnect",
+      "name": "MediaConnect",
+      "notes": "Receives live camera feed and splits stream"
+    },
+    {
+      "id": "6",
+      "service": "MediaLive",
+      "name": "MediaLive",
+      "notes": "Encodes live A/B watermarking channels"
+    },
+    {
+      "id": "7",
+      "service": "MediaPackage",
+      "name": "MediaPackage",
+      "notes": "Packages live streams for internet distribution"
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWeb",
+      "name": "Player 1",
+      "notes": "Client player receiving ABAB sequence"
+    },
+    {
+      "id": "9",
+      "service": "UserConsumerMobile",
+      "name": "Player 2",
+      "notes": "Client player receiving ABBA sequence"
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "DS",
+      "notes": "Detection Service identifying session breaches"
+    },
+    {
+      "id": "11",
+      "service": "UserConsumerCamera",
+      "name": "Live Feed",
+      "notes": "Source camera feed"
+    }
+  ],
+  "edges": [
+    {
+      "source": "11",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Live stream input to MediaConnect"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "MediaConnect splits stream into dual channels to MediaLive"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "MediaLive outputs A/B channels to MediaPackage"
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "MediaPackage acts as origin for CloudFront"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "VOD file sent to MediaConvert"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "A and B variants saved back to S3"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 serves as CloudFront origin"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront executes Lambda@Edge at edge"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda@Edge checks DynamoDB for blacklisting"
+    },
+    {
+      "source": "10",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Detection service populates blacklisted sessions"
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Delivers ABAB sequence to Player 1"
+    },
+    {
+      "source": "2",
+      "target": "9",
+      "flow_id": 5,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers ABBA sequence to Player 2"
+    }
+  ]
+}

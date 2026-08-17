@@ -1,0 +1,128 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates a serverless data processing pipeline at Autodesk. Data is ingested into S3 (13TB daily volume). S3 triggers an event notification via SNS, which invokes processing Lambda functions. The Lambda functions cleanse and enrich the data, then write metadata into DynamoDB. An ECS batch processing service reads metadata from DynamoDB, performs parquet batch conversion, and writes the resulting output back to S3 for end users. In case of processing errors, SNS triggers a secondary Lambda function that copies erroneous files to S3 for investigation.",
+  "graph": {
+    "name": "Autodesk Serverless Near-Real-Time Data Pipeline",
+    "link": "",
+    "categories": "Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "Serverless pipeline replacing Spark-based data processing using S3, SNS, Lambda, DynamoDB, and ECS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Data Lake Bucket",
+      "notes": "Stores raw ingested data (up to 13TB daily) and processed batch Parquet files."
+    },
+    {
+      "id": "1",
+      "service": "SNS",
+      "name": "SNS Topic",
+      "notes": "Receives events from S3 and triggers processing and error-handling Lambdas."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Processing Lambda",
+      "notes": "Cleanses, enriches data, and writes metadata to DynamoDB."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB Metadata Store",
+      "notes": "Provides high throughput and low latency for metadata operations."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS Batch Service",
+      "notes": "Async RESTful Web API service that batches JSON outputs into Parquet format."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Error Handling Lambda",
+      "notes": "Copies erroneous files back into S3 upon processing failures."
+    },
+    {
+      "id": "6",
+      "service": "UserConsumerWeb",
+      "name": "End Users",
+      "notes": "Consumes processed Parquet data from S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 bucket triggers SNS event upon file arrival."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "SNS triggers data processing Lambda functions."
+    },
+    {
+      "source": "2",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Internal retry mechanism within processing Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Processing Lambda writes metadata to DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "ECS reads metadata from DynamoDB to perform batch processing."
+    },
+    {
+      "source": "4",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "ECS writes batched Parquet files back to S3."
+    },
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "End users consume processed data from S3."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "SNS notifies error handling Lambda upon processing failure."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Error handling Lambda copies bad files back to S3 for debugging."
+    }
+  ]
+}

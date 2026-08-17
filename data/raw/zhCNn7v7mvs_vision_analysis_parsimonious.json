@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows an email delivery workflow spanning two main accounts/regions separated by a blue vertical divider line. On the left side, an Application (APP) triggers job queuing into ElastiCache Redis on the right side, while data from Aurora Postgres is written to S3. On the right side (sending infrastructure region), an EC2 instance fleet (Mail Merge) reads job queues from ElastiCache Redis, recipient CSV files from S3, and email templates from Aurora Postgres. It then sends email tasks via a Network Load Balancer (NLB) to another EC2 fleet acting as Mail Transfer Agents (MTAs). The MTAs send emails out to the Internet Recipients (Cloud shape) and log delivery status to Kinesis Firehose, which streams logs back across the account boundary into Aurora Postgres on the left.",
+  "graph": {
+    "name": "CM Group Email Delivery Subsystem Architecture",
+    "link": "",
+    "categories": "Messaging, Serverless, Compute, Storage",
+    "graph_usable": true,
+    "notes": "Multi-region architecture for high-volume email delivery processing billions of emails using EC2, NLB, ElastiCache Redis, S3, Aurora Postgres, and Kinesis Firehose."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "APP",
+      "notes": "SaaS Web Application initiating email campaigns"
+    },
+    {
+      "id": "1",
+      "service": "Aurora",
+      "name": "Aurora Postgres",
+      "notes": "Stores metadata, templates, and recipient data"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores campaign recipient CSV files"
+    },
+    {
+      "id": "3",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "Custom job queue in remote region"
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 (Mail Merge)",
+      "notes": "Fleet processing job queue and merging templates"
+    },
+    {
+      "id": "5",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "Network Load Balancer routing to MTAs"
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 (MTA)",
+      "notes": "Fleet of Mail Transfer Agents using BYOIP"
+    },
+    {
+      "id": "7",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Streams delivery logs back to main account database"
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Internet Recipients",
+      "notes": "External email recipients"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Enqueues processing job into ElastiCache Redis"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Exports recipient data into S3 CSV files"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pulls queue jobs"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fetches recipient CSV files"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fetches templates for mail merge"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 4,
+      "seq": "6",
+      "type": "data",
+      "notes": "Sends merged email stream to NLB"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 5,
+      "seq": "7",
+      "type": "data",
+      "notes": "Routes email traffic to MTA instances"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 6,
+      "seq": "8",
+      "type": "data",
+      "notes": "Delivers emails across the internet using BYOIP"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 7,
+      "seq": "9",
+      "type": "data",
+      "notes": "Sends delivery/bounce log entries via Kinesis agent"
+    },
+    {
+      "source": "7",
+      "target": "1",
+      "flow_id": 8,
+      "seq": "10",
+      "type": "data",
+      "notes": "Streams log metrics back to Aurora Postgres"
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The architecture shows an IDP platform. First, a pre-processing Lambda checks an Email Inbox (ThirdParty) and stores incoming documents into S3. Next, documents from S3 interact bidirectionally with AI services in the middle layer: Comprehend, Textract, and SageMaker. A post-processing Lambda consumes results from S3, stores structured data into DynamoDB, and sends low-confidence or unhandled cases to SageMaker Ground Truth for human review.",
+  "graph": {
+    "name": "InnoWisdom Intelligent Document Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=2Tzvh8wF1J0",
+    "categories": "AI/ML Document Processing",
+    "graph_usable": true,
+    "notes": "Intelligent document processing pipeline using AWS Lambda, S3, Textract, Comprehend, SageMaker, SageMaker Ground Truth, and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Email Inbox",
+      "notes": "External email intake station"
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Pre-processing Lambda",
+      "notes": "Fetches emails and attachments"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Storage Bucket",
+      "notes": "Central document and state storage"
+    },
+    {
+      "id": "3",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Text classification and named entity recognition"
+    },
+    {
+      "id": "4",
+      "service": "Textract",
+      "name": "Textract",
+      "notes": "Text and table extraction"
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker Custom Model",
+      "notes": "Custom extraction for specialized forms"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Post-processing Lambda",
+      "notes": "Stitches table data and normalizes synonyms"
+    },
+    {
+      "id": "7",
+      "service": "SageMakerGroundTruth",
+      "name": "SageMaker Ground Truth",
+      "notes": "Human-in-the-loop review for low accuracy items"
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores synonyms and extracted structured data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda fetches email from inbox"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves raw files into S3"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reads document for classification/NER"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes entity results back to S3"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reads document for text extraction"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes extraction results to S3"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reads document for custom ML processing"
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes custom model results to S3"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Post-processing Lambda reads all stage output from S3"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries and saves structured results/synonyms in DynamoDB"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends low-accuracy items to Ground Truth for SME review"
+    }
+  ]
+}
