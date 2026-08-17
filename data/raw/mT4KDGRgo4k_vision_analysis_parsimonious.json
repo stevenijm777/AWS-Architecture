@@ -1,0 +1,96 @@
+{
+  "step_by_step_reasoning": "The visual diagram shows client applications (an EC2-based app server and an AWS Lambda function) contained within a Clients box, both pointing to a Network Load Balancer (NLB). The NLB forwards queries to an auto-scaled Heimdall Proxy cluster running on EC2 instances. The Proxy cluster communicates with a Primary RDS database and an ElastiCache instance used for pub/sub synchronization and invalidation messages across proxy nodes. Secondary database instances (RDS) are also present in the environment.",
+  "graph": {
+    "name": "Database Caching and Read-Write Split Architecture with Heimdall Proxy",
+    "link": "",
+    "categories": "Database / Performance / Load Balancing",
+    "graph_usable": true,
+    "notes": "Architecture shows Heimdall Proxy layer using NLB, ElastiCache, and RDS databases for read-write splitting and query caching."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "Application Server",
+      "notes": "Client application server issuing database queries."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Client Lambda Function",
+      "notes": "Serverless application client."
+    },
+    {
+      "id": "2",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "Distributes database traffic across proxy nodes."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Heimdall Proxy Cluster",
+      "notes": "Proxy instances performing query routing, caching, and connection management."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "Primary Database",
+      "notes": "Writable primary database node."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "Secondary Database",
+      "notes": "Read replica database instances."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Pub-sub cache interface for synchronizing invalidations across proxy nodes."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "App server sends queries to NLB."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda function sends queries to NLB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "NLB routes traffic to Heimdall proxy instances."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Proxy directs write operations to primary database."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Proxy sends invalidation signals via ElastiCache Pub-Sub."
+    }
+  ]
+}

@@ -1,0 +1,397 @@
+[
+  {
+    "start": 0.0,
+    "end": 10.08,
+    "text": "Bonjour à tous, bienvenue pour ce nouvel épisode de This is my architecture."
+  },
+  {
+    "start": 10.08,
+    "end": 13.6,
+    "text": "Je m'appelle Marc et aujourd'hui je suis accompagné par Pierre de la société CLAP."
+  },
+  {
+    "start": 13.6,
+    "end": 16.68,
+    "text": "Bienvenue Pierre. Bonjour Marc. Alors dis-moi Pierre, est-ce que tu pourrais"
+  },
+  {
+    "start": 16.68,
+    "end": 20.92,
+    "text": "nous décrire un peu le cas d'utilisation aujourd'hui de CLAP ? Oui alors CLAP fait"
+  },
+  {
+    "start": 20.92,
+    "end": 25.8,
+    "text": "du montage automatisé et du traitement de vidéo dans le domaine du sport qui s'adresse"
+  },
+  {
+    "start": 25.8,
+    "end": 32.36,
+    "text": "aux paris sportifs ou aux événements sportifs en tout genre. Donc nous gérons des gros flux"
+  },
+  {
+    "start": 32.36,
+    "end": 37.32,
+    "text": "vidéo et nous faisons par exemple pour les matchs de foot des montages dans lesquels nous"
+  },
+  {
+    "start": 37.32,
+    "end": 42.040000000000006,
+    "text": "intuons l'ensemble des buts du match de foot ou des statistiques comme le nombre de passes par joueur."
+  },
+  {
+    "start": 42.040000000000006,
+    "end": 46.2,
+    "text": "D'accord et aujourd'hui vous avez créé votre solution applicative directement sur AWS. Est-ce"
+  },
+  {
+    "start": 46.2,
+    "end": 52.14,
+    "text": "que tu pourrais nous en dire plus ? Oui alors nous nous sommes basés sur AWS pour le cloud au départ"
+  },
+  {
+    "start": 52.14,
+    "end": 58.46,
+    "text": "de stockage Amazon S3 qui nous permet de gérer nos énormes vidéos puisque nous gérons des flux de"
+  },
+  {
+    "start": 58.46,
+    "end": 63.260000000000005,
+    "text": "très haute qualité de 50 mbps par seconde ce qui fait environ 50 gigaoctets pour deux heures de vidéo."
+  },
+  {
+    "start": 63.260000000000005,
+    "end": 70.92,
+    "text": "Nous avons vite énormément de vidéos à gérer et gérer ça dans le cloud AWS nous permet de ne pas"
+  },
+  {
+    "start": 70.92,
+    "end": 75.78,
+    "text": "gérer les vidéos sur des disques durs ce qui crée des problèmes de fiabilité et de la même manière"
+  },
+  {
+    "start": 75.78,
+    "end": 80.62,
+    "text": "nous utilisons aussi beaucoup Amazon lambda pour nos calculs ce qui nous permet de la même manière de ne"
+  },
+  {
+    "start": 80.62,
+    "end": 84.94,
+    "text": "pas avoir un seul serveur qui fait le calcul mais de distribuer nos calculs dans le cloud Amazon."
+  },
+  {
+    "start": 84.94,
+    "end": 88.30000000000001,
+    "text": "D'accord et est-ce que tu pourrais nous décrire l'architecture que nous avons en tableau ?"
+  },
+  {
+    "start": 88.30000000000001,
+    "end": 96.98,
+    "text": "Oui alors je vais vous présenter le chemin d'une vidéo dans le cloud clap donc la vidéo arrive dans"
+  },
+  {
+    "start": 96.98,
+    "end": 104.08000000000001,
+    "text": "un bucket Amazon S3 et l'arrivée de cette vidéo va enclencher automatiquement l'exécution,"
+  },
+  {
+    "start": 104.08,
+    "end": 113.34,
+    "text": "une exécution step function. Cette exécution step function va enclencher séquentiellement quatre"
+  },
+  {
+    "start": 113.34,
+    "end": 120.16,
+    "text": "étapes. On commence d'abord par une lambda qui va prendre cette vidéo et qui va les transformer en"
+  },
+  {
+    "start": 120.16,
+    "end": 125.74,
+    "text": "milliers de frames qui va être stocké à nouveau sur Amazon S3 sous forme de PNG. D'accord donc une fois"
+  },
+  {
+    "start": 125.74,
+    "end": 133.9,
+    "text": "que vous avez généré toutes ces images qu'est-ce que tu vas en faire ? Alors ces images sont ensuite analysées par une"
+  },
+  {
+    "start": 133.9,
+    "end": 139.24,
+    "text": "seconde lambda mais cette seconde lambda va lister les images et comme il y a un gros, un grand nombre"
+  },
+  {
+    "start": 139.24,
+    "end": 143.8,
+    "text": "d'images, une grosse quantité de calculs à faire, en fait au lieu de faire le calcul directement,"
+  },
+  {
+    "start": 143.8,
+    "end": 150.56,
+    "text": "elle va lancer un traitement par lot, par lot de 50 à 200 images dans des lambdas qui vont être"
+  },
+  {
+    "start": 150.56,
+    "end": 159.1,
+    "text": "lancées en parallèle. Donc en pratique elle va lancer ça peut être 50 ou 100 lambdas en parallèle ou bien"
+  },
+  {
+    "start": 159.1,
+    "end": 164.44,
+    "text": "jusqu'à 1000 lambdas, puisque c'est ce que nous permet de faire AWS, qui vont traiter l'ensemble des images de"
+  },
+  {
+    "start": 164.44,
+    "end": 171.34,
+    "text": "la vidéo en même temps. Et qui vont extraire grâce à un modèle TensorFlow, par exemple la position du"
+  },
+  {
+    "start": 171.34,
+    "end": 176.92,
+    "text": "ballon dans chaque image et stocker cette position de nouveau dans un bucket Amazon S3. D'accord et donc"
+  },
+  {
+    "start": 176.92,
+    "end": 181.18,
+    "text": "vous avez entraîné un modèle TensorFlow que vous avez ensuite importé dans une fonction lambda,"
+  },
+  {
+    "start": 181.18,
+    "end": 187.0,
+    "text": "pourquoi avoir fait le choix de l'inférence sur lambda ? Alors lambda a beaucoup d'avantages dans ce cas-là,"
+  },
+  {
+    "start": 187.0,
+    "end": 191.2,
+    "text": "d'abord c'est un système qui est extrêmement fiable puisque comme notre calcul est distribué,"
+  },
+  {
+    "start": 191.2,
+    "end": 197.08,
+    "text": "si une des unités de calcul tombe, on peut la relancer dynamiquement. Ensuite c'est extrêmement"
+  },
+  {
+    "start": 197.08,
+    "end": 200.68,
+    "text": "scalable comme j'expliquais, indépendamment de la quantité de vidéos qu'on doit traiter,"
+  },
+  {
+    "start": 200.68,
+    "end": 208.0,
+    "text": "on peut régler en permanence la capacité de calcul disponible en envoyant plus de lambda en parallèle"
+  },
+  {
+    "start": 208.0,
+    "end": 214.54,
+    "text": "tout simplement. Et finalement en termes de coût, c'est intéressant puisque ça nous permet de gérer"
+  },
+  {
+    "start": 214.54,
+    "end": 222.7,
+    "text": "tous nos calculs sur lambda et de ne pas avoir à payer les scale up et les scale down qu'on peut avoir"
+  },
+  {
+    "start": 222.7,
+    "end": 227.14,
+    "text": "sur des instances habituelles. D'accord donc sur cette deuxième étape vous allez générer des features"
+  },
+  {
+    "start": 227.14,
+    "end": 231.51999999999998,
+    "text": "qui vont être stockées sur S3. Qu'est-ce que vous allez faire avec ces features après ? Alors ces features"
+  },
+  {
+    "start": 231.51999999999998,
+    "end": 241.66,
+    "text": "sont traitées par la lambda suivante dans l'exécution step function. Cette lambda est une forme de moteur de décision,"
+  },
+  {
+    "start": 241.66,
+    "end": 247.54,
+    "text": "c'est à dire que on sait où est la balle dans chaque image, ce qu'on va faire donc on sait où est le but aussi,"
+  },
+  {
+    "start": 247.54,
+    "end": 252.88,
+    "text": "on a juste à regarder quand est-ce que la balle rentre dans le but, dans quelle image et décider à ce"
+  },
+  {
+    "start": 252.88,
+    "end": 259.42,
+    "text": "moment là quel montage on va faire. En l'occurrence on veut un ralenti du but. Donc ça c'est cette décision"
+  },
+  {
+    "start": 259.42,
+    "end": 262.71999999999997,
+    "text": "qui est prise dans cette lambda là au regard de toutes les détections qui ont été faites dans les"
+  },
+  {
+    "start": 262.71999999999997,
+    "end": 267.65999999999997,
+    "text": "frames et qui va permettre ensuite de faire le montage. D'accord et donc une fois que vous avez déterminé le moteur de"
+  },
+  {
+    "start": 267.66,
+    "end": 272.1,
+    "text": "décision comment lancez-vous l'étape de montage ? Alors l'étape de montage n'est pas faite dans une"
+  },
+  {
+    "start": 272.1,
+    "end": 281.40000000000003,
+    "text": "fonction lambda, elle est faite dans un cluster ECS. Ce cluster ECS porte des instances EC2. Ces instances EC2"
+  },
+  {
+    "start": 281.40000000000003,
+    "end": 292.08000000000004,
+    "text": "vont porter un moteur FFmpeg qui va faire le montage effectif de la vidéo et envoyer cette vidéo ensuite"
+  },
+  {
+    "start": 292.08,
+    "end": 298.68,
+    "text": "sur les plateformes de streaming pour qu'elles soient visionnées par les clients de nos clients."
+  },
+  {
+    "start": 298.68,
+    "end": 303.84,
+    "text": "D'accord et donc pourquoi avoir choisi spécifiquement ECS et non pas lambda pour cette dernière étape ?"
+  },
+  {
+    "start": 303.84,
+    "end": 310.56,
+    "text": "Alors nous sommes des grands fans de lambda chez Clap parce que ça permet plein d'avantages sur"
+  },
+  {
+    "start": 310.56,
+    "end": 317.09999999999997,
+    "text": "l'ensemble du calcul mais le problème sur cette dernière étape de fin de chaîne c'est que on ne peut pas dans"
+  },
+  {
+    "start": 317.1,
+    "end": 323.70000000000005,
+    "text": "tous les cas avoir un calcul qui dure forcément moins de 15 minutes. On peut imaginer que on a envie de"
+  },
+  {
+    "start": 323.70000000000005,
+    "end": 328.92,
+    "text": "monter un but, les 20 minutes qui précèdent le but, il faut faire tout ce qui est transcoding etc."
+  },
+  {
+    "start": 328.92,
+    "end": 333.66,
+    "text": "Donc c'est des calculs assez lourds et donc les limitations qui sont inhérentes aux fonctions lambda"
+  },
+  {
+    "start": 333.66,
+    "end": 341.52000000000004,
+    "text": "en fait peuvent nous poser des problématiques métiers sur cette dernière étape. Donc on a préféré prendre un"
+  },
+  {
+    "start": 341.52,
+    "end": 346.26,
+    "text": "cluster ECS ce qui nous permet d'avoir moins de limitations, d'être plus libre. Puis étant donné"
+  },
+  {
+    "start": 346.26,
+    "end": 351.53999999999996,
+    "text": "que c'est pas l'endroit où ça nous coûte le plus cher, on n'avait pas non plus besoin d'optimiser"
+  },
+  {
+    "start": 351.53999999999996,
+    "end": 355.97999999999996,
+    "text": "énormément à cet endroit-là. D'accord. Est-ce que tu pourrais partager des chiffres sur l'utilisation"
+  },
+  {
+    "start": 355.97999999999996,
+    "end": 359.58,
+    "text": "de cette architecture aujourd'hui ? Alors cette architecture aujourd'hui nous permet de traiter"
+  },
+  {
+    "start": 359.58,
+    "end": 367.26,
+    "text": "1 à 5 millions d'images analysées par jour pour des coûts qui vont être inférieurs à 10 000 euros par jour."
+  },
+  {
+    "start": 367.26,
+    "end": 373.8,
+    "text": "Ça peut paraître cher comme ça mais la vidéo c'est extrêmement lourd à traiter, les calculs sont"
+  },
+  {
+    "start": 373.8,
+    "end": 380.02,
+    "text": "lourds et par rapport à notre solution, de notre analyse, c'est très compétitif. L'autre avantage"
+  },
+  {
+    "start": 380.02,
+    "end": 386.02,
+    "text": "que l'on a c'est qu'indépendamment de la quantité de data qu'on va avoir en entrée, on peut garantir"
+  },
+  {
+    "start": 386.02,
+    "end": 390.84,
+    "text": "un traitement au moins jusqu'ici, sur toute cette première partie, qui va durer moins de cinq minutes."
+  },
+  {
+    "start": 390.84,
+    "end": 396.84,
+    "text": "Donc par exemple pour traiter des gros lots d'archives de données de nos utilisateurs, ça fait une solution"
+  },
+  {
+    "start": 396.84,
+    "end": 401.4,
+    "text": "qui est extrêmement véloce. D'accord. Et quelles sont les améliorations que vous pourriez apporter"
+  },
+  {
+    "start": 401.4,
+    "end": 408.59999999999997,
+    "text": "à cette architecture ? Il y en a énormément des améliorations. Le point qui est important pour"
+  },
+  {
+    "start": 408.59999999999997,
+    "end": 413.28,
+    "text": "nous c'est de réduire cette barrière de cinq minutes, de pouvoir abaisser sur les flux live,"
+  },
+  {
+    "start": 413.28,
+    "end": 418.2,
+    "text": "de pouvoir être capable de sortir un résultat en moins de 30 secondes. Et pour ça on espère connecter,"
+  },
+  {
+    "start": 418.2,
+    "end": 425.08,
+    "text": "enfin on est en train de connecter un flux Amazon Kinesis qui remplacera l'entrée par le bucket S3 et qui"
+  },
+  {
+    "start": 425.08,
+    "end": 429.64,
+    "text": "permettra d'avoir plus de fluidité dans le stream et de gérer le stream vraiment en temps réel."
+  },
+  {
+    "start": 429.64,
+    "end": 436.65999999999997,
+    "text": "L'autre point c'est de transformer, de compléter cette architecture par des traitements GPU au niveau"
+  },
+  {
+    "start": 436.65999999999997,
+    "end": 441.15999999999997,
+    "text": "de la lambda pour pouvoir avoir des traitements hybrides et pouvoir faire tourner des modèles"
+  },
+  {
+    "start": 441.15999999999997,
+    "end": 445.0,
+    "text": "TensorFlow qui soient plus volumineux, qui ne rentrent pas aujourd'hui dans les fonctions lambda."
+  },
+  {
+    "start": 445.0,
+    "end": 447.96,
+    "text": "D'accord. Merci Pierre d'avoir partagé avec nous toute mon expérience."
+  },
+  {
+    "start": 447.96,
+    "end": 451.47999999999996,
+    "text": "Merci Marc de nous avoir invités. Et merci à vous de nous avoir suivis pour cet épisode de"
+  },
+  {
+    "start": 451.48,
+    "end": 457.24,
+    "text": "This is my architecture. Au revoir."
+  }
+]

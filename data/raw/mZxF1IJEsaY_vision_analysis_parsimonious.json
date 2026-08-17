@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "1. Identified user entry point indicated by the squiggly arrow on the left pointing to Route 53.\n2. Identified Route 53 service node.\n3. Identified the Front End path: Route 53 -> ALB (Front End) -> ECS (Front End) -> Route 53 (loop back to backend domain).\n4. Identified the Back End path: Route 53 -> ALB (Back End) -> ECS (Back End).\n5. From ECS (Back End), connections go to Aurora MySQL for database storage and Amazon MQ for message processing.\n6. Identified DMS (Database Migration Service) feeding data into Aurora MySQL.\n7. Identified the drawn cyan line connecting Route 53 and DMS.",
+  "graph": {
+    "name": "Zappos Back Office Architecture with ECS, Aurora MySQL, and Amazon MQ",
+    "link": "",
+    "categories": "Web Application & Database Migration",
+    "graph_usable": true,
+    "notes": "Architecture showing Zappos front-end and back-end decoupling on ECS with Aurora MySQL and Amazon MQ."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Users",
+      "notes": "External users sending requests"
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "DNS service routing front-end and back-end traffic"
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "Front End ALB",
+      "notes": "Application Load Balancer for Front End"
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "Front End ECS",
+      "notes": "ECS cluster running front-end microservices"
+    },
+    {
+      "id": "4",
+      "service": "ALB",
+      "name": "Back End ALB",
+      "notes": "Application Load Balancer for Back End"
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "Back End ECS",
+      "notes": "ECS cluster running back-end microservices"
+    },
+    {
+      "id": "6",
+      "service": "AmazonMQ",
+      "name": "Amazon MQ",
+      "notes": "Message broker service for back-end messaging"
+    },
+    {
+      "id": "7",
+      "service": "Aurora",
+      "name": "Aurora MySQL",
+      "notes": "Relational database target"
+    },
+    {
+      "id": "8",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "Database Migration Service used for migrating legacy database data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "User request to Route 53"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Route 53 directs front-end traffic to Front End ALB"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Front End ALB forwards to Front End ECS"
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Front End ECS calls back-end via Route 53 DNS query"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route 53 routes back-end request to Back End ALB"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Back End ALB forwards request to Back End ECS"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Back End ECS reads/writes to Aurora MySQL"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Back End ECS generates/consumes messages with Amazon MQ"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "DMS migrates data into Aurora MySQL"
+    },
+    {
+      "source": "8",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Blue line drawn connecting DMS back across to Route 53"
+    }
+  ]
+}

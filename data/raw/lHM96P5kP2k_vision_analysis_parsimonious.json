@@ -1,0 +1,184 @@
+{
+  "step_by_step_reasoning": "The architecture shows an end-to-end data processing pipeline for ad events. Data enters via Kafka into Spark Streaming, which writes raw parquet data into an initial S3 bucket. Airflow triggers batch processing jobs on an EKS cluster (running Spark with Spotinst) which ingests raw data from S3, writes aggregated results to a secondary S3 bucket, and directly populates Cassandra. S3 aggregated data is read by Presto and EMR. EMR populates Druid. Finally, Cassandra, Presto, and Druid feed into a central Dashboard UI.",
+  "graph": {
+    "name": "Fyber Ad Event Analytics Architecture",
+    "link": "",
+    "categories": "Analytics & Big Data",
+    "graph_usable": true,
+    "notes": "Real-time ad event processing architecture using Kafka, Spark on EKS, S3, EMR, Druid, Cassandra, and Presto."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Kafka",
+      "notes": "Ingests high-volume ad events"
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Spark Streaming",
+      "notes": "Reads real-time data stream"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Raw S3 Bucket",
+      "notes": "Stores parquet raw events"
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Spark on EKS / Spotinst",
+      "notes": "Runs auto-scaled Spark jobs"
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Airflow",
+      "notes": "Orchestrates EKS and EMR batch jobs"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "Aggregated S3 Bucket",
+      "notes": "Stores aggregated data"
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Cassandra",
+      "notes": "Stores fast aggregated metric time series"
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Presto",
+      "notes": "Queries user snapshot data directly from S3"
+    },
+    {
+      "id": "8",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Reads aggregated data and populates Druid"
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Druid",
+      "notes": "Multi-dimensional OLAP data store"
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWeb",
+      "name": "Dashboard UI",
+      "notes": "Visual dashboard for customers"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams events to Spark Streaming"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes raw parquet files to S3"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Spark on EKS reads raw data"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Airflow triggers EKS Spark jobs"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes aggregated data to S3"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Writes aggregated results directly to Cassandra"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Presto queries aggregated S3 data"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR reads aggregated S3 data"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Airflow triggers EMR job"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 4,
+      "seq": "3",
+      "type": "data",
+      "notes": "EMR loads data into Druid"
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Feeds high-speed metrics to Dashboard"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 5,
+      "seq": "2",
+      "type": "data",
+      "notes": "Feeds snapshot queries to Dashboard"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 5,
+      "seq": "3",
+      "type": "data",
+      "notes": "Feeds multi-dimensional queries to Dashboard"
+    }
+  ]
+}

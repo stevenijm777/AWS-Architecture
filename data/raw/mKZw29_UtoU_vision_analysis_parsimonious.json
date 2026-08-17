@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The architecture processes real-time parking data and performs ML predictions. Data flows from IoT Parking sensors into Kinesis Firehose, processed by a Lambda function, and saved into DynamoDB for real-time access and S3 for long-term storage. S3 feeds SageMaker for model training orchestrated by Step Functions. CodeCommit triggers Lambda deployments. API Gateway routes user requests to a query Lambda that reads from DynamoDB and SageMaker.",
+  "graph": {
+    "name": "IEM Mobillita Parking Prediction Architecture",
+    "link": "",
+    "categories": "IoT, Machine Learning, Serverless",
+    "graph_usable": true,
+    "notes": "Serverless parking occupancy prediction and real-time visualization architecture."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Parking Lot Sensors",
+      "notes": "Sends current parking occupancy data."
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Ingests real-time streaming data."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Data Processing Lambda",
+      "notes": "Cleans data and writes to S3 and DynamoDB."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores historical parking data in Parquet format."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB Table",
+      "notes": "Stores real-time occupancy data with TTL."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "SageMaker Model Endpoint",
+      "notes": "Trains and serves long-term occupancy predictions."
+    },
+    {
+      "id": "6",
+      "service": "StepFunctions",
+      "name": "Step Functions Workflow",
+      "notes": "Orchestrates data cleaning, training, and model deployment."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "API Service Lambda",
+      "notes": "Fetches real-time or predicted parking data."
+    },
+    {
+      "id": "8",
+      "service": "CodeCommit",
+      "name": "CodeCommit Repository",
+      "notes": "Stores application code and CloudFormation templates."
+    },
+    {
+      "id": "9",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for public user requests."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams occupancy data"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers data cleaning every minute"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Exports cleaned data in Parquet format"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Writes real-time data with TTL"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Provides dataset for training"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers training and endpoint deployment"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Invokes cleaning task"
+    },
+    {
+      "source": "8",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Deploys code updates to ingestion Lambda"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Deploys code updates to API Lambda"
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Routes API user queries"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries prediction model"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queries real-time data"
+    }
+  ]
+}

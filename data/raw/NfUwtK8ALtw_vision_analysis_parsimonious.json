@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents MX Player's video ingestion, pre-transcoding, transcoding, and delivery pipeline. Ingest begins with the CMS pushing content to EC2 (Pre-Transcoding API). EC2 triggers Pre-Transcoding workers (Auto Scaling), writes to SQS, and writes task entries to ElastiCache. Pre-Transcoding workers process initial media metadata/audio, send messages to SQS, and trigger Transcoding workers (Auto Scaling). Transcoding workers poll jobs from SQS, read raw content from S3, write metadata/tasks to ElastiCache, and write processed video streams back to S3. For playback, end consumers request video through CloudFront, which fetches content directly from S3.",
+  "graph": {
+    "name": "MX Player Scalable Video Transcoding Architecture",
+    "link": "",
+    "categories": "Media Processing & Content Delivery",
+    "graph_usable": true,
+    "notes": "Architecture showing large-scale spot fleet video transcoding workflow on AWS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "CMS",
+      "notes": "Content Management System ingesting videos."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Pre-transcoding API server."
+    },
+    {
+      "id": "2",
+      "service": "AutoScaling",
+      "name": "Pre Transcoding",
+      "notes": "Spot fleet EC2 GPU/CPU instances doing audio/subtitle processing."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Message queue for transcoding job tasks."
+    },
+    {
+      "id": "4",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Task status tracking and cache store."
+    },
+    {
+      "id": "5",
+      "service": "AutoScaling",
+      "name": "Transcoding",
+      "notes": "Large spot fleet workers performing video codec transformation."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Storage for raw and transcoded video files."
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN for delivering video content to end users."
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End consumer requesting video streaming."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests raw videos to pre-transcoding API"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Invokes pre-transcoding workers"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends job message to queue"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Creates task record in ElastiCache"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends message upon pre-transcoding completion"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers actual transcoding workflow"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Transcoding workers pull messages from SQS"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads raw media files from S3"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Marks task done in cache"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Writes transcoded media output to S3"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests media playback"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront fetches media from S3 origin"
+    }
+  ]
+}

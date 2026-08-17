@@ -1,0 +1,192 @@
+[
+  {
+    "start": 0.0,
+    "end": 14.0,
+    "text": "Hello and welcome to another episode of This is My Architecture. I'm Sounika and today I have Vaibhav from MX Player with us."
+  },
+  {
+    "start": 14.0,
+    "end": 19.0,
+    "text": "Hello Vaibhav. Hey, thanks for having me. Vaibhav, can you tell us a bit about MX Player?"
+  },
+  {
+    "start": 19.0,
+    "end": 25.0,
+    "text": "MX Player is India's largest digital entertainment ecosystem with 1 billion plus app download on Android."
+  },
+  {
+    "start": 25.0,
+    "end": 42.0,
+    "text": "We have around 17 plus international market and we have around 300 million plus MAUs and more than 200k hours of video content in 10 different languages."
+  },
+  {
+    "start": 42.0,
+    "end": 50.0,
+    "text": "200 hours of video content, 200k hours of video content, right? These are like huge. So how are you managing this scale Vaibhav on this platform?"
+  },
+  {
+    "start": 50.0,
+    "end": 63.0,
+    "text": "So as an OTD platform, we basically get a loss of videos from different vendors and our content team basically ingest the data to buy our CMS."
+  },
+  {
+    "start": 63.0,
+    "end": 70.0,
+    "text": "So this comes from the CMS2. These are transcoding API and then the flow scope."
+  },
+  {
+    "start": 70.0,
+    "end": 76.0,
+    "text": "Okay, so once the file is ingested to the EC2, what gets further to the pre-transcoding?"
+  },
+  {
+    "start": 76.0,
+    "end": 89.0,
+    "text": "So basically once these files got ingested, basically this pre-transcoding API invoke the transcoding workers and send the message to SQS and create a task in Elastic Cache."
+  },
+  {
+    "start": 89.0,
+    "end": 96.0,
+    "text": "Okay, so once the file is ingested and the pre-transcoding layer is invoked, what exactly happens here?"
+  },
+  {
+    "start": 96.0,
+    "end": 104.0,
+    "text": "So this pre-transcoding workers do basic checks on raw videos and do audio and subtitle transcoding."
+  },
+  {
+    "start": 104.0,
+    "end": 115.0,
+    "text": "And with this, there's a huge amount of videos comes in. So we use auto-scaling in this particular to scale our fleet."
+  },
+  {
+    "start": 115.0,
+    "end": 117.0,
+    "text": "Okay, and this is spot fleet, is it?"
+  },
+  {
+    "start": 117.0,
+    "end": 130.0,
+    "text": "Yeah, this is spot fleet and the raw video size is very big. So we use the GPU instances here and sometimes we use the normal CPU-weight instances to basically do a pre-transcoding work."
+  },
+  {
+    "start": 130.0,
+    "end": 134.0,
+    "text": "Okay, and once the pre-transcoding is done, what happens next?"
+  },
+  {
+    "start": 134.0,
+    "end": 146.0,
+    "text": "So once pre-transcoding is done, so basically it's again send data to SQS and also hit actual transcoding API."
+  },
+  {
+    "start": 146.0,
+    "end": 154.0,
+    "text": "Okay, so I'm sure you will be receiving so many files because like you have 300 million plus MEUs."
+  },
+  {
+    "start": 154.0,
+    "end": 158.0,
+    "text": "So this would be massive scale right on transcoding layer. So what exactly are you doing here?"
+  },
+  {
+    "start": 158.0,
+    "end": 175.0,
+    "text": "So this particular transcoding workers basically get the data from S3 and this is basically, again, a spot fleet where we have a GPU instances and the CPU instances."
+  },
+  {
+    "start": 175.0,
+    "end": 190.0,
+    "text": "So this comes to S3 and do a transcoding. Once the transcoding got finished, because the pre-transcoding created a task here, so basically they mark the task done here and send data back to S3."
+  },
+  {
+    "start": 190.0,
+    "end": 199.0,
+    "text": "Got it. So this spot fleet, right? I'm sure there would be reason why you're using spot fleet here. And what is the peak scale that you've seen with the transcoding layer?"
+  },
+  {
+    "start": 199.0,
+    "end": 221.0,
+    "text": "So the transcoding one is like, if I give you the idea, like once we have around 100K videos got ingested in our SQS. And this spot fleet basically we scaled up to like around 3000 instances, which basically we have almost finished all this transcoding in one hour."
+  },
+  {
+    "start": 221.0,
+    "end": 236.0,
+    "text": "One hour. That's really amazing. So once the video files gets created and transcoded, the final output is there here in the S3 file, right? The media file stays. As a user, when I hit a play button for a video file on MX Player, what happens?"
+  },
+  {
+    "start": 236.0,
+    "end": 253.0,
+    "text": "So whenever a user hit to a play button, it directly comes to CloudFront. And for a CloudFront backend is your S3. And from the S3, all the video goes to users."
+  },
+  {
+    "start": 253.0,
+    "end": 256.0,
+    "text": "So how are you making this efficient for the end user?"
+  },
+  {
+    "start": 256.0,
+    "end": 276.0,
+    "text": "So we basically with this all the spot fleet and all different type of EC2 GPU and all, we basically able to do a multiple codec transformation. So with the multiple codecs, like we use S266, S265, AV1 and different transcoding format, which basically compress the data."
+  },
+  {
+    "start": 276.0,
+    "end": 283.0,
+    "text": "If I give you a good idea, like we are the only one in the OTT platform who does the S266 transcoding."
+  },
+  {
+    "start": 283.0,
+    "end": 291.0,
+    "text": "Only the one, right? Maybe the first one to do S266. So what is the final user bandwidth, right? That gets benefited?"
+  },
+  {
+    "start": 291.0,
+    "end": 301.0,
+    "text": "Yeah. So the user bandwidth, if I transcoded our content is S266, that's the user consumption will be 50% less than the other things."
+  },
+  {
+    "start": 301.0,
+    "end": 302.0,
+    "text": "Lot of savings on internet."
+  },
+  {
+    "start": 302.0,
+    "end": 311.0,
+    "text": "Yes. Because if the loss of CDN cost basically got benefit, it's a user benefit as well. It's a cost benefit for us as well."
+  },
+  {
+    "start": 311.0,
+    "end": 321.0,
+    "text": "Because the CloudFront, the CDN data out will be less. And from S3 to CloudFront data will be less. It's all free, but there will be less data transfer in there."
+  },
+  {
+    "start": 321.0,
+    "end": 325.0,
+    "text": "Okay. So this is how we as an end user quickly see the videos on MX Player."
+  },
+  {
+    "start": 325.0,
+    "end": 326.0,
+    "text": "Exactly."
+  },
+  {
+    "start": 326.0,
+    "end": 331.0,
+    "text": "Thank you so much. This is really a great scalable architecture. Thanks for sharing your time with us today, Vaibhau."
+  },
+  {
+    "start": 331.0,
+    "end": 332.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 332.0,
+    "end": 333.0,
+    "text": "Thanks."
+  },
+  {
+    "start": 333.0,
+    "end": 334.0,
+    "text": "Thanks for watching. This is my architecture."
+  }
+]

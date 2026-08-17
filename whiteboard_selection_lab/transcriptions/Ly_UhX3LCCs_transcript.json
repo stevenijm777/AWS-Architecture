@@ -1,0 +1,237 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.16,
+    "text": "Welcome to another episode of This is My Architecture. Well, typically we love to have"
+  },
+  {
+    "start": 11.16,
+    "end": 16.6,
+    "text": "customers talk about their solutions, but today I have a fellow solution architect with me,"
+  },
+  {
+    "start": 16.6,
+    "end": 21.54,
+    "text": "Pravanchu. How are you? Good. How are you, Andrew? I'm well. Now, you work in the media and"
+  },
+  {
+    "start": 21.54,
+    "end": 27.0,
+    "text": "entertainment team, and you work with a lot of customers that are looking to ship around vast"
+  },
+  {
+    "start": 27.0,
+    "end": 33.54,
+    "text": "volumes of files, audio, video, large data sets. What are some of the challenges that you see that"
+  },
+  {
+    "start": 33.54,
+    "end": 41.22,
+    "text": "they have? Typically, it's the amount of time and money that they are spending by maintaining those"
+  },
+  {
+    "start": 41.22,
+    "end": 47.34,
+    "text": "infrastructure for moving those files. As an example, if somebody has to move hundreds of"
+  },
+  {
+    "start": 47.34,
+    "end": 53.1,
+    "text": "gigabytes or terabytes of data over the internet, it takes considerable amount of time. And also,"
+  },
+  {
+    "start": 53.1,
+    "end": 57.54,
+    "text": "they are having to pay for the licenses that are associated with those softwares that are doing"
+  },
+  {
+    "start": 57.54,
+    "end": 63.96,
+    "text": "it for them, etc. Also, security is paramount. In our industry, all the transfers have to be secured"
+  },
+  {
+    "start": 63.96,
+    "end": 69.6,
+    "text": "because this is really extremely valuable content. And you've built a really elegant solution,"
+  },
+  {
+    "start": 69.6,
+    "end": 76.92,
+    "text": "so let's dive in. Yeah, so in this solution, we are putting S3 as the backbone for those transfers."
+  },
+  {
+    "start": 76.92,
+    "end": 82.98,
+    "text": "The reason we are looking at S3 is because a lot of our customers are already using S3 as part of"
+  },
+  {
+    "start": 82.98,
+    "end": 90.42,
+    "text": "their media processing workflows. So what we have done is that we have taken an S3 bucket and put it in"
+  },
+  {
+    "start": 90.42,
+    "end": 99.18,
+    "text": "the middle for whoever is producing the content and whoever is here to receive the content. But the thing"
+  },
+  {
+    "start": 99.18,
+    "end": 108.22,
+    "text": "about this particular S3 bucket is that it is secured and access controlled for the specific transactions"
+  },
+  {
+    "start": 108.22,
+    "end": 114.66,
+    "text": "that they are having to do with themselves. Now, what is happening here is that whoever is producing content,"
+  },
+  {
+    "start": 114.66,
+    "end": 121.66,
+    "text": "they are only simply copying the files into this bucket, the S3 bucket that is in the middle, and the other side"
+  },
+  {
+    "start": 121.66,
+    "end": 126.66,
+    "text": "is coming to go and pick it up. So they have write permissions, the other side have read permissions to it."
+  },
+  {
+    "start": 126.66,
+    "end": 134.22,
+    "text": "So you're using a publisher subscriber model. Exactly. How do you maintain control of access between all the different buckets?"
+  },
+  {
+    "start": 134.22,
+    "end": 141.66,
+    "text": "That's a great question. The access is being controlled by AWS Identity and Access Management. There are no credentials to manage."
+  },
+  {
+    "start": 141.66,
+    "end": 150.57999999999998,
+    "text": "So what this bucket is configured for is that the publisher account has access to this bucket to put assets in, and the"
+  },
+  {
+    "start": 150.57999999999998,
+    "end": 160.22,
+    "text": "subscriber account has access into this bucket to read those files in. It's really simple. That you are putting, as if you're putting the files in a staging area,"
+  },
+  {
+    "start": 160.22,
+    "end": 168.66,
+    "text": "and then the other side is coming and picking it up from there. Great. So let's walk through the whole orchestration of how it works."
+  },
+  {
+    "start": 168.66,
+    "end": 189.1,
+    "text": "Yeah. So what is happening here is that every time the publishers put a file in between, that generates an event, which gets sent to an event bridge. And these notifications, the object creation notifications, get passed around to both the parties."
+  },
+  {
+    "start": 189.1,
+    "end": 196.1,
+    "text": "That way what happens is that they can either publisher or the subscriber can integrate their existing workflows to it."
+  },
+  {
+    "start": 196.1,
+    "end": 209.1,
+    "text": "As an example, if you are, if somebody is receiving an asset, they can look at those events and start transcoding them immediately. They don't have to wait for the whole thing to complete, etc."
+  },
+  {
+    "start": 209.1,
+    "end": 212.1,
+    "text": "They do not have to come back and check when the assets are transferred."
+  },
+  {
+    "start": 212.1,
+    "end": 229.1,
+    "text": "So event bridge, which is our serverless event bus makes it really scalable no matter how many publishers and subscribers that you have. Tell us a little bit about how we now manage the security because we've talked about the robustness, but how do customers feel that their data is secure?"
+  },
+  {
+    "start": 229.1,
+    "end": 242.1,
+    "text": "Yeah, absolutely. What is one key point here is that there are no changes to be made here in this side of the board in the publisher account or on the subscriber side of the things."
+  },
+  {
+    "start": 242.1,
+    "end": 250.1,
+    "text": "All this is being deployed in its own account in a siloed area where it is completely locked out and assets as they're moving in."
+  },
+  {
+    "start": 250.1,
+    "end": 259.1,
+    "text": "What is happening from the publisher's point of view is that they are writing into a bucket that happens to be in a different account and they have the required permissions."
+  },
+  {
+    "start": 259.1,
+    "end": 263.1,
+    "text": "Similarly, on the subscriber side, they have the required permissions to read from there."
+  },
+  {
+    "start": 263.1,
+    "end": 271.1,
+    "text": "And on top of that, everything is encrypted with AES-256 and AWS KMS in the mix, which is here."
+  },
+  {
+    "start": 271.1,
+    "end": 288.1,
+    "text": "What we are doing in this case is that the KMS is generating the keys that are being used to encrypt each and every object and the parties on publishing and subscriber have access for encryption and decryption."
+  },
+  {
+    "start": 288.1,
+    "end": 297.1,
+    "text": "That way it's not only secured from S3's point of view, but it is also secured with an shared encryption key that is only available to these two parties."
+  },
+  {
+    "start": 297.1,
+    "end": 302.1,
+    "text": "Great. And those access logs are sitting in the S3 bucket for querying later on."
+  },
+  {
+    "start": 302.1,
+    "end": 315.1,
+    "text": "That's a reporting piece in the sense that every time objects are being written to or read from this particular bucket that produces access log at the subscribers,"
+  },
+  {
+    "start": 315.1,
+    "end": 322.1,
+    "text": "the publishers and subscribers have access to it. That way they can build reporting around it, who is, when the files were being picked up, etc."
+  },
+  {
+    "start": 322.1,
+    "end": 325.1,
+    "text": "Very elegant. How do customers get access to this?"
+  },
+  {
+    "start": 325.1,
+    "end": 330.1,
+    "text": "So this is available in the AWS solutions page as well as it's available in the GitHub."
+  },
+  {
+    "start": 330.1,
+    "end": 333.1,
+    "text": "Our customers can go and download it today and start using it."
+  },
+  {
+    "start": 333.1,
+    "end": 337.1,
+    "text": "Fantastic. Love all the serverless use and the simplicity of it."
+  },
+  {
+    "start": 337.1,
+    "end": 340.1,
+    "text": "Thanks, Pravanchu, for coming to share your architecture with us today."
+  },
+  {
+    "start": 340.1,
+    "end": 341.1,
+    "text": "Thank you."
+  },
+  {
+    "start": 341.1,
+    "end": 344.1,
+    "text": "And thank you for joining us on This is My Architecture."
+  },
+  {
+    "start": 344.1,
+    "end": 346.1,
+    "text": "Thank you."
+  }
+]

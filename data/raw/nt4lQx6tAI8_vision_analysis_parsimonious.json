@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The visual architecture diagram displays a news distribution platform (NewsGrid). At the top, global USERS connect to Route 53 for DR routing, then hit ELB. ELB authenticates users via Cognito and routes traffic across EC2 instances in two Availability Zones. EC2 instances forward requests to AppSync. AppSync communicates directly with DynamoDB for primary data storage and sends real-time MQTT subscription updates back to Users. DynamoDB Streams trigger Lambda, which indexes and synchronizes data into Elasticsearch (OpenSearch).",
+  "graph": {
+    "name": "Dow Jones NewsGrid Platform Architecture",
+    "link": "",
+    "categories": "Media & Content Delivery",
+    "graph_usable": true,
+    "notes": "Global multi-AZ architecture leveraging AppSync, DynamoDB, Lambda, and Elasticsearch for real-time publishing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "USERS",
+      "notes": "Global desktop and mobile users"
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Global routing and disaster recovery"
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Load balancing incoming web traffic"
+    },
+    {
+      "id": "3",
+      "service": "Cognito",
+      "name": "COGNITO",
+      "notes": "User authentication and session enforcement"
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 (AZ 1)",
+      "notes": "Application server in first availability zone"
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 (AZ 2)",
+      "notes": "Application server in second availability zone"
+    },
+    {
+      "id": "6",
+      "service": "AppSync",
+      "name": "APPSYNC",
+      "notes": "Managed GraphQL API and real-time subscriptions"
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Primary database store"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Processes DynamoDB streams for search indexing"
+    },
+    {
+      "id": "9",
+      "service": "OpenSearch",
+      "name": "ELASTIC SEARCH",
+      "notes": "Search, sorting, and filtering cluster"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "DNS resolution request to determine active region"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Web and mobile traffic routed to load balancer"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Auth check with Cognito and Okta identity provider"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Forwards authenticated traffic to EC2 in AZ 1"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Forwards authenticated traffic to EC2 in AZ 2"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Proxies GraphQL requests to AppSync"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Proxies GraphQL requests to AppSync"
+    },
+    {
+      "source": "6",
+      "target": "0",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Real-time updates pushed back to client via MQTT"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads and writes data directly to primary datastore"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 5,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB Stream triggers Lambda processing"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 5,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda indexes updated data into Elasticsearch"
+    }
+  ]
+}

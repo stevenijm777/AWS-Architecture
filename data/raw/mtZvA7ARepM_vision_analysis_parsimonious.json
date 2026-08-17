@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "1. Identified 8 nodes from the whiteboard: API Gateway, ELB, Fargate, RDS, Kinesis, two separate Lambda functions (one for event processing, one for queries), and DynamoDB.\n2. Mapped visual connections: API Gateway routes write traffic through ELB to Fargate, which writes to RDS and streams events to Kinesis. Kinesis triggers Lambda to update DynamoDB. For queries, API Gateway routes directly to a second Lambda that reads from DynamoDB.\n3. Ensured exact service string names matching prompt V9 schema rules.",
+  "graph": {
+    "name": "Temenos Banking Platform Architecture",
+    "link": "",
+    "categories": "Banking / CQRS / Serverless",
+    "graph_usable": true,
+    "notes": "CQRS architecture separating OLTP write traffic (Fargate/RDS) from read/query traffic (Lambda/DynamoDB) with event streaming via Kinesis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point routing write and read requests."
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Routes transactional write requests to container backend."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Hosts core containerized transaction processing logic."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Primary OLTP database for transaction processing."
+    },
+    {
+      "id": "4",
+      "service": "KinesisDataStream",
+      "name": "Kinesis",
+      "notes": "Streams business and data events asynchronously."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Event Processor Lambda",
+      "notes": "Transforms events into query-optimized data models."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Query-optimized database for fast read operations."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Query Handler Lambda",
+      "notes": "Processes query requests and fetches data from DynamoDB."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes transactional requests to load balancer."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards request to Fargate container tasks."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Persists transactional data into RDS."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Emits business and data events into Kinesis."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Triggers Lambda function to process event stream."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Writes formatted query models into DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes query requests directly to Lambda."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queries DynamoDB for fast response times."
+    }
+  ]
+}

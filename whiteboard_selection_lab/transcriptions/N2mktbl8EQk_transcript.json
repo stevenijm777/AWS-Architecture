@@ -1,0 +1,462 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.72,
+    "text": "Hello everyone and welcome to another episode of This is My Model. If you're a traditional"
+  },
+  {
+    "start": 12.72,
+    "end": 17.76,
+    "text": "viewer you'll know that we always host customers and talk about their internal architectures and"
+  },
+  {
+    "start": 17.76,
+    "end": 21.68,
+    "text": "platforms. However, today we're doing something a little bit different. We're turning the cameras"
+  },
+  {
+    "start": 21.68,
+    "end": 27.92,
+    "text": "on ourselves internally to learn a little bit more about how the AWS DeepRacer service actually works."
+  },
+  {
+    "start": 28.48,
+    "end": 35.04,
+    "text": "I'm joined by Dr. Shahika Gensh from the Amazon SageMaker RL team. Shahika, thanks for joining us."
+  },
+  {
+    "start": 35.04,
+    "end": 39.6,
+    "text": "Thanks for having me. There's so many different types of techniques out there when it comes to"
+  },
+  {
+    "start": 39.6,
+    "end": 44.88,
+    "text": "machine learning. Specifically, there's supervised learning and unsupervised learning. Why are we"
+  },
+  {
+    "start": 44.88,
+    "end": 50.08,
+    "text": "using reinforcement learning? Reinforcement learning has a very high barrier to entry. There are a lot"
+  },
+  {
+    "start": 50.08,
+    "end": 56.56,
+    "text": "of skill set that is needed and to be acquired in order to learn how you can use reinforcement learning"
+  },
+  {
+    "start": 56.56,
+    "end": 61.760000000000005,
+    "text": "to solve complex artificial intelligence problems. So let's jump right into it, put a marker to the"
+  },
+  {
+    "start": 61.760000000000005,
+    "end": 66.48,
+    "text": "board and just figure out from an architecture perspective where we start and what services"
+  },
+  {
+    "start": 66.48,
+    "end": 73.04,
+    "text": "make up the AWS DeepRacer service. There are five main services that make up the SageMaker,"
+  },
+  {
+    "start": 73.04,
+    "end": 80.48,
+    "text": "RoboMaker, S3, Kinesis and CloudWatch. DeepRacer in the back runs all these services."
+  },
+  {
+    "start": 80.48,
+    "end": 86.32000000000001,
+    "text": "So this is the console view from the customer's perspective after they log in and they're"
+  },
+  {
+    "start": 86.32000000000001,
+    "end": 89.76,
+    "text": "interacting right away with the core services within their VPC."
+  },
+  {
+    "start": 89.76,
+    "end": 98.56,
+    "text": "That is true. Both Amazon SageMaker and AWS RoboMaker are under AVPC."
+  },
+  {
+    "start": 98.56,
+    "end": 105.04,
+    "text": "So Amazon SageMaker for training, AWS RoboMaker for the simulation environment where I'm assuming the"
+  },
+  {
+    "start": 105.04,
+    "end": 111.2,
+    "text": "agent is exploring, understanding and learning over time given its environment that it's working in."
+  },
+  {
+    "start": 111.2,
+    "end": 118.88000000000001,
+    "text": "That is true. Amazon SageMaker has several training algorithms using popular reinforcement learning"
+  },
+  {
+    "start": 118.88,
+    "end": 126.0,
+    "text": "algorithms. AWS RoboMaker creates a simulation environment where your physics engine determines"
+  },
+  {
+    "start": 126.0,
+    "end": 132.0,
+    "text": "given a sensor input and an action how your car is going to behave. So the physics engine is already"
+  },
+  {
+    "start": 132.0,
+    "end": 137.76,
+    "text": "pre-configured, the environment is already pre-created and the parameters from a configuration perspective"
+  },
+  {
+    "start": 137.76,
+    "end": 143.92,
+    "text": "are already pre-configured for the users. That is already done and it is done specifically for DeepRacer."
+  },
+  {
+    "start": 143.92,
+    "end": 148.8,
+    "text": "That will allow your car to run in the real world as well. So a lot of the interaction"
+  },
+  {
+    "start": 148.8,
+    "end": 153.92000000000002,
+    "text": "happens between Amazon SageMaker and AWS RoboMaker. We'll discuss more about that through the neural"
+  },
+  {
+    "start": 153.92000000000002,
+    "end": 159.84,
+    "text": "network discussion, but let's talk about the other services that make up the AWS DeepRacer service."
+  },
+  {
+    "start": 159.84,
+    "end": 169.92000000000002,
+    "text": "That's a great question. Amazon SageMaker uses S3 to store information about your presets,"
+  },
+  {
+    "start": 169.92000000000002,
+    "end": 177.04000000000002,
+    "text": "which is your hardware parameters, your model, and in addition to that it stores information about your"
+  },
+  {
+    "start": 177.04,
+    "end": 182.23999999999998,
+    "text": "environment. So one of the important things when it comes to reinforcement learning is the reward function,"
+  },
+  {
+    "start": 182.23999999999998,
+    "end": 188.16,
+    "text": "right? So that logic of how to incentivize an agent within its environment. When I author that,"
+  },
+  {
+    "start": 188.16,
+    "end": 196.07999999999998,
+    "text": "what happens to that logic? That logic stores in the S3 bucket and what happens is that the model and all the logic"
+  },
+  {
+    "start": 196.07999999999998,
+    "end": 204.88,
+    "text": "later is used by AWS RoboMaker to generate new experiences that the Amazon SageMaker can learn from."
+  },
+  {
+    "start": 204.88,
+    "end": 210.16,
+    "text": "As RoboMaker generates new experiences, state, next state, action, and reward,"
+  },
+  {
+    "start": 211.51999999999998,
+    "end": 220.24,
+    "text": "Amazon SageMaker interacts through the S3 bucket to obtain that information and to get better and learn"
+  },
+  {
+    "start": 220.24,
+    "end": 227.44,
+    "text": "to drive the car. Very cool. So if I do something creative within my reward function, I'll have the"
+  },
+  {
+    "start": 227.44,
+    "end": 233.84,
+    "text": "confidence that it's being stored for later viewing. Kinesis video streams, I'm thinking a stream from the"
+  },
+  {
+    "start": 233.84,
+    "end": 238.24,
+    "text": "simulation environment or a first person view in the console. Can you talk to us about that?"
+  },
+  {
+    "start": 238.24,
+    "end": 245.68,
+    "text": "That is true. You want to see how the car is driving and Kinesis video stream allows you to have that"
+  },
+  {
+    "start": 245.68,
+    "end": 251.84,
+    "text": "windshield view that the car is seeing while it is trying to learn by trial and error. So it's very cool"
+  },
+  {
+    "start": 251.84,
+    "end": 257.2,
+    "text": "because I can actually see it going off the track right away during the exploration phase and as it"
+  },
+  {
+    "start": 257.2,
+    "end": 261.84000000000003,
+    "text": "exploits its knowledge and its learnings over time, it's hopefully making a lap around the track."
+  },
+  {
+    "start": 261.84,
+    "end": 264.96,
+    "text": "That is true and it may get very addicted at some point."
+  },
+  {
+    "start": 264.96,
+    "end": 270.47999999999996,
+    "text": "Now from a logging perspective, I'm trying to put my developer hat on. I want to make sure that I can"
+  },
+  {
+    "start": 270.47999999999996,
+    "end": 276.47999999999996,
+    "text": "view all the different logs, print out all the parameters from my reward function, but talk to me"
+  },
+  {
+    "start": 276.47999999999996,
+    "end": 283.03999999999996,
+    "text": "about what are we logging specifically with Amazon CloudWatch? With Amazon CloudWatch, we are tracking"
+  },
+  {
+    "start": 283.03999999999996,
+    "end": 288.64,
+    "text": "several information. We want to learn when the algorithm is exploiting and when the algorithm is"
+  },
+  {
+    "start": 288.64,
+    "end": 295.52,
+    "text": "exploring. Exploring phase is when the algorithm is trying to learn many different new behaviors."
+  },
+  {
+    "start": 295.52,
+    "end": 302.0,
+    "text": "Exploiting is when it is trying to maximize that behavior. We store information from both RoboMaker and"
+  },
+  {
+    "start": 302.0,
+    "end": 309.36,
+    "text": "SageMaker in order to be able to plot the reward function and also the progress the car makes along"
+  },
+  {
+    "start": 309.36,
+    "end": 316.15999999999997,
+    "text": "with how the exploration is going on. So let's jump right into the Manage Jupiter Notebook and Amazon"
+  },
+  {
+    "start": 316.16,
+    "end": 321.68,
+    "text": "SageMaker and really understand the neural network architecture, how it's created. Can you help us"
+  },
+  {
+    "start": 321.68,
+    "end": 329.28000000000003,
+    "text": "walk through what to expect from the initial image that the agent sees until the output? Great. Our Amazon"
+  },
+  {
+    "start": 329.28000000000003,
+    "end": 335.28000000000003,
+    "text": "SageMaker reinforcement learning for DeepRacer is Proximate Policy Optimization. It is one of the"
+  },
+  {
+    "start": 335.28000000000003,
+    "end": 342.40000000000003,
+    "text": "state-of-art algorithms. This algorithm works by creating an agent model as well as a critic model,"
+  },
+  {
+    "start": 342.4,
+    "end": 347.91999999999996,
+    "text": "which is representative of your environment. So the neural network we're going to discuss is going to be"
+  },
+  {
+    "start": 347.91999999999996,
+    "end": 356.88,
+    "text": "the agent model that inputs the image as its information and it outputs actions. Hence, by updating the weights,"
+  },
+  {
+    "start": 356.88,
+    "end": 363.91999999999996,
+    "text": "the agent learns how to drive. Okay, great. So it all starts with a 160 by 120 image that's passed over to a"
+  },
+  {
+    "start": 363.92,
+    "end": 371.92,
+    "text": "convolutional neural network. That is true. So let's have our actions at the very end as the output and we"
+  },
+  {
+    "start": 371.92,
+    "end": 379.84000000000003,
+    "text": "have our input as the image. And we have several convolutional neural networks that learns to focus"
+  },
+  {
+    "start": 379.84000000000003,
+    "end": 386.56,
+    "text": "on several points. It may be focusing on yellow lines or it may be focusing on white lines depending"
+  },
+  {
+    "start": 386.56,
+    "end": 394.56,
+    "text": "your reward function. We pass this image through three layers of convolutional neural networks where"
+  },
+  {
+    "start": 395.28000000000003,
+    "end": 402.88,
+    "text": "the car learns to extract several features that will enable it to learn to drive. So the final stage"
+  },
+  {
+    "start": 402.88,
+    "end": 408.88,
+    "text": "before we reach to the action states after our convolutional neural networks is the fully connected"
+  },
+  {
+    "start": 410.32,
+    "end": 416.4,
+    "text": "layers and these layers enable which actions to be taken. So this is where the policy"
+  },
+  {
+    "start": 416.4,
+    "end": 421.35999999999996,
+    "text": "network is created. This is where PPO really comes into play and the weights are constantly updated for"
+  },
+  {
+    "start": 421.35999999999996,
+    "end": 429.44,
+    "text": "the retrainings that happen. That is true. At every training, one SageMaker, Amazon SageMaker is running"
+  },
+  {
+    "start": 429.44,
+    "end": 434.71999999999997,
+    "text": "with the information that it receives from RoboMaker, it will be making updates to these weights."
+  },
+  {
+    "start": 435.44,
+    "end": 442.79999999999995,
+    "text": "So this is open sourced right now. Anybody can go out, look at the actual AWS samples, Amazon SageMaker RL"
+  },
+  {
+    "start": 442.8,
+    "end": 449.52000000000004,
+    "text": "repository, look at the AWS DeepRacer example and even begin to modify it a little bit. What are some of"
+  },
+  {
+    "start": 449.52000000000004,
+    "end": 454.56,
+    "text": "the modifications that you've seen that have worked out very well for customers? Some of the modifications"
+  },
+  {
+    "start": 454.56,
+    "end": 460.08000000000004,
+    "text": "includes changing this architecture and this architecture can be changed in one of the files"
+  },
+  {
+    "start": 460.08000000000004,
+    "end": 465.76,
+    "text": "that you are storing in S3 bucket. So if you forget about what you did, you can still go back and look at"
+  },
+  {
+    "start": 465.76,
+    "end": 470.96,
+    "text": "what your architecture is. It also stores information about your hyperparameters."
+  },
+  {
+    "start": 471.68,
+    "end": 476.96,
+    "text": "Okay, great. So that preset file, the hyperparameters, I can change those, maybe even tune those,"
+  },
+  {
+    "start": 477.52,
+    "end": 481.84,
+    "text": "add different types of layers. So that's that modularity flexibility that we give you with an"
+  },
+  {
+    "start": 481.84,
+    "end": 487.92,
+    "text": "open source notebook. And really that kind of addresses one aspect of the reality gap. Can you talk to us"
+  },
+  {
+    "start": 487.92,
+    "end": 492.4,
+    "text": "more about that big challenge and issue within the industry when it comes to the reality gap and"
+  },
+  {
+    "start": 492.4,
+    "end": 498.23999999999995,
+    "text": "how we can address that using the Amazon SageMaker notebook? It's been very difficult to bridge the"
+  },
+  {
+    "start": 498.23999999999995,
+    "end": 506.15999999999997,
+    "text": "gap between simulation and reality. In order to reduce that gap, what we did behind the scenes is we"
+  },
+  {
+    "start": 506.15999999999997,
+    "end": 513.36,
+    "text": "made sure that the simulation has high physics fidelity. That is, the way the car behaves in physics is the"
+  },
+  {
+    "start": 513.36,
+    "end": 520.64,
+    "text": "same as the car will behave in simulation. And furthermore, through extensive testing, we learned that"
+  },
+  {
+    "start": 520.64,
+    "end": 527.04,
+    "text": "there are several network models that will generalize much better into the real world. And"
+  },
+  {
+    "start": 527.92,
+    "end": 534.16,
+    "text": "current default architecture for DeepRacer is one of those networks. But we found through research that"
+  },
+  {
+    "start": 534.16,
+    "end": 539.04,
+    "text": "there are several of those that could be utilized. Great. So it sounds like there's much more to come"
+  },
+  {
+    "start": 539.04,
+    "end": 544.4,
+    "text": "with AWS DeepRacer as well. There's constant updates that are happening to the notebook end. There's"
+  },
+  {
+    "start": 544.4,
+    "end": 549.4399999999999,
+    "text": "flexibility of choice around how to get started, whether you have little to no knowledge of machine"
+  },
+  {
+    "start": 549.44,
+    "end": 554.6400000000001,
+    "text": "learning or whether you're an expert or a practitioner, as you put it. And at the end of the day, upskilling"
+  },
+  {
+    "start": 554.6400000000001,
+    "end": 560.1600000000001,
+    "text": "your workforce and just learning about reinforcement learning in general has now been lowered from a"
+  },
+  {
+    "start": 560.1600000000001,
+    "end": 565.84,
+    "text": "barrier perspective. And this is really true to marketization of reinforcement learning. That is true."
+  },
+  {
+    "start": 565.84,
+    "end": 572.96,
+    "text": "And in addition to DeepRacer, Amazon SageMaker reinforcement learning repo contains many other notebooks"
+  },
+  {
+    "start": 572.96,
+    "end": 578.88,
+    "text": "where you can bring your own simulation and or you can bring your own popular reinforcement learning"
+  },
+  {
+    "start": 578.88,
+    "end": 592.24,
+    "text": "algorithms. Great. Shahika, thank you so much. It's always a pleasure. Thank you. And thank you for watching. This is my model."
+  }
+]

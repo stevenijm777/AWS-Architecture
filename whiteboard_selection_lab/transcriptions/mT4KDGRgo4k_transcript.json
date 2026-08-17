@@ -1,0 +1,292 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.0,
+    "text": "Welcome to This is My Architecture. I am Han and today we have Eric from Heimdall Data joining us."
+  },
+  {
+    "start": 12.0,
+    "end": 15.0,
+    "text": "Welcome Eric and thank you for joining us. Thank you."
+  },
+  {
+    "start": 15.0,
+    "end": 19.0,
+    "text": "So before we get into your architecture, can you tell me a little bit about Heimdall?"
+  },
+  {
+    "start": 19.0,
+    "end": 27.0,
+    "text": "Yes. Heimdall is an ISV partner of Amazon and what we do is we provide a software solution that's a proxy,"
+  },
+  {
+    "start": 27.0,
+    "end": 34.0,
+    "text": "database proxy that sits between client applications, Lambda functions, and the database itself."
+  },
+  {
+    "start": 34.0,
+    "end": 43.0,
+    "text": "And within the software it provides a wide variety of different functions in order to improve the scale and performance of applications"
+  },
+  {
+    "start": 43.0,
+    "end": 46.0,
+    "text": "and just help simplify the life of developers."
+  },
+  {
+    "start": 46.0,
+    "end": 51.0,
+    "text": "So let's say I'm a developer. So walk me through the flow of how that would help."
+  },
+  {
+    "start": 51.0,
+    "end": 56.0,
+    "text": "Okay. So whether you've got an application server or a Lambda function,"
+  },
+  {
+    "start": 56.0,
+    "end": 64.0,
+    "text": "they are going to connect to an NLB that will then distribute database queries as if it were the database"
+  },
+  {
+    "start": 64.0,
+    "end": 70.0,
+    "text": "into one or more proxies via an auto scaling group."
+  },
+  {
+    "start": 70.0,
+    "end": 78.0,
+    "text": "These proxies then provide one of several or any one of several functions, be it caching or read-write split,"
+  },
+  {
+    "start": 78.0,
+    "end": 84.0,
+    "text": "which we're about to talk about today, all in accessing the database."
+  },
+  {
+    "start": 84.0,
+    "end": 88.0,
+    "text": "Okay. So you said read-write split. So how does that orchestration work?"
+  },
+  {
+    "start": 88.0,
+    "end": 96.0,
+    "text": "Okay. So the whole idea here is that most applications aren't designed to access multiple application or database nodes."
+  },
+  {
+    "start": 96.0,
+    "end": 103.0,
+    "text": "Because the database nodes are read-write or, as in the case of a secondary server, it is a read-only node."
+  },
+  {
+    "start": 103.0,
+    "end": 109.0,
+    "text": "And the applications aren't designed to know when it's safe to use that second server."
+  },
+  {
+    "start": 109.0,
+    "end": 115.0,
+    "text": "So what Heimdall does is, as the proxy, it monitors the traffic that's going through the Heimdall,"
+  },
+  {
+    "start": 115.0,
+    "end": 122.0,
+    "text": "or going through the proxy, and it is able to determine what tables are being written to"
+  },
+  {
+    "start": 122.0,
+    "end": 126.0,
+    "text": "and what tables are being read from out of the database."
+  },
+  {
+    "start": 126.0,
+    "end": 131.0,
+    "text": "So let's say you've got a write going into the primary server."
+  },
+  {
+    "start": 131.0,
+    "end": 141.0,
+    "text": "We know that it is no longer safe to read that same table from the reader until long enough has occurred"
+  },
+  {
+    "start": 141.0,
+    "end": 144.0,
+    "text": "that that data is now on the secondary server."
+  },
+  {
+    "start": 144.0,
+    "end": 148.0,
+    "text": "All right. So I noticed that the proxy is in a cluster."
+  },
+  {
+    "start": 148.0,
+    "end": 152.0,
+    "text": "So how do you ensure there's no drift among the different nodes within there?"
+  },
+  {
+    "start": 152.0,
+    "end": 161.0,
+    "text": "Okay. What Heimdall does is, when we see the DML happening, we leverage the Pub-Sub interface of the LastCache."
+  },
+  {
+    "start": 161.0,
+    "end": 166.0,
+    "text": "It's something, an interface that's very similar to SNS, although very low latency."
+  },
+  {
+    "start": 166.0,
+    "end": 173.0,
+    "text": "So the proxy will come through, will write an invalidation message against that Pub-Sub interface,"
+  },
+  {
+    "start": 173.0,
+    "end": 179.0,
+    "text": "and then it will synchronize that with all the other proxies."
+  },
+  {
+    "start": 179.0,
+    "end": 185.0,
+    "text": "So by doing that, all the nodes know what is happening on any individual node,"
+  },
+  {
+    "start": 185.0,
+    "end": 192.0,
+    "text": "and they're able to operate as one even though they're distributed across many physical instances."
+  },
+  {
+    "start": 192.0,
+    "end": 197.0,
+    "text": "That's cool. So as a developer, what do I need to do? Do I have to make some code changes?"
+  },
+  {
+    "start": 197.0,
+    "end": 201.0,
+    "text": "Nope, you don't. Okay? Heimdall takes care of everything."
+  },
+  {
+    "start": 201.0,
+    "end": 206.0,
+    "text": "We understand what tables are being written to, what are being read from."
+  },
+  {
+    "start": 206.0,
+    "end": 210.0,
+    "text": "We synchronize that. We also do something that we call lag detection."
+  },
+  {
+    "start": 210.0,
+    "end": 217.0,
+    "text": "Wow. Okay. What lag detection is, is independent of all the traffic the application is doing."
+  },
+  {
+    "start": 217.0,
+    "end": 225.0,
+    "text": "We write into the primary database. We let it synchronize over to the secondary database,"
+  },
+  {
+    "start": 225.0,
+    "end": 230.0,
+    "text": "and then we read what we wrote, and what we're writing is a timestamp."
+  },
+  {
+    "start": 230.0,
+    "end": 239.0,
+    "text": "So by reading it back in, we're able to tell how long it takes for data to go from the primary to the secondary."
+  },
+  {
+    "start": 239.0,
+    "end": 252.0,
+    "text": "We then use the last write time on the table, plus that replication lag to determine what is safe to do when we do a read."
+  },
+  {
+    "start": 252.0,
+    "end": 256.0,
+    "text": "Is the secondary safe? And it's all automatic. That's the beauty of it."
+  },
+  {
+    "start": 256.0,
+    "end": 265.0,
+    "text": "So application developers can now scale their database from one writable server to, let's say, an Aurora cluster with 15 readers."
+  },
+  {
+    "start": 265.0,
+    "end": 270.0,
+    "text": "That's fantastic. I definitely can see how that will make it easier for the developer's life."
+  },
+  {
+    "start": 270.0,
+    "end": 275.0,
+    "text": "So what are some of the benefits that you've seen, or your customers seen, with this architecture?"
+  },
+  {
+    "start": 275.0,
+    "end": 282.0,
+    "text": "Okay. We've literally seen, have customers that are using 15 read replicas."
+  },
+  {
+    "start": 282.0,
+    "end": 290.0,
+    "text": "Wow. And because of the way that we handle everything, we're able to effectively use all 15 replicas."
+  },
+  {
+    "start": 290.0,
+    "end": 299.0,
+    "text": "If you even try to implement this on your own, most developers would try to use the reader endpoint of your Aurora cluster, for example."
+  },
+  {
+    "start": 299.0,
+    "end": 306.0,
+    "text": "But because of DNS and the way load balancing happens, you'll often get very different loads on the different databases."
+  },
+  {
+    "start": 306.0,
+    "end": 312.0,
+    "text": "So even if you tried to implement this, it generally isn't going to get you the same results that you get with us."
+  },
+  {
+    "start": 312.0,
+    "end": 317.0,
+    "text": "Okay. So what are the other benefits that your customers have seen with this architecture?"
+  },
+  {
+    "start": 317.0,
+    "end": 320.0,
+    "text": "Okay. So on top of the read-write split, we have other functionality."
+  },
+  {
+    "start": 320.0,
+    "end": 327.0,
+    "text": "We've got another video. We talk about our caching logic, which is very much related to how we do the read-write split."
+  },
+  {
+    "start": 327.0,
+    "end": 333.0,
+    "text": "But we also do connection pooling and multiplexing in order to reduce the number of connections on a database."
+  },
+  {
+    "start": 333.0,
+    "end": 340.0,
+    "text": "And then in particular with Postgres-derived databases, lowering the connection count can be very important to improve performance."
+  },
+  {
+    "start": 340.0,
+    "end": 353.0,
+    "text": "Thank you for going over your architecture. It's definitely very beneficial for the developers to give that lift in the application with little to no code changes and having to handle the connection pooling and replication."
+  },
+  {
+    "start": 353.0,
+    "end": 355.0,
+    "text": "That's really awesome. Thank you."
+  },
+  {
+    "start": 355.0,
+    "end": 358.0,
+    "text": "And thank you for watching This is My Architecture."
+  },
+  {
+    "start": 358.0,
+    "end": 359.0,
+    "text": "This is My Architecture."
+  }
+]

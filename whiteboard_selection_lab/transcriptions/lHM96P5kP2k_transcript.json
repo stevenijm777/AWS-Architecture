@@ -1,0 +1,252 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.040000000000001,
+    "text": "Welcome to This is My Architecture. My name is Ran and joining me today is Yudha from Fiber. Hi, Yudha."
+  },
+  {
+    "start": 11.040000000000001,
+    "end": 17.76,
+    "text": "Hi. Before we get into the architecture, tell us a bit about Fiber. So Fiber helps mobile developers"
+  },
+  {
+    "start": 17.76,
+    "end": 24.12,
+    "text": "monetize from ads. Okay, how do they do that? So we do that by connecting by advertisers and"
+  },
+  {
+    "start": 24.12,
+    "end": 30.92,
+    "text": "mobile developers. Okay. We are getting half a million ad requests each second and we go out"
+  },
+  {
+    "start": 30.92,
+    "end": 38.56,
+    "text": "to advertisers and try to get ads for those ad requests. We go out to advertisers about 15 million"
+  },
+  {
+    "start": 38.56,
+    "end": 43.68,
+    "text": "times each second. Okay. Which generate a lot of events. Okay. Tell us how those events look like"
+  },
+  {
+    "start": 43.68,
+    "end": 49.18000000000001,
+    "text": "and what you do with them. All right. So those 15 million events each seconds go to our Kafka."
+  },
+  {
+    "start": 49.18,
+    "end": 55.98,
+    "text": "We have a Spark streaming application who reads the data from Kafka and put it in S3 in"
+  },
+  {
+    "start": 55.98,
+    "end": 68.86,
+    "text": "market format. We have Spark running on EKS triggered by Airflow and aggregating the data again to S3,"
+  },
+  {
+    "start": 68.86,
+    "end": 83.66,
+    "text": "S3 to a more aggregated data and also into Cassandra. And also triggers EMR to read the data from S3 and put it into Druid."
+  },
+  {
+    "start": 83.66,
+    "end": 91.66,
+    "text": "Okay. So that's an interesting data flow. You're running your Spark applications on Kubernetes. That's a rather new approach."
+  },
+  {
+    "start": 91.66,
+    "end": 102.46,
+    "text": "Tell us a bit about it and what it solves for you. Our old approach was to run with Yarn, to run Hadoop machines on demand and was not as cost effective."
+  },
+  {
+    "start": 102.46,
+    "end": 112.46,
+    "text": "And we wanted to look for a more efficient way of doing things. So we checked how to run Spark jobs on Kubernetes."
+  },
+  {
+    "start": 112.46,
+    "end": 121.25999999999999,
+    "text": "We used EKS to make it faster, not build our own. And it seems to be very cost effective, very stable."
+  },
+  {
+    "start": 121.25999999999999,
+    "end": 127.25999999999999,
+    "text": "Okay. It seems like you're using SpotInst here. That's an AWS technology partner. What does it do for you?"
+  },
+  {
+    "start": 127.26,
+    "end": 134.06,
+    "text": "So the reason this technology is so efficient is because it's auto scaling and using SpotInst."
+  },
+  {
+    "start": 134.06,
+    "end": 148.06,
+    "text": "So we use SpotInst. We have a pod of SpotInst inside our Kubernetes cluster who listen to our metric server and see if we need to spawn more machines up or actually to reduce machines."
+  },
+  {
+    "start": 148.06,
+    "end": 159.86,
+    "text": "Okay. So when Airflow schedules a job on EKS, a Spark job on EKS, SpotInst actually looks at the utilization. If it needs to scale, it increases the size of the cluster with SpotInst."
+  },
+  {
+    "start": 159.86,
+    "end": 161.86,
+    "text": "Yeah. He's listening all the time."
+  },
+  {
+    "start": 161.86,
+    "end": 169.86,
+    "text": "So auto scaling and SpotInst is running with Spark on Kubernetes. That's got to be major cost savings, right?"
+  },
+  {
+    "start": 169.86,
+    "end": 174.26,
+    "text": "Yeah. The numbers are about 90% cost saving from old setup."
+  },
+  {
+    "start": 174.26,
+    "end": 182.06,
+    "text": "Great. Sounds really good. So as far as I understand, you have several different data sources filling into your dashboard."
+  },
+  {
+    "start": 182.06,
+    "end": 188.45999999999998,
+    "text": "I'm assuming due to different data structure, access patterns. Tell us a bit about those architectural decisions that you made with those."
+  },
+  {
+    "start": 188.45999999999998,
+    "end": 194.85999999999999,
+    "text": "So those have evolved through requirements from our customers. So in the beginning, they were very humble."
+  },
+  {
+    "start": 194.85999999999999,
+    "end": 200.66,
+    "text": "They just want to see how much revenue they made previous day, seven days ago, 30 days ago."
+  },
+  {
+    "start": 200.66,
+    "end": 208.46,
+    "text": "And then they want to know some more data. They want to know how much they make per country, how much they make per application that they own."
+  },
+  {
+    "start": 208.46,
+    "end": 218.46,
+    "text": "And still, Cassandra has a very good setup. You can see a whole year of revenue in milliseconds. Fast, cheap, and very efficient."
+  },
+  {
+    "start": 218.46,
+    "end": 226.26000000000002,
+    "text": "And then they wanted more. They want to see, okay, so how am I doing per gender? How am I doing per age?"
+  },
+  {
+    "start": 226.26000000000002,
+    "end": 231.26000000000002,
+    "text": "How am I doing per creative ID, campaign ID, and 50 other more dimensions?"
+  },
+  {
+    "start": 231.26,
+    "end": 241.06,
+    "text": "So that's a challenging thing. 50 more dimensions. Even if the cardinality is 10, it's 10 in the power of 50."
+  },
+  {
+    "start": 241.06,
+    "end": 245.06,
+    "text": "So we really scratch our heads and come up with Druid."
+  },
+  {
+    "start": 245.06,
+    "end": 252.06,
+    "text": "So we have Druid with open source called Pivot in the UI."
+  },
+  {
+    "start": 252.06,
+    "end": 259.86,
+    "text": "You can drag and drop different dimensions and you can see revenue per every combination of dimensions that you like."
+  },
+  {
+    "start": 259.86,
+    "end": 262.86,
+    "text": "So those are feeding the dashboard. And what about Presto?"
+  },
+  {
+    "start": 262.86,
+    "end": 269.86,
+    "text": "So we have at Fiber a billion users using our systems. We have a lot of data about the users."
+  },
+  {
+    "start": 269.86,
+    "end": 278.66,
+    "text": "So you want to see a snapshot of a billion different users in one second, very fast. This Druid cannot handle."
+  },
+  {
+    "start": 278.66,
+    "end": 283.66,
+    "text": "Druid is very good for data series, not very good for snapshots."
+  },
+  {
+    "start": 283.66,
+    "end": 293.66,
+    "text": "So Presto is actually fit for the job. And actually the people who develop it, Facebook, created Presto for exactly the same purpose,"
+  },
+  {
+    "start": 293.66,
+    "end": 297.66,
+    "text": "to power their audience set up in Facebook."
+  },
+  {
+    "start": 297.66,
+    "end": 308.46000000000004,
+    "text": "So the right tool for the job. It's reading data directly from S3 because it's a database engine and not a database per se, like Cassandra or Druid."
+  },
+  {
+    "start": 308.46000000000004,
+    "end": 311.46000000000004,
+    "text": "And it's that."
+  },
+  {
+    "start": 311.46000000000004,
+    "end": 317.46000000000004,
+    "text": "Great. So I really like the fact that this architecture contains a database engine, like you mentioned,"
+  },
+  {
+    "start": 317.46000000000004,
+    "end": 322.46000000000004,
+    "text": "and different databases which are purpose-built for the job instead of kind of a one-size-fits-all."
+  },
+  {
+    "start": 322.46000000000004,
+    "end": 326.46000000000004,
+    "text": "And of course, Spark on Kubernetes is the next big thing."
+  },
+  {
+    "start": 326.46,
+    "end": 331.26,
+    "text": "A lot of customers like that. It sounds great that you're doing that with auto-scaling and spot instances."
+  },
+  {
+    "start": 331.26,
+    "end": 333.26,
+    "text": "Thanks very much for sharing."
+  },
+  {
+    "start": 333.26,
+    "end": 334.26,
+    "text": "Thank you for having me."
+  },
+  {
+    "start": 334.26,
+    "end": 337.26,
+    "text": "And thank you for watching. This is my architecture."
+  },
+  {
+    "start": 337.26,
+    "end": 344.06,
+    "text": "Thank you."
+  },
+  {
+    "start": 344.06,
+    "end": 345.06,
+    "text": "Thank you."
+  }
+]

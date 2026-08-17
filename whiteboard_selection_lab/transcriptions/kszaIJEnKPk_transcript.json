@@ -1,0 +1,287 @@
+[
+  {
+    "start": 0.0,
+    "end": 13.92,
+    "text": "Hello all. Welcome to an episode of This is My Architecture. My name is Aisha and with me today"
+  },
+  {
+    "start": 13.92,
+    "end": 19.92,
+    "text": "I have Brian joining us from Resmet. Hi Brian. Delighted to be here. Brian, can you tell us a"
+  },
+  {
+    "start": 19.92,
+    "end": 24.28,
+    "text": "little bit about Resmet? Absolutely, yeah. Resmet is a med tech company which specializes in sleep"
+  },
+  {
+    "start": 24.28,
+    "end": 30.400000000000002,
+    "text": "apnea therapy so we build medical devices and digital solutions. Recently you underwent a major"
+  },
+  {
+    "start": 30.400000000000002,
+    "end": 36.06,
+    "text": "migration where you migrated your on-premises monolithic architecture for your product MyAir"
+  },
+  {
+    "start": 36.06,
+    "end": 41.980000000000004,
+    "text": "to a completely serverless environment on AWS. Can you talk a little more about that? Yes, MyAir is"
+  },
+  {
+    "start": 41.980000000000004,
+    "end": 47.5,
+    "text": "our patient engagement platform. So this consists of mobile apps, website, a medical device and our"
+  },
+  {
+    "start": 47.5,
+    "end": 53.0,
+    "text": "backend system and this allows our patients to engage and track their therapy. Okay, so you brought"
+  },
+  {
+    "start": 53.0,
+    "end": 56.68,
+    "text": "your architecture with us. Let's dive straight into it. Absolutely, yeah. So the first thing"
+  },
+  {
+    "start": 56.68,
+    "end": 60.68,
+    "text": "you notice this is a fully serverless solution and that's direction we wanted to go with for"
+  },
+  {
+    "start": 60.68,
+    "end": 66.84,
+    "text": "low operations costs. So for any user here using our mobile app, the communication is over GraphQL"
+  },
+  {
+    "start": 66.84,
+    "end": 72.2,
+    "text": "and to AppSync. So AppSync and manage GraphQL server. We wanted to take advantage not just of"
+  },
+  {
+    "start": 72.2,
+    "end": 76.52,
+    "text": "GraphQL but we also wanted to take advantage of the synchronization infrastructure that comes"
+  },
+  {
+    "start": 76.52,
+    "end": 81.8,
+    "text": "out of the box with AppSync. We didn't want to have to rebuild this. Any requests that come in here,"
+  },
+  {
+    "start": 81.8,
+    "end": 86.12,
+    "text": "they'll basically go through something called VTL which is velocity translation language."
+  },
+  {
+    "start": 87.0,
+    "end": 91.47999999999999,
+    "text": "So this then basically routes it to a particular Lambda. We have multiple Lambdas and then these"
+  },
+  {
+    "start": 91.47999999999999,
+    "end": 97.32,
+    "text": "Lambdas call into DynamoDB to either write or read and they execute a bunch of business logic."
+  },
+  {
+    "start": 97.32,
+    "end": 102.03999999999999,
+    "text": "Okay, this right there seems like a very robust architecture. Can you talk a little bit about how"
+  },
+  {
+    "start": 102.03999999999999,
+    "end": 106.36,
+    "text": "you scale for this? Yeah, absolutely. Yeah, so these are all managed services which really helps on the"
+  },
+  {
+    "start": 106.36,
+    "end": 113.64,
+    "text": "scaling side. So we have about 60 million Lambda invocations every day and at peak load we're"
+  },
+  {
+    "start": 113.64,
+    "end": 119.96,
+    "text": "hitting about 4,000 Lambdas, concurrent Lambdas. So it's incredible to see it in operation."
+  },
+  {
+    "start": 119.96,
+    "end": 125.48,
+    "text": "That's definitely very impressive. Can you talk a bit about how does this IoT device right here fit into"
+  },
+  {
+    "start": 125.48,
+    "end": 131.88,
+    "text": "this architecture? Absolutely, yeah. So we have our own solution currently within ResMed which handles"
+  },
+  {
+    "start": 131.88,
+    "end": 139.24,
+    "text": "IoT. The difference with this project is we now write this data and we publish this data real time"
+  },
+  {
+    "start": 139.24,
+    "end": 143.72,
+    "text": "into Kinesis. There's a little bit of transformation. We get this data and then we write this"
+  },
+  {
+    "start": 144.84,
+    "end": 149.32,
+    "text": "into DynamoDB via Lambda Poller which does a bunch of statistical analysis."
+  },
+  {
+    "start": 149.32,
+    "end": 155.4,
+    "text": "Okay, so it seems like DynamoDB right here is acting like a centralized repository not just for users"
+  },
+  {
+    "start": 155.4,
+    "end": 161.16,
+    "text": "polling in data but also any data that you collect based on their performance from the IoT device. Is that right?"
+  },
+  {
+    "start": 161.16,
+    "end": 164.68,
+    "text": "That's exactly correct. Okay, so how does SNS fit into this?"
+  },
+  {
+    "start": 164.68,
+    "end": 167.8,
+    "text": "Yeah, so as soon as this data arrives in here we're taking advantage of DB streams"
+  },
+  {
+    "start": 168.52,
+    "end": 173.48,
+    "text": "and what we're doing is we have another Lambda here which essentially interrogates the data that's"
+  },
+  {
+    "start": 173.48,
+    "end": 177.64,
+    "text": "just been written to understand what is the most important information that we need to tell the user"
+  },
+  {
+    "start": 177.64,
+    "end": 183.0,
+    "text": "about how they slept last night or any issues they were having. This then puts this onto an SNS topic"
+  },
+  {
+    "start": 183.0,
+    "end": 189.56,
+    "text": "and then this gets sent out to the user either as a push notification or we can send an email off to SES."
+  },
+  {
+    "start": 189.56,
+    "end": 197.08,
+    "text": "Okay, so not only are users tracking and monitoring their health performances but they're also getting"
+  },
+  {
+    "start": 197.08,
+    "end": 201.72,
+    "text": "notified in real time based on any anomalies or any important information that they need to know about"
+  },
+  {
+    "start": 201.72,
+    "end": 207.4,
+    "text": "their health? Absolutely, yeah. Correct. And was there any performance improvement that you saw with this"
+  },
+  {
+    "start": 207.4,
+    "end": 213.32,
+    "text": "kind of a deployment right here? Yeah, so obviously the you know database access is incredible, incredibly fast and"
+  },
+  {
+    "start": 213.32,
+    "end": 219.16,
+    "text": "the data that comes through the system from the medical device and so what happens with when someone"
+  },
+  {
+    "start": 219.16,
+    "end": 223.79999999999998,
+    "text": "wakes up in the morning that's that's when we send up the data to the cloud. Typically in the past it was"
+  },
+  {
+    "start": 223.79999999999998,
+    "end": 231.4,
+    "text": "taking a few minutes and for this database to arrive and so it was it was measured in minutes and so right"
+  },
+  {
+    "start": 231.4,
+    "end": 235.72,
+    "text": "now this data is less than 10 seconds to make it all the way through the system. That's impressive."
+  },
+  {
+    "start": 235.72,
+    "end": 241.56,
+    "text": "And finally I see CloudFront and S3S, so what are these two components doing here in this architecture?"
+  },
+  {
+    "start": 241.56,
+    "end": 247.72,
+    "text": "Yeah, so within here we have a lot of static content that we basically stored in here. This static content"
+  },
+  {
+    "start": 247.72,
+    "end": 253.96,
+    "text": "is things like videos, images and any other assets which drive the mobile applications. So we support"
+  },
+  {
+    "start": 253.96,
+    "end": 262.2,
+    "text": "currently right now we support about 30 countries and 20 languages. So potentially any asset in here"
+  },
+  {
+    "start": 262.2,
+    "end": 268.68,
+    "text": "could be represented 600 times based on that matrix. So when the app calls in we have CloudFront in"
+  },
+  {
+    "start": 268.68,
+    "end": 275.96,
+    "text": "front of S3 and so we have a lambda at edge here and this lambda at edge interrogates the headers"
+  },
+  {
+    "start": 275.96,
+    "end": 280.59999999999997,
+    "text": "within that request and determines what language, what country and it has a lookup table which then"
+  },
+  {
+    "start": 280.59999999999997,
+    "end": 286.52,
+    "text": "basically tells CloudFront here this is the URL within S3 that you need to call and it calls that. And then"
+  },
+  {
+    "start": 286.52,
+    "end": 292.68,
+    "text": "this reduces instead of having the 600 potential assets we have about 60 so 10x reduction. So for"
+  },
+  {
+    "start": 292.68,
+    "end": 299.32,
+    "text": "maintenance that's very very beneficial. That's very very impressive Brian. So I see that you have"
+  },
+  {
+    "start": 299.32,
+    "end": 304.12,
+    "text": "users across 30 countries across the globe so anything that you wanted to talk about the global scale of"
+  },
+  {
+    "start": 304.12,
+    "end": 308.35999999999996,
+    "text": "this architecture? Yeah well I mean it scales incredibly and a lot of it is out of the box because"
+  },
+  {
+    "start": 308.35999999999996,
+    "end": 314.35999999999996,
+    "text": "it's serverless so we didn't have to do too much tweaking on that and to be able to hit these numbers"
+  },
+  {
+    "start": 314.36,
+    "end": 320.2,
+    "text": "it's just amazing. Okay thank you for sharing this with us Brian. No problem at all. Thank you for"
+  },
+  {
+    "start": 320.2,
+    "end": 326.2,
+    "text": "watching this is my architecture."
+  }
+]

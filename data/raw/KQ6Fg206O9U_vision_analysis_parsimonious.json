@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. Identify visible components on the whiteboard: User devices, CloudFront, WAF, Pattern Match Lambda, Kinesis Firehose, S3, Transform Lambda, Athena, QuickSight, and Internet Booking System (EC2).\n2. Identify directed arrows connecting these components:\n   - User -> CloudFront\n   - CloudFront -> WAF\n   - CloudFront -> Pattern Match Lambda\n   - WAF -> Kinesis Firehose\n   - Pattern Match Lambda -> Kinesis Firehose\n   - Kinesis Firehose -> S3\n   - S3 -> Transform Lambda\n   - Transform Lambda -> S3\n   - Athena -> S3\n   - QuickSight -> Athena\n   - QuickSight -> Pattern Match Lambda (manual feedback loop)\n3. Internet Booking System is present on the board as an isolated central node without drawn edges.",
+  "graph": {
+    "name": "Vietjet Bot Mitigation and Analytics Architecture",
+    "link": "",
+    "categories": "Security & Analytics",
+    "graph_usable": true,
+    "notes": "Architecture for detecting and filtering fraudulent booking bots using edge compute, data streams, and interactive analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User Devices",
+      "notes": "Mobile and desktop end users"
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Content delivery network entry point"
+    },
+    {
+      "id": "2",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "Filters standard web application attacks"
+    },
+    {
+      "id": "3",
+      "service": "LambdaAtEdge",
+      "name": "Pattern Match",
+      "notes": "Validates business logic and identifies bot signatures at the edge"
+    },
+    {
+      "id": "4",
+      "service": "Firehose",
+      "name": "Kinesis",
+      "notes": "Streams log data to storage"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Centralized log data lake"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Transform",
+      "notes": "Transforms raw text logs into Parquet format"
+    },
+    {
+      "id": "7",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Queries transformed log data in S3"
+    },
+    {
+      "id": "8",
+      "service": "QuickSight",
+      "name": "QuickSight",
+      "notes": "Visualizes booking patterns and attack metrics"
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "Internet Booking System",
+      "notes": "Backend booking application"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends web requests"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Requests routed through WAF inspection"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Requests evaluated by Lambda@Edge"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "WAF logs sent to Kinesis"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pattern match logs sent to Kinesis"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Streams log files into S3"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers Lambda transformation"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Saves Parquet formatted logs back to S3"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries Parquet data in S3"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fetches query results for dashboards"
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Manual update of bot detection rules"
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "step_by_step_reasoning": "The whiteboard architecture shows Clumio's backup and metadata analysis solution for AWS workloads. On the left, in the customer's account, there is CloudFormation (CFT), IAM, data sources grouped together (EBS, RDS, DynamoDB), and EventBridge. On the right, in Clumio's managed AWS account, there are KMS, IAM Role, S3 (for backup data), SQS, two Lambda functions, Metadata Engine, and a second S3 bucket (for metadata). We decompose the grouped data sources (EBS, RDS, DynamoDB) into individual nodes as required by Rule 4. Arrows connect CFT to KMS and IAM Role; EventBridge to SQS; SQS to bottom Lambda; bottom Lambda to Metadata Engine and bottom S3; data sources (EBS, RDS, DynamoDB) to middle S3; and top Lambda to IAM Role and middle S3.",
+  "graph": {
+    "name": "Clumio AWS Backup and Metadata Analysis Architecture",
+    "link": "",
+    "categories": "Backup and Restore / Data Management",
+    "graph_usable": true,
+    "notes": "Shows customer account integration with Clumio managed account for automated backup and metadata analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFormation",
+      "name": "CloudFormation (CFT)",
+      "notes": "Deploys customer-side resources and configures roles/keys"
+    },
+    {
+      "id": "1",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "Customer account IAM roles/permissions"
+    },
+    {
+      "id": "2",
+      "service": "EBS",
+      "name": "EBS",
+      "notes": "Elastic Block Store volume data source"
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational Database Service data source"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DynamoDB table data source"
+    },
+    {
+      "id": "5",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Captures configuration and event changes"
+    },
+    {
+      "id": "6",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Key Management Service for encryption"
+    },
+    {
+      "id": "7",
+      "service": "IAM",
+      "name": "IAM Role",
+      "notes": "Clumio account cross-account IAM Role"
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 (Backup Data Storage)",
+      "notes": "Target S3 bucket for encrypted data backups"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Lambda (Post-Processing)",
+      "notes": "Performs compression, verification, and cataloging on S3 backup objects"
+    },
+    {
+      "id": "10",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues metadata change events"
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Lambda (Metadata Engine Processor)",
+      "notes": "Processes metadata messages from SQS"
+    },
+    {
+      "id": "12",
+      "service": "ThirdParty",
+      "name": "Metadata Engine",
+      "notes": "Clumio Metadata Engine for reporting and recommendations"
+    },
+    {
+      "id": "13",
+      "service": "S3",
+      "name": "S3 (Metadata Storage)",
+      "notes": "Stores generated metadata output reports"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFormation provisions KMS keys"
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFormation provisions IAM roles"
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Cross-account IAM role trust relationship"
+    },
+    {
+      "source": "5",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EventBridge sends change notifications to SQS queue"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "SQS triggers metadata processing Lambda"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda feeds processed metadata into Metadata Engine"
+    },
+    {
+      "source": "11",
+      "target": "13",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda stores metadata outputs in S3"
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EBS snapshot data transferred directly to Clumio S3 bucket"
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "RDS data transferred directly to Clumio S3 bucket"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB data transferred directly to Clumio S3 bucket"
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Lambda assumes IAM role for access"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda performs post-processing compression and cataloging on S3 objects"
+    }
+  ]
+}
