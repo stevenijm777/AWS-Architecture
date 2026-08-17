@@ -1,0 +1,212 @@
+{
+  "step_by_step_reasoning": "1. Identify all visual nodes on the whiteboard: CloudFront, WAF, Shield Advanced, Lambda, S3, DynamoDB, Route 53, ELB, EC2, DX (DirectConnect), VPC Peering, ON-PREM (OnPremDC), and VPC.\n2. Verify each node against the allowed list of AWS services and actors.\n3. Trace each visible directed arrow on the whiteboard canvas to build edges, ensuring strict adherence to visually drawn lines.\n4. Group flows logically into main traffic delivery (CloudFront -> Route 53 -> ELB/EC2 -> DX/VPC Peering -> On-Prem/VPC) and security/log analysis loop (CloudFront -> S3 -> On-Prem -> DynamoDB -> Lambda -> WAF, plus CloudFront -> WAF).",
+  "graph": {
+    "name": "William Hill DDoS Mitigation and Hybrid Cloud Architecture",
+    "link": "",
+    "categories": "Security, Networking",
+    "graph_usable": true,
+    "notes": "Architecture showing multi-layer DDoS protection using CloudFront, WAF, Shield Advanced, Route 53, VPC Peering, Direct Connect, and a log analysis feedback loop."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": ""
+    },
+    {
+      "id": "1",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": ""
+    },
+    {
+      "id": "2",
+      "service": "ShieldAdvanced",
+      "name": "Shield Advanced",
+      "notes": ""
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": ""
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": ""
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": ""
+    },
+    {
+      "id": "6",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": ""
+    },
+    {
+      "id": "7",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": ""
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": ""
+    },
+    {
+      "id": "9",
+      "service": "DirectConnect",
+      "name": "DX",
+      "notes": ""
+    },
+    {
+      "id": "10",
+      "service": "VPCPeering",
+      "name": "VPC Peering",
+      "notes": ""
+    },
+    {
+      "id": "11",
+      "service": "OnPremDC",
+      "name": "On-Prem",
+      "notes": ""
+    },
+    {
+      "id": "12",
+      "service": "VPC",
+      "name": "VPC",
+      "notes": ""
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Traffic routed from CloudFront to Route 53"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Route 53 routes non-sensitive traffic to ELB"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Route 53 routes sensitive traffic to EC2 (F5 Big IP)"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Traffic sent from ELB through Direct Connect to On-Prem"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Traffic sent from EC2 through Direct Connect to On-Prem"
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Direct Connect delivers traffic to On-Prem servers"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Traffic sent from ELB through VPC Peering"
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Traffic sent from EC2 through VPC Peering"
+    },
+    {
+      "source": "10",
+      "target": "12",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "data",
+      "notes": "VPC Peering connects to application VPCs"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront protected by WAF"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront logs sent to S3"
+    },
+    {
+      "source": "4",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 logs sent to On-Prem analysis servers"
+    },
+    {
+      "source": "11",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Identified malicious IP addresses pushed to DynamoDB"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "DynamoDB triggers Lambda on table updates"
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda updates WAF block rules"
+    }
+  ]
+}

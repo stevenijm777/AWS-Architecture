@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. Identify visible components on the whiteboard:\n- MongoDB (labeled 'MONGODB') -> actor/service: 'MongoDBAtlas'\n- Kinesis Data Firehose (labeled 'KINESIS DATA FIREHOSE') -> AWS service: 'Firehose'\n- Raw Zone S3 Bucket (labeled 'RAW ZONE S3') -> AWS service: 'S3'\n- AWS Glue (labeled 'GLUE', with crawler bug and catalog icons) -> AWS service: 'Glue'\n- Landing Zone S3 Bucket (labeled 'LANDING ZONE S3') -> AWS service: 'S3'\n- Amazon Aurora (labeled 'AURORA') -> AWS service: 'Aurora'\n- Amazon Athena (labeled 'ATHENA') -> AWS service: 'Athena'\n- AWS Elastic Beanstalk (labeled 'ELASTIC BEANSTALK') -> AWS service: 'BeanStalk'\n- CDN Cloud icon (labeled 'CDN') -> AWS service: 'CloudFront'\n- AIS Middleware (labeled 'AIS' box at top) -> Third party system: 'ThirdParty'\n\n2. Trace directed arrows on the whiteboard:\n- MONGODB -> Kinesis Data Firehose\n- Kinesis Data Firehose -> RAW ZONE S3\n- AIS -> RAW ZONE S3\n- RAW ZONE S3 -> GLUE (dashed line)\n- GLUE -> LANDING ZONE S3 (dashed line)\n- LANDING ZONE S3 -> AURORA\n- LANDING ZONE S3 -> ATHENA\n- ELASTIC BEANSTALK <-> AURORA (double-headed arrow)\n- CDN <-> ELASTIC BEANSTALK (double-headed arrow)\n\n3. Construct nodes and edges according to Cloudscape schema rules.",
+  "graph": {
+    "name": "Town Square Community Management Data Analytics Architecture",
+    "link": "",
+    "categories": "",
+    "graph_usable": true,
+    "notes": "Architecture showing real-time operational database streaming into S3 raw zone, data transformation with AWS Glue, star schema staging in Aurora, and delivery to end users via Elastic Beanstalk and CloudFront."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "MongoDBAtlas",
+      "name": "MongoDB",
+      "notes": "Operational database storing community application data"
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Buffers incoming change streams and delivers to raw zone S3"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Raw Zone S3",
+      "notes": "S3 bucket storing raw JSON change stream data"
+    },
+    {
+      "id": "3",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Crawls raw data, updates catalog, deduplicates and transforms into star schema"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Landing Zone S3",
+      "notes": "S3 bucket storing curated/deduplicated data"
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "Amazon Aurora",
+      "notes": "Relational database holding star schema for benchmarking queries"
+    },
+    {
+      "id": "6",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Queries curated data in landing zone for ad-hoc BI reports"
+    },
+    {
+      "id": "7",
+      "service": "BeanStalk",
+      "name": "Elastic Beanstalk",
+      "notes": "Backend API querying Aurora database"
+    },
+    {
+      "id": "8",
+      "service": "CloudFront",
+      "name": "CDN",
+      "notes": "Distributes Angular web client interface"
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "AIS Middleware",
+      "notes": "Middleware connecting external accounting systems to raw zone S3"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Streams change data into Firehose"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Saves raw JSON data into S3 raw zone"
+    },
+    {
+      "source": "9",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pushes accounting data into raw zone S3"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue crawler inspects raw zone S3"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Glue writes deduplicated/curated data to landing zone S3"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue job transforms JSON to star schema in Aurora"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena directly queries landing zone data via Glue Catalog"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 6,
+      "seq": "1",
+      "type": "data",
+      "notes": "HTTP requests sent from UI host CDN to Elastic Beanstalk"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 6,
+      "seq": "2",
+      "type": "data",
+      "notes": "Responses returned to CDN/client"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 6,
+      "seq": "3",
+      "type": "data",
+      "notes": "Elastic Beanstalk queries Aurora database"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 6,
+      "seq": "4",
+      "type": "data",
+      "notes": "Query results returned to Elastic Beanstalk"
+    }
+  ]
+}

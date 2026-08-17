@@ -1,0 +1,150 @@
+{
+  "step_by_step_reasoning": "The architecture diagram features an ingestion pipeline starting from satellite imagery processed by EC2 Spot instances, which writes data to S3 and metadata to RDS. On the serving side, users interact with AWS Fargate for tile rendering, backed by ElastiCache for tile caching, and fetching imagery/metadata from S3 and RDS. A Lambda service computes time-series summaries based on farmer-provided field geometries, querying metadata from RDS.",
+  "graph": {
+    "name": "Indigo Carbon: Serverless Satellite Imagery Processing Architecture",
+    "link": "",
+    "categories": "Serverless, Big Data, Analytics",
+    "graph_usable": true,
+    "notes": "Architecture for processing, caching, and serving satellite imagery and field analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerSatellite",
+      "name": "Satellite",
+      "notes": "External satellite data provider"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Spot",
+      "notes": "Processes raw satellite tiles"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores bulk processed imagery"
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores imagery metadata and catalog"
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Serves and renders map web tiles"
+    },
+    {
+      "id": "5",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Redis cache for generated web tiles"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Computes time-series vegetation index metrics"
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerFarmer",
+      "name": "Users / Farmers",
+      "notes": "End users accessing web application"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests daily satellite tiles"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Writes processed imagery"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes image metadata"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Requests map tiles"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Serves rendered web tiles"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes rendered tiles to cache"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads cached tiles"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Looks up tile metadata"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fetches byte ranges of imagery chunks"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Submits custom field boundaries"
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries metadata for time-series extraction"
+    }
+  ]
+}

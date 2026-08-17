@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identify Actors & Components:\n   - External User stick figure on the left (UserConsumerWeb).\n   - Frontend stack: WAF, CloudFront, S3 (inside top green box).\n   - API / Processing stack: API Gateway, ECS (with Fargate), RDS (with Read Replicas R).\n   - Scheduling / Async stack: CloudWatch Events, Fargate, SQS.\n\n2. Trace Flows:\n   - Flow 0 (Frontend): User -> WAF -> CloudFront -> S3.\n   - Flow 1 (API Backend): User -> API Gateway -> ECS -> RDS.\n   - Flow 2 (Scheduled Tasks): CloudWatch Events (1min trigger) -> Fargate -> SQS -> ECS.",
+  "graph": {
+    "name": "Nimbos Serverless and Container Automated Platform Architecture",
+    "link": "",
+    "categories": "Web App Architecture & Batch Processing",
+    "graph_usable": true,
+    "notes": "Architecture showing static website hosting via S3 and CloudFront with WAF, API Gateway with ECS Fargate for backend, RDS for persistent data, and CloudWatch Events with SQS for decoupled automated task scheduling."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End user accessing frontend and API"
+    },
+    {
+      "id": "1",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "AWS WAF protecting web interface"
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "CDN for front-end caching"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores Angular front-end application"
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "REST API endpoint"
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Microservices cluster"
+    },
+    {
+      "id": "6",
+      "service": "Fargate",
+      "name": "FARGATE",
+      "notes": "Serverless compute engine for ECS tasks"
+    },
+    {
+      "id": "7",
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH EVENTS",
+      "notes": "Triggers daemon every 1 minute"
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Decouples scheduled work execution"
+    },
+    {
+      "id": "9",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "MySQL RDS primary and read replicas"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User accesses frontend web app via WAF"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "WAF routes to CloudFront CDN"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront fetches web assets from S3 bucket"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Frontend REST API calls sent to API Gateway"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway forwards calls to ECS microservices"
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS microservices read/write to RDS database"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "1-minute scheduled event triggers daemon"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Daemon splits and pushes tasks into SQS queue"
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS workers process task messages from SQS"
+    }
+  ]
+}

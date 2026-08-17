@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Identify the user actor (PF.AE) connecting to the Application Load Balancer (ALB).\n2. Trace ALB routing web traffic to EC2 Spot instances running Kubernetes pods within EKS across multiple availability zones.\n3. Trace the spot termination lifecycle: a terminating EC2 Spot instance sends an event to EventBridge.\n4. EventBridge triggers a Lambda function to handle auto-scaling and node draining.",
+  "graph": {
+    "name": "PropertyFinder Kubernetes EKS Architecture on 100% EC2 Spot Instances",
+    "link": "",
+    "categories": "Compute, Containers, Serverless, Event-Driven",
+    "graph_usable": true,
+    "notes": "PropertyFinder runs production Kubernetes workloads on 100% EC2 Spot instances managed via EKS, ALB, EventBridge, and Lambda for fault tolerance."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "USER",
+      "notes": "Web user accessing propertyfinder.ae"
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer routing incoming traffic"
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Amazon EKS cluster managing worker nodes and pods"
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 SPOT",
+      "notes": "EC2 Spot Instance in Availability Zone 1"
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 SPOT",
+      "notes": "EC2 Spot Instance in Availability Zone 2"
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 SPOT",
+      "notes": "EC2 Spot Instance in Availability Zone 3 (marked for termination)"
+    },
+    {
+      "id": "6",
+      "service": "EventBridge",
+      "name": "EVENT BRIDGE",
+      "notes": "Listens for EC2 Spot Instance termination notification events"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Triggered by EventBridge to scale ASG and drain nodes"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "User sends request to website via ALB"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB routes web traffic to ingress pod running on EC2 Spot instance"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Workload distribution between AZ instances"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Workload distribution between AZ instances"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Termination warning event emitted to EventBridge"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "EventBridge triggers Lambda function"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda scales up ASG and drains terminating node"
+    }
+  ]
+}
