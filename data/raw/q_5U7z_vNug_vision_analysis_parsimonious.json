@@ -1,0 +1,150 @@
+{
+  "step_by_step_reasoning": "1. Identify edge nodes: 'PRODUCTION' represented by the derrick icon mapped to UserCompanyEdge, and 'User' mapped to UserConsumerWeb.\n2. Identify AWS services: MSK, Lambda, EMR, S3, EC2, and RDS (represented by the blue DATABASE icon).\n3. Trace data flows:\n   - Streaming data flows from PRODUCTION via MQTT to MSK.\n   - MSK connects to Lambda, which triggers Spark jobs on EMR.\n   - EMR reads from MSK, writes parsed data back to MSK, and persists clean data to S3.\n   - EC2 runs ML and analytics, ingesting real-time data from MSK, historical data from S3, and metadata from RDS.\n   - Users access the web app on EC2.\n   - EC2 sends control feedback back to PRODUCTION in a closed loop.",
+  "graph": {
+    "name": "Flutura Industrial IoT ML Architecture",
+    "link": "",
+    "categories": "IoT, Machine Learning, Big Data",
+    "graph_usable": true,
+    "notes": "Architecture for industrial IoT predictive maintenance and closed-loop control using MSK, EMR, and EC2."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "PRODUCTION",
+      "notes": "Field control systems and edge equipment"
+    },
+    {
+      "id": "1",
+      "service": "MSK",
+      "name": "MSK",
+      "notes": "Managed Streaming for Apache Kafka"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Triggers EMR Spark parsing jobs periodically"
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs Spark parser and OpenTSDB / HBase"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Sanitized time series data store"
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Runs ML model evaluation and web application"
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "DATABASE",
+      "notes": "PostgreSQL database storing equipment digital twin configuration"
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End-user viewing predictions and receiving notifications"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingests field sensor data via MQTT connectors into Kafka topics"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers Lambda function"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda invokes Spark data parser job on EMR cluster"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EMR reads streaming raw data from Kafka topics"
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "EMR parser publishes cleaned data back to another Kafka topic"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "EMR writes sanitized data to S3"
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 ML models consume real-time streams from MSK"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "EC2 ML models fetch historical data from S3"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "EC2 queries contextual equipment digital twin data"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Users interact with the web app running on EC2"
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Closed-loop feedback writes setpoint changes back to field equipment"
+    }
+  ]
+}

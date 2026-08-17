@@ -1,0 +1,262 @@
+[
+  {
+    "start": 0.0,
+    "end": 11.64,
+    "text": "Welcome to another episode of This is My Architecture. Today I'm joined by Avik from"
+  },
+  {
+    "start": 11.64,
+    "end": 16.98,
+    "text": "Zillow. Hey Avik. Hi Adrian. Thank you for having me. Thanks for coming in. So tell us a little bit"
+  },
+  {
+    "start": 16.98,
+    "end": 21.78,
+    "text": "about what Zillow does. Of course. So Zillow is the largest realistic platform in the country."
+  },
+  {
+    "start": 22.14,
+    "end": 27.44,
+    "text": "We get the most amount of realistic traffic on our website and we do everything from selling,"
+  },
+  {
+    "start": 27.44,
+    "end": 33.72,
+    "text": "buying, providing rentals and providing home loans. So all things real estate come to Zillow,"
+  },
+  {
+    "start": 33.78,
+    "end": 38.3,
+    "text": "right? Zillow.com. So tell us a little bit about the interactions that you have with some of your"
+  },
+  {
+    "start": 38.3,
+    "end": 43.400000000000006,
+    "text": "customers. Of course. So one of the things that we do is connect our potential buyers to real estate"
+  },
+  {
+    "start": 43.400000000000006,
+    "end": 47.92,
+    "text": "agents through phone conversations and that's where this architecture comes in in helping our"
+  },
+  {
+    "start": 47.92,
+    "end": 53.42,
+    "text": "customers as well as our agents. In here we have a near real-time pipeline that allows us to run"
+  },
+  {
+    "start": 53.42,
+    "end": 57.440000000000005,
+    "text": "machine learning models on top of these conversations to generate insights. I can't wait."
+  },
+  {
+    "start": 57.440000000000005,
+    "end": 64.82000000000001,
+    "text": "Let's dive in. Sure. So it all starts by calling AWS Transcribe which converts the phone call speech"
+  },
+  {
+    "start": 64.82000000000001,
+    "end": 70.28,
+    "text": "to text. And one of the important things in here is we use, we take data security very seriously at"
+  },
+  {
+    "start": 70.28,
+    "end": 76.54,
+    "text": "Zillow. So we use the redaction API in AWS Transcribe and that scrubs off all PII contents. Say for"
+  },
+  {
+    "start": 76.54,
+    "end": 81.46000000000001,
+    "text": "example, name, phone number, email address from these transcripts. So once that is done,"
+  },
+  {
+    "start": 81.46,
+    "end": 87.8,
+    "text": "these transcripts are sent over to Firehose and we have a limit of one minute of buffering on this"
+  },
+  {
+    "start": 87.8,
+    "end": 92.89999999999999,
+    "text": "Firehose and every one minute we are spitting out a file containing these transcripts onto S3."
+  },
+  {
+    "start": 93.25999999999999,
+    "end": 99.52,
+    "text": "So one file for one minute. So you've got an async pattern to deal with all that volume and"
+  },
+  {
+    "start": 99.52,
+    "end": 105.22,
+    "text": "all that data sitting in S3. Tell us a little bit about what Lambda is doing."
+  },
+  {
+    "start": 105.63999999999999,
+    "end": 111.24,
+    "text": "Of course. So this Lambda is to handle the trigger that is generated off of S3 for this"
+  },
+  {
+    "start": 111.24,
+    "end": 118.83999999999999,
+    "text": "event. And this Lambda then pulls this container information from ECR and creates a job and submits"
+  },
+  {
+    "start": 118.83999999999999,
+    "end": 124.89999999999999,
+    "text": "it to AWS Batch. Right. So you've got your container registry maintaining all of the different models"
+  },
+  {
+    "start": 124.89999999999999,
+    "end": 130.45999999999998,
+    "text": "that you have. Now tell us a little bit about how you're using Batch. Of course. So the Batch"
+  },
+  {
+    "start": 130.45999999999998,
+    "end": 136.7,
+    "text": "is where our machine learning inferences run. We use transformer-based architectures for our machine"
+  },
+  {
+    "start": 136.7,
+    "end": 142.6,
+    "text": "learning models. So pretty state of the art deep learned models. And AWS Batch helps us synchronize"
+  },
+  {
+    "start": 142.6,
+    "end": 148.51999999999998,
+    "text": "between ECR and ECS and helps us scale up and down depending on our job load. For example,"
+  },
+  {
+    "start": 148.73999999999998,
+    "end": 155.32,
+    "text": "when we submit a job, this job is put in a job queue over here. And this job queue triggers the scale up"
+  },
+  {
+    "start": 155.32,
+    "end": 160.92,
+    "text": "and scale down in ECS. So when there's a lot of load, and we get a lot of traffic, say for example,"
+  },
+  {
+    "start": 160.92,
+    "end": 166.23999999999998,
+    "text": "in the mornings, our cluster scales up. And at night when there are no conversations happening,"
+  },
+  {
+    "start": 166.73999999999998,
+    "end": 168.1,
+    "text": "we scale down all the way to zero."
+  },
+  {
+    "start": 168.66,
+    "end": 174.95999999999998,
+    "text": "So that's a clever way of using Lambda and Batch together to scale your EC2 container service."
+  },
+  {
+    "start": 175.64,
+    "end": 178.48,
+    "text": "So what sort of savings have you seen there?"
+  },
+  {
+    "start": 178.48,
+    "end": 183.11999999999998,
+    "text": "So just by choosing this architecture and not going with something, for example,"
+  },
+  {
+    "start": 183.26,
+    "end": 187.42,
+    "text": "Cronbase or Kubernetes, or doing individual services for the models, because we run multiple"
+  },
+  {
+    "start": 187.42,
+    "end": 192.32,
+    "text": "models in a single container through AWS Batch, we are saving up to 75% of the compute cost."
+  },
+  {
+    "start": 192.79999999999998,
+    "end": 197.14,
+    "text": "So once you've done that inference, you've matched some agents, what happens next?"
+  },
+  {
+    "start": 197.45999999999998,
+    "end": 201.35999999999999,
+    "text": "So what happens next is we put these predictions into two different channels,"
+  },
+  {
+    "start": 201.35999999999999,
+    "end": 208.28,
+    "text": "one of the channels being an SNS topic. So the downstream teams can then subscribe to this"
+  },
+  {
+    "start": 208.28,
+    "end": 211.88,
+    "text": "topic. And then in near real time, within five minutes of the call ending,"
+  },
+  {
+    "start": 212.16,
+    "end": 216.74,
+    "text": "give these valuable insights. And we also send it off to another firehose,"
+  },
+  {
+    "start": 217.34,
+    "end": 222.18,
+    "text": "which buffers it for a longer duration, and then puts it into a data leak,"
+  },
+  {
+    "start": 222.56,
+    "end": 228.38,
+    "text": "secure data leak on S3, so that our data scientists can run analytics with Spark and Presto and what have you."
+  },
+  {
+    "start": 228.38,
+    "end": 232.58,
+    "text": "Great. So you're using SNS to give near real time data availability."
+  },
+  {
+    "start": 233.22,
+    "end": 236.64,
+    "text": "Tell me a little bit about what the developer experience is like."
+  },
+  {
+    "start": 236.64,
+    "end": 242.38,
+    "text": "Of course. So we use GitLab pipelines and GitLab based builds. Our applied scientists,"
+  },
+  {
+    "start": 242.38,
+    "end": 250.04,
+    "text": "they build their models and they push their Python code over here to GitLab. And the model weights go to S3."
+  },
+  {
+    "start": 252.83999999999997,
+    "end": 259.84,
+    "text": "And we take both of these and run in GitLab pipelines, and we push the new image to ECR."
+  },
+  {
+    "start": 259.84,
+    "end": 265.58,
+    "text": "So this image tag would pertain to a particular GitLab commit and a particular model weight version."
+  },
+  {
+    "start": 265.58,
+    "end": 271.32,
+    "text": "So you built a pipeline for your data analysts, and they don't have to ever deal with any of the infrastructure."
+  },
+  {
+    "start": 271.32,
+    "end": 277.32,
+    "text": "That's correct. So if your model is not doing well in production, you get an easy way to roll back or roll forward."
+  },
+  {
+    "start": 277.32,
+    "end": 280.82,
+    "text": "This is a great architecture. Thanks so much for sharing it with us today, Avik."
+  },
+  {
+    "start": 280.82,
+    "end": 282.32,
+    "text": "Thank you so much for having me."
+  },
+  {
+    "start": 282.32,
+    "end": 285.18,
+    "text": "And thank you for joining us. And this is my architecture."
+  }
+]

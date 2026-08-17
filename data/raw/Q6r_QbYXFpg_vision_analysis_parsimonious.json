@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "1. **Identify Nodes from Visual Diagram:**\n   - **Console / S3**: Top-left, S3 icon framed in green, labeled 'Console S3' (Service: `S3`).\n   - **Cognito**: Top middle-left, Cognito icon labeled 'COGNITO' (Service: `Cognito`).\n   - **SAML IdP**: Top right inside Customer boundary, icon labeled 'SAML IdP' (Actor: `ThirdParty`).\n   - **Customer Lambda**: Middle right inside Customer boundary, Lambda icon labeled 'LAMBDA' (Service: `Lambda`).\n   - **API Gateway**: Middle row, center-right, API Gateway icon labeled 'API GATEWAY' (Service: `ApiGateway`).\n   - **Backend Lambda**: Middle row, center, Lambda icon labeled 'LAMBDA' (Service: `Lambda`).\n   - **RDS**: Middle row, left, RDS icon labeled 'RDS' (Service: `RDS`).\n   - **SQS**: Bottom row, left, SQS icon labeled 'SQS' (Service: `SQS`).\n   - **Trigger Lambda**: Bottom row, center, Lambda icon labeled 'LAMBDA' (Service: `Lambda`).\n   - **Step Functions**: Bottom row, center-right, Step Functions icon labeled 'STEP FUNCTIONS' (Service: `StepFunctions`).\n   - **Workspaces**: Bottom right inside Customer boundary, WorkSpaces icon labeled 'WORKSPACES' (Service: `WorkSpaces`).\n\n2. **Identify Edges based on visible drawn arrows:**\n   - Authentication Flow:\n     - Cognito -> SAML IdP (top right arrow)\n     - SAML IdP -> Cognito (bottom left arrow below the top one)\n   - User Management / Directory Sync Flow:\n     - Customer Lambda -> API Gateway (arrow pointing left)\n     - API Gateway -> Backend Lambda (arrow pointing left)\n     - Backend Lambda -> RDS (arrow pointing up-left)\n     - Backend Lambda -> SQS (arrow pointing down-left)\n   - Automation & Provisioning Execution Flow:\n     - SQS -> Trigger Lambda (arrow pointing right)\n     - Trigger Lambda -> Step Functions (4 parallel arrows pointing right)\n     - Step Functions -> WorkSpaces (2 parallel arrows pointing right)",
+  "graph": {
+    "name": "Synchronet - Automated Amazon WorkSpaces Provisioning Platform",
+    "link": "",
+    "categories": "End User Computing, Automation, Serverless Architecture",
+    "graph_usable": true,
+    "notes": "Architectural overview of Synchronet's platform for automated Amazon WorkSpaces provisioning and user management across multi-tenant/customer environments."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "Console / S3",
+      "notes": "Hosts the frontend administration console UI"
+    },
+    {
+      "id": "1",
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "Handles SAML authentication flow for end users"
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "SAML IdP",
+      "notes": "Customer identity provider for SAML authentication"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Customer Lambda",
+      "notes": "Deployed in customer environment to sync users and groups"
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Exposes API endpoints for receiving directory information"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Backend CRUD & Automation Lambda",
+      "notes": "Processes CRUD operations for DB and determines workspace delta jobs"
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores platform data, business logic, user/group mappings"
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues provisioning and modification tasks"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Trigger Lambda",
+      "notes": "Invoked by SQS to trigger AWS Step Functions execution"
+    },
+    {
+      "id": "9",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates workspace provisioning workflows and handles wait states"
+    },
+    {
+      "id": "10",
+      "service": "WorkSpaces",
+      "name": "Workspaces",
+      "notes": "Target WorkSpaces instances provisioned inside customer AWS account"
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Redirects to customer SAML IdP for authentication"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns SAML assertion to Cognito"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Customer Lambda pushes user/group directory data via API Gateway"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "API Gateway forwards directory payload to central backend Lambda"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Backend Lambda executes CRUD operations on RDS database"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Backend Lambda places required provisioning jobs into SQS queue"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "SQS triggers Lambda execution"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda starts Step Functions state machine execution"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Step Functions orchestrates creation/modification of Amazon WorkSpaces"
+    }
+  ]
+}

@@ -1,0 +1,192 @@
+[
+  {
+    "start": 0.0,
+    "end": 13.200000000000001,
+    "text": "Welcome to This is My Architecture. I am Han and today I am joined by Daniel from Airbnb. Welcome."
+  },
+  {
+    "start": 13.200000000000001,
+    "end": 18.22,
+    "text": "Thanks, good to be here Han. So before we get into your architecture, for those who are not"
+  },
+  {
+    "start": 18.22,
+    "end": 23.94,
+    "text": "familiar with Airbnb, can you tell me a little bit about what you guys do? Yeah, so Airbnb is an"
+  },
+  {
+    "start": 23.94,
+    "end": 28.72,
+    "text": "online marketplace where guests and hosts can connect with each other and as a guest you can,"
+  },
+  {
+    "start": 28.72,
+    "end": 33.82,
+    "text": "you know, stay in unique accommodations or have one-of-a-kind experiences with these hosts."
+  },
+  {
+    "start": 33.82,
+    "end": 39.28,
+    "text": "Wow. So what are some of the business challenges that you are trying to solve with your architecture?"
+  },
+  {
+    "start": 39.28,
+    "end": 47.5,
+    "text": "Yeah, so at Airbnb we run our own multi-tenant Kubernetes clusters on EC2. You know, we want"
+  },
+  {
+    "start": 47.5,
+    "end": 54.58,
+    "text": "our own clusters because we sometimes need to backport fixes or add new features into our Kubernetes."
+  },
+  {
+    "start": 54.58,
+    "end": 62.08,
+    "text": "And the main challenge that we ran into in the past was we have, you know, many different pods that run"
+  },
+  {
+    "start": 62.08,
+    "end": 69.46,
+    "text": "on a, you know, single host and we want to give fine-grained access controls or fine-grained IAM roles"
+  },
+  {
+    "start": 69.46,
+    "end": 77.8,
+    "text": "to these pods. And so the way we do that now is, you know, we have our control plane that manages all"
+  },
+  {
+    "start": 77.8,
+    "end": 84.64,
+    "text": "of our pods in our cluster. What the control plane does is it injects service account tokens into the pod."
+  },
+  {
+    "start": 84.64,
+    "end": 89.14,
+    "text": "And that control plane is one of the EC2s?"
+  },
+  {
+    "start": 89.14,
+    "end": 95.98,
+    "text": "Yes, that's correct. The control plane runs on a physically separate EC2 host than all of our worker nodes."
+  },
+  {
+    "start": 95.98,
+    "end": 96.64,
+    "text": "Okay."
+  },
+  {
+    "start": 96.64,
+    "end": 106.7,
+    "text": "So the control plane injects tokens. These tokens are cryptographically signed, but they contain basically an identity."
+  },
+  {
+    "start": 106.7,
+    "end": 114.14,
+    "text": "They act like an ID card for these pods. And some things that a token will have are, you know, what namespace the pod belongs to."
+  },
+  {
+    "start": 114.14,
+    "end": 126.98,
+    "text": "And also the name of the pod. The pod can then take this token and send it directly to STS."
+  },
+  {
+    "start": 126.98,
+    "end": 127.98,
+    "text": "Okay."
+  },
+  {
+    "start": 127.98,
+    "end": 136.98,
+    "text": "You know, for verification. Since again, since I mentioned before, these pods are cryptographically signed, STS can verify"
+  },
+  {
+    "start": 136.98,
+    "end": 151.82,
+    "text": "that the token is valid and hasn't been tampered with. If that all checks out, STS can then check the IAM role and verify that the namespace"
+  },
+  {
+    "start": 151.82,
+    "end": 165.82,
+    "text": "and the name of the pod is able to assume the IAM role that it's requesting. And if all that checks out, you know, STS will get temporary credentials for that IAM role and send those credentials back to the pods."
+  },
+  {
+    "start": 165.82,
+    "end": 174.82,
+    "text": "So from a multi-tenant perspective, how do you secure those pods in a more clustered manner in your Kubernetes cluster?"
+  },
+  {
+    "start": 174.82,
+    "end": 182.82,
+    "text": "Yeah, that's a good question. So, you know, each pod has its own identity that's, you know, that's provided by the buyer control plane."
+  },
+  {
+    "start": 182.82,
+    "end": 198.82,
+    "text": "And, you know, in the IAM role definition itself, you know, service owners are able to say, like, you know, IAM role foo, for example, should only be allowed to be assumed by pods in the foo namespace."
+  },
+  {
+    "start": 198.82,
+    "end": 211.82,
+    "text": "So, you know, given that connection with each other, we can guarantee that other pods and different namespaces cannot assume, you know, foo's IAM role."
+  },
+  {
+    "start": 211.82,
+    "end": 217.82,
+    "text": "Cool. So in terms of reconciliation and making sure that the pods are assuming the right role, how do you monitor that and audit that?"
+  },
+  {
+    "start": 217.82,
+    "end": 236.82,
+    "text": "Yeah, that's a good question. So, you know, STS emits events into CloudTrail whenever it creates a new token. Also, whenever our pods, you know, assume an IAM role, those events also get emitted into CloudTrail."
+  },
+  {
+    "start": 236.82,
+    "end": 255.82,
+    "text": "And we take these events and we ingest them into our Elasticsearch cluster that, you know, engineers have access to. And sort of the main, you know, purpose of this, or the main purpose is that we're allowed, we can, you know, see when a pod is assuming an IAM role."
+  },
+  {
+    "start": 255.82,
+    "end": 265.82,
+    "text": "We can see when, what IAM roles are being used. We can also see when, when a failure happens. And when that happens, for example, oftentimes we notice people that are not going to be able to do that."
+  },
+  {
+    "start": 265.82,
+    "end": 274.82,
+    "text": "Oftentimes we notice before service owners, you know, realize that there's a problem and we can either go and, you know, check their definition of their IAM role to make sure, you know, it's correct."
+  },
+  {
+    "start": 274.82,
+    "end": 280.82,
+    "text": "Or we can let service owners know, you know, something's wrong and they need to take a look at a problem."
+  },
+  {
+    "start": 280.82,
+    "end": 285.82,
+    "text": "So you would notify the service owners immediately for them to correct the roles and configuration?"
+  },
+  {
+    "start": 285.82,
+    "end": 289.82,
+    "text": "Yeah. And ideally we have like alerting to automatically notify them."
+  },
+  {
+    "start": 289.82,
+    "end": 300.82,
+    "text": "Awesome. Well, that is so cool that you're able to provide that fine grain access to the basically multi-tenant C enable it for your Kubernetes cluster. So thank you for that."
+  },
+  {
+    "start": 300.82,
+    "end": 301.82,
+    "text": "Thank you."
+  },
+  {
+    "start": 301.82,
+    "end": 304.82,
+    "text": "And thank you for watching. This is my architecture."
+  },
+  {
+    "start": 304.82,
+    "end": 305.82,
+    "text": "Thank you."
+  }
+]

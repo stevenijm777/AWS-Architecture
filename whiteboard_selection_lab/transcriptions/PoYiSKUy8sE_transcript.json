@@ -1,0 +1,207 @@
+[
+  {
+    "start": 0.0,
+    "end": 18.0,
+    "text": "Hi, I'm Tobi from AWS. I'm joined today by Yevgeny from AlertLogic. Welcome, Yevgeny. Why don't you tell me a bit about AlertLogic?"
+  },
+  {
+    "start": 18.0,
+    "end": 25.0,
+    "text": "AlertLogic is an SES security company providing 24-7 SOC for more than 4,000 customers of ours."
+  },
+  {
+    "start": 25.0,
+    "end": 36.0,
+    "text": "While doing this, we process about 25 petabytes of their data and on top of that we provide search functionality for both our customers and security engineers of our company."
+  },
+  {
+    "start": 36.0,
+    "end": 40.0,
+    "text": "Okay, and you're here today to tell me a bit about the system you use for search."
+  },
+  {
+    "start": 40.0,
+    "end": 52.0,
+    "text": "Yes, absolutely right. So, the system consists of two parts. It's data ingestion, which is trivial, and the data comes in from our agents and appliances from the customer fleet,"
+  },
+  {
+    "start": 52.0,
+    "end": 62.0,
+    "text": "creates our kinesis streams, done a little bit of pre-processing, and ends up in our S3 data lake, which as I said, consists of 25 petabytes of data."
+  },
+  {
+    "start": 62.0,
+    "end": 65.0,
+    "text": "Okay, so this is your process data that's coming from your... Yes."
+  },
+  {
+    "start": 65.0,
+    "end": 78.0,
+    "text": "Yeah, great. On top of that we have a search engine, which is a rich SQL syntax with lots of data enrichment, which is parsing, meaning we extract meaning out of the data."
+  },
+  {
+    "start": 78.0,
+    "end": 85.0,
+    "text": "We search over, and the search engine is basically just a MapReduce engine consisting of several Lambda functions."
+  },
+  {
+    "start": 85.0,
+    "end": 89.0,
+    "text": "Okay, so let's walk through that. So the search request comes into your ECS cluster, is it?"
+  },
+  {
+    "start": 89.0,
+    "end": 98.0,
+    "text": "So it looks very simple, yes. The search request comes into the ECS instance, and it does only validation and just planning of the execution."
+  },
+  {
+    "start": 98.0,
+    "end": 108.0,
+    "text": "Then it shadows it in a single Lambda function, which does job shadowing for the execution of the engine based on the data volume we have for this particular customer."
+  },
+  {
+    "start": 108.0,
+    "end": 119.0,
+    "text": "After that, it actually spins up thousands and thousands of filter functions, which do process data, filter data, and enrich it with the data which was requested."
+  },
+  {
+    "start": 119.0,
+    "end": 128.0,
+    "text": "All this data ends up in a different S3 bucket, which is then sent to Kinesis and to a different Lambda function to aggregate over."
+  },
+  {
+    "start": 128.0,
+    "end": 134.0,
+    "text": "All this is controlled by a single Lambda step function, which just keeps the state running."
+  },
+  {
+    "start": 134.0,
+    "end": 144.0,
+    "text": "Yeah, so this is managing the process and the result of that search. And the search results then are stored in S3 and passed back to your user via ECS."
+  },
+  {
+    "start": 144.0,
+    "end": 157.0,
+    "text": "Okay, great. And I can see you mentioned thousands of Lambda functions here. I imagine that search in that sense is well suited to Lambda in that it's a very spiky demand curve, isn't it?"
+  },
+  {
+    "start": 157.0,
+    "end": 168.0,
+    "text": "It is. It is absolutely right. It is a spiky workload, meaning for a single search we have to spike from zero to thousand and sometimes even ten thousand Lambda functions."
+  },
+  {
+    "start": 168.0,
+    "end": 174.0,
+    "text": "Because what is search is searching over weeks or months or years of data, which is usually hundreds of terabytes."
+  },
+  {
+    "start": 174.0,
+    "end": 180.0,
+    "text": "So we have to scale it in a flash scale pretty much immediately and then tear it down."
+  },
+  {
+    "start": 180.0,
+    "end": 188.0,
+    "text": "Okay. So you've recently run a performance test on that search engine and you've got some results you want to share?"
+  },
+  {
+    "start": 188.0,
+    "end": 190.0,
+    "text": "Yes, let me share some results."
+  },
+  {
+    "start": 190.0,
+    "end": 203.0,
+    "text": "So during the game day, which we ran the performance over, during an hour we ran 40,000 search queries."
+  },
+  {
+    "start": 203.0,
+    "end": 210.0,
+    "text": "While doing this we scaled from zero to 55,000 concurrent Lambda functions running all of those,"
+  },
+  {
+    "start": 210.0,
+    "end": 221.0,
+    "text": "overall reaching 18 million executions during just an hour. And during all this exercise the SLO was flat and just in seconds like we promised,"
+  },
+  {
+    "start": 221.0,
+    "end": 224.0,
+    "text": "which was five to 20 seconds for the execution."
+  },
+  {
+    "start": 224.0,
+    "end": 230.0,
+    "text": "Wow. So your Lambda fleet scaled from zero to 50,000 concurrent in an hour?"
+  },
+  {
+    "start": 230.0,
+    "end": 234.0,
+    "text": "In an hour. And then when we stopped it went back to zero, saving us money."
+  },
+  {
+    "start": 234.0,
+    "end": 238.0,
+    "text": "Right. So I can see why you don't run your own server fleet for that in Lambda as well suited."
+  },
+  {
+    "start": 238.0,
+    "end": 243.0,
+    "text": "Absolutely. Running clusters, any type of clusters for us would be just ghost prohibitive in this case."
+  },
+  {
+    "start": 243.0,
+    "end": 248.0,
+    "text": "Okay. And the functions you execute in Lambda, which language to use?"
+  },
+  {
+    "start": 248.0,
+    "end": 253.0,
+    "text": "So in AlertLogic we made a strategic choice to use Erlang all over the place."
+  },
+  {
+    "start": 253.0,
+    "end": 257.0,
+    "text": "Erlang is a runtime which is very easy to understand and very easy to use."
+  },
+  {
+    "start": 257.0,
+    "end": 263.0,
+    "text": "But on top of that, when we've integrated and provided Erlang as part of Lambda execution,"
+  },
+  {
+    "start": 263.0,
+    "end": 269.0,
+    "text": "we found that it's actually very performant in terms of cold boot less than a second,"
+  },
+  {
+    "start": 269.0,
+    "end": 272.0,
+    "text": "which is a very good fit for our use case."
+  },
+  {
+    "start": 272.0,
+    "end": 275.0,
+    "text": "Right. So you're taking advantage of the new support for Erlang in Lambda?"
+  },
+  {
+    "start": 275.0,
+    "end": 276.0,
+    "text": "Yes."
+  },
+  {
+    "start": 276.0,
+    "end": 280.0,
+    "text": "Great. Okay. Well, thanks very much for sharing your solution today, Evgeny."
+  },
+  {
+    "start": 280.0,
+    "end": 281.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 281.0,
+    "end": 283.0,
+    "text": "Thanks for watching. This is my architecture."
+  }
+]

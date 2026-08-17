@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "1. Identify visual nodes from the whiteboard: Transcribe, Firehose (1st), S3 (1st bucket), Lambda, Batch (with JQ icon), ECR, GitLab, ECS, SNS, Firehose (2nd, labeled FH), S3 (2nd data lake).\n2. Map services to exact schema values: Transcribe -> 'Transcribe', Firehose -> 'Firehose', S3 -> 'S3', Lambda -> 'Lambda', Batch -> 'Batch', ECR -> 'ECR', GitLab -> 'ThirdParty', ECS -> 'ECS', SNS -> 'SNS'.\n3. Identify directed edges based on visually drawn arrows:\n   - GitLab -> ECR (model image build/push)\n   - ECR -> Batch (container pull)\n   - Transcribe -> Firehose (1min transcript stream)\n   - Firehose -> S3 (1min transcript file storage)\n   - S3 -> Lambda (event trigger)\n   - Lambda -> Batch (job submission to Job Queue)\n   - Batch -> ECS (cluster execution/scaling)\n   - Batch -> SNS (near real-time prediction notifications)\n   - Batch -> Firehose (FH data lake stream)\n   - Firehose -> S3 (prediction data lake storage)\n4. Structure logical sequencing (flow_id and seq) from ingestion/deployment through processing to output channels.",
+  "graph": {
+    "name": "Zillow - Machine Learning Pipelines for Customer Speech Insights",
+    "link": "",
+    "categories": "",
+    "graph_usable": true,
+    "notes": "Near real-time speech processing and ML inference architecture built on AWS Transcribe, Batch, ECS, and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Transcribe",
+      "name": "AWS Transcribe",
+      "notes": "Converts speech to text and redacts PII"
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose",
+      "notes": "Buffers transcript stream (1 min)"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores transcript files"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Triggered by S3 event to create Batch job"
+    },
+    {
+      "id": "4",
+      "service": "Batch",
+      "name": "AWS Batch",
+      "notes": "Runs ML inference jobs via Job Queue"
+    },
+    {
+      "id": "5",
+      "service": "ECR",
+      "name": "Amazon ECR",
+      "notes": "Stores container images with ML models"
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "GitLab",
+      "notes": "GitLab CI/CD pipelines"
+    },
+    {
+      "id": "7",
+      "service": "ECS",
+      "name": "Amazon ECS",
+      "notes": "Executes container tasks and scales cluster"
+    },
+    {
+      "id": "8",
+      "service": "SNS",
+      "name": "Amazon SNS",
+      "notes": "Near real-time notifications for downstream teams"
+    },
+    {
+      "id": "9",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose (FH)",
+      "notes": "Buffers predictions for data lake"
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Amazon S3 (Data Lake)",
+      "notes": "Secure data lake for analytics"
+    }
+  ],
+  "edges": [
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "GitLab pipeline pushes container image"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Batch pulls model container"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Transcripts sent to Firehose"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "1-minute files written to S3"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 event triggers Lambda function"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda submits job to Batch job queue"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Batch triggers scaling and execution in ECS"
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Predictions sent to SNS topic"
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Predictions sent to Firehose"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Firehose writes predictions to S3 data lake"
+    }
+  ]
+}

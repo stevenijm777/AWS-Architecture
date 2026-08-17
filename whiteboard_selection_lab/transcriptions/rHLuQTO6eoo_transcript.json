@@ -1,0 +1,252 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.120000000000001,
+    "text": "Welcome to This is My Architecture. Today I have here Cem from Insider. Hello Cem."
+  },
+  {
+    "start": 12.120000000000001,
+    "end": 14.700000000000001,
+    "text": "Hello Kamran. Can you tell me a little bit more about Insider?"
+  },
+  {
+    "start": 14.700000000000001,
+    "end": 20.46,
+    "text": "Sure. Insider is a multi-channel marketing automation platform that enables brands to"
+  },
+  {
+    "start": 20.46,
+    "end": 25.560000000000002,
+    "text": "deliver personalized experiences to their customers. So we have a really interesting"
+  },
+  {
+    "start": 25.56,
+    "end": 30.24,
+    "text": "architecture here. Can you tell me what challenge you were trying to solve?"
+  },
+  {
+    "start": 30.24,
+    "end": 37.44,
+    "text": "Before we are big spot users with Insider and before using EKS we were managing our"
+  },
+  {
+    "start": 37.44,
+    "end": 46.379999999999995,
+    "text": "spot instances via auto-scaling groups as spot fleets and elastic beanstalk. So with EKS we have"
+  },
+  {
+    "start": 46.379999999999995,
+    "end": 55.019999999999996,
+    "text": "consolidated all that compute architecture within one place and we are also solving the problem of"
+  },
+  {
+    "start": 55.02,
+    "end": 60.78,
+    "text": "data flowing from multiple channels to the company. That's great. So getting data value out of the data."
+  },
+  {
+    "start": 60.78,
+    "end": 68.64,
+    "text": "Yeah. So let's dive in. Sure. So a typical we have integration with multiple channels as I said. So"
+  },
+  {
+    "start": 68.64,
+    "end": 78.18,
+    "text": "let's take a mobile our mobile SDK for example. Once the user uses the app we get the data through our"
+  },
+  {
+    "start": 78.18,
+    "end": 95.94000000000001,
+    "text": "public ELB which is provisioned by EKS. So that ELB then forwards the traffic to EKS to one of, we have two actually, two microservices that are in charge of receiving the incoming traffic."
+  },
+  {
+    "start": 95.94,
+    "end": 107.7,
+    "text": "So those services they contain minimal business logic. They just do simple validations and sanity checks and then forward the data to our queue solution which is NSQ."
+  },
+  {
+    "start": 107.7,
+    "end": 116.7,
+    "text": "Okay. And within EKS we use managed node groups. So that lets us take advantage of spot instances very efficiently."
+  },
+  {
+    "start": 116.7,
+    "end": 128.46,
+    "text": "That's great. So what kind of scale are we talking about here? So through our public ELB we have about 50,000 requests per second."
+  },
+  {
+    "start": 128.46,
+    "end": 138.46,
+    "text": "And this is for write. This is our write workload. And for our read workload we have about 100,000 requests per second."
+  },
+  {
+    "start": 138.46,
+    "end": 148.22,
+    "text": "Okay. So you write it into the queue and then what happens next? So what happens next is we have consumers within EKS again."
+  },
+  {
+    "start": 148.22,
+    "end": 160.22,
+    "text": "And those consumers are tied to the depth of the queue via custom metrics. So our HPA scale our consumers depending on the depth of the queue."
+  },
+  {
+    "start": 160.22,
+    "end": 169.98,
+    "text": "So once we write the data we read it back into EKS to our consumers and we provision more consumers depending on how much data we have in the queue as I said."
+  },
+  {
+    "start": 169.98,
+    "end": 185.98,
+    "text": "And once we read that data, that piece of traffic actually, we write it three ways. We write it to DynamoDB, our all-app DB solution which is ClickHouse and then we write it to NS3 bucket."
+  },
+  {
+    "start": 185.98,
+    "end": 191.73999999999998,
+    "text": "Okay. Why the segregation of data between DynamoDB and ClickHouse and S3?"
+  },
+  {
+    "start": 192.62,
+    "end": 195.73999999999998,
+    "text": "Well, we use S3 to troubleshoot our problems."
+  },
+  {
+    "start": 195.73999999999998,
+    "end": 197.73999999999998,
+    "text": "Okay."
+  },
+  {
+    "start": 197.73999999999998,
+    "end": 209.73999999999998,
+    "text": "What we do is we write every piece of traffic to S3 along with a lot of metadata. So in case there is like a bad integration or unwanted data situations,"
+  },
+  {
+    "start": 209.74,
+    "end": 217.5,
+    "text": "we just plug Athena in to S3 to find the root cause of that unwanted data."
+  },
+  {
+    "start": 217.5,
+    "end": 221.5,
+    "text": "We can easily identify it via the metadata that we write alongside the traffic."
+  },
+  {
+    "start": 221.5,
+    "end": 222.06,
+    "text": "Okay."
+  },
+  {
+    "start": 222.06,
+    "end": 227.02,
+    "text": "So like we can do quick troubleshooting regarding the ingestion of data."
+  },
+  {
+    "start": 227.02,
+    "end": 241.26000000000002,
+    "text": "And another use case we have is if something goes wrong with our data sources, we can just replay the entire traffic between a specified amount of time from Athena."
+  },
+  {
+    "start": 241.26000000000002,
+    "end": 245.58,
+    "text": "And we just read the traffic back and write it to queue and then the process starts all over again."
+  },
+  {
+    "start": 245.58,
+    "end": 248.38,
+    "text": "That's great. It's a really powerful use case with Athena as well."
+  },
+  {
+    "start": 248.38,
+    "end": 252.14000000000001,
+    "text": "I also see you have a private ELB here. I'm assuming this is for your internal users."
+  },
+  {
+    "start": 252.14,
+    "end": 264.46,
+    "text": "That's correct. So we have many teams within the company and all of them need the data that is stored within those data sources from us."
+  },
+  {
+    "start": 264.46,
+    "end": 268.94,
+    "text": "So this is how we communicate with the outside world, if you will."
+  },
+  {
+    "start": 271.18,
+    "end": 278.78,
+    "text": "So when a product wants a specific piece of data from us, I mean, all the products within the company are basically our customers, right?"
+  },
+  {
+    "start": 278.78,
+    "end": 297.17999999999995,
+    "text": "We don't have products ourselves in this architecture. When they want data from us, they communicate it to us via the private ELB, which then goes to EKS, which is where we have a lot of microservices that serve different purposes."
+  },
+  {
+    "start": 297.18,
+    "end": 315.1,
+    "text": "So depending on the use case, the data can be read from DynamoDB or ClickHouse and then served back to whichever product requested the data in a manner that's formatted, consolidated and sanitized."
+  },
+  {
+    "start": 315.1,
+    "end": 319.5,
+    "text": "So we never allow direct access to data sources. We do everything through our APIs."
+  },
+  {
+    "start": 319.5,
+    "end": 320.86,
+    "text": "And provide the security for data as well."
+  },
+  {
+    "start": 320.86,
+    "end": 321.58,
+    "text": "Exactly."
+  },
+  {
+    "start": 321.58,
+    "end": 325.1,
+    "text": "That's great. So what kind of benefits have you realized from this architecture?"
+  },
+  {
+    "start": 325.1,
+    "end": 338.70000000000005,
+    "text": "As I said, we're big spot users. So moving this architecture to EKS enabled us to spend less time on DevOps operations."
+  },
+  {
+    "start": 339.90000000000003,
+    "end": 346.70000000000005,
+    "text": "And the other thing is we had, since we have many products, we have different data stores for all of our products, right?"
+  },
+  {
+    "start": 346.70000000000005,
+    "end": 350.3,
+    "text": "And they all had their own data solutions at the time."
+  },
+  {
+    "start": 350.3,
+    "end": 370.3,
+    "text": "What we did here is to, once we centralized all the data processing into one place, we effectively freed all the other product teams to actually focus on creating product features and create business value rather than spend time with data management."
+  },
+  {
+    "start": 370.3,
+    "end": 373.82,
+    "text": "That's great. So you're getting the value out of the data that you're acquiring."
+  },
+  {
+    "start": 373.82,
+    "end": 374.54,
+    "text": "Yeah."
+  },
+  {
+    "start": 374.54,
+    "end": 377.9,
+    "text": "So, Jim, thank you for sharing your work with me today."
+  },
+  {
+    "start": 377.9,
+    "end": 379.65999999999997,
+    "text": "Yeah, thank you for having me, Cameron."
+  },
+  {
+    "start": 379.65999999999997,
+    "end": 381.82,
+    "text": "And thank you for joining This is My Architecture."
+  }
+]

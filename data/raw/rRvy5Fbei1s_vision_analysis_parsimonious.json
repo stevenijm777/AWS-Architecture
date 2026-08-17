@@ -1,0 +1,128 @@
+{
+  "step_by_step_reasoning": "The architecture diagram features three main functional columns: Ingest, Processing, and Reporting.\n\n1. Ingest Stage:\n   - Requests enter via API Gateway.\n   - API Gateway forwards requests to an Ingest Lambda function for message validation.\n   - Ingest Lambda writes directly to DynamoDB for high-throughput tracking/validation storing.\n   - Ingest Lambda also stores raw incoming messages into an Ingest S3 bucket.\n   - Ingest Lambda puts messages into an SQS queue.\n\n2. Processing Stage:\n   - SQS triggers or feeds into a Processing Lambda function.\n   - DynamoDB feeds data into EC2 instances for heavy compute transformation (converting NoSQL data to SQL structures).\n   - S3 bucket (top) sits in processing/storage area.\n\n3. Reporting Stage:\n   - Contains Data Pipeline, Redshift, and QuickSight icons on the whiteboard for transformed data ingestion, staging, and visualization, though no explicit connecting arrows are drawn to them on screen.",
+  "graph": {
+    "name": "Dentsu - Track and Trace European Tobacco Supply Chain Architecture",
+    "link": "",
+    "categories": "Data Ingestion & Processing, Analytics & Reporting",
+    "graph_usable": true,
+    "notes": "Parsed from 'This is My Architecture' whiteboard presentation by Dentsu."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Ingests incoming track & trace messages (6,000 calls/sec)"
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "LAMBDA (Validation)",
+      "notes": "Validates message authenticity using parallel .NET Core"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (Ingest)",
+      "notes": "Stores validated raw messages"
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues validated messages for downstream processing"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Stores key validation state and non-SQL data"
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Transforms non-SQL data into SQL structure for Redshift"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA (Processing)",
+      "notes": "Processes queued pipeline data"
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 (Processing)",
+      "notes": "Stores prepared data ready for Redshift loading"
+    },
+    {
+      "id": "8",
+      "service": "DataPipeline",
+      "name": "DATA PIPELINE",
+      "notes": "Orchestrates fact table preparation and COPY commands into Redshift"
+    },
+    {
+      "id": "9",
+      "service": "RedShift",
+      "name": "REDSHIFT",
+      "notes": "Columnar data warehouse for fact table queries"
+    },
+    {
+      "id": "10",
+      "service": "QuickSight",
+      "name": "QUICKSIGHT",
+      "notes": "Visualizes fact tables using SPICE engine"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway routes incoming calls to Validation Lambda"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Validation Lambda performs massive traffic writes to DynamoDB"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB feeds non-SQL data to EC2 for compute transformation"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Validation Lambda stores messages into S3"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Validation Lambda pushes valid data to SQS queue"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "SQS feeds message batches into Processing Lambda"
+    }
+  ]
+}

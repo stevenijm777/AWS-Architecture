@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1. Identify all visual nodes on the whiteboard canvas:\n   - Ingestion path (bottom): Kinesis Data Stream ('KINESIS'), ECS ('ECS'), S3 ('S3').\n   - Search path (top/middle): ECS ('ECS'), DynamoDB ('DYNAMODB'), Lambda ('LAMBDA' - job dispatcher), SQS ('SQS'), Step Functions ('STEP FUNCTION'), Lambda ('LAMBDA' - worker/filter functions), S3 ('S3' - temporary results), Kinesis Data Stream ('KINESIS'), Lambda ('LAMBDA' - aggregator function partially visible on the right edge).\n2. Identify all drawn directed arrows:\n   - Ingestion path: Ingest arrow -> Kinesis -> ECS -> S3.\n   - Search path: Search request -> top ECS -> first Lambda -> SQS, Step Functions, and second Lambda.\n   - Filter Lambda -> S3 and Kinesis.\n   - Kinesis and Filter Lambda -> Aggregator Lambda.\n3. Assign strictly allowed AWS service names from Rule 1 (e.g., 'KinesisDataStream', 'ECS', 'S3', 'DynamoDB', 'Lambda', 'SQS', 'StepFunctions').\n4. Build edges based exclusively on visual lines drawn on the board with appropriate flow_id and seq identifiers.",
+  "graph": {
+    "name": "AlertLogic Serverless Log Search and Data Ingestion Architecture",
+    "link": "",
+    "categories": "Security & Analytics",
+    "graph_usable": true,
+    "notes": "Architecture showing a 25PB log ingestion pipeline into S3 and a massive parallel MapReduce search engine using thousands of Lambda functions coordinated via Step Functions and SQS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "KinesisDataStream",
+      "name": "Data Ingestion Stream",
+      "notes": "Receives log data from customer fleet agents and appliances."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "Pre-processing ECS Cluster",
+      "notes": "Performs pre-processing on incoming log streams."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Data Lake (25 PB)",
+      "notes": "Stores processed log data lake."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "Search Planner ECS",
+      "notes": "Validates search queries and plans execution."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "State/Metadata Store",
+      "notes": "DynamoDB table present on diagram."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Job Shadowing Lambda",
+      "notes": "Schedules and coordinates job execution based on customer data volume."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "Task Queue",
+      "notes": "Buffers search task requests."
+    },
+    {
+      "id": "7",
+      "service": "StepFunctions",
+      "name": "State Machine",
+      "notes": "Manages execution state and orchestration."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Filter Lambda Fleet",
+      "notes": "Spins up thousands of instances to filter and enrich log data."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Intermediate S3 Bucket",
+      "notes": "Stores filtered intermediate search results."
+    },
+    {
+      "id": "10",
+      "service": "KinesisDataStream",
+      "name": "Results Kinesis Stream",
+      "notes": "Streams filtered results to aggregator."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Aggregation Lambda",
+      "notes": "Aggregates search results to return to user."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingested log stream passed to ECS pre-processor."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pre-processed data written to 25 PB S3 data lake."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Search request passed to job shadowing Lambda."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Queues tasks in SQS."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Triggers Step Functions workflow."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2c",
+      "type": "data",
+      "notes": "Spins up filter Lambda instances."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3a",
+      "type": "data",
+      "notes": "Filtered results stored in intermediate S3 bucket."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "3b",
+      "type": "data",
+      "notes": "Filtered stream sent to Kinesis."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "3c",
+      "type": "data",
+      "notes": "Direct control / signal to aggregation Lambda."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Stream data fed into aggregation Lambda."
+    }
+  ]
+}

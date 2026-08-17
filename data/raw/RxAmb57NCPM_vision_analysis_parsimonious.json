@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows an event-driven data lake ingestion and processing pipeline at Zalando. First, external microservices send events into Nakadi (a custom event bus represented as a ThirdParty component). Nakadi batches these events and writes them into an S3 Archival Bucket. Object creation events trigger an SQS Queue, which invokes a Lambda function to partition and write data into an S3 RAW Bucket. From the S3 RAW Bucket, object creation triggers another SQS Queue and Lambda function that enriches message attributes and pushes them to an SNS Topic. The SNS Topic fans out to multiple SQS Queues filtered by event type for downstream processing (e.g. Spark jobs), as well as to a reformatting pipeline consisting of Lambda, an SQS Queue, and an S3 MAIN Bucket for ad-hoc querying.",
+  "graph": {
+    "name": "Zalando Serverless Data Lake Architecture",
+    "link": "",
+    "categories": "Data Lake, Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "Data ingestion pipeline from Nakadi event bus through S3 archival, raw bucket enrichment, SNS fan-out, and main data lake storage."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Nakadi",
+      "notes": "Distributed event bus abstraction over Kafka"
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Archival Bucket",
+      "notes": "Stores initial 5-minute/50MB batched event files"
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Archival SQS Queue",
+      "notes": "Receives object creation notifications from archival bucket"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Partitioning Lambda",
+      "notes": "Partitions incoming data and writes to RAW bucket"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "RAW Bucket",
+      "notes": "Stores partitioned raw data"
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "RAW SQS Queue",
+      "notes": "Receives notifications for object creation in RAW bucket"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Enrichment Lambda",
+      "notes": "Enriches message attributes with event type and partition metadata"
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "SNS Topic",
+      "notes": "Fans out messages to multiple subscribers based on event attributes"
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "Downstream Processing SQS Queues",
+      "notes": "Queues filtered by event type for downstream Spark jobs"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Reformatting Lambda",
+      "notes": "Reformats partitions from hourly to daily levels"
+    },
+    {
+      "id": "10",
+      "service": "SQS",
+      "name": "Main Pipeline SQS Queue",
+      "notes": "Buffers reformatted data before writing to main storage"
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "MAIN Bucket",
+      "notes": "Data lake serving layer for ad-hoc queries"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Nakadi batches events and writes to archival S3 bucket"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Object creation notification sent to SQS queue"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "SQS queue triggers partitioning Lambda"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda partitions and writes data to RAW bucket"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "5",
+      "type": "data",
+      "notes": "Object creation in RAW bucket triggers SQS message"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 6,
+      "seq": "6",
+      "type": "data",
+      "notes": "SQS triggers enrichment Lambda"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 7,
+      "seq": "7",
+      "type": "data",
+      "notes": "Lambda publishes enriched messages to SNS topic"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 8,
+      "seq": "8a",
+      "type": "data",
+      "notes": "SNS fans out filtered messages to downstream SQS queues"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 8,
+      "seq": "8b",
+      "type": "data",
+      "notes": "SNS routes unfiltered messages to reformatting Lambda"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 9,
+      "seq": "9",
+      "type": "data",
+      "notes": "Reformatting Lambda outputs to SQS queue"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 10,
+      "seq": "10",
+      "type": "data",
+      "notes": "SQS pipeline writes processed data to MAIN S3 bucket"
+    }
+  ]
+}

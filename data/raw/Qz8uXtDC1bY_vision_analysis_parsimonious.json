@@ -1,0 +1,224 @@
+{
+  "step_by_step_reasoning": "1. Identify actors and external services: Developers (UserCompanyDeveloper), Slack (ThirdParty), and GitHub (ThirdParty).\n2. Identify AWS services drawn as explicit icons: API Gateway (ApiGateway), CloudWatch (CloudWatch), Manager Lambda (Lambda), Step Functions (StepFunctions), Fargate (Fargate), ECR (ECR), SNS (SNS), and three target Lambdas (Lambda) on the right side.\n3. Identify data target ovals drawn under Fargate: WH (Data Warehouse / RedShift) and S3 (S3).\n4. Trace drawn connections:\n   - Developers -> GitHub\n   - GitHub -> Step Functions and GitHub -> ECR\n   - Slack -> API Gateway -> Manager Lambda\n   - CloudWatch -> Manager Lambda\n   - Manager Lambda -> Step Functions\n   - Step Functions -> SNS\n   - SNS -> top Lambda, middle Lambda, and bottom Dependency Lambda\n   - Top/Middle Lambda -> Slack\n   - Dependency Lambda -> Manager Lambda (feedback loop)\n   - Fargate -> WH and Fargate -> S3\n5. Format strictly according to Cloudscape dataset rules.",
+  "graph": {
+    "name": "Fundbox Data Job Orchestration Platform",
+    "link": "",
+    "categories": "Data Processing & Orchestration",
+    "graph_usable": true,
+    "notes": "Data job orchestration architecture using AWS Step Functions, Fargate, Lambda, and SNS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developers / Engineers",
+      "notes": ""
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": ""
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "GitHub",
+      "notes": ""
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": ""
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": ""
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Manager Lambda",
+      "notes": ""
+    },
+    {
+      "id": "6",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": ""
+    },
+    {
+      "id": "7",
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": ""
+    },
+    {
+      "id": "8",
+      "service": "ECR",
+      "name": "ECR",
+      "notes": ""
+    },
+    {
+      "id": "9",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": ""
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Audit Lambda",
+      "notes": ""
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Slack Lambda",
+      "notes": ""
+    },
+    {
+      "id": "12",
+      "service": "Lambda",
+      "name": "Dependency Lambda",
+      "notes": ""
+    },
+    {
+      "id": "13",
+      "service": "RedShift",
+      "name": "Data Warehouse (WH)",
+      "notes": ""
+    },
+    {
+      "id": "14",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": ""
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Commits code and configuration files"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Creates step function task via CI/CD"
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes Docker image to ECR"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers job execution via Slack command"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends HTTP request to Manager Lambda"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Scheduled CRON trigger"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers Step Functions execution"
+    },
+    {
+      "source": "7",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Interacts with warehouse"
+    },
+    {
+      "source": "7",
+      "target": "14",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Interacts with S3 storage"
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends job status notification"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fans out job result event"
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fans out job result event"
+    },
+    {
+      "source": "9",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fans out job result event"
+    },
+    {
+      "source": "11",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends notification back to user Slack channel"
+    },
+    {
+      "source": "12",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "5",
+      "type": "data",
+      "notes": "Triggers downstream jobs recursively via Manager Lambda"
+    }
+  ]
+}

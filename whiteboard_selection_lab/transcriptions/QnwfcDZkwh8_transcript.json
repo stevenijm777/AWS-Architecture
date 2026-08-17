@@ -1,0 +1,197 @@
+[
+  {
+    "start": 0.0,
+    "end": 9.0,
+    "text": "Welcome to This is My Architecture. I am Han and today I'm joined by Marco from Mediaset. Welcome."
+  },
+  {
+    "start": 9.0,
+    "end": 10.0,
+    "text": "Thank you for having me."
+  },
+  {
+    "start": 10.0,
+    "end": 12.0,
+    "text": "Tell us about Mediaset."
+  },
+  {
+    "start": 12.0,
+    "end": 25.0,
+    "text": "Mediaset is Italy's top free broadcaster. We have an average share of 40% on our linear channels and more than 10 million views on our digital channels daily."
+  },
+  {
+    "start": 25.0,
+    "end": 28.0,
+    "text": "Awesome. So what problem are you trying to solve today?"
+  },
+  {
+    "start": 28.0,
+    "end": 39.0,
+    "text": "Well, our top talent show is Amici, which is a game where a classroom of teenagers compete one against the other by dancing and acting to win a prize."
+  },
+  {
+    "start": 39.0,
+    "end": 45.0,
+    "text": "During the final episode of the show, the winner is chosen by the public via a voting system."
+  },
+  {
+    "start": 45.0,
+    "end": 56.0,
+    "text": "Last year, we had the need to withstand an increased load in traffic in number of votes. We expected a higher load and we had expected a very spiky pattern."
+  },
+  {
+    "start": 56.0,
+    "end": 62.0,
+    "text": "So we decided to rebuild the infrastructure from scratch using AWS services in order to withstand this load."
+  },
+  {
+    "start": 62.0,
+    "end": 63.0,
+    "text": "Let's dive in."
+  },
+  {
+    "start": 63.0,
+    "end": 75.0,
+    "text": "Yeah, of course. So the first step is open a session. So the show is broadcast from an on-prem. So we have an on-prem system that is being used by editorial teams to open the session."
+  },
+  {
+    "start": 75.0,
+    "end": 90.0,
+    "text": "This command is routed through a VPN and goes to an ECS service on Fargate. This service is not accessible on the public network. And its responsibility is to open the session on MemoryDB."
+  },
+  {
+    "start": 90.0,
+    "end": 97.0,
+    "text": "MemoryDB is being used to store who the contestants are in a specific voting session."
+  },
+  {
+    "start": 97.0,
+    "end": 100.0,
+    "text": "Cool. So let's just say, I'm ready to vote. What happens?"
+  },
+  {
+    "start": 100.0,
+    "end": 113.0,
+    "text": "Yeah. So the user has to choose from several different channels that we allow him to use to vote. And we have SMS. We have mobile application, both iOS and Android. We have websites. And we also have connected TVs."
+  },
+  {
+    "start": 113.0,
+    "end": 127.0,
+    "text": "Once the user has authenticated on this platform and has chosen who he wants to vote, he will transmit his vote intention. The first issue that we need to solve is being sure that users outside of Italy cannot vote."
+  },
+  {
+    "start": 127.0,
+    "end": 143.0,
+    "text": "We use WAF to perform this check. So the votes come into WAF and we make sure that the location of the users is valid. After that, the users go through ALB and reaches a front-end service on Fargate."
+  },
+  {
+    "start": 143.0,
+    "end": 153.0,
+    "text": "The service is completely separate from the backend service that we talked about earlier. And these two components are obviously being used to withstand the spiky load pattern that we expect."
+  },
+  {
+    "start": 153.0,
+    "end": 168.0,
+    "text": "Fargate is being scaled with an auto-scaling policies and with the scheduled policies of auto-scaling to make sure that we can absorb what we are expecting. Fargate is being used also to validate that the user is authenticated correctly."
+  },
+  {
+    "start": 168.0,
+    "end": 178.0,
+    "text": "Fargate is being used to be able to perform a first check that the session has been opened before the user is transmitted in the vote. If everything is okay, the vote is then transmitted on MemoryDB."
+  },
+  {
+    "start": 178.0,
+    "end": 194.0,
+    "text": "MemoryDB is where the core logic of our application is being served. We use a Lua script to make sure that no more than one vote is processed concurrently. We double-check that the session is open."
+  },
+  {
+    "start": 194.0,
+    "end": 211.0,
+    "text": "And we check that the users are not exhausted their votes for one specific session. If everything is okay, we update the counters so that we can know who is being voted and what are the new limits, the new remaining votes."
+  },
+  {
+    "start": 211.0,
+    "end": 229.0,
+    "text": "And we transmit the results back to the user so that we can provide feedback. We can tell them if everything was okay. We can tell them how many votes he has left and if there was an error or not. All of this in under than 10 milliseconds."
+  },
+  {
+    "start": 229.0,
+    "end": 233.0,
+    "text": "Wow. And how many consumers or viewers are you seeing?"
+  },
+  {
+    "start": 233.0,
+    "end": 242.0,
+    "text": "Well, during last final episode, we had five voting sessions and we collected more than five million votes."
+  },
+  {
+    "start": 242.0,
+    "end": 245.0,
+    "text": "And it's all processed in 10 milliseconds."
+  },
+  {
+    "start": 245.0,
+    "end": 246.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 246.0,
+    "end": 249.0,
+    "text": "Super cool. How do you monitor all of this?"
+  },
+  {
+    "start": 249.0,
+    "end": 270.0,
+    "text": "Well, basically, we create a lot of logs. Both ELB and Fargate create logs. These logs are stored in CloudWatch. And this allows us to create dashboards to make sure that everything is going according to what we expect. And we have no issues."
+  },
+  {
+    "start": 270.0,
+    "end": 291.0,
+    "text": "The same data is being streamed through Kinesis Firehose. Obviously, it's a lot of data, but we can allow to stream it to data firewalls and persist it on S3 for long term storage for certification purposes and to integrate this with our other data that we have with our other services."
+  },
+  {
+    "start": 291.0,
+    "end": 298.0,
+    "text": "Super cool. So now that this session is open, users are voting and then we were able to visualize that."
+  },
+  {
+    "start": 298.0,
+    "end": 300.0,
+    "text": "Now let's just say the show ends."
+  },
+  {
+    "start": 300.0,
+    "end": 301.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 301.0,
+    "end": 302.0,
+    "text": "Then what?"
+  },
+  {
+    "start": 302.0,
+    "end": 318.0,
+    "text": "So as for the opening of a session, the editorial team will close the session. The flow is the same as before, so the command will go through the VPN, will go to Fargate, then we'll go to MemoryDB, which will close the session so further votes cannot be processed."
+  },
+  {
+    "start": 318.0,
+    "end": 329.0,
+    "text": "And the results will be streamed back to the on-prem so that the conductor of the show can tell the public who was the winner of this particular session or of the show."
+  },
+  {
+    "start": 329.0,
+    "end": 336.0,
+    "text": "Well, thank you so much for going over your architecture. That is truly game-changing that you're able to do that near real-time streaming of that voting. So thank you."
+  },
+  {
+    "start": 336.0,
+    "end": 337.0,
+    "text": "It's been a pleasure."
+  },
+  {
+    "start": 337.0,
+    "end": 340.0,
+    "text": "And thank you for watching This Is My Architecture."
+  }
+]

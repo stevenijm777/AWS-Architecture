@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "1. Identify actors and services from visual whiteboard and transcript: An external client (UserConsumerWeb) interacts with the system. The architecture is split into 'Microservice' and 'Event Store' domains.\n2. In the Event Store container, nodes are DynamoDB (Event Store), Lambda (Streamer), SNS (SNS FIFO), and S3 (Archive bucket).\n3. In the Microservice container, nodes are Lambda (Command handler), SQS (SQS FIFO), Lambda (Event processor), DynamoDB (Read model/projection), and Lambda (Query handler).\n4. Trace arrows visually from left to right and top to bottom: Write command enters Command Lambda -> writes to Event Store DynamoDB -> streams to Streamer Lambda -> publishes to SNS FIFO and archives to S3 -> fans out to SQS FIFO -> processed by Event Processor Lambda -> writes to Read Model DynamoDB. Separate Query path goes from Client to Query Lambda and returns response directly.",
+  "graph": {
+    "name": "Kupol Serverless CQRS Event Sourcing Architecture",
+    "link": "",
+    "categories": "Serverless, Microservices, CQRS, Event-Driven",
+    "graph_usable": true,
+    "notes": "Serverless event-sourced architecture using DynamoDB, SNS FIFO, SQS FIFO, Lambda, and S3 for digital staffing platform."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Client",
+      "notes": "External client sending CQRS commands and queries"
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Command Lambda",
+      "notes": "Validates and processes incoming CQRS write commands"
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Event Store table storing system events"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Streamer Lambda",
+      "notes": "Processes DynamoDB streams to forward events and archive data"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Archives event store data"
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "SNS FIFO",
+      "notes": "Publishes ordered events for fan-out"
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS FIFO",
+      "notes": "Queue subscribed to SNS FIFO for domain event consumption"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Event Handler Lambda",
+      "notes": "Consumes business events from SQS FIFO to update projections"
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Read model projections optimized for access patterns"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Query Lambda",
+      "notes": "Handles CQRS read queries"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client sends CQRS write command"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Emits event to Event Store"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB Stream triggers streamer Lambda"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Puts event to SNS FIFO"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Archives event data to S3"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Fan-out event to service SQS FIFO queue"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda pulls events from SQS FIFO"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Writes data to read model projection"
+    },
+    {
+      "source": "0",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client sends CQRS query request"
+    },
+    {
+      "source": "9",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Query response returned to client"
+    }
+  ]
+}

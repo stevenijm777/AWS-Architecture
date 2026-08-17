@@ -1,0 +1,227 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.0,
+    "text": "Hi, welcome to This is My Architecture. I'm Yu Hua. I'm here today with Jose from DBS Bank."
+  },
+  {
+    "start": 12.0,
+    "end": 16.68,
+    "text": "Welcome Jose. Thanks for having me here. So Jose, can you share a bit about DBS Bank with us?"
+  },
+  {
+    "start": 16.68,
+    "end": 22.68,
+    "text": "DBS Bank is a leading financial service group in Asia. Nowadays we call ourselves the Digital Bank"
+  },
+  {
+    "start": 22.68,
+    "end": 26.52,
+    "text": "of Singapore. So I know we are here today to talk about a serverless compute grid use case"
+  },
+  {
+    "start": 26.52,
+    "end": 31.32,
+    "text": "within DBS Bank. Can you share with us more details on that? Our compute grid is being"
+  },
+  {
+    "start": 31.32,
+    "end": 38.94,
+    "text": "used to price exotic option trades which are using the mathematical models developed at DBS."
+  },
+  {
+    "start": 38.94,
+    "end": 46.019999999999996,
+    "text": "And the application which calls the grid is Murex which is our main primary trading"
+  },
+  {
+    "start": 46.019999999999996,
+    "end": 51.480000000000004,
+    "text": "application and the RISP platform. So before we dive deeper into the architecture itself,"
+  },
+  {
+    "start": 51.480000000000004,
+    "end": 55.980000000000004,
+    "text": "can you share with us what was the challenge that your team was trying to solve? Okay, in grid computing"
+  },
+  {
+    "start": 55.98,
+    "end": 62.58,
+    "text": "cluster we have two major major component which is a compute itself and so this compute we have"
+  },
+  {
+    "start": 62.58,
+    "end": 72.12,
+    "text": "migrated from our physical servers to AWS cloud in the past in 2017 and we were able to save almost 80%"
+  },
+  {
+    "start": 72.12,
+    "end": 80.64,
+    "text": "of our infra cost. Now the second component which is a grid scheduler software which is a third-party"
+  },
+  {
+    "start": 80.64,
+    "end": 85.92,
+    "text": "software and it is being licensed based on the number of cores in your cluster. Now this"
+  },
+  {
+    "start": 85.92,
+    "end": 93.6,
+    "text": "itself is actually limits us to scale as and when we need it. I'm looking at architecture I see"
+  },
+  {
+    "start": 93.6,
+    "end": 100.08,
+    "text": "that are multiple Amazon SQS queues being used. Is there a rationale behind that design? Yes, so in"
+  },
+  {
+    "start": 100.08,
+    "end": 106.74000000000001,
+    "text": "in Murex application we have multiple type of users like high priority users and so what we have done,"
+  },
+  {
+    "start": 106.74,
+    "end": 113.41999999999999,
+    "text": "we have divided the, we have divided the queues into high, medium and low so that in case for example like when the trader makes a"
+  },
+  {
+    "start": 113.42,
+    "end": 126.42,
+    "text": "his submission to his job to the grid actually hits the high queue and the back office users will be in medium and the batch users are actually going to the low queue."
+  },
+  {
+    "start": 126.42,
+    "end": 133.1,
+    "text": "I see that you also have multiple AWS Lambda functions. Out of curiosity are they the same Lambda functions or are they different?"
+  },
+  {
+    "start": 133.1,
+    "end": 142.74,
+    "text": "Yes, they are same Lambda functions. So when we started we only had one Lambda function for multiple queues and we found that the performance was not so good."
+  },
+  {
+    "start": 142.74,
+    "end": 167.74,
+    "text": "So what we have done is we have divided them, we just duplicated them as same function just to manage our provision concurrency. So by having that provision concurrency for example if I give a provision concurrency of 300 to high and the 200 to the low and then 100 here then we have almost and a buffer of 500."
+  },
+  {
+    "start": 167.74,
+    "end": 173.74,
+    "text": "So total 1000 Lambdas I can actually better scale and for each of the queues."
+  },
+  {
+    "start": 173.74,
+    "end": 177.74,
+    "text": "So interesting, so with this design you can maintain a quality of service for different groups of users."
+  },
+  {
+    "start": 177.74,
+    "end": 178.74,
+    "text": "Yes, you are right."
+  },
+  {
+    "start": 178.74,
+    "end": 187.74,
+    "text": "You are also using multiple different AWS storage services such as Amazon S3 and Amazon EFS. Can you share with us what types of data are you storing in those services?"
+  },
+  {
+    "start": 187.74,
+    "end": 196.74,
+    "text": "Okay, so for the computation we need input data which are non sensitive in the nature so we used to save all the output, all the data into the data."
+  },
+  {
+    "start": 196.74,
+    "end": 211.74,
+    "text": "S3 bucket in the beginning including the binary but we know that whenever the binary is actually downloaded into the Lambda we found that actually the size is not enough because we have lots of binary financial models."
+  },
+  {
+    "start": 211.74,
+    "end": 224.74,
+    "text": "So what we have chosen is EFS. So EFS is mounted now in each of our Lambda and then we can avoid the cold start for the Lambda itself because the binary is mounted in the Lambda itself."
+  },
+  {
+    "start": 224.74,
+    "end": 228.74,
+    "text": "So that's interesting. So now EFS has become your binary repository in some sense."
+  },
+  {
+    "start": 228.74,
+    "end": 229.74,
+    "text": "Yes, you are right."
+  },
+  {
+    "start": 229.74,
+    "end": 235.74,
+    "text": "Can I also assume that the output from the AWS Lambda functions executions are being stored in DynamoDB?"
+  },
+  {
+    "start": 235.74,
+    "end": 242.74,
+    "text": "Yes. So DynamoDB we have chosen because of the throughput which it gives and it works very well with the Lambda."
+  },
+  {
+    "start": 242.74,
+    "end": 251.74,
+    "text": "So we store our output in DynamoDB as well as the status of the function itself, what has happened to the function, right?"
+  },
+  {
+    "start": 251.74,
+    "end": 263.74,
+    "text": "If it has failed or successful. So when the API, when we request the output actually we check, make sure that it is not a duplicated execution of the Lambda function."
+  },
+  {
+    "start": 263.74,
+    "end": 265.74,
+    "text": "This is the use of DynamoDB."
+  },
+  {
+    "start": 265.74,
+    "end": 270.74,
+    "text": "That's interesting. Elasticsearch, are you using it for monitoring purposes?"
+  },
+  {
+    "start": 270.74,
+    "end": 283.74,
+    "text": "So yeah. So Elasticsearch, what we are doing is our on-premise logs and as well as all the AWS logs, whichever the logs are actually coming from the Lambda, everything is actually aggregated at Elasticsearch"
+  },
+  {
+    "start": 283.74,
+    "end": 290.74,
+    "text": "and then which we can use later for end-to-end monitoring of the task computation while using Grafana."
+  },
+  {
+    "start": 290.74,
+    "end": 295.74,
+    "text": "Sure. So Jose, what are some of the future plans you have for this architecture?"
+  },
+  {
+    "start": 295.74,
+    "end": 308.74,
+    "text": "Yes. So today actually when we execute our Lambda, so we are able to execute 3 to 4,000 Lambda per minute, assuming that the account limit is 1,000."
+  },
+  {
+    "start": 308.74,
+    "end": 318.74,
+    "text": "But we want to enhance this actually further. So recently AWS has announced that they have increased the CPU and memory of the Lambda function itself."
+  },
+  {
+    "start": 318.74,
+    "end": 327.74,
+    "text": "So we want to try micro-batching so that one Lambda function can execute multiple calculations in parallel."
+  },
+  {
+    "start": 327.74,
+    "end": 334.74,
+    "text": "So our target is to actually execute almost 30 to 40 million calculations per day."
+  },
+  {
+    "start": 334.74,
+    "end": 338.74,
+    "text": "So this is very interesting architecture. Thank you for sharing with us today."
+  },
+  {
+    "start": 338.74,
+    "end": 345.74,
+    "text": "and I hope you enjoyed it as well. And thank you for watching. This is my architecture."
+  }
+]

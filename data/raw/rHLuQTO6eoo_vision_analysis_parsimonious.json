@@ -1,0 +1,172 @@
+{
+  "step_by_step_reasoning": "1. Identify nodes: Mobile SDK (UserConsumerMobile), Public ELB (ELB), EKS (EKS), Queue (ThirdParty), DynamoDB (DynamoDB), OLAP DB (ThirdParty), S3 (S3), Athena (Athena), Private ELB (ELB).\n2. Identify edges based on drawn arrows:\n- Mobile SDK -> Public ELB -> EKS -> Queue\n- Queue -> EKS -> DynamoDB / OLAP DB / S3\n- DynamoDB <-> EKS and OLAP DB <-> EKS for bidirectional reads/writes\n- EKS -> Private ELB\n- Athena -> S3, Athena -> OLAP DB, and top loop back to Queue for replay.",
+  "graph": {
+    "name": "Insider Data Ingestion and Processing Architecture with EKS",
+    "link": "",
+    "categories": "Analytics & Data Processing",
+    "graph_usable": true,
+    "notes": "Architecture showing high-throughput data ingestion using EKS, custom queuing, and multi-store persistence (DynamoDB, ClickHouse, S3)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile SDK",
+      "notes": "Ingestion source"
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "Public ELB",
+      "notes": "Handles incoming write traffic"
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Central container platform running ingestion microservices and consumers"
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Queue",
+      "notes": "NSQ queue solution"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "NoSQL data store"
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "OLAP DB",
+      "notes": "ClickHouse database for OLAP analytics"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Object store for raw traffic and metadata"
+    },
+    {
+      "id": "7",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Interactive query engine for troubleshooting and traffic replay"
+    },
+    {
+      "id": "8",
+      "service": "ELB",
+      "name": "Private ELB",
+      "notes": "Exposes endpoints for internal product teams"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends write requests"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Routes traffic to EKS validation services"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pushes validated events into queue"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "EKS consumers pull events from queue based on HPA"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Writes data to DynamoDB"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Writes data to ClickHouse"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4c",
+      "type": "data",
+      "notes": "Writes raw traffic and metadata to S3"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reads data for internal product APIs"
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads analytics data for internal APIs"
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Serves sanitized query results back to internal callers"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Queries data in S3 bucket"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Replay flow to OLAP DB"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Replay loop writing back into queue"
+    }
+  ]
+}

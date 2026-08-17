@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "The architecture shows log producers (EC2, Lambda, Fargate) sending logs through processors (Logstash, Lambda, FluentBit) into OpenSearch. Users authenticate via Okta to access OpenSearch.",
+  "graph": {
+    "name": "Benevity Centralized Logging Architecture",
+    "link": "",
+    "categories": "Logging and Monitoring",
+    "graph_usable": true,
+    "notes": "Centralized log ingestion using OpenSearch, Okta for RBAC, and various log processors."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2 Producer",
+      "notes": "Legacy EC2 compute producing logs"
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda Producer",
+      "notes": "Serverless application producer"
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "Fargate Producer",
+      "notes": "ECS Fargate tasks producing logs"
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Logstash",
+      "notes": "Processes EC2 logs"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda Processor",
+      "notes": "Processes serverless logs for OpenSearch"
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Fluent Bit",
+      "notes": "FireLens sidecar container processing container logs"
+    },
+    {
+      "id": "6",
+      "service": "OpenSearch",
+      "name": "OpenSearch",
+      "notes": "Centralized log storage and search engine"
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Okta",
+      "notes": "Identity provider for role-based access control"
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Users",
+      "notes": "Internal teams (SecOps, IT, Devs, Ops)"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends EC2 logs to Logstash"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingests processed logs into OpenSearch"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends Lambda logs to processing Lambda"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingests processed logs into OpenSearch"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pushes logs via FireLens to Fluent Bit"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingests processed container logs into OpenSearch"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "User authentication request"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Provides access control to OpenSearch indexes"
+    }
+  ]
+}

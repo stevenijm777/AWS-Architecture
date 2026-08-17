@@ -1,0 +1,252 @@
+{
+  "step_by_step_reasoning": "The architecture diagram features two main processing paths: a mobile data ingestion pathway and a web application pathway for dashboards and reporting.\n\n1. Mobile Application Path:\n   - Mobile Application sends streams to Amazon Kinesis.\n   - Amazon Kinesis backs up raw data to a top-left Amazon S3 bucket and routes data to AWS Lambda for aggregation.\n   - AWS Lambda passes processed payloads to AWS Step Functions for workflow orchestration and sends compressed Parquet data to a top-right Amazon S3 bucket.\n   - AWS Step Functions triggers Amazon Simple Notification Service (SNS) for notifications and invokes a second AWS Lambda function.\n   - The second AWS Lambda writes to Amazon RDS.\n   - The top-right Amazon S3 bucket feeds into AWS Glue for cataloging, which is queried by Amazon Athena.\n\n2. Web Application Path:\n   - Web Application connects through Amazon Route 53 to Amazon API Gateway.\n   - Amazon API Gateway invokes Backend Processing components: AWS Fargate and AWS Lambda.\n   - AWS Lambda interacts with Amazon RDS for transactional data and Amazon ElastiCache for session caching.\n   - The Web Application queries Amazon Athena directly for dashboards and reporting.",
+  "graph": {
+    "name": "Sales Flow Serverless Workflow and Analytics Architecture",
+    "link": "",
+    "categories": "Serverless Data Pipeline & Web Application",
+    "graph_usable": true,
+    "notes": "Serverless architecture for managing on-ground field force operations, combining real-time data ingestion via Kinesis/Lambda/Step Functions and direct querying via Athena."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Application",
+      "notes": "Field force mobile app sending workflow and tracking data"
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Amazon Kinesis",
+      "notes": "Ingests real-time data streams"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Raw stream backup bucket"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Aggregates and parses incoming stream payloads"
+    },
+    {
+      "id": "4",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates workflow state machines"
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "Amazon Simple Notification Service (Amazon SNS)",
+      "notes": "Sends user prompts and threshold breach alerts"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Processes state machine results"
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Data lake bucket storing Parquet format data"
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Crawls and catalogs S3 data"
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Executes on-demand interactive SQL queries"
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWeb",
+      "name": "Web Application For Dashboards and Reporting",
+      "notes": "User interface for configuration and viewing reports"
+    },
+    {
+      "id": "11",
+      "service": "Route53",
+      "name": "Amazon Route 53",
+      "notes": "DNS domain routing"
+    },
+    {
+      "id": "12",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "API entry point for web frontend"
+    },
+    {
+      "id": "13",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Runs long-running backend tasks"
+    },
+    {
+      "id": "14",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Handles short transactional backend operations"
+    },
+    {
+      "id": "15",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Relational transactional database"
+    },
+    {
+      "id": "16",
+      "service": "ElastiCache",
+      "name": "Amazon ElastiCache",
+      "notes": "In-memory cache for fast session/permissions lookup"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile app streams data to Kinesis"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kinesis backs up data to S3"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis sends stream payloads to Lambda"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda forwards parsed data to Step Functions"
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda converts data to Parquet and stores in S3"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Step Functions triggers SNS notifications"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Step Functions executes downstream Lambda"
+    },
+    {
+      "source": "6",
+      "target": "15",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Lambda stores relational execution data in RDS"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "S3 data cataloged by Glue"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue provides schema catalog to Athena"
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Web app queries Athena directly for reports"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Web app traffic routed through Route 53"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route 53 directs traffic to API Gateway"
+    },
+    {
+      "source": "12",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "API Gateway routes long-running tasks to Fargate"
+    },
+    {
+      "source": "12",
+      "target": "14",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "API Gateway invokes Lambda for short transactions"
+    },
+    {
+      "source": "14",
+      "target": "15",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda performs CRUD operations on RDS"
+    },
+    {
+      "source": "14",
+      "target": "16",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda reads/writes cached sessions in ElastiCache"
+    }
+  ]
+}

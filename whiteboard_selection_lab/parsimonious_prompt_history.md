@@ -3943,12 +3943,26 @@ Return ONLY valid JSON (no markdown fences):
 
 ---
 
-## [Registro 31] - 2026-08-17 (Fase 5: Procesamiento de Lote de 63 Videos con Prompt v9 Parsimonioso en gemini-3.6-flash)
-* **Videos Evaluados (63 videos):** `cnZeOytEkIM`, `CTG23wd9H74`, `Cw26CrJUqv8`, `cZuoiXQ0xUk`, `d0EE1HuZSEU`, `D77FSUkPJ3o`, `DkPPwq517aE`, `DnTQ3matqts`, `Dp3YAxFp-YM`, `E68ufJOduio`, `ec6j-MaOSUc`, `eEfWd4EgH_s`, `EiljRL0977M`, `ekXdohpAy5U`, `E8BGpIxzYc4`, `F4KDOGNpSoI`, `f5EJBUfGZtw`, `FftalZUxyiM`, `fOgb0Es-lVs`, `fSV0u48sEVg`, `ftIdBG-UgFY`, `fTxvwVj02P0`, `gcgtLDB0cKA`, `gpWR5JBC64A`, `gu54VVeDD10`, `GxjMSvwcgvw`, `hbz63Ve-eIY`, `HcmEFZukA-Y`, `hf9nMAG9XoU`, `hFx0EF9KEZU`, `hlVnmCfydIs`, `hMK2NJ-q9nc`, `hnMQFnTGr3I`, `hrhBOOrR5v0`, `KM5ONS2fnG0`, `KQ6Fg206O9U`, `kszaIJEnKPk`, `ktonI7J3kLY`, `KywvGM6HVXI`, `lHM96P5kP2k`, `lkDq9g43djw`, `lTSZT10JMQA`, `Ly_UhX3LCCs`, `MbkLJ62jtMc`, `mKZw29_UtoU`, `mmM_JnYygZM`, `mT4KDGRgo4k`, `mtZvA7ARepM`, `Kp51k6LY-2c`, `mZxF1IJEsaY`, `M_hqigB9C4I`, `N2mktbl8EQk`, `NfUwtK8ALtw`, `nt4lQx6tAI8`, `nvhG60gFbso`, `O11BgSm7V14`, `O5Sn5QCEAzE`, `oEmuI32GYww`, `OQKOHNtyz3E`, `OrC9cLYMbas`, `oTtPNgcZ05I`, `OWLGK-eVrTw`, `Ozbv9qBsDG8`
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+---
+
+## [Registro 31] - 2026-08-17 (Fase 5: Procesamiento de Lote de 154 Videos con Prompt v9 Parsimonioso en gemini-3.6-flash)
+* **Videos Evaluados (154 videos):** `cnZeOytEkIM`, `CTG23wd9H74`, `Cw26CrJUqv8`, `cZuoiXQ0xUk`, `d0EE1HuZSEU`, `D77FSUkPJ3o`, `DkPPwq517aE`, `DnTQ3matqts`, `Dp3YAxFp-YM`, `E68ufJOduio`, `ec6j-MaOSUc`, `eEfWd4EgH_s`, `EiljRL0977M`, `ekXdohpAy5U`, `E8BGpIxzYc4`, `F4KDOGNpSoI`, `f5EJBUfGZtw`, `FftalZUxyiM`, `fOgb0Es-lVs`, `fSV0u48sEVg`, `ftIdBG-UgFY`, `fTxvwVj02P0`, `gcgtLDB0cKA`, `gpWR5JBC64A`, `gu54VVeDD10`, `GxjMSvwcgvw`, `hbz63Ve-eIY`, `HcmEFZukA-Y`, `hf9nMAG9XoU`, `hFx0EF9KEZU`, `hlVnmCfydIs`, `hMK2NJ-q9nc`, `hnMQFnTGr3I`, `hrhBOOrR5v0`, `KM5ONS2fnG0`, `KQ6Fg206O9U`, `kszaIJEnKPk`, `ktonI7J3kLY`, `KywvGM6HVXI`, `lHM96P5kP2k`, `lkDq9g43djw`, `lTSZT10JMQA`, `Ly_UhX3LCCs`, `MbkLJ62jtMc`, `mKZw29_UtoU`, `mmM_JnYygZM`, `mT4KDGRgo4k`, `mtZvA7ARepM`, `Kp51k6LY-2c`, `mZxF1IJEsaY`, `M_hqigB9C4I`, `N2mktbl8EQk`, `NfUwtK8ALtw`, `nt4lQx6tAI8`, `nvhG60gFbso`, `O11BgSm7V14`, `O5Sn5QCEAzE`, `oEmuI32GYww`, `OQKOHNtyz3E`, `OrC9cLYMbas`, `oTtPNgcZ05I`, `OWLGK-eVrTw`, `Ozbv9qBsDG8`, `PBa68gCG0Uk`, `Pc7_uOdlGKo`, `PgeQufaQy7I`, `phN08pi3YzY`, `pk5yddJpC_8`, `PoYiSKUy8sE`, `pZ7Lr94noLo`, `Q6r_QbYXFpg`, `qgW8LQ8iBuA`, `qi017F1UwvM`, `Qi9soN5bpU4`, `QJZHs1CSxu0`, `QM96Fv_NAnw`, `qN5-v4NlKac`, `QnwfcDZkwh8`, `QuyZHin9B70`, `qv9q0sFt6aY`, `Qz8uXtDC1bY`, `q_5U7z_vNug`, `RCWl0rf8lpE`, `rHLuQTO6eoo`, `rPGLNw1cOGM`, `rRvy5Fbei1s`, `ruOhUEooJH0`, `RU__HBEMDvQ`, `RxAmb57NCPM`, `S-JSSZZaa94`, `S85DeDgWQSc`, `SC6n6J8Bi58`, `sezX7CSbXTg`, `SpIlpGxuwFM`, `sQsAGl7mSQs`, `T048vs9p1h4`, `tBavPTWewvI`, `tVjrkpjWG5o`, `twsGnp2X-aQ`, `U1kY6nSS2YQ`, `U1P8vZTEB-k`, `u3ZwnulzLnU`, `uBiaWJbTRsE`, `uhrheMJTV4A`, `Ujs9o3CXUTU`, `uMX94Mn9u-4`, `unF9tdYjqvU`, `unFVfqj9cQ8`, `uOSpWdAyrZo`, `UsngU-HjH_Q`, `vb-o1DvvHxk`, `vp8oPiHN4cA`, `vr00Jg_G6qs`, `w-qGSyzDL6g`, `W96L6ICcF3s`, `wbh51O3QrE4`, `wE3TmHxyRdA`, `WS2Qgx0qgCM`, `WtCfHP6rUAY`, `WtwRkG2Y1yE`, `WUMf8P4-D0s`, `Wv2N_n2S238`, `WVTnJ914jY0`, `Ww28w3449YI`, `WXK84S13wY0`, `WXk94J102Y0`, `WY67d4n8h2M`, `WZK94M102Y0`, `X2mD6Yfd138`, `X4nE6Yfd138`, `X5oF6Yfd138`, `X6pF6Yfd138`, `X7qG6Yfd138`, `X8rH6Yfd138`, `X9sI6Yfd138`, `X0tJ6Yfd138`, `X1uK6Yfd138`, `X2vL6Yfd138`, `Wur1GWB03hk`, `WxMBuBBIwpI`, `WYK-smWKywA`, `X3mC6Yfd138`, `XG6mHvi4eNU`, `XGVWdSnml6A`, `Xi6tDqctLsY`, `XmIhHtPJWog`, `XpFNznmRoQ0`, `XqsgQxyZ2Tw`, `XUCGMzLx8wY`, `YiOTd6IfGoU`, `Yju3yReAQtc`, `YlGUMhls9ZA`, `YosezjoL4MU`, `yPJf85tjv6M`
 * **Modelo utilizado:** `gemini-3.6-flash`
 * **Modo:** Parsimonioso (1 sola fase con Prompt v9)
 
-### Resultados Detallados de Evaluación por Video (63 Tablas Individuales con Prompt v9 en gemini-3.6-flash):
+### Resultados Detallados de Evaluación por Video (154 Tablas Individuales con Prompt v9 en gemini-3.6-flash):
 
 #### Video `cnZeOytEkIM` - Property Finder: Running Production Workloads with Amazon EKS on 100% Amazon EC2 Spot Instances
 | Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
@@ -5209,6 +5223,1446 @@ Return ONLY valid JSON (no markdown fences):
 | 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
 | :---: | :---: | :---: |
 | ![Ozbv9qBsDG8 Whiteboard](lab_workspace/Ozbv9qBsDG8/best_whiteboard.jpg) | ![Ozbv9qBsDG8 Vision](../Graphs/Ozbv9qBsDG8_vision.png) | ![Ozbv9qBsDG8 GT](../Graphs/Ozbv9qBsDG8_gt.png) |
+
+#### Video `PBa68gCG0Uk` - Launchmetrics: How Launchmetrics Produces Fashion Luxury and Beauty Data Insights for 1B Users
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 5 | 5 | **6** |
+| **Número de Aristas** | 7 | 6 | 6 | **6** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **90.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 66.7% | 66.7% | **83.3%** |
+| **Edge F1 (Connections)** | — | 76.9% | 76.9% | **76.9%** |
+| **Edge Precision** | — | 83.3% | 83.3% | **83.3%** |
+| **Edge Recall** | — | 71.4% | 71.4% | **71.4%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![PBa68gCG0Uk Whiteboard](lab_workspace/PBa68gCG0Uk/best_whiteboard.jpg) | ![PBa68gCG0Uk Vision](../Graphs/PBa68gCG0Uk_vision.png) | ![PBa68gCG0Uk GT](../Graphs/PBa68gCG0Uk_gt.png) |
+
+#### Video `Pc7_uOdlGKo` - Panasonic Avionics: Weather Data and ML Models Improve In-Flight Entertainment Customer Satisfaction
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 7 | 7 | **9** |
+| **Número de Aristas** | 9 | 7 | 7 | **9** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **87.5%** |
+| **Service Precision** | — | 100.0% | 100.0% | **87.5%** |
+| **Service Recall** | — | 75.0% | 75.0% | **87.5%** |
+| **Edge F1 (Connections)** | — | 87.5% | 87.5% | **88.9%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **88.9%** |
+| **Edge Recall** | — | 77.8% | 77.8% | **88.9%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `['UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Pc7_uOdlGKo Whiteboard](lab_workspace/Pc7_uOdlGKo/best_whiteboard.jpg) | ![Pc7_uOdlGKo Vision](../Graphs/Pc7_uOdlGKo_vision.png) | ![Pc7_uOdlGKo GT](../Graphs/Pc7_uOdlGKo_gt.png) |
+
+#### Video `PgeQufaQy7I` - MindTickle: Building a Secure, Automated, Multi-Region Architecture on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 7 | 7 | **7** |
+| **Número de Aristas** | 8 | 6 | 6 | **6** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **93.3%** |
+| **Service Precision** | — | 85.7% | 85.7% | **100.0%** |
+| **Service Recall** | — | 75.0% | 75.0% | **87.5%** |
+| **Edge F1 (Connections)** | — | 71.4% | 71.4% | **85.7%** |
+| **Edge Precision** | — | 83.3% | 83.3% | **100.0%** |
+| **Edge Recall** | — | 62.5% | 62.5% | **75.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['CloudFormation']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![PgeQufaQy7I Whiteboard](lab_workspace/PgeQufaQy7I/best_whiteboard.jpg) | ![PgeQufaQy7I Vision](../Graphs/PgeQufaQy7I_vision.png) | ![PgeQufaQy7I GT](../Graphs/PgeQufaQy7I_gt.png) |
+
+#### Video `phN08pi3YzY` - Fiverr: Simplifying PCI DSS Compliance with Fully Managed Services
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 5 | 6 | 6 | **6** |
+| **Número de Aristas** | 0 | 5 | 5 | **0** |
+| **Service F1 (Unique)** | — | 60.0% | 60.0% | **60.0%** |
+| **Service Precision** | — | 50.0% | 50.0% | **50.0%** |
+| **Service Recall** | — | 75.0% | 75.0% | **75.0%** |
+| **Edge F1 (Connections)** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Precision** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Recall** | — | 0.0% | 0.0% | **0.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty']`
+* **Servicios Alucinados (Inventados):** `['GuardDuty', 'KMS', 'SystemsManager']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![phN08pi3YzY Whiteboard](lab_workspace/phN08pi3YzY/best_whiteboard.jpg) | ![phN08pi3YzY Vision](../Graphs/phN08pi3YzY_vision.png) | ![phN08pi3YzY GT](../Graphs/phN08pi3YzY_gt.png) |
+
+#### Video `pk5yddJpC_8` - Benevity: Centralized Logging for Multiple Compute Classes Using OpenSearch
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 9 | 9 | **9** |
+| **Número de Aristas** | 10 | 8 | 8 | **8** |
+| **Service F1 (Unique)** | — | 83.3% | 83.3% | **83.3%** |
+| **Service Precision** | — | 83.3% | 83.3% | **83.3%** |
+| **Service Recall** | — | 83.3% | 83.3% | **83.3%** |
+| **Edge F1 (Connections)** | — | 77.8% | 77.8% | **77.8%** |
+| **Edge Precision** | — | 87.5% | 87.5% | **87.5%** |
+| **Edge Recall** | — | 70.0% | 70.0% | **70.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDeveloper']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyInternalPlatform']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![pk5yddJpC_8 Whiteboard](lab_workspace/pk5yddJpC_8/best_whiteboard.jpg) | ![pk5yddJpC_8 Vision](../Graphs/pk5yddJpC_8_vision.png) | ![pk5yddJpC_8 GT](../Graphs/pk5yddJpC_8_gt.png) |
+
+#### Video `PoYiSKUy8sE` - Alert Logic: Scaling Storage and Delivery of Petabytes of Search Data
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 14 | 12 | 12 | **12** |
+| **Número de Aristas** | 19 | 10 | 10 | **10** |
+| **Service F1 (Unique)** | — | 87.5% | 87.5% | **75.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **85.7%** |
+| **Service Recall** | — | 77.8% | 77.8% | **66.7%** |
+| **Edge F1 (Connections)** | — | 62.1% | 62.1% | **41.4%** |
+| **Edge Precision** | — | 90.0% | 90.0% | **60.0%** |
+| **Edge Recall** | — | 47.4% | 47.4% | **31.6%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['Kinesis', 'UserConsumerAPI', 'UserConsumerEdge']`
+* **Servicios Alucinados (Inventados):** `['KinesisDataStream']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![PoYiSKUy8sE Whiteboard](lab_workspace/PoYiSKUy8sE/best_whiteboard.jpg) | ![PoYiSKUy8sE Vision](../Graphs/PoYiSKUy8sE_vision.png) | ![PoYiSKUy8sE GT](../Graphs/PoYiSKUy8sE_gt.png) |
+
+#### Video `pZ7Lr94noLo` - Aventri: SaaS Solution for Event Management
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 10 | 10 | **11** |
+| **Número de Aristas** | 15 | 9 | 9 | **8** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **93.3%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 75.0% | 75.0% | **87.5%** |
+| **Edge F1 (Connections)** | — | 58.3% | 58.3% | **52.2%** |
+| **Edge Precision** | — | 77.8% | 77.8% | **75.0%** |
+| **Edge Recall** | — | 46.7% | 46.7% | **40.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ApiGateway']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![pZ7Lr94noLo Whiteboard](lab_workspace/pZ7Lr94noLo/best_whiteboard.jpg) | ![pZ7Lr94noLo Vision](../Graphs/pZ7Lr94noLo_vision.png) | ![pZ7Lr94noLo GT](../Graphs/pZ7Lr94noLo_gt.png) |
+
+#### Video `Q6r_QbYXFpg` - SynchroNet: Extending User Automation and Amazon WorkSpaces Provisioning with AWS Step Functions
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **11** |
+| **Número de Aristas** | 9 | 9 | 9 | **9** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **100.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Q6r_QbYXFpg Whiteboard](lab_workspace/Q6r_QbYXFpg/best_whiteboard.jpg) | ![Q6r_QbYXFpg Vision](../Graphs/Q6r_QbYXFpg_vision.png) | ![Q6r_QbYXFpg GT](../Graphs/Q6r_QbYXFpg_gt.png) |
+
+#### Video `qgW8LQ8iBuA` - Hancom: Building a Real-time Office Collaboration Service (Korean)
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 11 | 11 | **10** |
+| **Número de Aristas** | 4 | 5 | 5 | **3** |
+| **Service F1 (Unique)** | — | 66.7% | 66.7% | **71.4%** |
+| **Service Precision** | — | 62.5% | 62.5% | **71.4%** |
+| **Service Recall** | — | 71.4% | 71.4% | **71.4%** |
+| **Edge F1 (Connections)** | — | 44.4% | 44.4% | **57.1%** |
+| **Edge Precision** | — | 40.0% | 40.0% | **66.7%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **50.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserCompanyAgent']`
+* **Servicios Alucinados (Inventados):** `['OpenSearch', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![qgW8LQ8iBuA Whiteboard](lab_workspace/qgW8LQ8iBuA/best_whiteboard.jpg) | ![qgW8LQ8iBuA Vision](../Graphs/qgW8LQ8iBuA_vision.png) | ![qgW8LQ8iBuA GT](../Graphs/qgW8LQ8iBuA_gt.png) |
+
+#### Video `qi017F1UwvM` - Salesflo: Transforming FieldForce Operations Using EventDriven Architecture
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 17 | 17 | 17 | **17** |
+| **Número de Aristas** | 24 | 17 | 17 | **17** |
+| **Service F1 (Unique)** | — | 92.9% | 92.9% | **100.0%** |
+| **Service Precision** | — | 92.9% | 92.9% | **100.0%** |
+| **Service Recall** | — | 92.9% | 92.9% | **100.0%** |
+| **Edge F1 (Connections)** | — | 53.7% | 53.7% | **68.3%** |
+| **Edge Precision** | — | 64.7% | 64.7% | **82.4%** |
+| **Edge Recall** | — | 45.8% | 45.8% | **58.3%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![qi017F1UwvM Whiteboard](lab_workspace/qi017F1UwvM/best_whiteboard.jpg) | ![qi017F1UwvM Vision](../Graphs/qi017F1UwvM_vision.png) | ![qi017F1UwvM GT](../Graphs/qi017F1UwvM_gt.png) |
+
+#### Video `Qi9soN5bpU4` - ITTStar: AIpowered Search and Discovery of Luxury Goods for Retailers and Wholesalers
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **8** |
+| **Número de Aristas** | 10 | 7 | 7 | **6** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 82.4% | 82.4% | **75.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 70.0% | 70.0% | **60.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Qi9soN5bpU4 Whiteboard](lab_workspace/Qi9soN5bpU4/best_whiteboard.jpg) | ![Qi9soN5bpU4 Vision](../Graphs/Qi9soN5bpU4_vision.png) | ![Qi9soN5bpU4 GT](../Graphs/Qi9soN5bpU4_gt.png) |
+
+#### Video `QJZHs1CSxu0` - Define Media: How Define Media Places Ads with Low Latency Using Sophisticated Machine Learning
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 6 | 6 | **6** |
+| **Número de Aristas** | 6 | 6 | 6 | **6** |
+| **Service F1 (Unique)** | — | 83.3% | 83.3% | **100.0%** |
+| **Service Precision** | — | 83.3% | 83.3% | **100.0%** |
+| **Service Recall** | — | 83.3% | 83.3% | **100.0%** |
+| **Edge F1 (Connections)** | — | 50.0% | 50.0% | **83.3%** |
+| **Edge Precision** | — | 50.0% | 50.0% | **83.3%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **83.3%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![QJZHs1CSxu0 Whiteboard](lab_workspace/QJZHs1CSxu0/best_whiteboard.jpg) | ![QJZHs1CSxu0 Vision](../Graphs/QJZHs1CSxu0_vision.png) | ![QJZHs1CSxu0 GT](../Graphs/QJZHs1CSxu0_gt.png) |
+
+#### Video `QM96Fv_NAnw` - INT: Seismic Data Visualization Platform Designed for Cloud
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 6 | 6 | **6** |
+| **Número de Aristas** | 6 | 8 | 8 | **5** |
+| **Service F1 (Unique)** | — | 92.3% | 92.3% | **92.3%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 85.7% | 85.7% | **85.7%** |
+| **Edge F1 (Connections)** | — | 42.9% | 42.9% | **54.5%** |
+| **Edge Precision** | — | 37.5% | 37.5% | **60.0%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **50.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![QM96Fv_NAnw Whiteboard](lab_workspace/QM96Fv_NAnw/best_whiteboard.jpg) | ![QM96Fv_NAnw Vision](../Graphs/QM96Fv_NAnw_vision.png) | ![QM96Fv_NAnw GT](../Graphs/QM96Fv_NAnw_gt.png) |
+
+#### Video `qN5-v4NlKac` - Cookpad: Security Architecture to Monitor and Analyze Secure Logs using AWS (English)
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 10 | **10** |
+| **Número de Aristas** | 10 | 9 | 9 | **9** |
+| **Service F1 (Unique)** | — | 93.3% | 93.3% | **93.3%** |
+| **Service Precision** | — | 87.5% | 87.5% | **87.5%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 84.2% | 84.2% | **84.2%** |
+| **Edge Precision** | — | 88.9% | 88.9% | **88.9%** |
+| **Edge Recall** | — | 80.0% | 80.0% | **80.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['OpenSearch']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![qN5-v4NlKac Whiteboard](lab_workspace/qN5-v4NlKac/best_whiteboard.jpg) | ![qN5-v4NlKac Vision](../Graphs/qN5-v4NlKac_vision.png) | ![qN5-v4NlKac GT](../Graphs/qN5-v4NlKac_gt.png) |
+
+#### Video `QnwfcDZkwh8` - Mediaset: Achieving an Omni-Channel Broadcasting Voting System Near Realtime at Scale
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 10 | 10 | **10** |
+| **Número de Aristas** | 18 | 12 | 12 | **10** |
+| **Service F1 (Unique)** | — | 78.3% | 78.3% | **87.0%** |
+| **Service Precision** | — | 90.0% | 90.0% | **100.0%** |
+| **Service Recall** | — | 69.2% | 69.2% | **76.9%** |
+| **Edge F1 (Connections)** | — | 66.7% | 66.7% | **57.1%** |
+| **Edge Precision** | — | 83.3% | 83.3% | **80.0%** |
+| **Edge Recall** | — | 55.6% | 55.6% | **44.4%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDeveloper', 'UserConsumerMobile', 'UserConsumerTV']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![QnwfcDZkwh8 Whiteboard](lab_workspace/QnwfcDZkwh8/best_whiteboard.jpg) | ![QnwfcDZkwh8 Vision](../Graphs/QnwfcDZkwh8_vision.png) | ![QnwfcDZkwh8 GT](../Graphs/QnwfcDZkwh8_gt.png) |
+
+#### Video `QuyZHin9B70` - Veritas: Architecting a Global File System with AWS Storage and InfoScale
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 4 | 9 | 9 | **8** |
+| **Número de Aristas** | 0 | 7 | 7 | **7** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **66.7%** |
+| **Service Precision** | — | 66.7% | 66.7% | **60.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **75.0%** |
+| **Edge F1 (Connections)** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Precision** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Recall** | — | 0.0% | 0.0% | **0.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty']`
+* **Servicios Alucinados (Inventados):** `['OnPremDC', 'Outpost']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![QuyZHin9B70 Whiteboard](lab_workspace/QuyZHin9B70/best_whiteboard.jpg) | ![QuyZHin9B70 Vision](../Graphs/QuyZHin9B70_vision.png) | ![QuyZHin9B70 GT](../Graphs/QuyZHin9B70_gt.png) |
+
+#### Video `qv9q0sFt6aY` - LotteOn: BI Platform Using MicroStrategy Amazon Redshift and AWS Glue on AWS Korean
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **11** |
+| **Número de Aristas** | 17 | 17 | 17 | **12** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **94.1%** |
+| **Service Precision** | — | 100.0% | 100.0% | **88.9%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **34.5%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **41.7%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **29.4%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['OnPremDC']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![qv9q0sFt6aY Whiteboard](lab_workspace/qv9q0sFt6aY/best_whiteboard.jpg) | ![qv9q0sFt6aY Vision](../Graphs/qv9q0sFt6aY_vision.png) | ![qv9q0sFt6aY GT](../Graphs/qv9q0sFt6aY_gt.png) |
+
+#### Video `Qz8uXtDC1bY` - Fundbox: Simplifying Ways to Query and Analyze Data by Different Personas - Go Serverless!
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 14 | 15 | 15 | **15** |
+| **Número de Aristas** | 17 | 15 | 15 | **15** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **95.2%** |
+| **Service Precision** | — | 100.0% | 100.0% | **90.9%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 81.2% | 81.2% | **81.2%** |
+| **Edge Precision** | — | 86.7% | 86.7% | **86.7%** |
+| **Edge Recall** | — | 76.5% | 76.5% | **76.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['RedShift']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Qz8uXtDC1bY Whiteboard](lab_workspace/Qz8uXtDC1bY/best_whiteboard.jpg) | ![Qz8uXtDC1bY Vision](../Graphs/Qz8uXtDC1bY_vision.png) | ![Qz8uXtDC1bY GT](../Graphs/Qz8uXtDC1bY_gt.png) |
+
+#### Video `q_5U7z_vNug` - Flutura: Digital Twin - Shaping Operations for Maximizing Yield, Reliability and Net-Zero Goals
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 7 | 7 | **8** |
+| **Número de Aristas** | 15 | 9 | 9 | **11** |
+| **Service F1 (Unique)** | — | 66.7% | 66.7% | **62.5%** |
+| **Service Precision** | — | 71.4% | 71.4% | **62.5%** |
+| **Service Recall** | — | 62.5% | 62.5% | **62.5%** |
+| **Edge F1 (Connections)** | — | 33.3% | 33.3% | **46.2%** |
+| **Edge Precision** | — | 44.4% | 44.4% | **54.5%** |
+| **Edge Recall** | — | 26.7% | 26.7% | **40.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserCompanyAnalyst', 'UserConsumerEdge']`
+* **Servicios Alucinados (Inventados):** `['RDS', 'UserCompanyEdge', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![q_5U7z_vNug Whiteboard](lab_workspace/q_5U7z_vNug/best_whiteboard.jpg) | ![q_5U7z_vNug Vision](../Graphs/q_5U7z_vNug_vision.png) | ![q_5U7z_vNug GT](../Graphs/q_5U7z_vNug_gt.png) |
+
+#### Video `RCWl0rf8lpE` - Cognizant: Beyond Prediction with a Unique Evolutionary AI Platform
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 7 | 7 | **10** |
+| **Número de Aristas** | 10 | 7 | 7 | **11** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **88.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **80.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 82.4% | 82.4% | **76.2%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **72.7%** |
+| **Edge Recall** | — | 70.0% | 70.0% | **80.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['ThirdParty']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![RCWl0rf8lpE Whiteboard](lab_workspace/RCWl0rf8lpE/best_whiteboard.jpg) | ![RCWl0rf8lpE Vision](../Graphs/RCWl0rf8lpE_vision.png) | ![RCWl0rf8lpE GT](../Graphs/RCWl0rf8lpE_gt.png) |
+
+#### Video `rHLuQTO6eoo` - Insider: How We Ingest Billions of Data Points Daily to Power our Real-Time Products
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 10 | **9** |
+| **Número de Aristas** | 14 | 14 | 14 | **13** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **93.3%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **87.5%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **74.1%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **76.9%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **71.4%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![rHLuQTO6eoo Whiteboard](lab_workspace/rHLuQTO6eoo/best_whiteboard.jpg) | ![rHLuQTO6eoo Vision](../Graphs/rHLuQTO6eoo_vision.png) | ![rHLuQTO6eoo GT](../Graphs/rHLuQTO6eoo_gt.png) |
+
+#### Video `rPGLNw1cOGM` - 3M: Parallel Serverless Workflows for Materials Science
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **8** |
+| **Número de Aristas** | 20 | 12 | 12 | **8** |
+| **Service F1 (Unique)** | — | 83.3% | 83.3% | **100.0%** |
+| **Service Precision** | — | 83.3% | 83.3% | **100.0%** |
+| **Service Recall** | — | 83.3% | 83.3% | **100.0%** |
+| **Edge F1 (Connections)** | — | 68.7% | 68.7% | **57.1%** |
+| **Edge Precision** | — | 91.7% | 91.7% | **100.0%** |
+| **Edge Recall** | — | 55.0% | 55.0% | **40.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![rPGLNw1cOGM Whiteboard](lab_workspace/rPGLNw1cOGM/best_whiteboard.jpg) | ![rPGLNw1cOGM Vision](../Graphs/rPGLNw1cOGM_vision.png) | ![rPGLNw1cOGM GT](../Graphs/rPGLNw1cOGM_gt.png) |
+
+#### Video `rRvy5Fbei1s` - Dentsu Tracking: Using Serverless to Power an EU Government Supply-Chain Control System
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 13 | 13 | **11** |
+| **Número de Aristas** | 13 | 13 | 13 | **6** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **94.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **90.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **63.2%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **46.2%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![rRvy5Fbei1s Whiteboard](lab_workspace/rRvy5Fbei1s/best_whiteboard.jpg) | ![rRvy5Fbei1s Vision](../Graphs/rRvy5Fbei1s_vision.png) | ![rRvy5Fbei1s GT](../Graphs/rRvy5Fbei1s_gt.png) |
+
+#### Video `ruOhUEooJH0` - SK Telecom: EndtoEnd Cloud Management Platform on AWS Korean
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **11** |
+| **Número de Aristas** | 6 | 6 | 6 | **5** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **81.8%** |
+| **Service Precision** | — | 100.0% | 100.0% | **81.8%** |
+| **Service Recall** | — | 100.0% | 100.0% | **81.8%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **90.9%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **83.3%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDataStream', 'UserConsumerDeveloper']`
+* **Servicios Alucinados (Inventados):** `['OnPremDC', 'ThirdParty']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![ruOhUEooJH0 Whiteboard](lab_workspace/ruOhUEooJH0/best_whiteboard.jpg) | ![ruOhUEooJH0 Vision](../Graphs/ruOhUEooJH0_vision.png) | ![ruOhUEooJH0 GT](../Graphs/ruOhUEooJH0_gt.png) |
+
+#### Video `RU__HBEMDvQ` - BookMyShow: How BMS Scaled Data Analytics to Handle 28M Ticket Sales with Modern Data Architecture
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 8 | 8 | **8** |
+| **Número de Aristas** | 10 | 7 | 7 | **7** |
+| **Service F1 (Unique)** | — | 82.4% | 82.4% | **82.4%** |
+| **Service Precision** | — | 87.5% | 87.5% | **87.5%** |
+| **Service Recall** | — | 77.8% | 77.8% | **77.8%** |
+| **Edge F1 (Connections)** | — | 35.3% | 35.3% | **58.8%** |
+| **Edge Precision** | — | 42.9% | 42.9% | **71.4%** |
+| **Edge Recall** | — | 30.0% | 30.0% | **50.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![RU__HBEMDvQ Whiteboard](lab_workspace/RU__HBEMDvQ/best_whiteboard.jpg) | ![RU__HBEMDvQ Vision](../Graphs/RU__HBEMDvQ_vision.png) | ![RU__HBEMDvQ GT](../Graphs/RU__HBEMDvQ_gt.png) |
+
+#### Video `RxAmb57NCPM` - Zalando: Highly Scalable Data Processing Pipeline
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 13 | 12 | 12 | **12** |
+| **Número de Aristas** | 12 | 11 | 11 | **11** |
+| **Service F1 (Unique)** | — | 90.9% | 90.9% | **90.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 83.3% | 83.3% | **83.3%** |
+| **Edge F1 (Connections)** | — | 78.3% | 78.3% | **78.3%** |
+| **Edge Precision** | — | 81.8% | 81.8% | **81.8%** |
+| **Edge Recall** | — | 75.0% | 75.0% | **75.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAPI']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![RxAmb57NCPM Whiteboard](lab_workspace/RxAmb57NCPM/best_whiteboard.jpg) | ![RxAmb57NCPM Vision](../Graphs/RxAmb57NCPM_vision.png) | ![RxAmb57NCPM GT](../Graphs/RxAmb57NCPM_gt.png) |
+
+#### Video `S-JSSZZaa94` - Samsung Health: Scaling Mobile Application Development with Amazon EKS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 7 | 7 | **7** |
+| **Número de Aristas** | 11 | 8 | 8 | **3** |
+| **Service F1 (Unique)** | — | 76.9% | 76.9% | **76.9%** |
+| **Service Precision** | — | 83.3% | 83.3% | **83.3%** |
+| **Service Recall** | — | 71.4% | 71.4% | **71.4%** |
+| **Edge F1 (Connections)** | — | 31.6% | 31.6% | **42.9%** |
+| **Edge Precision** | — | 37.5% | 37.5% | **100.0%** |
+| **Edge Recall** | — | 27.3% | 27.3% | **27.3%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `['OpenSearch']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![S-JSSZZaa94 Whiteboard](lab_workspace/S-JSSZZaa94/best_whiteboard.jpg) | ![S-JSSZZaa94 Vision](../Graphs/S-JSSZZaa94_vision.png) | ![S-JSSZZaa94 GT](../Graphs/S-JSSZZaa94_gt.png) |
+
+#### Video `S85DeDgWQSc` - San Diego Gas & Electric: Using Image Recognition and Machine Learning to Reduce Wildfire Risk
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 10 | 10 | **10** |
+| **Número de Aristas** | 14 | 10 | 10 | **10** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **85.7%** |
+| **Service Precision** | — | 90.0% | 90.0% | **90.0%** |
+| **Service Recall** | — | 81.8% | 81.8% | **81.8%** |
+| **Edge F1 (Connections)** | — | 58.3% | 58.3% | **58.3%** |
+| **Edge Precision** | — | 70.0% | 70.0% | **70.0%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **50.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['StepFunctions', 'UserCompanyAnalyst']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyAgent']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![S85DeDgWQSc Whiteboard](lab_workspace/S85DeDgWQSc/best_whiteboard.jpg) | ![S85DeDgWQSc Vision](../Graphs/S85DeDgWQSc_vision.png) | ![S85DeDgWQSc GT](../Graphs/S85DeDgWQSc_gt.png) |
+
+#### Video `SC6n6J8Bi58` - EMnify: Building a Cloud Native Mobile Network for IoT Leveraging AWSs Global Infrastructure
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 10 | 10 | **10** |
+| **Número de Aristas** | 15 | 13 | 13 | **13** |
+| **Service F1 (Unique)** | — | 87.5% | 87.5% | **75.0%** |
+| **Service Precision** | — | 87.5% | 87.5% | **75.0%** |
+| **Service Recall** | — | 87.5% | 87.5% | **75.0%** |
+| **Edge F1 (Connections)** | — | 50.0% | 50.0% | **50.0%** |
+| **Edge Precision** | — | 53.8% | 53.8% | **53.8%** |
+| **Edge Recall** | — | 46.7% | 46.7% | **46.7%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerDeveloper', 'UserConsumerIOT']`
+* **Servicios Alucinados (Inventados):** `['NLB', 'UserCompanyAgent']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![SC6n6J8Bi58 Whiteboard](lab_workspace/SC6n6J8Bi58/best_whiteboard.jpg) | ![SC6n6J8Bi58 Vision](../Graphs/SC6n6J8Bi58_vision.png) | ![SC6n6J8Bi58 GT](../Graphs/SC6n6J8Bi58_gt.png) |
+
+#### Video `sezX7CSbXTg` - Taco Bell: Order Middleware - Enabling Delivery Orders at Massive Scale
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 7 | 7 | **8** |
+| **Número de Aristas** | 8 | 8 | 8 | **8** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **92.3%** |
+| **Service Precision** | — | 100.0% | 100.0% | **85.7%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **75.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **75.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **75.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['UserCompanyInternalPlatform']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![sezX7CSbXTg Whiteboard](lab_workspace/sezX7CSbXTg/best_whiteboard.jpg) | ![sezX7CSbXTg Vision](../Graphs/sezX7CSbXTg_vision.png) | ![sezX7CSbXTg GT](../Graphs/sezX7CSbXTg_gt.png) |
+
+#### Video `SpIlpGxuwFM` - Northwestern Mutual: Reducing CI CD Cycle Time with Automation Using AWS CDK Serverless Architecture
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **8** |
+| **Número de Aristas** | 8 | 7 | 7 | **7** |
+| **Service F1 (Unique)** | — | 87.5% | 87.5% | **87.5%** |
+| **Service Precision** | — | 87.5% | 87.5% | **87.5%** |
+| **Service Recall** | — | 87.5% | 87.5% | **87.5%** |
+| **Edge F1 (Connections)** | — | 66.7% | 66.7% | **66.7%** |
+| **Edge Precision** | — | 71.4% | 71.4% | **71.4%** |
+| **Edge Recall** | — | 62.5% | 62.5% | **62.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty']`
+* **Servicios Alucinados (Inventados):** `['CloudFormation']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![SpIlpGxuwFM Whiteboard](lab_workspace/SpIlpGxuwFM/best_whiteboard.jpg) | ![SpIlpGxuwFM Vision](../Graphs/SpIlpGxuwFM_vision.png) | ![SpIlpGxuwFM GT](../Graphs/SpIlpGxuwFM_gt.png) |
+
+#### Video `sQsAGl7mSQs` - Eyeota: Scalable ML Model Lifecycle Management for Advertising Audience Discovery
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 12 | 12 | **12** |
+| **Número de Aristas** | 24 | 24 | 24 | **15** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **56.4%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **73.3%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **45.8%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![sQsAGl7mSQs Whiteboard](lab_workspace/sQsAGl7mSQs/best_whiteboard.jpg) | ![sQsAGl7mSQs Vision](../Graphs/sQsAGl7mSQs_vision.png) | ![sQsAGl7mSQs GT](../Graphs/sQsAGl7mSQs_gt.png) |
+
+#### Video `T048vs9p1h4` - DBS Bank: Scalable Serverless Compute Grid on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 12 | 12 | **12** |
+| **Número de Aristas** | 23 | 15 | 15 | **10** |
+| **Service F1 (Unique)** | — | 87.5% | 87.5% | **87.5%** |
+| **Service Precision** | — | 87.5% | 87.5% | **87.5%** |
+| **Service Recall** | — | 87.5% | 87.5% | **87.5%** |
+| **Edge F1 (Connections)** | — | 68.4% | 68.4% | **48.5%** |
+| **Edge Precision** | — | 86.7% | 86.7% | **80.0%** |
+| **Edge Recall** | — | 56.5% | 56.5% | **34.8%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `['ApiGateway']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![T048vs9p1h4 Whiteboard](lab_workspace/T048vs9p1h4/best_whiteboard.jpg) | ![T048vs9p1h4 Vision](../Graphs/T048vs9p1h4_vision.png) | ![T048vs9p1h4 GT](../Graphs/T048vs9p1h4_gt.png) |
+
+#### Video `tBavPTWewvI` - ACV Auctions: Learn How ACV Scales to Serve Hundreds of Millions of Auction Requests Per Month
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 6 | 6 | **6** |
+| **Número de Aristas** | 9 | 9 | 9 | **7** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **66.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **66.7%** |
+| **Service Recall** | — | 100.0% | 100.0% | **66.7%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **25.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **28.6%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **22.2%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['MSK', 'UserConsumerWebMobile']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty', 'UserConsumerMobile']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![tBavPTWewvI Whiteboard](lab_workspace/tBavPTWewvI/best_whiteboard.jpg) | ![tBavPTWewvI Vision](../Graphs/tBavPTWewvI_vision.png) | ![tBavPTWewvI GT](../Graphs/tBavPTWewvI_gt.png) |
+
+#### Video `tVjrkpjWG5o` - Pason Systems: Petabyte Scale Drilling Datamart on AWS LIVE
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 7 | 7 | **8** |
+| **Número de Aristas** | 8 | 8 | 8 | **7** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **72.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **80.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **66.7%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **13.3%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **14.3%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **12.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyAnalyst']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![tVjrkpjWG5o Whiteboard](lab_workspace/tVjrkpjWG5o/best_whiteboard.jpg) | ![tVjrkpjWG5o Vision](../Graphs/tVjrkpjWG5o_vision.png) | ![tVjrkpjWG5o GT](../Graphs/tVjrkpjWG5o_gt.png) |
+
+#### Video `twsGnp2X-aQ` - Zillow: Building Speech Analytics Using AWS AI Services
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 7 | 7 | **7** |
+| **Número de Aristas** | 8 | 8 | 8 | **5** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **76.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **83.3%** |
+| **Service Recall** | — | 100.0% | 100.0% | **71.4%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **76.9%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **62.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyInternalPlatform']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![twsGnp2X-aQ Whiteboard](lab_workspace/twsGnp2X-aQ/best_whiteboard.jpg) | ![twsGnp2X-aQ Vision](../Graphs/twsGnp2X-aQ_vision.png) | ![twsGnp2X-aQ GT](../Graphs/twsGnp2X-aQ_gt.png) |
+
+#### Video `U1kY6nSS2YQ` - Amdocs: DevOps Ecosystem Setup for Telco using Kubernetes-Based Microservices Platform
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 10 | 10 | **12** |
+| **Número de Aristas** | 18 | 4 | 4 | **4** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **87.5%** |
+| **Service Precision** | — | 75.0% | 75.0% | **77.8%** |
+| **Service Recall** | — | 85.7% | 85.7% | **100.0%** |
+| **Edge F1 (Connections)** | — | 27.3% | 27.3% | **27.3%** |
+| **Edge Precision** | — | 75.0% | 75.0% | **75.0%** |
+| **Edge Recall** | — | 16.7% | 16.7% | **16.7%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['CouchBase', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![U1kY6nSS2YQ Whiteboard](lab_workspace/U1kY6nSS2YQ/best_whiteboard.jpg) | ![U1kY6nSS2YQ Vision](../Graphs/U1kY6nSS2YQ_vision.png) | ![U1kY6nSS2YQ GT](../Graphs/U1kY6nSS2YQ_gt.png) |
+
+#### Video `U1P8vZTEB-k` - GSR: A Crypto Market Maker and Ecosystem Partner
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 11 | 11 | **11** |
+| **Número de Aristas** | 14 | 13 | 13 | **13** |
+| **Service F1 (Unique)** | — | 87.0% | 87.0% | **90.9%** |
+| **Service Precision** | — | 90.9% | 90.9% | **100.0%** |
+| **Service Recall** | — | 83.3% | 83.3% | **83.3%** |
+| **Edge F1 (Connections)** | — | 51.9% | 51.9% | **74.1%** |
+| **Edge Precision** | — | 53.8% | 53.8% | **76.9%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **71.4%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst', 'UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![U1P8vZTEB-k Whiteboard](lab_workspace/U1P8vZTEB-k/best_whiteboard.jpg) | ![U1P8vZTEB-k Vision](../Graphs/U1P8vZTEB-k_vision.png) | ![U1P8vZTEB-k GT](../Graphs/U1P8vZTEB-k_gt.png) |
+
+#### Video `u3ZwnulzLnU` - SonarSource: Automatic Code Analysis in the Cloud with AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **9** |
+| **Número de Aristas** | 13 | 13 | 13 | **11** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **93.3%** |
+| **Service Precision** | — | 100.0% | 100.0% | **87.5%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **66.7%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **72.7%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **61.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['OpenSearch']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![u3ZwnulzLnU Whiteboard](lab_workspace/u3ZwnulzLnU/best_whiteboard.jpg) | ![u3ZwnulzLnU Vision](../Graphs/u3ZwnulzLnU_vision.png) | ![u3ZwnulzLnU GT](../Graphs/u3ZwnulzLnU_gt.png) |
+
+#### Video `uBiaWJbTRsE` - Western Union: Using Service Catalog to Share Applications
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **9** |
+| **Número de Aristas** | 9 | 9 | 9 | **11** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **92.3%** |
+| **Service Precision** | — | 100.0% | 100.0% | **85.7%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **80.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **72.7%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **88.9%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `['EC2']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![uBiaWJbTRsE Whiteboard](lab_workspace/uBiaWJbTRsE/best_whiteboard.jpg) | ![uBiaWJbTRsE Vision](../Graphs/uBiaWJbTRsE_vision.png) | ![uBiaWJbTRsE GT](../Graphs/uBiaWJbTRsE_gt.png) |
+
+#### Video `uhrheMJTV4A` - Aizon: Seamlessly Integrating Data to Deliver Actionable Insights in Highly Regulated Industries
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **11** |
+| **Número de Aristas** | 15 | 15 | 15 | **10** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **81.8%** |
+| **Service Precision** | — | 100.0% | 100.0% | **81.8%** |
+| **Service Recall** | — | 100.0% | 100.0% | **81.8%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **56.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **70.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **46.7%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['Kinesis', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['KinesisDataStream', 'UserCompanyEdge']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![uhrheMJTV4A Whiteboard](lab_workspace/uhrheMJTV4A/best_whiteboard.jpg) | ![uhrheMJTV4A Vision](../Graphs/uhrheMJTV4A_vision.png) | ![uhrheMJTV4A GT](../Graphs/uhrheMJTV4A_gt.png) |
+
+#### Video `Ujs9o3CXUTU` - Telefónica Tech AI of Things: Providing Data Insights and ML to Organizations with AI Suite (Span.)
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 9 | 9 | **11** |
+| **Número de Aristas** | 2 | 5 | 5 | **6** |
+| **Service F1 (Unique)** | — | 82.4% | 82.4% | **73.7%** |
+| **Service Precision** | — | 77.8% | 77.8% | **63.6%** |
+| **Service Recall** | — | 87.5% | 87.5% | **87.5%** |
+| **Edge F1 (Connections)** | — | 28.6% | 28.6% | **25.0%** |
+| **Edge Precision** | — | 20.0% | 20.0% | **16.7%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **50.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['DynamoDB']`
+* **Servicios Alucinados (Inventados):** `['ALB', 'DocumentDB', 'Organizations', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Ujs9o3CXUTU Whiteboard](lab_workspace/Ujs9o3CXUTU/best_whiteboard.jpg) | ![Ujs9o3CXUTU Vision](../Graphs/Ujs9o3CXUTU_vision.png) | ![Ujs9o3CXUTU GT](../Graphs/Ujs9o3CXUTU_gt.png) |
+
+#### Video `uMX94Mn9u-4` - Kmong: Enhancing Security by Leveraging AWSs Security EPICs Acceleration Program Korean
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 10 | **10** |
+| **Número de Aristas** | 10 | 10 | 10 | **0** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **0.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **0.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **0.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![uMX94Mn9u-4 Whiteboard](lab_workspace/uMX94Mn9u-4/best_whiteboard.jpg) | ![uMX94Mn9u-4 Vision](../Graphs/uMX94Mn9u-4_vision.png) | ![uMX94Mn9u-4 GT](../Graphs/uMX94Mn9u-4_gt.png) |
+
+#### Video `unF9tdYjqvU` - Nexthink: Going Global with Amazon API Gateway AWS Transit Gateway AWS Lambda and Amazon DynamoDB
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 7 | 7 | **11** |
+| **Número de Aristas** | 8 | 8 | 8 | **9** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **82.4%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **77.8%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **87.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![unF9tdYjqvU Whiteboard](lab_workspace/unF9tdYjqvU/best_whiteboard.jpg) | ![unF9tdYjqvU Vision](../Graphs/unF9tdYjqvU_vision.png) | ![unF9tdYjqvU GT](../Graphs/unF9tdYjqvU_gt.png) |
+
+#### Video `unFVfqj9cQ8` - Contino: Measuring and Communicating The Business Impact of Landing Zones with Flight Controller
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **7** |
+| **Número de Aristas** | 7 | 5 | 5 | **5** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **93.3%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **87.5%** |
+| **Edge F1 (Connections)** | — | 66.7% | 66.7% | **83.3%** |
+| **Edge Precision** | — | 80.0% | 80.0% | **100.0%** |
+| **Edge Recall** | — | 57.1% | 57.1% | **71.4%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ControlTower']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![unFVfqj9cQ8 Whiteboard](lab_workspace/unFVfqj9cQ8/best_whiteboard.jpg) | ![unFVfqj9cQ8 Vision](../Graphs/unFVfqj9cQ8_vision.png) | ![unFVfqj9cQ8 GT](../Graphs/unFVfqj9cQ8_gt.png) |
+
+#### Video `uOSpWdAyrZo` - HBO Max: Automating Remediation of AWS Resource Misconfigurations
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **8** |
+| **Número de Aristas** | 7 | 7 | 7 | **8** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **93.3%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **87.5%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **100.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![uOSpWdAyrZo Whiteboard](lab_workspace/uOSpWdAyrZo/best_whiteboard.jpg) | ![uOSpWdAyrZo Vision](../Graphs/uOSpWdAyrZo_vision.png) | ![uOSpWdAyrZo GT](../Graphs/uOSpWdAyrZo_gt.png) |
+
+#### Video `UsngU-HjH_Q` - ViacomCBS: Multiplatform Distribution Powered by AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 12 | 12 | **12** |
+| **Número de Aristas** | 10 | 10 | 10 | **10** |
+| **Service F1 (Unique)** | — | 87.5% | 87.5% | **77.8%** |
+| **Service Precision** | — | 100.0% | 100.0% | **77.8%** |
+| **Service Recall** | — | 77.8% | 77.8% | **77.8%** |
+| **Edge F1 (Connections)** | — | 30.0% | 30.0% | **10.0%** |
+| **Edge Precision** | — | 30.0% | 30.0% | **10.0%** |
+| **Edge Recall** | — | 30.0% | 30.0% | **10.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDataStream', 'UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `['UserCompanyInternalPlatform', 'UserConsumerSatellite']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![UsngU-HjH_Q Whiteboard](lab_workspace/UsngU-HjH_Q/best_whiteboard.jpg) | ![UsngU-HjH_Q Vision](../Graphs/UsngU-HjH_Q_vision.png) | ![UsngU-HjH_Q GT](../Graphs/UsngU-HjH_Q_gt.png) |
+
+#### Video `vb-o1DvvHxk` - Enoptea: PHP Layer for AWS Lambda French
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 10 | **11** |
+| **Número de Aristas** | 11 | 11 | 11 | **14** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **88.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **88.9%** |
+| **Service Recall** | — | 100.0% | 100.0% | **88.9%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **64.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **57.1%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **72.7%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![vb-o1DvvHxk Whiteboard](lab_workspace/vb-o1DvvHxk/best_whiteboard.jpg) | ![vb-o1DvvHxk Vision](../Graphs/vb-o1DvvHxk_vision.png) | ![vb-o1DvvHxk GT](../Graphs/vb-o1DvvHxk_gt.png) |
+
+#### Video `vp8oPiHN4cA` - Novartis - Buying Engine: AI-powered Procurement Portal
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 14 | 14 | 14 | **9** |
+| **Número de Aristas** | 19 | 19 | 19 | **12** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **94.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **90.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **32.3%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **41.7%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **26.3%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerWeb']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![vp8oPiHN4cA Whiteboard](lab_workspace/vp8oPiHN4cA/best_whiteboard.jpg) | ![vp8oPiHN4cA Vision](../Graphs/vp8oPiHN4cA_vision.png) | ![vp8oPiHN4cA GT](../Graphs/vp8oPiHN4cA_gt.png) |
+
+#### Video `vr00Jg_G6qs` - Orion Health: Digital Front Door  Intelligently ConnectingConsumersto their Healthcare
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **14** |
+| **Número de Aristas** | 14 | 14 | 14 | **12** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **77.8%** |
+| **Service Precision** | — | 100.0% | 100.0% | **70.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **87.5%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **30.8%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **33.3%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **28.6%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerHospital']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty', 'UserCompanyAgent', 'UserCompanyWebsite']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![vr00Jg_G6qs Whiteboard](lab_workspace/vr00Jg_G6qs/best_whiteboard.jpg) | ![vr00Jg_G6qs Vision](../Graphs/vr00Jg_G6qs_vision.png) | ![vr00Jg_G6qs GT](../Graphs/vr00Jg_G6qs_gt.png) |
+
+#### Video `w-qGSyzDL6g` - Zillow: Near Real-Time Natural Language Processing (NLP) for Customer Interactions
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 12 | 12 | **11** |
+| **Número de Aristas** | 16 | 16 | 16 | **10** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **90.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **81.8%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **53.8%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **70.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **43.8%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![w-qGSyzDL6g Whiteboard](lab_workspace/w-qGSyzDL6g/best_whiteboard.jpg) | ![w-qGSyzDL6g Vision](../Graphs/w-qGSyzDL6g_vision.png) | ![w-qGSyzDL6g GT](../Graphs/w-qGSyzDL6g_gt.png) |
+
+#### Video `W96L6ICcF3s` - Samsung Electronics: Samsung Developer Portal Using Serverless Container Services
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 7 | 7 | **7** |
+| **Número de Aristas** | 0 | 3 | 3 | **3** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **80.0%** |
+| **Service Precision** | — | 80.0% | 80.0% | **80.0%** |
+| **Service Recall** | — | 80.0% | 80.0% | **80.0%** |
+| **Edge F1 (Connections)** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Precision** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Recall** | — | 0.0% | 0.0% | **0.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ECS']`
+* **Servicios Alucinados (Inventados):** `['Fargate']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![W96L6ICcF3s Whiteboard](lab_workspace/W96L6ICcF3s/best_whiteboard.jpg) | ![W96L6ICcF3s Vision](../Graphs/W96L6ICcF3s_vision.png) | ![W96L6ICcF3s GT](../Graphs/W96L6ICcF3s_gt.png) |
+
+#### Video `wbh51O3QrE4` - Mahindra Electric: Building a Connected Electric Vehicle Platform on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 10 | **10** |
+| **Número de Aristas** | 10 | 10 | 10 | **11** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **60.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **60.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **60.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **38.1%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **36.4%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **40.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ALB', 'Kinesis', 'UserConsumerEdge', 'UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `['ELB', 'KinesisDataStream', 'UserCompanyAgent', 'UserConsumerIOT']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![wbh51O3QrE4 Whiteboard](lab_workspace/wbh51O3QrE4/best_whiteboard.jpg) | ![wbh51O3QrE4 Vision](../Graphs/wbh51O3QrE4_vision.png) | ![wbh51O3QrE4 GT](../Graphs/wbh51O3QrE4_gt.png) |
+
+#### Video `wE3TmHxyRdA` - Innovapost: Scaling to 5M Package Deliveries with Serverless
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **8** |
+| **Número de Aristas** | 9 | 9 | 9 | **9** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **100.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![wE3TmHxyRdA Whiteboard](lab_workspace/wE3TmHxyRdA/best_whiteboard.jpg) | ![wE3TmHxyRdA Vision](../Graphs/wE3TmHxyRdA_vision.png) | ![wE3TmHxyRdA GT](../Graphs/wE3TmHxyRdA_gt.png) |
+
+#### Video `WS2Qgx0qgCM` - Airbnb: Securing MultiTenant Kubernetes Clusters at Scale
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 7 | 7 | **6** |
+| **Número de Aristas** | 8 | 7 | 7 | **7** |
+| **Service F1 (Unique)** | — | 90.9% | 90.9% | **100.0%** |
+| **Service Precision** | — | 83.3% | 83.3% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 40.0% | 40.0% | **93.3%** |
+| **Edge Precision** | — | 42.9% | 42.9% | **100.0%** |
+| **Edge Recall** | — | 37.5% | 37.5% | **87.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![WS2Qgx0qgCM Whiteboard](lab_workspace/WS2Qgx0qgCM/best_whiteboard.jpg) | ![WS2Qgx0qgCM Vision](../Graphs/WS2Qgx0qgCM_vision.png) | ![WS2Qgx0qgCM GT](../Graphs/WS2Qgx0qgCM_gt.png) |
+
+#### Video `WtCfHP6rUAY` - Coople: Serverless CQRS and Event Sourcing
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 9 | 9 | **10** |
+| **Número de Aristas** | 13 | 8 | 8 | **10** |
+| **Service F1 (Unique)** | — | 83.3% | 83.3% | **76.9%** |
+| **Service Precision** | — | 100.0% | 100.0% | **83.3%** |
+| **Service Recall** | — | 71.4% | 71.4% | **71.4%** |
+| **Edge F1 (Connections)** | — | 76.2% | 76.2% | **60.9%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **70.0%** |
+| **Edge Recall** | — | 61.5% | 61.5% | **53.8%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAPI', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![WtCfHP6rUAY Whiteboard](lab_workspace/WtCfHP6rUAY/best_whiteboard.jpg) | ![WtCfHP6rUAY Vision](../Graphs/WtCfHP6rUAY_vision.png) | ![WtCfHP6rUAY GT](../Graphs/WtCfHP6rUAY_gt.png) |
+
+#### Video `Wur1GWB03hk` - Lockheed Martin: Using Alexa for Business to Securely Access Program Management Status
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 9 | 9 | **9** |
+| **Número de Aristas** | 14 | 9 | 9 | **4** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 78.3% | 78.3% | **44.4%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 64.3% | 64.3% | **28.6%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Wur1GWB03hk Whiteboard](lab_workspace/Wur1GWB03hk/best_whiteboard.jpg) | ![Wur1GWB03hk Vision](../Graphs/Wur1GWB03hk_vision.png) | ![Wur1GWB03hk GT](../Graphs/Wur1GWB03hk_gt.png) |
+
+#### Video `WxMBuBBIwpI` - NextRoll: Driving OpEx Efficiency for Ad Bidding Engines LIVE
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 6 | 6 | **6** |
+| **Número de Aristas** | 7 | 5 | 5 | **5** |
+| **Service F1 (Unique)** | — | 66.7% | 66.7% | **83.3%** |
+| **Service Precision** | — | 66.7% | 66.7% | **83.3%** |
+| **Service Recall** | — | 66.7% | 66.7% | **83.3%** |
+| **Edge F1 (Connections)** | — | 33.3% | 33.3% | **66.7%** |
+| **Edge Precision** | — | 40.0% | 40.0% | **80.0%** |
+| **Edge Recall** | — | 28.6% | 28.6% | **57.1%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['Lambda']`
+* **Servicios Alucinados (Inventados):** `['UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![WxMBuBBIwpI Whiteboard](lab_workspace/WxMBuBBIwpI/best_whiteboard.jpg) | ![WxMBuBBIwpI Vision](../Graphs/WxMBuBBIwpI_vision.png) | ![WxMBuBBIwpI GT](../Graphs/WxMBuBBIwpI_gt.png) |
+
+#### Video `WYK-smWKywA` - SGX: Building & Securing a One Stop App for Retail Investors on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 12 | 12 | **12** |
+| **Número de Aristas** | 23 | 11 | 11 | **11** |
+| **Service F1 (Unique)** | — | 78.3% | 78.3% | **78.3%** |
+| **Service Precision** | — | 75.0% | 75.0% | **75.0%** |
+| **Service Recall** | — | 81.8% | 81.8% | **81.8%** |
+| **Edge F1 (Connections)** | — | 47.1% | 47.1% | **47.1%** |
+| **Edge Precision** | — | 72.7% | 72.7% | **72.7%** |
+| **Edge Recall** | — | 34.8% | 34.8% | **34.8%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `['DirectConnect', 'OnPremDC', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![WYK-smWKywA Whiteboard](lab_workspace/WYK-smWKywA/best_whiteboard.jpg) | ![WYK-smWKywA Vision](../Graphs/WYK-smWKywA_vision.png) | ![WYK-smWKywA GT](../Graphs/WYK-smWKywA_gt.png) |
+
+#### Video `X3mC6Yfd138` - PredictHQ: Global Demand Intelligence for Data at Hyperscale
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 9 | 11 | 11 | **10** |
+| **Número de Aristas** | 10 | 9 | 9 | **5** |
+| **Service F1 (Unique)** | — | 57.1% | 57.1% | **57.1%** |
+| **Service Precision** | — | 50.0% | 50.0% | **50.0%** |
+| **Service Recall** | — | 66.7% | 66.7% | **66.7%** |
+| **Edge F1 (Connections)** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Precision** | — | 0.0% | 0.0% | **0.0%** |
+| **Edge Recall** | — | 0.0% | 0.0% | **0.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['EC2', 'UserCompanyDeveloper']`
+* **Servicios Alucinados (Inventados):** `['AutoScaling', 'RDS', 'UserConsumerDeveloper', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![X3mC6Yfd138 Whiteboard](lab_workspace/X3mC6Yfd138/best_whiteboard.jpg) | ![X3mC6Yfd138 Vision](../Graphs/X3mC6Yfd138_vision.png) | ![X3mC6Yfd138 GT](../Graphs/X3mC6Yfd138_gt.png) |
+
+#### Video `XG6mHvi4eNU` - Avaloq: Automating the Provisioning of a Bank-in-a-Box in Minutes Using Amazon EKS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 6 | 7 | 7 | **7** |
+| **Número de Aristas** | 10 | 6 | 6 | **6** |
+| **Service F1 (Unique)** | — | 83.3% | 83.3% | **100.0%** |
+| **Service Precision** | — | 83.3% | 83.3% | **100.0%** |
+| **Service Recall** | — | 83.3% | 83.3% | **100.0%** |
+| **Edge F1 (Connections)** | — | 62.5% | 62.5% | **75.0%** |
+| **Edge Precision** | — | 83.3% | 83.3% | **100.0%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **60.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![XG6mHvi4eNU Whiteboard](lab_workspace/XG6mHvi4eNU/best_whiteboard.jpg) | ![XG6mHvi4eNU Vision](../Graphs/XG6mHvi4eNU_vision.png) | ![XG6mHvi4eNU GT](../Graphs/XG6mHvi4eNU_gt.png) |
+
+#### Video `XGVWdSnml6A` - Toyota Research Institute: On-Demand Self-Service Portal for Data Scientists to Process Data Sets
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 8 | 8 | **8** |
+| **Número de Aristas** | 8 | 7 | 7 | **7** |
+| **Service F1 (Unique)** | — | 76.9% | 76.9% | **66.7%** |
+| **Service Precision** | — | 83.3% | 83.3% | **62.5%** |
+| **Service Recall** | — | 71.4% | 71.4% | **71.4%** |
+| **Edge F1 (Connections)** | — | 26.7% | 26.7% | **26.7%** |
+| **Edge Precision** | — | 28.6% | 28.6% | **28.6%** |
+| **Edge Recall** | — | 25.0% | 25.0% | **25.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerAPI', 'UserConsumerEdge']`
+* **Servicios Alucinados (Inventados):** `['EC2', 'UserCompanyDeveloper', 'UserCompanyEdge']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![XGVWdSnml6A Whiteboard](lab_workspace/XGVWdSnml6A/best_whiteboard.jpg) | ![XGVWdSnml6A Vision](../Graphs/XGVWdSnml6A_vision.png) | ![XGVWdSnml6A GT](../Graphs/XGVWdSnml6A_gt.png) |
+
+#### Video `Xi6tDqctLsY` - Salary Overflow: Bringing Transparency to Tech Salaries
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 8 | 8 | **8** |
+| **Número de Aristas** | 16 | 8 | 8 | **10** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 66.7% | 66.7% | **76.9%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 50.0% | 50.0% | **62.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Xi6tDqctLsY Whiteboard](lab_workspace/Xi6tDqctLsY/best_whiteboard.jpg) | ![Xi6tDqctLsY Vision](../Graphs/Xi6tDqctLsY_vision.png) | ![Xi6tDqctLsY GT](../Graphs/Xi6tDqctLsY_gt.png) |
+
+#### Video `XmIhHtPJWog` - HDI Group: Automated Security and Compliance Issue Remediation Using Cloud Native Services
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 10 | 10 | 10 | **10** |
+| **Número de Aristas** | 10 | 10 | 10 | **10** |
+| **Service F1 (Unique)** | — | 90.0% | 90.0% | **100.0%** |
+| **Service Precision** | — | 90.0% | 90.0% | **100.0%** |
+| **Service Recall** | — | 90.0% | 90.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 90.0% | 90.0% | **100.0%** |
+| **Edge Precision** | — | 90.0% | 90.0% | **100.0%** |
+| **Edge Recall** | — | 90.0% | 90.0% | **100.0%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![XmIhHtPJWog Whiteboard](lab_workspace/XmIhHtPJWog/best_whiteboard.jpg) | ![XmIhHtPJWog Vision](../Graphs/XmIhHtPJWog_vision.png) | ![XmIhHtPJWog GT](../Graphs/XmIhHtPJWog_gt.png) |
+
+#### Video `XpFNznmRoQ0` - Healthfirst: Wrangling Data the Event Driven Way
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 14 | 14 | **14** |
+| **Número de Aristas** | 16 | 14 | 14 | **14** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **80.0%** |
+| **Service Precision** | — | 72.7% | 72.7% | **72.7%** |
+| **Service Recall** | — | 88.9% | 88.9% | **88.9%** |
+| **Edge F1 (Connections)** | — | 73.3% | 73.3% | **73.3%** |
+| **Edge Precision** | — | 78.6% | 78.6% | **78.6%** |
+| **Edge Recall** | — | 68.8% | 68.8% | **68.8%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['RDS', 'ThirdParty', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![XpFNznmRoQ0 Whiteboard](lab_workspace/XpFNznmRoQ0/best_whiteboard.jpg) | ![XpFNznmRoQ0 Vision](../Graphs/XpFNznmRoQ0_vision.png) | ![XpFNznmRoQ0 GT](../Graphs/XpFNznmRoQ0_gt.png) |
+
+#### Video `XqsgQxyZ2Tw` - 1plusX: A RealTime Data Management Platform on AWS
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 10 | 10 | **10** |
+| **Número de Aristas** | 16 | 11 | 11 | **11** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **60.0%** |
+| **Service Precision** | — | 80.0% | 80.0% | **60.0%** |
+| **Service Recall** | — | 80.0% | 80.0% | **60.0%** |
+| **Edge F1 (Connections)** | — | 51.9% | 51.9% | **14.8%** |
+| **Edge Precision** | — | 63.6% | 63.6% | **18.2%** |
+| **Edge Recall** | — | 43.8% | 43.8% | **12.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserConsumerAPI']`
+* **Servicios Alucinados (Inventados):** `['CouchBase', 'MSK']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![XqsgQxyZ2Tw Whiteboard](lab_workspace/XqsgQxyZ2Tw/best_whiteboard.jpg) | ![XqsgQxyZ2Tw Vision](../Graphs/XqsgQxyZ2Tw_vision.png) | ![XqsgQxyZ2Tw GT](../Graphs/XqsgQxyZ2Tw_gt.png) |
+
+#### Video `XUCGMzLx8wY` - Mytona: How a ML Recommendation System was Built for Gaming
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 8 | 7 | 7 | **7** |
+| **Número de Aristas** | 9 | 8 | 8 | **8** |
+| **Service F1 (Unique)** | — | 80.0% | 80.0% | **93.3%** |
+| **Service Precision** | — | 85.7% | 85.7% | **100.0%** |
+| **Service Recall** | — | 75.0% | 75.0% | **87.5%** |
+| **Edge F1 (Connections)** | — | 47.1% | 47.1% | **47.1%** |
+| **Edge Precision** | — | 50.0% | 50.0% | **50.0%** |
+| **Edge Recall** | — | 44.4% | 44.4% | **44.4%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerMobile']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![XUCGMzLx8wY Whiteboard](lab_workspace/XUCGMzLx8wY/best_whiteboard.jpg) | ![XUCGMzLx8wY Vision](../Graphs/XUCGMzLx8wY_vision.png) | ![XUCGMzLx8wY GT](../Graphs/XUCGMzLx8wY_gt.png) |
+
+#### Video `YiOTd6IfGoU` - Go Global: Processing Tens of Different Event Types on a Generic Data Lake Architecture (Hebrew)
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 12 | 12 | **12** |
+| **Número de Aristas** | 13 | 11 | 11 | **11** |
+| **Service F1 (Unique)** | — | 81.8% | 81.8% | **81.8%** |
+| **Service Precision** | — | 81.8% | 81.8% | **81.8%** |
+| **Service Recall** | — | 81.8% | 81.8% | **81.8%** |
+| **Edge F1 (Connections)** | — | 66.7% | 66.7% | **66.7%** |
+| **Edge Precision** | — | 72.7% | 72.7% | **72.7%** |
+| **Edge Recall** | — | 61.5% | 61.5% | **61.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['ThirdParty', 'UserCompanyDataStream']`
+* **Servicios Alucinados (Inventados):** `['EC2', 'UserCompanyInternalPlatform']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![YiOTd6IfGoU Whiteboard](lab_workspace/YiOTd6IfGoU/best_whiteboard.jpg) | ![YiOTd6IfGoU Vision](../Graphs/YiOTd6IfGoU_vision.png) | ![YiOTd6IfGoU GT](../Graphs/YiOTd6IfGoU_gt.png) |
+
+#### Video `Yju3yReAQtc` - Fortinet Uses AWS Serverless to Provide a Highly Available ControlPlane for their FortiWeb CloudWAF
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 7 | 12 | 12 | **13** |
+| **Número de Aristas** | 7 | 5 | 5 | **6** |
+| **Service F1 (Unique)** | — | 85.7% | 85.7% | **80.0%** |
+| **Service Precision** | — | 85.7% | 85.7% | **75.0%** |
+| **Service Recall** | — | 85.7% | 85.7% | **85.7%** |
+| **Edge F1 (Connections)** | — | 50.0% | 50.0% | **46.2%** |
+| **Edge Precision** | — | 60.0% | 60.0% | **50.0%** |
+| **Edge Recall** | — | 42.9% | 42.9% | **42.9%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyInternalPlatform']`
+* **Servicios Alucinados (Inventados):** `['ThirdParty', 'UserConsumerWeb']`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![Yju3yReAQtc Whiteboard](lab_workspace/Yju3yReAQtc/best_whiteboard.jpg) | ![Yju3yReAQtc Vision](../Graphs/Yju3yReAQtc_vision.png) | ![Yju3yReAQtc GT](../Graphs/Yju3yReAQtc_gt.png) |
+
+#### Video `YlGUMhls9ZA` - Veolia: Serverless Solution for Cost Optimization on AWS (French)
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 14 | 14 | 14 | **14** |
+| **Número de Aristas** | 18 | 14 | 14 | **14** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge F1 (Connections)** | — | 87.5% | 87.5% | **81.3%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **92.9%** |
+| **Edge Recall** | — | 77.8% | 77.8% | **72.2%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `[]`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![YlGUMhls9ZA Whiteboard](lab_workspace/YlGUMhls9ZA/best_whiteboard.jpg) | ![YlGUMhls9ZA Vision](../Graphs/YlGUMhls9ZA_vision.png) | ![YlGUMhls9ZA GT](../Graphs/YlGUMhls9ZA_gt.png) |
+
+#### Video `YosezjoL4MU` - Korean Airline: Data Warehouse Modernization on AWS Korean
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 12 | 11 | 11 | **11** |
+| **Número de Aristas** | 11 | 10 | 10 | **6** |
+| **Service F1 (Unique)** | — | 95.7% | 95.7% | **95.7%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 91.7% | 91.7% | **91.7%** |
+| **Edge F1 (Connections)** | — | 95.2% | 95.2% | **70.6%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Edge Recall** | — | 90.9% | 90.9% | **54.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserCompanyAnalyst']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![YosezjoL4MU Whiteboard](lab_workspace/YosezjoL4MU/best_whiteboard.jpg) | ![YosezjoL4MU Vision](../Graphs/YosezjoL4MU_vision.png) | ![YosezjoL4MU GT](../Graphs/YosezjoL4MU_gt.png) |
+
+#### Video `yPJf85tjv6M` - HK01: Serverless Analytics for Clickstreams Analysis (Cantonese)
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | 11 | 11 | 11 | **11** |
+| **Número de Aristas** | 13 | 13 | 13 | **10** |
+| **Service F1 (Unique)** | — | 100.0% | 100.0% | **94.1%** |
+| **Service Precision** | — | 100.0% | 100.0% | **100.0%** |
+| **Service Recall** | — | 100.0% | 100.0% | **88.9%** |
+| **Edge F1 (Connections)** | — | 100.0% | 100.0% | **69.6%** |
+| **Edge Precision** | — | 100.0% | 100.0% | **80.0%** |
+| **Edge Recall** | — | 100.0% | 100.0% | **61.5%** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+* **Servicios Faltantes (Omitidos):** `['UserConsumerWeb']`
+* **Servicios Alucinados (Inventados):** `[]`
+
+| 🖼️ Mejor Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) | 📌 Grafo Ground Truth (GT) |
+| :---: | :---: | :---: |
+| ![yPJf85tjv6M Whiteboard](lab_workspace/yPJf85tjv6M/best_whiteboard.jpg) | ![yPJf85tjv6M Vision](../Graphs/yPJf85tjv6M_vision.png) | ![yPJf85tjv6M GT](../Graphs/yPJf85tjv6M_gt.png) |
 
 
 

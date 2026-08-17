@@ -1,0 +1,120 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows an in-game purchase recommendation system (ML Offer) split into online inference and offline training pipelines. Online inference consists of AWS Lambda acting as a reverse proxy/traffic allocator, routing requests to model containers (m1, m2, m3) and a Multi-Armed Bandit (MAB) container running in Amazon ECS. Kafka streams user feedback data to MAB to recount weights, which feeds back to Lambda. The training workflow is managed by Airflow on Amazon EC2, triggering Amazon SageMaker to collect training data from Kafka and output trained model artifacts to Amazon S3. Amazon S3 and Amazon ECR supply the model artifacts and container images respectively to the ECS cluster.",
+  "graph": {
+    "name": "MyTona In-Game Purchase Recommendation System",
+    "link": "",
+    "categories": "Machine Learning, Game Infrastructure",
+    "graph_usable": true,
+    "notes": "Recommendation system architecture with dynamic traffic allocation (MAB) and automated SageMaker model training workflow."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Acts as reverse proxy and dynamically allocates traffic between model containers"
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs model containers (m1, m2, m3) and Multi-Armed Bandit container"
+    },
+    {
+      "id": "2",
+      "service": "MSK",
+      "name": "Kafka",
+      "notes": "Streams user reaction/feedback data and training data"
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Airflow",
+      "notes": "EC2 instance running Airflow to manage daily workflow"
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Trains machine learning recommendation models"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores trained model artifacts"
+    },
+    {
+      "id": "6",
+      "service": "ECR",
+      "name": "Amazon ECR",
+      "notes": "Stores container images for different model APIs"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda allocates prediction traffic to model containers (m1, m2, m3) in ECS"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kafka streams user feedback data on model predictions to MAB container in ECS"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "MAB periodically recalculates weights and sends updated weights to Lambda"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Airflow on EC2 triggers daily training workflow in SageMaker"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "SageMaker collects training data from Kafka"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker outputs trained model artifacts to S3"
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 provides model artifacts to build ECS model containers"
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "ECR provides container API images to ECS cluster"
+    }
+  ]
+}

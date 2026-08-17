@@ -1,0 +1,192 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows a serverless and containerized architecture for Enoptea. On the left, traffic enters via Elastic Load Balancing (ELB) to Elastic Beanstalk (EC2-based frontend/backend), which reads directly from an RDS database. Beanstalk also triggers API Gateway. API Gateway routes requests to three Lambda functions (written in PHP via custom runtime/layers). The top Lambda retrieves PDF invoices from external providers, places them in an S3 bucket, which triggers SQS queues. SQS queues invoke the middle and bottom Lambda functions for asynchronous invoice processing and analysis. The middle and bottom Lambdas store results in ElastiCache (cache/temporary data) and RDS (primary database).",
+  "graph": {
+    "name": "Enoptea Serverless PHP Architecture",
+    "link": "",
+    "categories": "Web Application & Event-Driven Serverless Architecture",
+    "graph_usable": true,
+    "notes": "Architecture showing Elastic Beanstalk frontend coupled with a multi-Lambda serverless PHP processing pipeline using S3, SQS, ElastiCache, and RDS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Entry load balancer for user web frontend traffic"
+    },
+    {
+      "id": "1",
+      "service": "BeanStalk",
+      "name": "Elastic Beanstalk",
+      "notes": "Runs application frontend/backend servers"
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for backend processing and Lambda invocation"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda (Invoice Scraper)",
+      "notes": "Retrieves invoice PDFs from supplier client portals"
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "PDF Invoices",
+      "notes": "Invoice documents retrieved from supplier websites"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores uploaded invoice PDF files"
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Receives bucket notifications and buffers processing jobs"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Processor)",
+      "notes": "Processes invoice data triggered by SQS or API Gateway"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda (Analytics/Calculation)",
+      "notes": "Generates syntheses and calculations"
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Caches temporary processing data"
+    },
+    {
+      "id": "10",
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "Relational database for structured persistent storage"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Incoming traffic routed to Elastic Beanstalk"
+    },
+    {
+      "source": "1",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Beanstalk directly reads from RDS to render frontend views"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Frontend invokes API Gateway for backend processing tasks"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway triggers invoice scraper Lambda"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Scraper Lambda fetches PDF invoice documents"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Invoices are deposited into S3 bucket"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "S3 events trigger messages into SQS queue"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "5a",
+      "type": "data",
+      "notes": "SQS triggers middle processing Lambda"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "5b",
+      "type": "data",
+      "notes": "SQS triggers bottom processing Lambda"
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1a",
+      "type": "data",
+      "notes": "Direct invocation of middle Lambda from API Gateway"
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1b",
+      "type": "data",
+      "notes": "Direct invocation of bottom Lambda from API Gateway"
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Middle Lambda writes temporary cache data to ElastiCache"
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Middle Lambda persists structured data to RDS"
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "2c",
+      "type": "data",
+      "notes": "Bottom Lambda writes calculation results to RDS"
+    }
+  ]
+}

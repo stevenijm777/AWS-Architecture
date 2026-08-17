@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows an editorial session management flow from On-Premises through VPN to MemoryDB, alongside a high-throughput user voting pipeline routed through AWS WAF, Application Load Balancer, and ECS Fargate into MemoryDB Redis. System telemetry from ALB and Fargate is streamed via CloudWatch through Kinesis Data Firehose to Amazon S3.",
+  "graph": {
+    "name": "Mediaset Real-Time Voting Architecture",
+    "link": "",
+    "categories": "Serverless & Real-Time Analytics",
+    "graph_usable": true,
+    "notes": "Real-time voting architecture designed to process millions of votes with sub-10ms latency."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "OnPremDC",
+      "name": "On-Premises Editorial System",
+      "notes": "On-prem system used by editorial teams to initiate and close voting sessions."
+    },
+    {
+      "id": "1",
+      "service": "VPN",
+      "name": "AWS Site-to-Site VPN",
+      "notes": "Secure connectivity between on-premises systems and private AWS backend."
+    },
+    {
+      "id": "2",
+      "service": "UserConsumerWeb",
+      "name": "Voters / Clients",
+      "notes": "End users submitting votes via mobile apps, websites, SMS, and connected TVs."
+    },
+    {
+      "id": "3",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Filters incoming user requests and enforces geo-blocking rules."
+    },
+    {
+      "id": "4",
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Distributes incoming voting traffic to front-end compute."
+    },
+    {
+      "id": "5",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Scalable container service executing authentication and session checks."
+    },
+    {
+      "id": "6",
+      "service": "MemoryDB",
+      "name": "Amazon MemoryDB for Redis",
+      "notes": "In-memory database running Lua scripts to process vote counts and state within 10ms."
+    },
+    {
+      "id": "7",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Aggregates application logs and metrics from ALB and Fargate."
+    },
+    {
+      "id": "8",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose",
+      "notes": "Streams operational log data to persistent storage."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Long-term archive for audit trail and cross-service analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Session management commands sent over secure VPN."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Opens/closes voting session state in MemoryDB."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "User voting requests sent to AWS WAF."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Validated traffic routed to Application Load Balancer."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "ALB routes requests to Fargate containers."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fargate updates session and vote counters in MemoryDB."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB access logs streamed to CloudWatch."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate task logs sent to CloudWatch."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudWatch streams log records to Kinesis Data Firehose."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Firehose persists aggregated logs to Amazon S3."
+    }
+  ]
+}

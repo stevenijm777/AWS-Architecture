@@ -1,0 +1,322 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.0,
+    "text": "Hi, welcome to This is My Architecture coming to you from Zurich in Switzerland."
+  },
+  {
+    "start": 12.0,
+    "end": 15.0,
+    "text": "Today I'm joined by Michal from Kupol. Hi Michal."
+  },
+  {
+    "start": 15.0,
+    "end": 18.0,
+    "text": "Hi, Ross. Thank you for inviting me here."
+  },
+  {
+    "start": 18.0,
+    "end": 20.0,
+    "text": "Such a pleasure. What can you tell us about Kupol?"
+  },
+  {
+    "start": 20.0,
+    "end": 23.0,
+    "text": "So, Kupol is a digital staffing platform."
+  },
+  {
+    "start": 23.0,
+    "end": 29.0,
+    "text": "We support finding, hiring and payrolling of temporary and permanent workers."
+  },
+  {
+    "start": 29.0,
+    "end": 32.0,
+    "text": "We are in Switzerland and in the UK."
+  },
+  {
+    "start": 32.0,
+    "end": 37.0,
+    "text": "And we have more than 20,000 companies registered and more than 500,000 workers."
+  },
+  {
+    "start": 37.0,
+    "end": 41.0,
+    "text": "That is really nice. Tell me what part of Kupol are we going to be talking about?"
+  },
+  {
+    "start": 41.0,
+    "end": 47.0,
+    "text": "So, today I'd like to tell you how we migrated our system from a traditional data center to AWS."
+  },
+  {
+    "start": 47.0,
+    "end": 51.0,
+    "text": "We have had a CQRS event source monolith which we moved to AWS."
+  },
+  {
+    "start": 51.0,
+    "end": 58.0,
+    "text": "Today we are gradually migrating functionalities to domain serverless services."
+  },
+  {
+    "start": 58.0,
+    "end": 63.0,
+    "text": "That is nice. I mean, event sourcing in CQRS is some of my favorite architecture patterns"
+  },
+  {
+    "start": 63.0,
+    "end": 68.0,
+    "text": "and I'm really keen to get into the details. Why don't you take us through what's on the board?"
+  },
+  {
+    "start": 68.0,
+    "end": 75.0,
+    "text": "So, when a client wants to write to the system, they send us CQRS command."
+  },
+  {
+    "start": 75.0,
+    "end": 80.0,
+    "text": "It goes to AWS Lambda."
+  },
+  {
+    "start": 80.0,
+    "end": 88.0,
+    "text": "This Lambda processes validates the request and if everything is fine, it emits an event to the event store."
+  },
+  {
+    "start": 88.0,
+    "end": 92.0,
+    "text": "Our event store is a table in DynamoDB."
+  },
+  {
+    "start": 92.0,
+    "end": 97.0,
+    "text": "Then, event goes through DynamoDB stream to Lambda."
+  },
+  {
+    "start": 97.0,
+    "end": 107.0,
+    "text": "Our streamer puts the event to SNS FIFO and also archives data to S3."
+  },
+  {
+    "start": 107.0,
+    "end": 111.0,
+    "text": "From SNS FIFO we do a fan out."
+  },
+  {
+    "start": 111.0,
+    "end": 118.0,
+    "text": "Every service can subscribe to an event by simply attaching SQS to SNS."
+  },
+  {
+    "start": 118.0,
+    "end": 123.0,
+    "text": "Now, SNS FIFO is a relatively new service in AWS."
+  },
+  {
+    "start": 123.0,
+    "end": 126.0,
+    "text": "If we were to go back in time for a year, what did this look like?"
+  },
+  {
+    "start": 126.0,
+    "end": 130.0,
+    "text": "So, before we had a normal SNS and SQS."
+  },
+  {
+    "start": 130.0,
+    "end": 135.0,
+    "text": "We moved it to SNS FIFO and SQS FIFO to simplify the architecture."
+  },
+  {
+    "start": 135.0,
+    "end": 139.0,
+    "text": "This simple change helped us to remove additional components"
+  },
+  {
+    "start": 139.0,
+    "end": 145.0,
+    "text": "which were maintaining the events ordering within one aggregate and events cache in the handler."
+  },
+  {
+    "start": 145.0,
+    "end": 148.0,
+    "text": "Okay, great to hear. So, what happens next?"
+  },
+  {
+    "start": 148.0,
+    "end": 153.0,
+    "text": "So, Lambda pulls events from SQS."
+  },
+  {
+    "start": 153.0,
+    "end": 157.0,
+    "text": "Here we handle all the business events"
+  },
+  {
+    "start": 157.0,
+    "end": 161.0,
+    "text": "and we write data to our read models."
+  },
+  {
+    "start": 161.0,
+    "end": 167.0,
+    "text": "These are the projections for reading the data from the system."
+  },
+  {
+    "start": 167.0,
+    "end": 173.0,
+    "text": "When a client wants to read the data, they send us a CQRS query to Lambda."
+  },
+  {
+    "start": 173.0,
+    "end": 180.0,
+    "text": "Lambda reads this data from read model and sends it back to a client."
+  },
+  {
+    "start": 180.0,
+    "end": 184.0,
+    "text": "So, having read models in something like DynamoDB makes a lot of sense."
+  },
+  {
+    "start": 184.0,
+    "end": 186.0,
+    "text": "You get away from having to build the queries at runtime."
+  },
+  {
+    "start": 186.0,
+    "end": 189.0,
+    "text": "But how do you know what read models you need for your customers?"
+  },
+  {
+    "start": 189.0,
+    "end": 192.0,
+    "text": "So, at the beginning we don't know this."
+  },
+  {
+    "start": 192.0,
+    "end": 195.0,
+    "text": "We start quite usually with MySQL database."
+  },
+  {
+    "start": 195.0,
+    "end": 199.0,
+    "text": "Over the time we learn what access patterns are used."
+  },
+  {
+    "start": 199.0,
+    "end": 202.0,
+    "text": "And then we can change this database to different one,"
+  },
+  {
+    "start": 202.0,
+    "end": 205.0,
+    "text": "which better suits the access pattern used by the microservice."
+  },
+  {
+    "start": 205.0,
+    "end": 207.0,
+    "text": "Okay, okay, nice."
+  },
+  {
+    "start": 207.0,
+    "end": 209.0,
+    "text": "I want to go back a bit."
+  },
+  {
+    "start": 209.0,
+    "end": 215.0,
+    "text": "Right at the beginning you mentioned that you're migrating from a CQRS monolith application."
+  },
+  {
+    "start": 215.0,
+    "end": 218.0,
+    "text": "How does that fit into what you've got on AWS now?"
+  },
+  {
+    "start": 218.0,
+    "end": 220.0,
+    "text": "So, we still use the monolith."
+  },
+  {
+    "start": 220.0,
+    "end": 225.0,
+    "text": "But from MySQL event store, we migrated to a table in DynamoDB."
+  },
+  {
+    "start": 225.0,
+    "end": 230.0,
+    "text": "Our monolith uses the same table as all the microservices."
+  },
+  {
+    "start": 230.0,
+    "end": 239.0,
+    "text": "The difference is that for building projections, it uses a GSI, which maintains a global order for all events in the system."
+  },
+  {
+    "start": 239.0,
+    "end": 240.0,
+    "text": "Okay."
+  },
+  {
+    "start": 240.0,
+    "end": 246.0,
+    "text": "Now, as elegant and as good as this architecture looks, you know, it's always constantly evolving."
+  },
+  {
+    "start": 246.0,
+    "end": 247.0,
+    "text": "What's next?"
+  },
+  {
+    "start": 247.0,
+    "end": 252.0,
+    "text": "So, right now we are starting to build new contexts in the Coupel."
+  },
+  {
+    "start": 252.0,
+    "end": 257.0,
+    "text": "It means that new context is getting a separate event store."
+  },
+  {
+    "start": 257.0,
+    "end": 263.0,
+    "text": "This new context will have a separate business events, which are internal for this context."
+  },
+  {
+    "start": 263.0,
+    "end": 268.0,
+    "text": "And when a new context wants to communicate with all part of the system,"
+  },
+  {
+    "start": 268.0,
+    "end": 272.0,
+    "text": "they will be using public events, which will be sent over EventBridge."
+  },
+  {
+    "start": 272.0,
+    "end": 273.0,
+    "text": "Okay."
+  },
+  {
+    "start": 273.0,
+    "end": 277.0,
+    "text": "Michal, thank you for sharing your architecture with us today."
+  },
+  {
+    "start": 277.0,
+    "end": 278.0,
+    "text": "You're welcome."
+  },
+  {
+    "start": 278.0,
+    "end": 279.0,
+    "text": "And thank you for watching."
+  },
+  {
+    "start": 279.0,
+    "end": 280.0,
+    "text": "This is my architecture."
+  }
+]

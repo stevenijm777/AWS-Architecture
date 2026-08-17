@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "1. Visual Analysis: The diagram shows a GATEWAY component on the far left with three outbound arrows leading to three parallel processing paths:\n   - Top path: SQS queue -> INGEST Lambda function -> RDS database.\n   - Middle path: SQS queue -> EVENT PROC Lambda function -> RDS database.\n   - Bottom path: S3 bucket -> IMAGE PROC Lambda function -> RDS database.\n\n2. Service Identification:\n   - GATEWAY -> ApiGateway\n   - SQS (top & middle) -> SQS\n   - S3 -> S3\n   - INGEST, EVENT PROC, IMAGE PROC -> Lambda\n   - RDS -> RDS\n\n3. Edge Construction & Logical Sequencing:\n   - Flow 0 (Ingestion): GATEWAY (0) -> SQS (1) -> INGEST Lambda (2) -> RDS (7)\n   - Flow 1 (Event Processing): GATEWAY (0) -> SQS (3) -> EVENT PROC Lambda (4) -> RDS (7)\n   - Flow 2 (Image Processing): GATEWAY (0) -> S3 (5) -> IMAGE PROC Lambda (6) -> RDS (7)",
+  "graph": {
+    "name": "Purolator Package Ingestion and Event Processing Architecture",
+    "link": "",
+    "categories": "Serverless Architecture",
+    "graph_usable": true,
+    "notes": "Serverless package tracking and image processing pipeline built on AWS Lambda, SQS, S3, and RDS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "GATEWAY",
+      "notes": "Ingress gateway for incoming package data and events"
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue for initial package creation messages"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "INGEST",
+      "notes": "Lambda function for ingesting package metadata"
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue for package status and event scans"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "EVENT PROC",
+      "notes": "Lambda function for processing various package events"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 bucket for storing dimensioning/weighing package images"
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "IMAGE PROC",
+      "notes": "Lambda function for processing images and generating image links"
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Central relational database serving as the single source of truth"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Package creation intent routed to top SQS queue"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingest Lambda consumes message from top SQS queue"
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ingest Lambda writes initial package record to RDS"
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Package scan events routed to middle SQS queue"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Event Proc Lambda consumes event message from middle SQS queue"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Event Proc Lambda updates event data in RDS"
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Package image uploaded to S3 bucket"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 event triggers Image Proc Lambda"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Image Proc Lambda stores image link and metadata in RDS"
+    }
+  ]
+}

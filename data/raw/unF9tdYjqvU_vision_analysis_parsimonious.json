@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "1. Identify main user actor node (USERS).\n2. Identify Route 53 service node used for latency-based DNS resolution.\n3. Identify Region A components: API Gateway, Lambda, EKS, Transit Gateway.\n4. Identify central DynamoDB global table for tenant lookup.\n5. Identify Region B components: Transit Gateway, EKS (drawn without edge connections).\n6. Identify Region C components: Transit Gateway, EKS.\n7. Map explicit arrows drawn on whiteboard to extract edges accurately following execution flow.",
+  "graph": {
+    "name": "NextThink - Multi-Region Multi-Tenant Request Routing",
+    "link": "",
+    "categories": "Networking, Compute, Multi-Region",
+    "graph_usable": true,
+    "notes": "NextThink architecture for routing multi-tenant user requests to the correct EKS cluster across regions using Route 53, API Gateway, Lambda, DynamoDB, and Transit Gateway inter-peering."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "USERS",
+      "notes": ""
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": ""
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Region A"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Region A"
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Region A"
+    },
+    {
+      "id": "5",
+      "service": "TransitGateway",
+      "name": "TRANSIT GW",
+      "notes": "Region A"
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Global Table"
+    },
+    {
+      "id": "7",
+      "service": "TransitGateway",
+      "name": "TRANSIT GW",
+      "notes": "Region B"
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Region B"
+    },
+    {
+      "id": "9",
+      "service": "TransitGateway",
+      "name": "TRANSIT GW",
+      "notes": "Region C"
+    },
+    {
+      "id": "10",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Region C"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "DNS request to retrieve IP address"
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Latency-based DNS response with IP address"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User calls API Gateway endpoint"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway invokes Lambda"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda checks tenant region mapping in DynamoDB"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Direct route to local EKS if tenant is in Region A"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Route via Transit Gateway if tenant is in another region"
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Inter-region Transit Gateway peering communication"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Routed request reaches EKS cluster in Region C"
+    }
+  ]
+}
