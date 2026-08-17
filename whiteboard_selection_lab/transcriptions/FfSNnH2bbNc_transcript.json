@@ -1,0 +1,362 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.040000000000001,
+    "text": "Hi, and welcome to This is My Architecture. I'm Andy, and I'm here with Jacob from Indigo Carbon."
+  },
+  {
+    "start": 12.040000000000001,
+    "end": 12.8,
+    "text": "Hi, Jacob."
+  },
+  {
+    "start": 12.8,
+    "end": 13.3,
+    "text": "Hey, Andy."
+  },
+  {
+    "start": 13.3,
+    "end": 15.4,
+    "text": "So, Jacob, can you tell me about Indigo Carbon?"
+  },
+  {
+    "start": 15.4,
+    "end": 20.2,
+    "text": "Yeah. Indigo is working with individual farmers to help them transition to regenerative agriculture,"
+  },
+  {
+    "start": 20.2,
+    "end": 26.400000000000002,
+    "text": "which is a system of practices to kind of enrich their soil and get paid to do it by people that"
+  },
+  {
+    "start": 26.400000000000002,
+    "end": 28.8,
+    "text": "are emitting CO2 and want to buy offsets for that."
+  },
+  {
+    "start": 28.8,
+    "end": 32.6,
+    "text": "So, how do you actually help farmers with this architecture?"
+  },
+  {
+    "start": 32.6,
+    "end": 36.24,
+    "text": "Yeah. So, there's a lot of different data that needs to be collected in order to actually"
+  },
+  {
+    "start": 36.24,
+    "end": 41.32,
+    "text": "produce carbon credits. We're able to leverage existing satellites from organizations like"
+  },
+  {
+    "start": 41.32,
+    "end": 47.0,
+    "text": "NASA to infer a lot of things about the operation on an individual field. It all kind of starts"
+  },
+  {
+    "start": 47.0,
+    "end": 52.5,
+    "text": "there. Every day throughout the day, we get a series of tiles from them that are kind of"
+  },
+  {
+    "start": 52.5,
+    "end": 56.760000000000005,
+    "text": "modestly processed and corrected for a bunch of things. And we get them in, but we need"
+  },
+  {
+    "start": 56.76,
+    "end": 61.0,
+    "text": "to do some post-processing both to correct some more and to get it into different formats"
+  },
+  {
+    "start": 61.0,
+    "end": 66.0,
+    "text": "that are more accessible for stuff downstream. So, we spin up a big kind of cluster of spot"
+  },
+  {
+    "start": 66.0,
+    "end": 69.56,
+    "text": "instances as quickly as possible, process all this data as it comes in, and spin it back"
+  },
+  {
+    "start": 69.56,
+    "end": 76.96,
+    "text": "down. We store those outputs in a combination of S3 and RDS. RDS has the metadata in it, and"
+  },
+  {
+    "start": 76.96,
+    "end": 79.2,
+    "text": "S3 actually has like the big bulk data itself."
+  },
+  {
+    "start": 79.2,
+    "end": 82.66,
+    "text": "Can you give me a sense of how much data we're actually talking about here?"
+  },
+  {
+    "start": 82.66,
+    "end": 88.22,
+    "text": "Yeah. So, our catalog spans back actually like 30 years. Most of our data is kind of in like"
+  },
+  {
+    "start": 88.22,
+    "end": 95.22,
+    "text": "the 10-year time frame. All of that surprises about five petabytes or so, give or take. And"
+  },
+  {
+    "start": 95.22,
+    "end": 100.75999999999999,
+    "text": "every day that grows as we get new imagery in. And that's like 100 gigabytes a day. And"
+  },
+  {
+    "start": 100.75999999999999,
+    "end": 104.66,
+    "text": "that rate increases as we add more data sources that we're doing kind of continuously."
+  },
+  {
+    "start": 104.66,
+    "end": 108.3,
+    "text": "Wow. So, after you've ingested this data, what happens next?"
+  },
+  {
+    "start": 108.3,
+    "end": 112.89999999999999,
+    "text": "Yeah. So, we access it in two kind of pretty different ways. One is from direct kind of"
+  },
+  {
+    "start": 112.89999999999999,
+    "end": 116.44,
+    "text": "like user access, and the other is to drive stuff in our models that we ultimately use"
+  },
+  {
+    "start": 116.44,
+    "end": 121.02,
+    "text": "to generate the carbon credits. We can talk about the user flow first. When they log into"
+  },
+  {
+    "start": 121.02,
+    "end": 125.96,
+    "text": "our app, one of the first things we show is this map of the United States, and we show some"
+  },
+  {
+    "start": 125.96,
+    "end": 130.72,
+    "text": "imagery on top of that. And we want it to be like our most up-to-date imagery. We give them"
+  },
+  {
+    "start": 130.72,
+    "end": 133.86,
+    "text": "the option to select what kind of layer they want from here and which time frame they're talking"
+  },
+  {
+    "start": 133.86,
+    "end": 139.14000000000001,
+    "text": "about. But ultimately, it gets served up as web tiles that come from this Fargate cluster."
+  },
+  {
+    "start": 140.10000000000002,
+    "end": 146.10000000000002,
+    "text": "When you load a map, it gets sliced into 16 or so different tiles, and those come as individual"
+  },
+  {
+    "start": 146.10000000000002,
+    "end": 154.26000000000002,
+    "text": "requests to Fargate. Fargate then looks up in RDS which source imagery actually corresponds to that"
+  },
+  {
+    "start": 154.26,
+    "end": 164.26,
+    "text": "tile. And then it pulls that data from S3. S3 has relatively large compressed chunks of data. And we only need"
+  },
+  {
+    "start": 164.26,
+    "end": 169.22,
+    "text": "like a small subsection of that for each one of these like source tiles. We actually use one of the kind of"
+  },
+  {
+    "start": 169.22,
+    "end": 174.1,
+    "text": "main features in S3 that's useful is HTTP range requests. We can read a part of an object in S3 instead of"
+  },
+  {
+    "start": 174.1,
+    "end": 178.89999999999998,
+    "text": "reading the entire thing. We then take all those different little parts of images, and we stitch them back"
+  },
+  {
+    "start": 178.89999999999998,
+    "end": 184.18,
+    "text": "together into a kind of bigger image. We down sample it to the right resolution, and then we'd either do color"
+  },
+  {
+    "start": 184.18,
+    "end": 188.42000000000002,
+    "text": "correction if we're talking about an RGB image, or we do color mapping if we're talking about just like"
+  },
+  {
+    "start": 188.42000000000002,
+    "end": 193.70000000000002,
+    "text": "an intensity value. So if you want to show like greenness of your field, that'll be like a zero to"
+  },
+  {
+    "start": 193.70000000000002,
+    "end": 198.42000000000002,
+    "text": "one value. We need to map that into like an RGB space. We have a color map for that. And then we serve"
+  },
+  {
+    "start": 198.42000000000002,
+    "end": 203.94,
+    "text": "it back as a tile. So I'm seeing a few other components on here. How does ElastiCache fit into this solution?"
+  },
+  {
+    "start": 203.94,
+    "end": 211.06,
+    "text": "Yeah, it's pretty simple. We just use Redis in ElastiCache as a kind of central cache for the tiles we've"
+  },
+  {
+    "start": 211.06,
+    "end": 215.62,
+    "text": "already generated. A lot of the tiles in our system are pretty common. Like I said, when we first load"
+  },
+  {
+    "start": 215.62,
+    "end": 220.82,
+    "text": "the app for most users, it shows the entire US. Those tiles are seen by everybody. So instead of"
+  },
+  {
+    "start": 220.82,
+    "end": 226.9,
+    "text": "recomputing those on the fly every time, we compute them on the fly once and store them in ElastiCache here,"
+  },
+  {
+    "start": 226.9,
+    "end": 231.46,
+    "text": "and read and write from that as needed, and serve back tiles to the user. Okay, excellent. And then so"
+  },
+  {
+    "start": 231.46,
+    "end": 236.26,
+    "text": "there's one last one other component to this. I'm seeing a lambda over here. Can you tell me what this"
+  },
+  {
+    "start": 236.26,
+    "end": 240.98000000000002,
+    "text": "lambda is actually doing? Yeah, so this is actually a series of lambda functions in here. What is ultimately"
+  },
+  {
+    "start": 240.98,
+    "end": 247.14,
+    "text": "there to do is try to compute a time series of data from this kind of source data cube. Taking back to"
+  },
+  {
+    "start": 247.14,
+    "end": 253.7,
+    "text": "the example of like the average greenness on your field, over the course of a year, say it's like 2019,"
+  },
+  {
+    "start": 253.7,
+    "end": 259.3,
+    "text": "and that goes to 2020, for corn, somewhere in August is kind of your peak greenness, and it'll end up"
+  },
+  {
+    "start": 259.3,
+    "end": 263.94,
+    "text": "looking in a curve like this. And this can tell you things about like the health of your corn and that"
+  },
+  {
+    "start": 263.94,
+    "end": 267.3,
+    "text": "kind of thing. You can imagine there's a lot more complex stuff you can do with it. But in order to"
+  },
+  {
+    "start": 267.3,
+    "end": 271.7,
+    "text": "compute that from this raw imagery, we need to take the area that we're interested in. In this case,"
+  },
+  {
+    "start": 271.7,
+    "end": 276.42,
+    "text": "it's something that a farmer told us, which is like their field somewhere in there in the grid of"
+  },
+  {
+    "start": 276.42,
+    "end": 282.1,
+    "text": "Iowa. And there's a little cutout here. So this is custom, this is what the grower is actually farming."
+  },
+  {
+    "start": 282.66,
+    "end": 286.66,
+    "text": "So we don't know this ahead of time. So they tell us this, we only need to take it, pass it to this"
+  },
+  {
+    "start": 286.66,
+    "end": 291.94,
+    "text": "series of lambda functions. And what this does is pretty similar to what the Fargate service does here."
+  },
+  {
+    "start": 291.94,
+    "end": 298.42,
+    "text": "Initially, it pulls the imagery that it needs from by looking it up in RDS and then reading stuff from"
+  },
+  {
+    "start": 298.42,
+    "end": 304.26,
+    "text": "S3. It turns that into kind of the tile of interest that we're doing. And then we clip it to this area"
+  },
+  {
+    "start": 304.26,
+    "end": 308.26,
+    "text": "of interest, and then can be a summary on it. In this case, we're talking about like the mean of the"
+  },
+  {
+    "start": 308.26,
+    "end": 312.1,
+    "text": "greenness. That's what it would do, take the average of all the pixels that fall in that field. And then it"
+  },
+  {
+    "start": 312.1,
+    "end": 317.14,
+    "text": "does that 1000 times over to get that time series. I'm seeing a lot of serverless components on here. Why'd you"
+  },
+  {
+    "start": 317.14,
+    "end": 321.7,
+    "text": "choose to go with that for this particular architecture? Yeah, so we have we have thousands"
+  },
+  {
+    "start": 321.7,
+    "end": 327.38,
+    "text": "of input variables here, and all kinds of different locations in the country. We just talked about how"
+  },
+  {
+    "start": 327.38,
+    "end": 331.06,
+    "text": "like we don't actually know the area that we're really interested in until the farmer tells us."
+  },
+  {
+    "start": 331.78,
+    "end": 335.21999999999997,
+    "text": "And we have time as well as another component of this. So there's millions of combinations that we"
+  },
+  {
+    "start": 335.21999999999997,
+    "end": 339.94,
+    "text": "could cut this data cube. We get it to a point where it's kind of minimally processed and to do all the"
+  },
+  {
+    "start": 339.94,
+    "end": 346.26,
+    "text": "other processing on the fly. And it saves us orders of magnitude of cost. Excellent. Jacob, thank you very"
+  },
+  {
+    "start": 346.26,
+    "end": 352.58,
+    "text": "much for sharing this. It's great to hear how Indigo Carbon is using a largely serverless architecture to help"
+  },
+  {
+    "start": 352.58,
+    "end": 367.78,
+    "text": "individual farmers with regenerative agriculture. And thank you for watching. This is my architecture."
+  }
+]

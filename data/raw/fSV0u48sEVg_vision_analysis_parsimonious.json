@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "The whiteboard diagram depicts a mobile game backend architecture on AWS.\n1. User interactions originate from mobile clients (UserConsumerMobile icon on the left).\n2. Requests enter via an Application Load Balancer (ALB).\n3. ALB forwards traffic to the core containerized compute layer running on AWS ECS Fargate.\n4. ECS Fargate connects to RDS (PostgreSQL database) for persistent game/user data, and interacts bi-directionally with ElastiCache (Redis) for caching to reduce DB load. RDS and ElastiCache also show a direct bi-directional connection.\n5. AWS Lambda handles infrequent/maintenance tasks, communicating bi-directionally with ECS Fargate.\n6. ECS Fargate, Lambda, and ElastiCache send logs and operational metrics directly to AWS CloudWatch for monitoring.",
+  "graph": {
+    "name": "Social Quantum Mobile Game Serverless Architecture",
+    "link": "",
+    "categories": "Mobile & Serverless Game Backend",
+    "graph_usable": true,
+    "notes": "Architecture for Social Quantum mobile games processing 60k requests/min using ECS Fargate, RDS, ElastiCache, Lambda, and CloudWatch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile User / Client",
+      "notes": "Mobile client generating up to 120k requests/min"
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Processes user requests and routes to container tasks"
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "ECS Fargate",
+      "notes": "Core application container cluster handling game logic"
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "PostgreSQL database storing user and game data"
+    },
+    {
+      "id": "4",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Redis cache reducing load on RDS"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Handles infrequent and maintenance tasks"
+    },
+    {
+      "id": "6",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Monitors metrics and logs across the environment"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User traffic sent to load balancer"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB forwards HTTP requests to ECS Fargate tasks"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS Fargate queries RDS database"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "3a",
+      "type": "data",
+      "notes": "ECS Fargate reads/writes cache in ElastiCache"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "3b",
+      "type": "data",
+      "notes": "ElastiCache returns cached responses to ECS Fargate"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Data synchronization between RDS and ElastiCache"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 4,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Cache invalidation / read-through from RDS"
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 5,
+      "seq": "5a",
+      "type": "data",
+      "notes": "Lambda invokes/interacts with tasks in ECS Fargate"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 5,
+      "seq": "5b",
+      "type": "data",
+      "notes": "ECS Fargate triggers or interacts with Lambda"
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 6,
+      "seq": "6",
+      "type": "data",
+      "notes": "ECS Fargate sends metrics and logs to CloudWatch"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 7,
+      "seq": "7",
+      "type": "data",
+      "notes": "Lambda sends logs and execution metrics to CloudWatch"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 8,
+      "seq": "8",
+      "type": "data",
+      "notes": "ElastiCache sends performance metrics to CloudWatch"
+    }
+  ]
+}

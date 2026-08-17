@@ -1,0 +1,412 @@
+[
+  {
+    "start": 0.64,
+    "end": 2.4,
+    "text": "Hi, I'm Ganesh from AWS."
+  },
+  {
+    "start": 2.4,
+    "end": 5.2,
+    "text": "And I'm Daniel from CMD, and this is my architecture."
+  },
+  {
+    "start": 15.08,
+    "end": 18.0,
+    "text": "So today we are going to discuss about ONC International"
+  },
+  {
+    "start": 18.0,
+    "end": 20.64,
+    "text": "and their DUKC platform and the serverless architecture"
+  },
+  {
+    "start": 20.64,
+    "end": 21.48,
+    "text": "that's built."
+  },
+  {
+    "start": 21.48,
+    "end": 23.04,
+    "text": "Daniel, why don't you share some insights"
+  },
+  {
+    "start": 23.04,
+    "end": 24.68,
+    "text": "about this architecture and the use case"
+  },
+  {
+    "start": 24.68,
+    "end": 25.8,
+    "text": "that you're trying to implement?"
+  },
+  {
+    "start": 25.8,
+    "end": 29.36,
+    "text": "Yep, so the DUKC platform helps ships and aid ships"
+  },
+  {
+    "start": 29.36,
+    "end": 33.24,
+    "text": "to get into port based on reading environment sensors"
+  },
+  {
+    "start": 33.24,
+    "end": 34.6,
+    "text": "and then processing that data."
+  },
+  {
+    "start": 34.6,
+    "end": 37.4,
+    "text": "So the port sensors, there could be various ones"
+  },
+  {
+    "start": 37.4,
+    "end": 40.28,
+    "text": "like wind, wave, and tide, and they send messages back"
+  },
+  {
+    "start": 40.28,
+    "end": 43.64,
+    "text": "to Amazon via the MSK service."
+  },
+  {
+    "start": 43.64,
+    "end": 46.7,
+    "text": "So we had sensors all over the port coming in"
+  },
+  {
+    "start": 46.7,
+    "end": 48.44,
+    "text": "and sending messages to MSK."
+  },
+  {
+    "start": 48.44,
+    "end": 52.120000000000005,
+    "text": "So assuming that you are giving the pathway to the vessels,"
+  },
+  {
+    "start": 52.120000000000005,
+    "end": 54.0,
+    "text": "this has life-saving benefits, right?"
+  },
+  {
+    "start": 54.0,
+    "end": 56.6,
+    "text": "So why don't you talk about how the data is ingested,"
+  },
+  {
+    "start": 56.6,
+    "end": 58.64,
+    "text": "where is it stored, and so on and so forth?"
+  },
+  {
+    "start": 58.64,
+    "end": 62.52,
+    "text": "Yep. So from MSK, we then use event source mapping,"
+  },
+  {
+    "start": 62.52,
+    "end": 64.88,
+    "text": "and Lambda would read those messages."
+  },
+  {
+    "start": 64.88,
+    "end": 68.68,
+    "text": "That would then process them and put them into DynamoDB"
+  },
+  {
+    "start": 68.68,
+    "end": 70.56,
+    "text": "as the hot storage location."
+  },
+  {
+    "start": 70.56,
+    "end": 74.72,
+    "text": "From there, DynamoDB would utilize streams,"
+  },
+  {
+    "start": 74.72,
+    "end": 77.16,
+    "text": "and streams would send it to Firehose,"
+  },
+  {
+    "start": 77.16,
+    "end": 80.36,
+    "text": "and then in parquet format, store the messages into a bucket"
+  },
+  {
+    "start": 80.36,
+    "end": 81.76,
+    "text": "for historical reasons."
+  },
+  {
+    "start": 81.76,
+    "end": 84.76,
+    "text": "So you mentioned about DynamoDB as the hot storage, right?"
+  },
+  {
+    "start": 84.76,
+    "end": 86.64,
+    "text": "Are you archiving the data out of it?"
+  },
+  {
+    "start": 86.64,
+    "end": 89.64,
+    "text": "Yeah. We're using, by moving the data across,"
+  },
+  {
+    "start": 89.64,
+    "end": 93.64,
+    "text": "we have a time to live then on any data that resides in DynamoDB."
+  },
+  {
+    "start": 93.64,
+    "end": 95.80000000000001,
+    "text": "So they, at the moment, retain it for three months,"
+  },
+  {
+    "start": 95.80000000000001,
+    "end": 97.68,
+    "text": "and that's good enough for them to use."
+  },
+  {
+    "start": 97.68,
+    "end": 101.36000000000001,
+    "text": "So when they need to query it, it can go quickly into DynamoDB."
+  },
+  {
+    "start": 101.36000000000001,
+    "end": 102.92,
+    "text": "If they need to go over that period,"
+  },
+  {
+    "start": 102.92,
+    "end": 106.28,
+    "text": "they'll then look at going to the historical bucket with S3."
+  },
+  {
+    "start": 106.28,
+    "end": 108.88,
+    "text": "Got it. So you're expiring the data in DynamoDB"
+  },
+  {
+    "start": 108.88,
+    "end": 111.52,
+    "text": "and then querying this Amazon S3 bucket, right?"
+  },
+  {
+    "start": 111.52,
+    "end": 112.16,
+    "text": "Yes."
+  },
+  {
+    "start": 112.16,
+    "end": 116.16,
+    "text": "So once Kinesis processes the data and stores in this historical bucket,"
+  },
+  {
+    "start": 116.16,
+    "end": 120.16,
+    "text": "how is the user UX flowing across here?"
+  },
+  {
+    "start": 120.16,
+    "end": 123.92,
+    "text": "So there's either users or platform that will want to request the data."
+  },
+  {
+    "start": 123.92,
+    "end": 126.32,
+    "text": "So they'll come in via API Gateway."
+  },
+  {
+    "start": 126.32,
+    "end": 128.84,
+    "text": "API Gateway, in turn, will call Lambda,"
+  },
+  {
+    "start": 128.84,
+    "end": 130.64,
+    "text": "and then Lambda has a decision point,"
+  },
+  {
+    "start": 130.64,
+    "end": 132.48,
+    "text": "whether it goes to DynamoDB,"
+  },
+  {
+    "start": 132.48,
+    "end": 136.24,
+    "text": "or we'll use Athena to then go to the bucket to query that data."
+  },
+  {
+    "start": 136.24,
+    "end": 140.08,
+    "text": "That decision point is based on what volume of data we're requesting"
+  },
+  {
+    "start": 140.08,
+    "end": 142.12,
+    "text": "and the age of the data it's requesting."
+  },
+  {
+    "start": 142.12,
+    "end": 145.32000000000002,
+    "text": "So it either goes to Dynamo or it goes to Athena."
+  },
+  {
+    "start": 146.72,
+    "end": 149.4,
+    "text": "And then from there, it will go to the bucket to request the data."
+  },
+  {
+    "start": 149.4,
+    "end": 151.60000000000002,
+    "text": "Now that we have this UX as well,"
+  },
+  {
+    "start": 151.60000000000002,
+    "end": 154.60000000000002,
+    "text": "can you also talk about the prediction layer, these three components?"
+  },
+  {
+    "start": 154.60000000000002,
+    "end": 157.48000000000002,
+    "text": "So they have a prediction service that's in a container."
+  },
+  {
+    "start": 157.48000000000002,
+    "end": 160.0,
+    "text": "That would utilize messages coming in."
+  },
+  {
+    "start": 160.0,
+    "end": 163.84,
+    "text": "So as the data comes in, it feeds into this particular service,"
+  },
+  {
+    "start": 163.84,
+    "end": 165.72,
+    "text": "and that would then do a prediction"
+  },
+  {
+    "start": 165.72,
+    "end": 168.8,
+    "text": "and put it inside a bucket for other systems to use it."
+  },
+  {
+    "start": 168.8,
+    "end": 171.6,
+    "text": "So it would look and forecast up to two weeks worth."
+  },
+  {
+    "start": 171.6,
+    "end": 173.52,
+    "text": "So overall, this is a serverless architecture"
+  },
+  {
+    "start": 173.52,
+    "end": 175.8,
+    "text": "with some amount of event driven part to it."
+  },
+  {
+    "start": 175.8,
+    "end": 178.64,
+    "text": "Can you also talk about the business benefit"
+  },
+  {
+    "start": 178.64,
+    "end": 180.48,
+    "text": "that the customer was able to observe through this?"
+  },
+  {
+    "start": 180.48,
+    "end": 183.84,
+    "text": "So really, the use case was to get the speed of the system up."
+  },
+  {
+    "start": 183.84,
+    "end": 186.6,
+    "text": "So there was a 30 times increase,"
+  },
+  {
+    "start": 186.6,
+    "end": 190.2,
+    "text": "as well as a 10 to 15% saving in running."
+  },
+  {
+    "start": 190.2,
+    "end": 192.28,
+    "text": "And that was really the benefit they were after."
+  },
+  {
+    "start": 192.28,
+    "end": 195.07999999999998,
+    "text": "They were after the ability to scale quickly,"
+  },
+  {
+    "start": 195.07999999999998,
+    "end": 197.07999999999998,
+    "text": "as well as keep some data segregated"
+  },
+  {
+    "start": 197.07999999999998,
+    "end": 199.2,
+    "text": "between their different clients and different ports."
+  },
+  {
+    "start": 199.2,
+    "end": 201.28,
+    "text": "When you said 30% increase,"
+  },
+  {
+    "start": 201.28,
+    "end": 203.72,
+    "text": "was it increase in terms of data ingestion?"
+  },
+  {
+    "start": 203.72,
+    "end": 204.95999999999998,
+    "text": "Yes, 30 times increase."
+  },
+  {
+    "start": 204.95999999999998,
+    "end": 207.12,
+    "text": "So if they get a massive volume of data"
+  },
+  {
+    "start": 207.12,
+    "end": 211.07999999999998,
+    "text": "due to sensors going offline and then collating and sending them through,"
+  },
+  {
+    "start": 211.07999999999998,
+    "end": 213.07999999999998,
+    "text": "it would automatically scale to handle that"
+  },
+  {
+    "start": 213.07999999999998,
+    "end": 214.88,
+    "text": "and it could easily process the data."
+  },
+  {
+    "start": 214.88,
+    "end": 215.92,
+    "text": "Thank you so much, Daniel."
+  },
+  {
+    "start": 215.92,
+    "end": 218.07999999999998,
+    "text": "I think this was quite insightful."
+  },
+  {
+    "start": 218.07999999999998,
+    "end": 219.76,
+    "text": "Thank you all for joining in today."
+  },
+  {
+    "start": 219.76,
+    "end": 221.64,
+    "text": "Until next time, this is My Architecture."
+  }
+]

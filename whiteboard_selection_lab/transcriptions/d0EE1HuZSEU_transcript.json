@@ -1,0 +1,162 @@
+[
+  {
+    "start": 0.0,
+    "end": 12.0,
+    "text": "Welcome to This is My Architecture. My name is Peter. I'm here with Ryan from William Hill. Hi Ryan, good to have you here."
+  },
+  {
+    "start": 12.0,
+    "end": 13.0,
+    "text": "Thanks for having me."
+  },
+  {
+    "start": 13.0,
+    "end": 14.0,
+    "text": "Alright, so what do you guys do?"
+  },
+  {
+    "start": 14.0,
+    "end": 22.0,
+    "text": "So William Hill is one of the world's leading betting and gaming companies. We provide gaming applications for customers all around the world on many different platforms."
+  },
+  {
+    "start": 22.0,
+    "end": 34.0,
+    "text": "Alright, I know that you've been subject to a larger DDoS attack some time ago and you've decided to move your security posture into the cloud. What's the actual issue you've had to deal with?"
+  },
+  {
+    "start": 34.0,
+    "end": 47.0,
+    "text": "So in 2016 we were the victims of a major DDoS attack which utilized one of the largest botnets of the time, the Mirai botnet. And at its peak we were hit with over 177 gigabits a second which impacted our applications."
+  },
+  {
+    "start": 47.0,
+    "end": 53.0,
+    "text": "Alright, that's something. So you've chosen a couple of services. Let's talk through the architecture."
+  },
+  {
+    "start": 53.0,
+    "end": 65.0,
+    "text": "Sure, so in front of all of our applications we have CloudFront. And we use CloudFront's partner applications to mitigate against DDoS."
+  },
+  {
+    "start": 65.0,
+    "end": 87.0,
+    "text": "So we use Shield Advanced to be able to mitigate both layer 3 and layer 4 DDoS attempts. Things such as ACK floods or SYN floods. Also low complexity layer 7 attacks such as H2P floods."
+  },
+  {
+    "start": 87.0,
+    "end": 97.0,
+    "text": "For more complicated layer 7 attacks we use WAF where we can create filters to block more complicated attacks."
+  },
+  {
+    "start": 97.0,
+    "end": 108.0,
+    "text": "Alright, so use Shield Advanced to increase scale out to swallow the incoming flood and use WAF to make sure that you block. Now there's more to this. Talk us through."
+  },
+  {
+    "start": 108.0,
+    "end": 120.0,
+    "text": "Sure, so from CloudFront and the protection that's therein we send the traffic across to Route 53 where we have two separate Route 53 hosted zones."
+  },
+  {
+    "start": 120.0,
+    "end": 124.0,
+    "text": "One for traffic going to an ELB."
+  },
+  {
+    "start": 124.0,
+    "end": 147.0,
+    "text": "For traffic going to an ELB we just send non-sensitive traffic. But for more sensitive traffic we send the traffic across to an EC2 instance which hosts a F5 Big IP which is another form of WAF and that adds an extra layer of protection on top of the WAF we already have on CloudFront."
+  },
+  {
+    "start": 147.0,
+    "end": 156.0,
+    "text": "I see. So you do basically introduce another layer to make sure that you are able to tackle even more types of variations of attacks with F5 being involved here."
+  },
+  {
+    "start": 156.0,
+    "end": 162.0,
+    "text": "I see this is happening within a VPC. There's a segregation. What happens to the rest of the services?"
+  },
+  {
+    "start": 162.0,
+    "end": 176.0,
+    "text": "Yeah, so once the traffic goes through the VPC we send it across to a VPC peering which sends the traffic to one of our seven different channel accounts where our applications actually are."
+  },
+  {
+    "start": 176.0,
+    "end": 188.0,
+    "text": "So from the VPC peering we see it goes across to the VPCs in those accounts which allows developers to create applications with the DDoS protection already built in."
+  },
+  {
+    "start": 188.0,
+    "end": 201.0,
+    "text": "I see. So you do send filtered and non-filtered traffic down here to your cloud environment and there's on-prem involved as well. I see Direct Connect. How does that collaborate?"
+  },
+  {
+    "start": 201.0,
+    "end": 210.0,
+    "text": "Sure, yeah. So we're still in the process of migrating to the cloud so we have a number of applications that actually sit on our on-premise data centers."
+  },
+  {
+    "start": 210.0,
+    "end": 224.0,
+    "text": "So traffic from both EC2 instances and from the ELB go through to Direct Connect which then allows our customers traffic to go to our on-prem application servers."
+  },
+  {
+    "start": 224.0,
+    "end": 231.0,
+    "text": "All right. Okay. So we end with this part on-premise involved. But I see some more services. What about these?"
+  },
+  {
+    "start": 231.0,
+    "end": 240.0,
+    "text": "Sure. Yeah. So for an added layer of protection we send traffic. We send logs of our traffic from CloudFront over to an S3 bucket."
+  },
+  {
+    "start": 240.0,
+    "end": 257.0,
+    "text": "From there we then send the logs across to our on-premise analysis servers which use both proprietary and third-party analytics and equations to be able to identify further malicious traffic."
+  },
+  {
+    "start": 257.0,
+    "end": 267.0,
+    "text": "Once that traffic is identified, we then send the IP addresses back up to AWS and to this DynamoDB instance we see here."
+  },
+  {
+    "start": 267.0,
+    "end": 283.0,
+    "text": "And there's a...basically the IP addresses are added to a table within DynamoDB, both with an expiration date due to the nature of IP addresses and them changing constantly."
+  },
+  {
+    "start": 283.0,
+    "end": 294.0,
+    "text": "There is a Lambda function which then runs that inspects that table for any new entries or for any expired entries."
+  },
+  {
+    "start": 294.0,
+    "end": 300.0,
+    "text": "And then updates the WAF filters with those IP addresses."
+  },
+  {
+    "start": 300.0,
+    "end": 304.0,
+    "text": "So it looks like a continuous improvement flow to your WAF filters."
+  },
+  {
+    "start": 304.0,
+    "end": 312.0,
+    "text": "Utilize the Direct Connect connection with low latency and high bandwidth to make sure that you have no losses in terms of..."
+  },
+  {
+    "start": 312.0,
+    "end": 319.0,
+    "text": "...the WAF connection. And yeah. Thank you Ryan. Thanks for sharing this very interesting solution."
+  },
+  {
+    "start": 319.0,
+    "end": 322.0,
+    "text": "And thanks for watching. This is my architecture."
+  }
+]

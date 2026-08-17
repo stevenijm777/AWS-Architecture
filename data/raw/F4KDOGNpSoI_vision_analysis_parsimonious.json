@@ -1,0 +1,226 @@
+{
+  "step_by_step_reasoning": "The architecture shows two primary flows: a redirection path for end users scanning QR/NFC links, and an administration/analytics flow. In the redirection flow, Users request short URLs via CloudFront, which triggers Lambda@Edge to query DynamoDB for destination URLs. CloudFront logs are saved to an S3 bucket, processed by a Lambda function, streamed via Kinesis Data Firehose, and stored in a second S3 bucket. In the admin flow, Admins interact via API Gateway and Lambda, which manages permissions in Aurora RDS, updates short URLs in DynamoDB, and queries analytics using Athena. AWS Glue organizes and optimizes data stored in S3 for Athena queries.",
+  "graph": {
+    "name": "Pernod Ricard URL Shortener and Analytics Architecture",
+    "link": "",
+    "categories": "Serverless URL Shortener & Analytics",
+    "graph_usable": true,
+    "notes": "Global URL shortener using CloudFront, Lambda@Edge, and DynamoDB, with an ETL and analytics backend using Firehose, S3, Glue, and Athena."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Users",
+      "notes": "End users scanning QR codes or NFC tags on bottles"
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Global CDN entry point for short URL requests"
+    },
+    {
+      "id": "2",
+      "service": "LambdaAtEdge",
+      "name": "Lambda@Edge",
+      "notes": "Processes incoming requests globally at edge locations"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Global table storing short URL mappings"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "CloudFront Logs S3 Bucket",
+      "notes": "Stores raw access logs from CloudFront"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Log Processor Lambda",
+      "notes": "Enriches access logs with IP location and user agent data"
+    },
+    {
+      "id": "6",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Streams enriched log data to storage"
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Analytics S3 Bucket",
+      "notes": "Stores transformed logs for querying"
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyDeveloper",
+      "name": "Admin Users",
+      "notes": "Internal contributors managing short URLs and analytics"
+    },
+    {
+      "id": "9",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "REST API interface for admin management"
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Admin Backend Lambda",
+      "notes": "Handles user permissions, URL transformations, and queries"
+    },
+    {
+      "id": "11",
+      "service": "RDS",
+      "name": "Amazon Aurora RDS",
+      "notes": "Stores user permissions and application metadata"
+    },
+    {
+      "id": "12",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Executes interactive queries on transformed log data"
+    },
+    {
+      "id": "13",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Optimizes files in S3 for Athena query performance"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends short URL request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront triggers Lambda@Edge"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda@Edge queries DynamoDB for URL destination"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB returns destination URL"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront delivers logs to S3"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda processes raw logs"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda forwards enriched data to Firehose"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Firehose writes processed logs to S3"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Admin sends API requests"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway triggers backend Lambda"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda checks permissions in RDS"
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda manages short URL records in DynamoDB"
+    },
+    {
+      "source": "10",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda triggers Athena query for analytics"
+    },
+    {
+      "source": "12",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries data in S3 bucket"
+    },
+    {
+      "source": "7",
+      "target": "13",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Glue ingests data files from S3"
+    },
+    {
+      "source": "13",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue writes optimized files back to S3"
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "step_by_step_reasoning": "The architecture shows an ad tech user segmentation pipeline divided into INPUT (left) and OUTPUT (right) sections. Data originates from mobile, web, and server clients into an input EKS cluster, which sends logs via Fluentd to raw S3 storage. Lambda cleans raw logs into S3. Athena queries S3 and writes refined 'Gold Data' to a target S3 bucket. DynamoDB and Kinesis collect additional user attributes. On the output side, Admin and Ad Server interact with an evaluation EKS cluster, which queries metadata from RDS, uses Athena to query S3 Gold Data, and writes segment results to DynamoDB.",
+  "graph": {
+    "name": "Buzzvil User Segmentation Architecture",
+    "link": "",
+    "categories": "Ad Tech / Big Data & Analytics",
+    "graph_usable": true,
+    "notes": "User segmentation architecture processing high-volume ad targeting data using AWS EKS, S3, Athena, and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile / Web / Server Apps",
+      "notes": "Client data sources sending activity logs"
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "EKS Input Cluster",
+      "notes": "Receives user activity data via MSA"
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Fluentd",
+      "notes": "Log collector sending logs to S3"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Extracts relevant user activity logs in batch"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Raw Bucket",
+      "notes": "Stores raw log files"
+    },
+    {
+      "id": "5",
+      "service": "Athena",
+      "name": "Athena Pre-processing",
+      "notes": "Enriches user activity with mapping data"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 Gold Data Bucket",
+      "notes": "Stores processed gold segment data"
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores user attribute data"
+    },
+    {
+      "id": "8",
+      "service": "Kinesis",
+      "name": "Kinesis Data Firehose",
+      "notes": "Streams attribute updates from DynamoDB Streams"
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyAgent",
+      "name": "Admin System",
+      "notes": "Advertisers defining target segment conditions"
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Ad Server",
+      "notes": "Fetches recommendations for targeting"
+    },
+    {
+      "id": "11",
+      "service": "EKS",
+      "name": "EKS Output / Evaluation Cluster",
+      "notes": "Runs evaluation jobs and builds queries"
+    },
+    {
+      "id": "12",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores segment metadata and rules"
+    },
+    {
+      "id": "13",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores generated segment target results"
+    },
+    {
+      "id": "14",
+      "service": "Athena",
+      "name": "Athena Query Engine",
+      "notes": "Executes built segment queries on Gold Data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends activity data to EKS"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Logs collected by Fluentd"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fluentd dumps logs to S3"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Batch filters required activity into S3"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena reads raw data for enrichment"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Athena outputs Gold Data to S3"
+    },
+    {
+      "source": "9",
+      "target": "12",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Admin saves segment conditions to RDS"
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "Admin triggers segment evaluation"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ad Server requests segment lookup"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 5,
+      "seq": "2",
+      "type": "data",
+      "notes": "Reads segment specs from RDS"
+    },
+    {
+      "source": "11",
+      "target": "14",
+      "flow_id": 5,
+      "seq": "3",
+      "type": "data",
+      "notes": "Executes evaluation query using Athena"
+    },
+    {
+      "source": "14",
+      "target": "6",
+      "flow_id": 5,
+      "seq": "4",
+      "type": "data",
+      "notes": "Athena queries Gold Data in S3"
+    },
+    {
+      "source": "11",
+      "target": "13",
+      "flow_id": 5,
+      "seq": "5",
+      "type": "data",
+      "notes": "Stores targeted segment outputs in DynamoDB"
+    }
+  ]
+}

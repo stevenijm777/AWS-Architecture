@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "The architecture diagram is divided into two parts by a vertical dashed line. On the left side (order processing), Shopify order events flow from an external source into EventBridge, through Kinesis Data Firehose, to S3. S3 triggers a Lambda function to store metadata in DynamoDB. On the right side (call personalization), incoming calls hit Connect, which checks caller country with Pinpoint, queries customer metadata from DynamoDB via Lambda, and interacts with Lex to identify contact intent before routing.",
+  "graph": {
+    "name": "Traeger Provisions Personalized Customer Support Architecture",
+    "link": "",
+    "categories": "Customer Support & Data Ingestion",
+    "graph_usable": true,
+    "notes": "Architecture for personalizing customer support using real-time order data and voice bots."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Shopify",
+      "notes": "E-commerce platform sending order events."
+    },
+    {
+      "id": "1",
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Ingests incoming order events."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Streams order data to S3."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores raw order data."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Processes order metadata and executes queries."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores customer order metadata."
+    },
+    {
+      "id": "6",
+      "service": "Connect",
+      "name": "Amazon Connect",
+      "notes": "Handles contact center call routing."
+    },
+    {
+      "id": "7",
+      "service": "Pinpoint",
+      "name": "Amazon Pinpoint",
+      "notes": "Checks caller country for localization."
+    },
+    {
+      "id": "8",
+      "service": "Lex",
+      "name": "Amazon Lex",
+      "notes": "Conversational AI bot to capture caller intent."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends order placement event."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Forwards event stream."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers order data to bucket."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Triggers Lambda function on object creation."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes customer order metadata."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Checks caller country and language options."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers Lambda to look up phone number."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queries customer profile by phone number."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns metadata match."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns customer details to Connect."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Invokes Lex bot to ask call reason."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns contact reason to Connect."
+    }
+  ]
+}

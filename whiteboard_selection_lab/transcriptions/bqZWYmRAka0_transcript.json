@@ -1,0 +1,352 @@
+[
+  {
+    "start": 0.0,
+    "end": 3.0,
+    "text": "Hi, I'm Gerardo from AWS."
+  },
+  {
+    "start": 3.0,
+    "end": 5.0,
+    "text": "Hi, I'm Chin-Jun from DBS."
+  },
+  {
+    "start": 5.0,
+    "end": 7.0,
+    "text": "This is my architecture."
+  },
+  {
+    "start": 16.0,
+    "end": 20.0,
+    "text": "Today we're going to talk about DBS Bank's quantitative pricing engine."
+  },
+  {
+    "start": 20.0,
+    "end": 22.0,
+    "text": "What can you tell me about this application?"
+  },
+  {
+    "start": 22.0,
+    "end": 25.0,
+    "text": "DBS is one of the largest banks in Asia."
+  },
+  {
+    "start": 25.0,
+    "end": 29.0,
+    "text": "We are providing a variety of financial services to our customers,"
+  },
+  {
+    "start": 29.0,
+    "end": 31.0,
+    "text": "including trading companies."
+  },
+  {
+    "start": 31.0,
+    "end": 34.0,
+    "text": "Quantitative pricing engine is one of the systems that we build in-house"
+  },
+  {
+    "start": 34.0,
+    "end": 40.0,
+    "text": "on top of AWS services for processing highly dynamic workload."
+  },
+  {
+    "start": 40.0,
+    "end": 42.0,
+    "text": "Okay, let's dive in."
+  },
+  {
+    "start": 42.0,
+    "end": 45.0,
+    "text": "So how do the traders interact with the application?"
+  },
+  {
+    "start": 45.0,
+    "end": 51.0,
+    "text": "The traders will initially trigger the pricing from DBS internal trading platform,"
+  },
+  {
+    "start": 51.0,
+    "end": 55.0,
+    "text": "taking the external data to the application load balancer."
+  },
+  {
+    "start": 55.0,
+    "end": 58.0,
+    "text": "Application load balancer will further traffic into pricing engine."
+  },
+  {
+    "start": 58.0,
+    "end": 66.0,
+    "text": "Pricing engine will store the accurate payload into Redis and get that job ID stored in the task queue."
+  },
+  {
+    "start": 66.0,
+    "end": 71.0,
+    "text": "I'm guessing a subset of that market data gets into the payload."
+  },
+  {
+    "start": 71.0,
+    "end": 74.0,
+    "text": "And then are these queues being pulled by the workers?"
+  },
+  {
+    "start": 74.0,
+    "end": 78.0,
+    "text": "The trade information as well as market data will store in the payload."
+  },
+  {
+    "start": 78.0,
+    "end": 80.0,
+    "text": "The worker will monitor the task queue."
+  },
+  {
+    "start": 80.0,
+    "end": 88.0,
+    "text": "The CPU worker once found the task queue has some item, will pop one and put into the processing queue."
+  },
+  {
+    "start": 88.0,
+    "end": 96.0,
+    "text": "And then the pricing worker will retrieve that payload from Redis and get that payload,"
+  },
+  {
+    "start": 96.0,
+    "end": 101.0,
+    "text": "go through a mathematical computation and produce the result and store back the result into Redis."
+  },
+  {
+    "start": 101.0,
+    "end": 105.0,
+    "text": "I can see you have two different types of pricing workers. Why is that?"
+  },
+  {
+    "start": 105.0,
+    "end": 110.0,
+    "text": "Some of the job itself have high computation power intensity."
+  },
+  {
+    "start": 110.0,
+    "end": 118.0,
+    "text": "So we are actually leveraging the GPU instances to do acceleration in case CPU is not able to process in time."
+  },
+  {
+    "start": 118.0,
+    "end": 130.0,
+    "text": "So similarly, the GPU worker will monitor the task queue for dedicated GPU task queue and pop one into the GPU processing queue."
+  },
+  {
+    "start": 130.0,
+    "end": 139.0,
+    "text": "And retrieve the payload from the Redis and similarly to the computation and save the result back into Redis."
+  },
+  {
+    "start": 139.0,
+    "end": 144.0,
+    "text": "How Sparky are these workloads? Are they on auto scaling groups?"
+  },
+  {
+    "start": 144.0,
+    "end": 146.0,
+    "text": "Yes, they are on auto scaling group."
+  },
+  {
+    "start": 146.0,
+    "end": 154.0,
+    "text": "The pricing engine, the worker for two CPU and GPU cluster, they are on different auto scaling group."
+  },
+  {
+    "start": 154.0,
+    "end": 159.0,
+    "text": "And sometimes they can even scale up to 5,000 workers."
+  },
+  {
+    "start": 159.0,
+    "end": 160.0,
+    "text": "That's a lot of workers."
+  },
+  {
+    "start": 160.0,
+    "end": 161.0,
+    "text": "Yes, they are."
+  },
+  {
+    "start": 161.0,
+    "end": 163.0,
+    "text": "How do you optimize cost of that?"
+  },
+  {
+    "start": 163.0,
+    "end": 170.0,
+    "text": "One way is actually by auto scaling them down in case there's not much job per se."
+  },
+  {
+    "start": 170.0,
+    "end": 174.0,
+    "text": "On top of that, we also leverage the spot instance to reduce cost."
+  },
+  {
+    "start": 174.0,
+    "end": 175.0,
+    "text": "All right, and what happens next?"
+  },
+  {
+    "start": 175.0,
+    "end": 180.0,
+    "text": "So after the results being stored in the payload, how does that get back to the traders?"
+  },
+  {
+    "start": 180.0,
+    "end": 182.0,
+    "text": "Yeah, that's a very good question."
+  },
+  {
+    "start": 182.0,
+    "end": 185.0,
+    "text": "We have two mechanisms to get the result back into traders."
+  },
+  {
+    "start": 185.0,
+    "end": 191.0,
+    "text": "One is the pricing engine would do a priority pooling from Redis to see if the result is available."
+  },
+  {
+    "start": 191.0,
+    "end": 200.0,
+    "text": "On the second approach, we actually trigger a result available from the worker and publish in the PubSub channel."
+  },
+  {
+    "start": 200.0,
+    "end": 210.0,
+    "text": "Then the PubSub channel will get notified to the pricing engine and the pricing engine will return that result back to the traders."
+  },
+  {
+    "start": 210.0,
+    "end": 215.0,
+    "text": "Can you tell me why you're using Elastic Edge for Redis for all of this functionality?"
+  },
+  {
+    "start": 215.0,
+    "end": 223.0,
+    "text": "Yeah, the Redis was picked the fundamental reason because it's performance in terms of saving as well as retrieving the data."
+  },
+  {
+    "start": 223.0,
+    "end": 227.0,
+    "text": "On top of that, it's providing the PubSub feature which is add-on."
+  },
+  {
+    "start": 227.0,
+    "end": 230.0,
+    "text": "And we just leverage that to improve the performance as well."
+  },
+  {
+    "start": 230.0,
+    "end": 235.0,
+    "text": "And why using PubSub for this final step instead of just pulling a queue?"
+  },
+  {
+    "start": 235.0,
+    "end": 244.0,
+    "text": "So pulling a queue may have a certain lag because even talk about 100 milliseconds or tens of milliseconds, that's still a gap."
+  },
+  {
+    "start": 244.0,
+    "end": 249.0,
+    "text": "So instead of doing that, the worker can just publish saying, hey, my result is available."
+  },
+  {
+    "start": 249.0,
+    "end": 252.0,
+    "text": "Then the pricing engine will pick up from there."
+  },
+  {
+    "start": 252.0,
+    "end": 253.0,
+    "text": "Right."
+  },
+  {
+    "start": 253.0,
+    "end": 257.0,
+    "text": "So I can see how all of this architecture is being optimized for speed."
+  },
+  {
+    "start": 257.0,
+    "end": 258.0,
+    "text": "Yes."
+  },
+  {
+    "start": 258.0,
+    "end": 262.0,
+    "text": "And I'm presuming those pricing requests from traders are quite time sensitive sometimes?"
+  },
+  {
+    "start": 262.0,
+    "end": 263.0,
+    "text": "Yes, they are."
+  },
+  {
+    "start": 263.0,
+    "end": 270.0,
+    "text": "The trader are actually expecting the pricing for ad hoc pricing to be near real time."
+  },
+  {
+    "start": 270.0,
+    "end": 275.0,
+    "text": "So they are on the spot with pricing, expecting to come back to them immediately."
+  },
+  {
+    "start": 275.0,
+    "end": 281.0,
+    "text": "So previously we have this in the on-prime cluster, the pricing is actually ringing in two minutes."
+  },
+  {
+    "start": 281.0,
+    "end": 287.0,
+    "text": "Now with this new architecture, we actually reduce timing to nearly half a second."
+  },
+  {
+    "start": 287.0,
+    "end": 291.0,
+    "text": "So it's almost like 100 times improvement in terms of performance."
+  },
+  {
+    "start": 291.0,
+    "end": 293.0,
+    "text": "It's a massive performance boost."
+  },
+  {
+    "start": 293.0,
+    "end": 294.0,
+    "text": "Yes, it is."
+  },
+  {
+    "start": 294.0,
+    "end": 297.0,
+    "text": "Jinjun, thank you so much for sharing this architecture with us today."
+  },
+  {
+    "start": 297.0,
+    "end": 298.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 298.0,
+    "end": 300.0,
+    "text": "And thank you for watching This is My Architecture."
+  },
+  {
+    "start": 300.0,
+    "end": 301.0,
+    "text": "See you next time."
+  },
+  {
+    "start": 301.0,
+    "end": 302.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 302.0,
+    "end": 303.0,
+    "text": "Thank you."
+  }
+]

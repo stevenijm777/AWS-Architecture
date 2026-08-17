@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture displays two integration paths into Salesforce: a batch path on top and a real-time streaming path on the bottom. Expedia Group sends source data into an initial S3 bucket. Data flows through EC2 and Glue for transformation into CSV format stored in a secondary S3 bucket, then ingested into Salesforce. On the streaming path, real-time events pass from ECS to Aurora, through Lambda to SQS, and finally up to Salesforce.",
+  "graph": {
+    "name": "Expedia Group Batch and Real-Time Integration to Salesforce",
+    "link": "",
+    "categories": "Data Processing, Batch & Real-time Integration",
+    "graph_usable": true,
+    "notes": "Consists of daily batch S3/Glue/EC2 processing and real-time ECS/Aurora/Lambda/SQS streaming to Salesforce."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Expedia group",
+      "notes": "Source systems providing booking and partner data."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Data ingestion layer for heterogeneous file formats."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Custom transformation handling complex files."
+    },
+    {
+      "id": "3",
+      "service": "Glue",
+      "name": "GLUE",
+      "notes": "Serverless ETL processing engine."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (CSV)",
+      "notes": "Transformed data formatted in CSV for Salesforce."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs Kafka consumer to process real-time streaming events."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Stores aggregated streaming data."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Processes real-time events into queued messages."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers queued messages prior to Salesforce ingestion."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Salesforce",
+      "notes": "Target system running Salesforce Einstein Analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Daily batch data ingestion into S3."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1a",
+      "type": "data",
+      "notes": "Raw data passed to EC2 for processing."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1b",
+      "type": "data",
+      "notes": "Raw data passed to Glue for ETL."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Processed CSV output sent to target S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Glue transformed CSV output sent to target S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Batch CSV datasets loaded into Salesforce."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Real-time stream written to Aurora database."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Aurora data consumed by Lambda function."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queues formatted messages to SQS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Streaming events pushed from SQS into Salesforce."
+    }
+  ]
+}

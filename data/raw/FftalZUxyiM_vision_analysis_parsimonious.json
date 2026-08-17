@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Analyze Whiteboard Architecture: Identified 8 distinct service nodes drawn on the board organized in three functional tiers. Top tier: Landing S3 bucket, validation Lambda, staging S3 bucket. Middle tier: ingestion Lambda and DynamoDB. Bottom tier: Step Functions and Neptune graph database, both feeding into an API Gateway on the right.\n2. Ignore Floating Text: 'SSFF SAP' is handwritten text above the first S3 bucket without a bounding box/icon and is excluded per Rule 3.\n3. Identify Edges: Arrow from S3 (landing) to Lambda (validation); arrow from Lambda (validation) to S3 (staging); arrow from S3 (staging) to Lambda (ingestion); arrow from Lambda (ingestion) to DynamoDB; arrow from Step Functions to Neptune ('NODE REL LOAD'); arrow from DynamoDB to API Gateway; arrow from Neptune to API Gateway.\n4. Schema Mapping: Ensure standard AWS service names (S3, Lambda, DynamoDB, StepFunctions, Neptune, ApiGateway) and sequence flows starting from ingestion to API serving.",
+  "graph": {
+    "name": "Cepsa Data Lake and Graph DB Architecture for Talent Search",
+    "link": "",
+    "categories": "Data Analytics & Graph Database",
+    "graph_usable": true,
+    "notes": "Data architecture using S3, Lambda, DynamoDB, Step Functions, Neptune, and API Gateway to support internal talent search."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "Landing S3 Bucket",
+      "notes": "Receives CSV files containing employee data from SuccessFactors and SAP"
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Validation Lambda",
+      "notes": "Validates schema and structure of incoming CSV files"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Staging S3 Bucket",
+      "notes": "Stores validated files ready for consumption"
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Loader Lambda",
+      "notes": "Triggered on staging bucket upload to load structured data into DynamoDB"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Key-value store containing structured employee profile data"
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates creating node files, relationship files, and loading data into Neptune"
+    },
+    {
+      "id": "6",
+      "service": "Neptune",
+      "name": "Neptune",
+      "notes": "Graph database modeling relationships between employees, skills, categories, and roles"
+    },
+    {
+      "id": "7",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Exposes endpoints for the Node/React web application used by employees and managers"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "File arrival in landing bucket triggers validation Lambda"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Validated files written to staging bucket"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Staged file triggers loading Lambda"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda populates DynamoDB with structured employee data"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Step Functions generates nodes and relationships to load into Neptune graph"
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "DynamoDB data consumed through API Gateway"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Neptune graph queries served to users/managers via API Gateway"
+    }
+  ]
+}

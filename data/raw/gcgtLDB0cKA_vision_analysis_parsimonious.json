@@ -1,0 +1,188 @@
+{
+  "step_by_step_reasoning": "The architecture shows an IoT data ingestion and query platform built on AWS.\n1. 'Port Sensors' send streaming sensor data to 'Amazon Managed Streaming for Apache Kafka' (MSK).\n2. 'AWS Lambda function' reads from MSK and writes hot data into 'DynamoDB Table'.\n3. 'DynamoDB Stream' captures changes from 'DynamoDB Table' and passes them to 'Amazon Kinesis Data Firehose'.\n4. 'Amazon Kinesis Data Firehose' archives historical data into 'Amazon S3 Bucket (Historical)' in Parquet format.\n5. 'Users' request data via 'Amazon API Gateway', which triggers a second 'AWS Lambda function'.\n6. This Lambda function queries either 'DynamoDB Table' for recent hot data or uses 'Amazon Athena' to query 'Amazon S3 Bucket (Historical)' for older data.\n7. A containerized prediction service running in 'Amazon Elastic Container Service (Amazon ECS)' produces forecast data and stores it in 'Amazon S3 Bucket (Predictions)'.",
+  "graph": {
+    "name": "OMC International DUKC Platform Serverless Architecture",
+    "link": "",
+    "categories": "IoT, Serverless, Data Analytics",
+    "graph_usable": true,
+    "notes": "The architecture processes port sensor data for vessel routing, supporting both real-time querying via DynamoDB and historical querying via Athena and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "Port Sensors",
+      "notes": "Environmental sensors for wind, wave, and tide"
+    },
+    {
+      "id": "1",
+      "service": "MSK",
+      "name": "Amazon Managed Streaming for Apache Kafka",
+      "notes": "Ingests streaming data from port sensors"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AWS Lambda function",
+      "notes": "Event source mapping processes MSK messages"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB Table",
+      "notes": "Hot storage location with TTL set for retention"
+    },
+    {
+      "id": "4",
+      "service": "DynamoDBStream",
+      "name": "DynamoDB Stream",
+      "notes": "Captures table updates for archival pipeline"
+    },
+    {
+      "id": "5",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose",
+      "notes": "Converts messages to Parquet format and delivers to S3"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Amazon S3 Bucket (Historical)",
+      "notes": "Long-term historical data storage"
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "Users",
+      "notes": "End-users or external systems requesting port data"
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Entry point for user data requests"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "AWS Lambda function",
+      "notes": "Decision logic function routing requests to DynamoDB or Athena"
+    },
+    {
+      "id": "10",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Interactive query engine for S3 historical data"
+    },
+    {
+      "id": "11",
+      "service": "S3",
+      "name": "Amazon S3 Bucket (Predictions)",
+      "notes": "Stores output from prediction service"
+    },
+    {
+      "id": "12",
+      "service": "ECS",
+      "name": "Amazon Elastic Container Service (Amazon ECS)",
+      "notes": "Runs prediction container service forecasting up to 2 weeks"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Port sensors send messages to MSK"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda reads messages from MSK via event source mapping"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda puts processed data into DynamoDB table"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB streams table changes"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Streams pass data to Kinesis Data Firehose"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Firehose writes parquet formatted historical data into S3 bucket"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Users make requests via API Gateway"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway calls query Lambda function"
+    },
+    {
+      "source": "9",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2a",
+      "type": "data",
+      "notes": "Lambda queries DynamoDB directly for recent/hot data"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Lambda calls Athena to query older/historical data"
+    },
+    {
+      "source": "10",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Athena queries historical S3 bucket"
+    },
+    {
+      "source": "12",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "ECS prediction service writes forecasts to predictions S3 bucket"
+    }
+  ]
+}

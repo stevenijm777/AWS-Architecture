@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "We identify nodes visually from the whiteboard: SQS, Lambda, DynamoDB, Step Functions, Neptune, Gremlin (mapped as ThirdParty), S3, and Glue. We then map the drawn arrows to sequential flow edges: SQS triggers Lambda, Lambda interacts bidirectionally with DynamoDB to retrieve configurations, Step Functions interact bidirectionally with DynamoDB to read and write status, Step Functions trigger and scale Neptune, Gremlin executes bidirectional queries on Neptune, Gremlin exports results to S3, and S3 catalogs data to Glue.",
+  "graph": {
+    "name": "HomeSite Insurance Graph-Based User Relationship Pipeline",
+    "link": "https://www.youtube.com/watch?v=Fst6vA28Nco",
+    "categories": "Analytics, Databases",
+    "graph_usable": true,
+    "notes": "Serverless pipeline orchestrating ingestion of customer interactions into Amazon Neptune to build a property graph, with results exported to S3 and cataloged via Glue."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Receives events from upstream pipelines to orchestrate stages."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Job Initiator Lambda",
+      "notes": "Triggered by SQS to retrieve configuration and initiate orchestration."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores pipeline configurations and execution exit status."
+    },
+    {
+      "id": "3",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Coordinates complex, long-running ETL processes and scales Neptune."
+    },
+    {
+      "id": "4",
+      "service": "Neptune",
+      "name": "Amazon Neptune",
+      "notes": "Graph database hosting vertices and edges of user relationships."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Gremlin",
+      "notes": "Traversal language and client used to query the Neptune graph."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores exported query results for cost-effective broad access."
+    },
+    {
+      "id": "7",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Catalogs the data stored in Amazon S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "SQS triggers Lambda"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queries pipeline definition"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB returns pipeline definition"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Step Function reads job state"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Step Function writes job execution status"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Step Function loads data and scales Neptune cluster"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Neptune returns graph results to Gremlin"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Gremlin executes queries against Neptune"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "data",
+      "notes": "Gremlin exports graph query output to S3"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "meta",
+      "notes": "S3 datasets are cataloged in AWS Glue"
+    }
+  ]
+}

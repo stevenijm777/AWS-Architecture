@@ -1,0 +1,197 @@
+[
+  {
+    "start": 0.0,
+    "end": 13.64,
+    "text": "Hello and welcome to another episode of This is My Architecture. I'm Todd and today I'm joined by"
+  },
+  {
+    "start": 13.64,
+    "end": 18.82,
+    "text": "Vlad from Capgemini. Vlad, thanks for joining us. Thank you for having me. Can you tell us a little"
+  },
+  {
+    "start": 18.82,
+    "end": 24.560000000000002,
+    "text": "bit about what Capgemini does? Capgemini is a big five consulting company and a global solution"
+  },
+  {
+    "start": 24.56,
+    "end": 30.0,
+    "text": "integrator. Okay, great. And today we'll be talking about a specific architecture for a life sciences"
+  },
+  {
+    "start": 30.0,
+    "end": 54.480000000000004,
+    "text": "client, is that right? Yes, absolutely. Okay, great. And I see kind of a dotted line here, so it looks like we have an on-prem part of the architecture versus an AWS part of the architecture. How does everything start? It's a life science project for migration from existing IBM NITISA services to AWS Redshift. Okay, and why was"
+  },
+  {
+    "start": 54.48,
+    "end": 78.0,
+    "text": "this project so important? Why are we doing this migration as an example? There are multiple factors affecting our decision. First of them was full scalability at each layer. Second was full dynamics from metadata perspective, as well as we were looking for managed retention periods for our storage. Okay, great. So fielded client requirements and built-in architecture accordingly."
+  },
+  {
+    "start": 78.0,
+    "end": 93.0,
+    "text": "I see a storage gateway that looks like it's on-prem. How is it getting data and where does the ingestion happen? Absolutely. Storage gateway is ingestion data from databases on-prem."
+  },
+  {
+    "start": 93.0,
+    "end": 121.0,
+    "text": "And when we started this project, first we created the architecture and deployed components. However, before you can ingest any kind of data, you have to do first seeding. Right? Sure. And what it means is that we requested AWS Snowball to get on our DC and ingest the data into the Snowball, move it into the S3s, and transform it into the transformation zone."
+  },
+  {
+    "start": 121.0,
+    "end": 138.0,
+    "text": "And that was our start for our full daily ingestion. Okay. Which is happening automatically from my storage gateway with NFS volumes via direct link into the S3s landing zones. We are using 210Gs."
+  },
+  {
+    "start": 138.0,
+    "end": 157.0,
+    "text": "And that connect to have white pipes. Okay, great. So the initial data from the on-premise source systems were via Snowball. You then went ahead and now you're leveraging storage gateway for all the remaining data. What's the type of volume that it runs on a daily basis here?"
+  },
+  {
+    "start": 157.0,
+    "end": 167.0,
+    "text": "It's a daily increment. It's 100 gigabytes. And historically, we are storing around 20 terabytes overall."
+  },
+  {
+    "start": 167.0,
+    "end": 178.0,
+    "text": "Okay. 100 gigabytes a day hits the lag, which is the two 10 gig direct connect aggregation, and all the data ends up in the landing zone in S3."
+  },
+  {
+    "start": 178.0,
+    "end": 182.0,
+    "text": "Absolutely. So what happens from the landing zone moving forward?"
+  },
+  {
+    "start": 182.0,
+    "end": 193.0,
+    "text": "Right. Once the data are ingested into the landing zone, we have RDS database in which we are storing all the metadata and all the transformation scripts."
+  },
+  {
+    "start": 193.0,
+    "end": 212.0,
+    "text": "And it's even based processing we are running here, which is ELT, Extraction and Loading and Transformation, which is the newer methodology for well-known ETL process, which we have a couple of pros."
+  },
+  {
+    "start": 212.0,
+    "end": 230.0,
+    "text": "One of them is basically time decrease. Okay, great. So I have two main things that are there, right? So one of them is RDS, storing all the metadata, which means, hey, RDS is really a very important and critical part of this architecture to work."
+  },
+  {
+    "start": 230.0,
+    "end": 239.0,
+    "text": "And then number two, it's really based off of the ELT process, which is the extraction, the loading, and transformation that happens."
+  },
+  {
+    "start": 239.0,
+    "end": 248.0,
+    "text": "Absolutely. So the whole process and all those pipelines are stored inside the metadata in RDS, which is deployed on Postgres database."
+  },
+  {
+    "start": 248.0,
+    "end": 256.0,
+    "text": "And one of the main reasons why we did it in Postgres was that in the future, we will continue to move it and migrate it into the Aurora."
+  },
+  {
+    "start": 256.0,
+    "end": 257.0,
+    "text": "Okay."
+  },
+  {
+    "start": 257.0,
+    "end": 266.0,
+    "text": "From processing perspective, we got ingested data into the landing zone, which is in real time. Everything is automatically synchronized into the landing zone."
+  },
+  {
+    "start": 266.0,
+    "end": 283.0,
+    "text": "Based on these scripts coming from RDS, which are driving quality cleansing and transformation, we are taking data from landing zone into the quality and cleansing processes, which are pushing them into the transformation bucket."
+  },
+  {
+    "start": 283.0,
+    "end": 291.0,
+    "text": "Okay. So these EC2 instances are picking up the scripts, they're performing the data quality and cleansing, and then they're storing that in a transformation bucket itself."
+  },
+  {
+    "start": 291.0,
+    "end": 292.0,
+    "text": "Absolutely."
+  },
+  {
+    "start": 292.0,
+    "end": 294.0,
+    "text": "From the transformation bucket, what's the next step?"
+  },
+  {
+    "start": 294.0,
+    "end": 302.0,
+    "text": "As the next step, transformation nodes are taking this data and transforming that into the Redshift as effects and dimensions."
+  },
+  {
+    "start": 302.0,
+    "end": 308.0,
+    "text": "In order to do that, you would need some type of schema already set within Redshift, right? So how do we make that happen?"
+  },
+  {
+    "start": 308.0,
+    "end": 323.0,
+    "text": "Absolutely. So before we started this transformation and before we even did first seeding, we used AWS schema conversion tool to mimic or replicate all the structures from the Netezza to the Redshift."
+  },
+  {
+    "start": 323.0,
+    "end": 331.0,
+    "text": "Okay. Great. So once it's in Redshift, the transformation happens. What happens next? How does the data get down to this publish bucket?"
+  },
+  {
+    "start": 331.0,
+    "end": 358.0,
+    "text": "Right. All the users are accessing Redshift via Redshift Spectrum. And so that's for ad hoc reports. But for daily processing, we are using the same Redshift Spectrum to publish data from Redshift directly to the publish bucket from which we can use them for daily dashboards."
+  },
+  {
+    "start": 358.0,
+    "end": 366.0,
+    "text": "Okay. So that's the why, right? Is the dashboards and being able to maybe essentially even query the S3 bucket to see all of that data that's sitting in there."
+  },
+  {
+    "start": 366.0,
+    "end": 379.0,
+    "text": "Yeah. Yeah. Absolutely. We are also using a bit sophisticated retention periods over the buckets. We have two days for landing zone because we essentially are always processing one day."
+  },
+  {
+    "start": 379.0,
+    "end": 397.0,
+    "text": "But it could be one plus one day if the previous day is not finished. Then we have one day in transformation. And we are using one year and one month of storage for publish. After that period, the data are moving to the glacier."
+  },
+  {
+    "start": 397.0,
+    "end": 411.0,
+    "text": "Okay. Great. So there's a retention plan that's already set for this type of architecture for the IBM Miteza migration over to Redshift. The metadata running in RDS is very important and a critical factor, as we discussed earlier, for the ELT process to happen."
+  },
+  {
+    "start": 411.0,
+    "end": 426.0,
+    "text": "Really like the ELT process and the modern alternative to ETL, especially with the time consideration that the data is readily available right away. Although maybe more complex, super cool and user friendly for developers and business users to access the data right away."
+  },
+  {
+    "start": 426.0,
+    "end": 439.0,
+    "text": "What about from a security perspective? I think that's really the last thing that I'm thinking of, especially if it's a life sciences customer. I think security immediately is the encryption. Is there encryption there? Is it happening at rest or in transit?"
+  },
+  {
+    "start": 439.0,
+    "end": 460.0,
+    "text": "Good question. So this whole architecture and deployment model is HIPAA compliant. Data and the rest are encrypted in buckets and on storage gateway layer with EAS256. And obviously we are using SSL security encryption over the direct connect."
+  },
+  {
+    "start": 460.0,
+    "end": 467.0,
+    "text": "Perfect. Sounds like a very HIPAA compliant type of architecture for the migration. So thanks a lot, Vlad. Really appreciate you joining us today."
+  },
+  {
+    "start": 467.0,
+    "end": 472.0,
+    "text": "Thank you. And thank you for joining us on This Is My Architecture."
+  }
+]
