@@ -1,118 +1,146 @@
 {
-  "step_by_step_reasoning": "The visual architecture depicts Edge Nodes (SuperNodes and Nodes) connecting to an Amazon EKS cluster and Amazon Kinesis Data Streams. EKS integrates with MongoDB for proximity clustering and Amazon DynamoDB for peer/profile metadata. For monitoring, Edge Nodes stream logs to Kinesis Data Streams, which feeds into Kinesis Data Firehose, archiving to Amazon S3. Snowflake queries S3 for real-time and long-term analytics.",
+  "step_by_step_reasoning": "The visual architecture shows edge nodes on the left communicating with Amazon EKS and Amazon Kinesis Data Streams. EKS integrates with MongoDB and Amazon DynamoDB. Kinesis Data Streams feeds into Kinesis Data Firehose, which outputs to Amazon S3. S3 is queried by Snowflake for analytics.",
   "graph": {
     "name": "Mimic Edge Engine Architecture",
     "link": "",
-    "categories": "IoT Edge Mesh & Analytics",
+    "categories": "",
     "graph_usable": true,
-    "notes": "Edge Engine architecture combining edge microservices, container management, and telemetry data streaming into S3 for Snowflake analytics."
+    "notes": "Architecture for Edge Engine microservices deployment, registration, storage, and telemetry analytics."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserCompanyEdge",
-      "name": "Edge Nodes (SuperNode / Node)",
-      "notes": "Runs Edge Engine microservices on devices like iOS and Android."
+      "name": "Supernode (SN)",
+      "notes": "Supernode handling discovery and registration"
     },
     {
       "id": "1",
-      "service": "EKS",
-      "name": "Amazon EKS",
-      "notes": "Handles node discovery and registration service (MDS)."
+      "service": "UserCompanyEdge",
+      "name": "Supernode (SN)",
+      "notes": "Supernode handling telemetry and cluster operations"
     },
     {
       "id": "2",
-      "service": "MongoDBAtlas",
-      "name": "MongoDB",
-      "notes": "Stores proximity cluster mapping."
+      "service": "UserCompanyEdge",
+      "name": "Node (N)",
+      "notes": "Edge node listening to nearby supernode"
     },
     {
       "id": "3",
-      "service": "DynamoDB",
-      "name": "Amazon DynamoDB",
-      "notes": "Stores profiles and hierarchical peer associations."
+      "service": "EKS",
+      "name": "Amazon EKS",
+      "notes": "Kubernetes cluster managing discovery and services"
     },
     {
       "id": "4",
-      "service": "KinesisDataStream",
-      "name": "Amazon Kinesis Data Streams",
-      "notes": "Ingests telemetry and logs from SuperNodes."
+      "service": "MongoDBAtlas",
+      "name": "MongoDB",
+      "notes": "Document store for proximity cluster definitions"
     },
     {
       "id": "5",
-      "service": "Firehose",
-      "name": "Amazon Kinesis Data Firehose",
-      "notes": "Delivers log streams to S3 storage."
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "NoSQL database for profiles and peer associations"
     },
     {
       "id": "6",
-      "service": "S3",
-      "name": "Amazon S3",
-      "notes": "Archives network log data."
+      "service": "KinesisDataStream",
+      "name": "Amazon Kinesis Data Streams",
+      "notes": "Ingests logs and telemetry from supernodes"
     },
     {
       "id": "7",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose",
+      "notes": "Buffers and delivers stream data to S3"
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Long-term archive for telemetry and log data"
+    },
+    {
+      "id": "9",
       "service": "ThirdParty",
       "name": "Snowflake",
-      "notes": "Queries data in S3 for long-term and real-time analytics."
+      "notes": "Data warehouse querying S3 for SQL analytics"
     }
   ],
   "edges": [
     {
-      "source": "0",
+      "source": "2",
       "target": "1",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "0",
       "type": "data",
-      "notes": "Edge node registers with discovery service on EKS."
+      "notes": "Node listens to and registers with Supernode"
     },
     {
-      "source": "1",
-      "target": "2",
+      "source": "0",
+      "target": "3",
       "flow_id": 1,
-      "seq": "2a",
+      "seq": "0",
       "type": "data",
-      "notes": "EKS registers proximity clustering data in MongoDB."
+      "notes": "Supernode registers with discovery service in EKS"
     },
     {
       "source": "1",
       "target": "3",
       "flow_id": 1,
-      "seq": "2b",
-      "type": "data",
-      "notes": "EKS manages profiles and associations in DynamoDB."
-    },
-    {
-      "source": "0",
-      "target": "4",
-      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "SuperNode streams API logs and telemetry to Kinesis Data Streams."
+      "notes": "Supernode registers new nodes with EKS"
     },
     {
-      "source": "4",
-      "target": "5",
-      "flow_id": 2,
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Data streams to Kinesis Data Firehose."
+      "notes": "Stores cluster proximity data in MongoDB"
     },
     {
-      "source": "5",
-      "target": "6",
-      "flow_id": 2,
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Firehose loads log data into S3."
+      "notes": "Stores profiles and hierarchical association in DynamoDB"
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reports logs and business metrics to Kinesis Data Streams"
     },
     {
       "source": "6",
       "target": "7",
       "flow_id": 2,
-      "seq": "4",
+      "seq": "1",
       "type": "data",
-      "notes": "Snowflake queries log data directly from S3."
+      "notes": "Streams data to Kinesis Firehose"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Delivers batch data to S3 for archive"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Snowflake queries archived data in S3"
     }
   ]
 }

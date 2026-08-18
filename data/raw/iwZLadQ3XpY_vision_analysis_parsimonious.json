@@ -1,90 +1,90 @@
 {
-  "step_by_step_reasoning": "Identified physical whiteboard nodes: Players, On-premises Game Servers, EKS, MSK regional buffer, S3 Delta Lake, and AWS Glue. Established sequential data flows from players through both the API (EKS) and local game servers (OnPremDC) into regional MSK, then written to S3. Glue is kept as a floating node with no visual connections as drawn.",
+  "step_by_step_reasoning": "The whiteboard shows a data ingestion architecture for Riot Games' HONO over IP system. On the left, a player/user icon splits into two flows: one to an Amazon EKS cluster and another to an On-Premises Data Center (building icon). Both the EKS cluster and the OnPremDC feed into Amazon MSK (Managed Streaming for Apache Kafka). Data from MSK then streams into Amazon S3. AWS Glue is drawn as an isolated icon at the bottom right without direct connected arrows.",
   "graph": {
-    "name": "Riot Games - HONO over IP Data Ingest System",
-    "link": "https://www.youtube.com/watch?v=Fj-P38-0S4Y",
-    "categories": "Game Tech, Analytics & Data Lakes",
+    "name": "Riot Games - HONO over IP Data Ingest Architecture",
+    "link": "",
+    "categories": "Analytics",
     "graph_usable": true,
-    "notes": "Whiteboard details ingest architecture for League of Legends, processing 8TB/day at peaks of over 500k events/sec using MSK and S3."
+    "notes": "Data ingestion pipeline for League of Legends game data."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWebMobile",
-      "name": "Players",
-      "notes": "Millions of global players connecting to APIs and game servers."
+      "name": "Players / Game Clients",
+      "notes": "Players connecting globally via game client"
     },
     {
       "id": "1",
-      "service": "EKS",
-      "name": "EKS API",
-      "notes": "Handles incoming client API requests and game telemetry."
+      "service": "OnPremDC",
+      "name": "Game Servers / Data Center",
+      "notes": "On-premise game servers running local Kafka clusters with MirrorMaker"
     },
     {
       "id": "2",
-      "service": "OnPremDC",
-      "name": "Local Game Servers",
-      "notes": "Game data centers buffering data locally in Kafka."
+      "service": "EKS",
+      "name": "EKS API",
+      "notes": "API service running in Elastic Kubernetes Service"
     },
     {
       "id": "3",
       "service": "MSK",
-      "name": "Amazon MSK",
-      "notes": "Regional buffering layer managing ingestion peaks."
+      "name": "Regional MSK Clusters",
+      "notes": "Amazon Managed Streaming for Apache Kafka for regional data buffering"
     },
     {
       "id": "4",
       "service": "S3",
-      "name": "Amazon S3",
-      "notes": "Delta Lake data store written to via Spark streaming."
+      "name": "Delta Lake in S3",
+      "notes": "Data lake storage for Delta Lake"
     },
     {
       "id": "5",
       "service": "Glue",
-      "name": "AWS Glue",
-      "notes": "Acts as the logical metastore and access control layer."
+      "name": "Glue Data Catalog",
+      "notes": "Meta store and permissions layer"
     }
   ],
   "edges": [
     {
       "source": "0",
-      "target": "1",
-      "flow_id": 1,
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Game clients send API requests to EKS"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Players interact with game APIs hosted in EKS."
+      "notes": "EKS streams event data into regional MSK clusters"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Spark streaming writes data from MSK to S3 Delta Lake"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Players connect to regional game servers"
     },
     {
       "source": "1",
       "target": "3",
       "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "Telemetry data is routed from EKS to regional MSK."
-    },
-    {
-      "source": "0",
-      "target": "2",
-      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Players connect directly to on-prem game servers."
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "MirrorMaker replicates local data to regional MSK clusters."
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Spark jobs streaming data from MSK to S3."
+      "notes": "MirrorMaker replicates local Kafka data to regional MSK"
     }
   ]
 }

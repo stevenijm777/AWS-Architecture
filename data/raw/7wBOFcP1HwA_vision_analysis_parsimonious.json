@@ -1,224 +1,137 @@
 {
-  "step_by_step_reasoning": "The analysis began by identifying all distinct visual components on the whiteboard diagram, matching them to exact AWS service names or predefined external actors. The 'USER' icon was mapped to 'UserConsumerWebMobile'. 'S3', 'CloudFront', 'Lambda', 'EKS', 'RDS', and 'CloudWatch' were directly identified from their icons and labels. The 'Load Balancer' icon, though generically labeled, was mapped to the AWS service 'ELB'. The 'Legacy' box, visually depicting EC2 instances and explicitly mentioned in the transcript as 'hosted on EC2', was mapped to 'EC2' (named 'Legacy EC2'). Another distinct 'EC2' icon, connected to Lambda and CloudWatch, was added as a separate 'EC2' node (named 'EC2'). The 'MONGO/KAFKA' label and icon, representing non-AWS data services, were mapped to 'ThirdParty' as a managed technology. Subsequently, all directional arrows on the whiteboard were traced to establish connections (edges), assigning sequential flow IDs and step numbers. Implied return paths essential for synchronous data flow (e.g., S3 serving content back to CloudFront, databases returning data) were also included. Monitoring connections to CloudWatch were categorized as 'meta' type.",
-  "graph": {
-    "name": "Siera Group Architecture",
-    "link": "",
-    "categories": "Web Application, Microservices, Hybrid",
-    "graph_usable": true,
-    "notes": "Architecture for Siera Group's travel platform, managing high request rates (approximately 300,000 requests per minute) with a hybrid approach transitioning from a monolithic legacy system to a microservices architecture on AWS."
-  },
-  "nodes": [
-    {
-      "id": "0",
-      "service": "UserConsumerWebMobile",
-      "name": "User",
-      "notes": "Customers making requests to the platform, referred to as 'user' in the diagram. Handles approximately 300,000 requests per minute."
-    },
-    {
-      "id": "1",
-      "service": "CloudFront",
-      "name": "CloudFront",
-      "notes": "Amazon CloudFront Content Delivery Network (CDN) used to serve static content and distribute incoming requests efficiently."
-    },
-    {
-      "id": "2",
-      "service": "S3",
-      "name": "S3",
-      "notes": "Amazon S3 used for cost-efficient storage of static content, images, 3D images, and videos."
-    },
-    {
-      "id": "3",
-      "service": "Lambda",
-      "name": "Lambda",
-      "notes": "AWS Lambda function assisting CloudFront in determining the origin region of traffic and routing requests to appropriate backend APIs (web or mobile)."
-    },
-    {
-      "id": "4",
-      "service": "ELB",
-      "name": "Load Balancer",
-      "notes": "A group of approximately 60 Load Balancers (Elastic Load Balancing) responsible for distributing incoming requests to either the legacy system or the microservices, ensuring resilience and scalability."
-    },
-    {
-      "id": "5",
-      "service": "EC2",
-      "name": "Legacy EC2",
-      "notes": "Represents the Legacy System, which is a monolithic application hosted on Amazon EC2 instances. It receives approximately 20% of the traffic from the Load Balancer."
-    },
-    {
-      "id": "6",
-      "service": "EKS",
-      "name": "EKS",
-      "notes": "Amazon Elastic Kubernetes Service (EKS) hosting the microservices architecture. It consists of approximately 250 microservices and over 1400 pods in production, handling more than 80% of the traffic."
-    },
-    {
-      "id": "7",
-      "service": "ThirdParty",
-      "name": "Mongo/Kafka",
-      "notes": "Non-SQL data services such as MongoDB and Apache Kafka, utilized by the microservices for specific functionalities and data storage requirements."
-    },
-    {
-      "id": "8",
-      "service": "RDS",
-      "name": "RDS",
-      "notes": "Amazon Relational Database Service (RDS) used for relational data storage, accessed by both microservices and legacy applications."
-    },
-    {
-      "id": "9",
-      "service": "EC2",
-      "name": "EC2",
-      "notes": "General Amazon EC2 instances, potentially for backend processing or specific tasks, connected to Lambda and monitored by CloudWatch."
-    },
-    {
-      "id": "10",
-      "service": "CloudWatch",
-      "name": "CloudWatch",
-      "notes": "Amazon CloudWatch used for monitoring the performance and health of EKS, Lambda functions, and EC2 instances, ensuring proper operation and resilience of the architecture."
-    }
-  ],
-  "edges": [
-    {
-      "source": "0",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "0",
-      "type": "data",
-      "notes": "User requests (approximately 300,000 per minute) arrive at CloudFront for content delivery."
-    },
-    {
-      "source": "1",
-      "target": "2",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "CloudFront retrieves static content (images, videos) from S3."
-    },
-    {
-      "source": "2",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "S3 serves static content back to CloudFront."
-    },
-    {
-      "source": "1",
-      "target": "0",
-      "flow_id": 0,
-      "seq": "3",
-      "type": "data",
-      "notes": "CloudFront delivers static content to the user."
-    },
-    {
-      "source": "1",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "Dynamic requests are forwarded from CloudFront to the Load Balancers."
-    },
-    {
-      "source": "4",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "Load Balancer routes approximately 20% of dynamic traffic to the Legacy EC2 system."
-    },
-    {
-      "source": "4",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "Load Balancer routes over 80% of dynamic traffic to the EKS microservices system."
-    },
-    {
-      "source": "6",
-      "target": "7",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "EKS microservices access non-SQL data services like Mongo and Kafka."
-    },
-    {
-      "source": "7",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Data is returned from Mongo/Kafka to EKS microservices."
-    },
-    {
-      "source": "6",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "EKS microservices access Amazon RDS for relational data."
-    },
-    {
-      "source": "8",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Data is returned from RDS to EKS microservices."
-    },
-    {
-      "source": "5",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "4",
-      "type": "data",
-      "notes": "Legacy EC2 applications access Amazon RDS for relational data."
-    },
-    {
-      "source": "8",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "5",
-      "type": "data",
-      "notes": "Data is returned from RDS to Legacy EC2 applications."
-    },
-    {
-      "source": "3",
-      "target": "1",
-      "flow_id": 3,
-      "seq": "0",
-      "type": "meta",
-      "notes": "Lambda provides routing logic and information to CloudFront for traffic management."
-    },
-    {
-      "source": "3",
-      "target": "9",
-      "flow_id": 3,
-      "seq": "1",
-      "type": "data",
-      "notes": "Lambda potentially interacts with or triggers EC2 instances for specific backend tasks."
-    },
-    {
-      "source": "6",
-      "target": "10",
-      "flow_id": 4,
-      "seq": "0",
-      "type": "meta",
-      "notes": "EKS instances are monitored by CloudWatch for performance and health."
-    },
-    {
-      "source": "9",
-      "target": "10",
-      "flow_id": 4,
-      "seq": "1",
-      "type": "meta",
-      "notes": "General EC2 instances are monitored by CloudWatch."
-    },
-    {
-      "source": "3",
-      "target": "10",
-      "flow_id": 4,
-      "seq": "2",
-      "type": "meta",
-      "notes": "Lambda functions are monitored by CloudWatch."
-    }
-  ]
+  "video_id": "7wBOFcP1HwA",
+  "prompt_version": "v9",
+  "model": "gemini-3.6-flash",
+  "extracted_graph": {
+    "nodes": [
+      {
+        "id": "user",
+        "service": "UserConsumerWebMobile",
+        "name": "USER",
+        "type": "user_actor"
+      },
+      {
+        "id": "cloudfront",
+        "service": "CloudFront",
+        "name": "CLOUDFRONT",
+        "type": "aws_service"
+      },
+      {
+        "id": "s3",
+        "service": "S3",
+        "name": "S3",
+        "type": "aws_service"
+      },
+      {
+        "id": "alb",
+        "service": "ALB",
+        "name": "LOAD BALANCER",
+        "type": "aws_service"
+      },
+      {
+        "id": "legacy",
+        "service": "Legacy",
+        "name": "LEGACY",
+        "type": "on_prem"
+      },
+      {
+        "id": "eks",
+        "service": "EKS",
+        "name": "EKS",
+        "type": "aws_service"
+      },
+      {
+        "id": "mongo_kafka",
+        "service": "MongoDB",
+        "name": "MONGO/KAFKA",
+        "type": "third_party"
+      },
+      {
+        "id": "rds",
+        "service": "RDS",
+        "name": "RDS",
+        "type": "aws_service"
+      },
+      {
+        "id": "lambda",
+        "service": "Lambda",
+        "name": "LAMBDA",
+        "type": "aws_service"
+      },
+      {
+        "id": "ec2",
+        "service": "EC2",
+        "name": "EC2",
+        "type": "aws_service"
+      },
+      {
+        "id": "cloudwatch",
+        "service": "CloudWatch",
+        "name": "CLOUDWATCH",
+        "type": "aws_service"
+      }
+    ],
+    "edges": [
+      {
+        "source": "user",
+        "target": "cloudfront",
+        "label": "requests",
+        "type": "data_flow"
+      },
+      {
+        "source": "s3",
+        "target": "cloudfront",
+        "label": "static content",
+        "type": "data_flow"
+      },
+      {
+        "source": "lambda",
+        "target": "cloudfront",
+        "label": "edge processing",
+        "type": "data_flow"
+      },
+      {
+        "source": "cloudfront",
+        "target": "alb",
+        "label": "routes traffic",
+        "type": "data_flow"
+      },
+      {
+        "source": "alb",
+        "target": "legacy",
+        "label": "routes traffic",
+        "type": "data_flow"
+      },
+      {
+        "source": "alb",
+        "target": "eks",
+        "label": "routes traffic",
+        "type": "data_flow"
+      },
+      {
+        "source": "eks",
+        "target": "legacy",
+        "label": "migration",
+        "type": "data_flow"
+      },
+      {
+        "source": "eks",
+        "target": "mongo_kafka",
+        "label": "data sync",
+        "type": "data_flow"
+      },
+      {
+        "source": "eks",
+        "target": "rds",
+        "label": "queries",
+        "type": "data_flow"
+      },
+      {
+        "source": "lambda",
+        "target": "ec2",
+        "label": "triggers",
+        "type": "data_flow"
+      }
+    ]
+  }
 }

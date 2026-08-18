@@ -1,86 +1,70 @@
 {
-  "step_by_step_reasoning": "The architecture was extracted by first identifying distinct visual components on the whiteboard diagram. Each icon or labeled box was mapped to its corresponding AWS service or external actor from the allowed list. Floating text like 'PCI', 'PROD EDW', and 'TOKEN' were used to enrich the 'notes' for relevant nodes but were not created as separate nodes, adhering to the strict visual-first rule. Two distinct accounts, 'PCI account' and 'Prod account', were inferred from the diagram's vertical dashed lines and transcript and noted within the relevant nodes. Edges were drawn strictly based on visible arrows on the diagram, ensuring no speculative return paths or implicit connections were created. The logical flow of data from on-premises sources through ingestion, processing, and consumption was used to assign `flow_id` and `seq` values.",
+  "step_by_step_reasoning": "The diagram presents an architecture for ingesting, tokenizing, and analyzing PCI data across accounts. The flow starts on-premises (OnPremDC), sending data through AWS Transfer Family (SFTP) and AWS PrivateLink. Both feed into an initial S3 landing bucket in the PCI account. Incoming object notifications trigger an SNS topic, which invokes an EC2 instance performing tokenization. The processed data is stored in a second S3 bucket located in the Prod account, where it is consumed by EC2 instances for analytics and machine learning.",
   "graph": {
-    "name": "Discover Financial Services Cloud Data Platform",
-    "link": "https://www.youtube.com/watch?v=UNKNOWN_VIDEO_ID",
-    "categories": "Data Analytics, Security, Machine Learning",
+    "name": "Discover Financial Services PCI and Prod Data Processing Architecture",
+    "link": "",
+    "categories": "Data Ingestion & Tokenization",
     "graph_usable": true,
-    "notes": "Architecture for Discover Financial Services' cloud data platform, separating PCI-compliant data processing in a dedicated PCI account from general analytics and machine learning in a production account. Handles petabyte-scale data."
+    "notes": "Data ingests into a PCI-compliant account via SFTP and PrivateLink, gets tokenized via EC2, and moves to a Prod account for analytics."
   },
   "nodes": [
     {
       "id": "0",
       "service": "OnPremDC",
-      "name": "On-Premises",
-      "notes": "Various data sources on-premises, running data ingestion pipelines."
+      "name": "On-Premises Data Sources",
+      "notes": "On-premises data sources sending raw data"
     },
     {
       "id": "1",
       "service": "TransferFamily",
-      "name": "SFTP",
-      "notes": "AWS Transfer for SFTP used for ingesting external data into S3."
+      "name": "AWS Transfer for SFTP",
+      "notes": "Ingests external SFTP data into AWS"
     },
     {
       "id": "2",
       "service": "PrivateLink",
-      "name": "PrivateLink",
-      "notes": "AWS PrivateLink used for ingesting on-premises data to the PCI account's landing S3 bucket."
+      "name": "AWS PrivateLink",
+      "notes": "Provides private connectivity from on-prem to S3"
     },
     {
       "id": "3",
       "service": "S3",
-      "name": "S3 Landing Bucket",
-      "notes": "S3 landing bucket in the PCI account. Receives raw PCI data, with S3 lifecycle policies and triggers enabled. This is where the initial ingested data lands. Also maintains an archive bucket for audit purposes."
+      "name": "S3 Landing Bucket (PCI)",
+      "notes": "Landing S3 bucket in PCI account containing raw data"
     },
     {
       "id": "4",
       "service": "SNS",
-      "name": "SNS Topic",
-      "notes": "SNS topic subscribed by security services in EC2, triggered by S3 object creation in the landing bucket."
+      "name": "Amazon SNS",
+      "notes": "Receives triggers on new file uploads"
     },
     {
       "id": "5",
       "service": "EC2",
-      "name": "Security Services",
-      "notes": "EC2 instances in the PCI account running security services for data tokenization, file format conversion, and data curation. PCI scope is limited to this account."
+      "name": "EC2 Tokenization Service",
+      "notes": "Performs tokenization and file format conversion"
     },
     {
       "id": "6",
       "service": "S3",
-      "name": "S3 Curated Data",
-      "notes": "S3 bucket in the production account. Stores curated and tokenized data from the PCI account. Serves as a petabyte-scale data warehouse (EDW) for analytics and machine learning. This data is synced to the EDW for general purpose consumption."
+      "name": "S3 Curated Bucket (Prod)",
+      "notes": "Curated S3 bucket residing in the Prod account"
     },
     {
       "id": "7",
       "service": "EC2",
-      "name": "Analytics & ML Services",
-      "notes": "EC2 instances and other container platforms in the production account for general purpose analytics and machine learning consumption."
+      "name": "EC2 Analytics & ML",
+      "notes": "Runs analytics and machine learning workloads on tokenized data"
     }
   ],
   "edges": [
-    {
-      "source": "0",
-      "target": "2",
-      "flow_id": 0,
-      "seq": "0",
-      "type": "data",
-      "notes": "On-premises data ingestion pipeline uses PrivateLink."
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Data ingested via PrivateLink to the S3 landing bucket in the PCI account."
-    },
     {
       "source": "0",
       "target": "1",
       "flow_id": 1,
       "seq": "0",
       "type": "data",
-      "notes": "External data ingests to on-premises then uses SFTP."
+      "notes": "On-premises data sent via SFTP"
     },
     {
       "source": "1",
@@ -88,39 +72,55 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "SFTP ingests data into the S3 landing bucket in the PCI account."
+      "notes": "SFTP ingests data into landing S3 bucket"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "On-premises pipeline data routed through PrivateLink"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "PrivateLink delivers data into S3 landing bucket"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 2,
+      "flow_id": 3,
       "seq": "0",
       "type": "data",
-      "notes": "S3 landing bucket triggers an SNS topic upon data arrival."
+      "notes": "S3 triggers event notifications to SNS"
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 2,
+      "flow_id": 3,
       "seq": "1",
       "type": "data",
-      "notes": "SNS notifies EC2 security services for consumption and processing."
+      "notes": "SNS notifies EC2 tokenization service"
     },
     {
       "source": "5",
       "target": "6",
-      "flow_id": 2,
+      "flow_id": 3,
       "seq": "2",
       "type": "data",
-      "notes": "Curated and tokenized data from PCI EC2 services is ingested into the production S3 bucket."
+      "notes": "Tokenized data written across account boundary into Prod S3 bucket"
     },
     {
       "source": "6",
       "target": "7",
       "flow_id": 3,
-      "seq": "0",
+      "seq": "3",
       "type": "data",
-      "notes": "Analytics and machine learning services consume curated data from the production S3 bucket."
+      "notes": "EC2 analytics workers read curated data from S3"
     }
   ]
 }

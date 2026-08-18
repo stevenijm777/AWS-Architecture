@@ -1,148 +1,134 @@
 {
-  "step_by_step_reasoning": "The architecture tracks speedtest data from consumers into a processing pipeline. Consumers send reports to an API Server (EC2) which ingests them into Kinesis. The data is enriched using facts from RDS, then forwarded to Kinesis Firehose, which stores them in an S3 Data Lake. From S3, a Lambda function triggers to normalize data into CSVs and loads them into Redshift. Aggregated insights from Redshift are written back to RDS to be served to consumers through the API. Additionally, Athena is used to query the S3 Data Lake directly.",
+  "step_by_step_reasoning": "The whiteboard architecture shows an end-to-end data processing pipeline for Ookla's Speedtest data. Consumers submit reports to an API/client which stream into Kinesis Data Streams. The stream enriches data using RDS and forwards enriched JSON to Kinesis Data Firehose, which aggregates into an S3 Data Lake. Athena queries S3 directly. A Lambda function processes landing data into CSVs for Redshift aggregation, with insights written back to RDS.",
   "graph": {
-    "name": "Ookla Speedtest Data Pipeline Architecture",
-    "link": "https://www.youtube.com/watch?v=FqSPh9YfL-4",
-    "categories": "Data Analytics, Serverless, Real-Time Ingestion",
+    "name": "Ookla Speedtest Near Real-Time Data Pipeline Architecture",
+    "link": "",
+    "categories": "Analytics, Streaming, Data Lake",
     "graph_usable": true,
-    "notes": "Ookla uses a Kinesis and Lambda-driven serverless pipeline to ingest, enrich, and analyze 4,000 speedtest reports per second, processing over 5 PB of data."
+    "notes": "Architecture processes 4,000 Speedtest reports per second into a 5PB S3 data lake."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWeb",
-      "name": "Consumers",
-      "notes": "End-users performing Speedtests"
+      "name": "Consumers / API",
+      "notes": "Client reporting speed test results"
     },
     {
       "id": "1",
-      "service": "EC2",
-      "name": "API Server",
-      "notes": "Receives speedtest reports and exposes intelligence product"
+      "service": "KinesisDataStream",
+      "name": "Kinesis",
+      "notes": "Inbound streaming buffer with 24h retention"
     },
     {
       "id": "2",
-      "service": "Kinesis",
-      "name": "Kinesis Stream",
-      "notes": "Provides 24-hour data retention and asynchronous queueing"
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores dimension fact tables and final customer insights"
     },
     {
       "id": "3",
-      "service": "RDS",
-      "name": "RDS Database",
-      "notes": "Holds dimension fact tables and stores aggregated speedtest insights"
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Batches and compresses data into S3"
     },
     {
       "id": "4",
-      "service": "Firehose",
-      "name": "Kinesis Firehose",
-      "notes": "Gathers, compresses, and writes reports to S3"
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "5PB raw JSON data lake"
     },
     {
       "id": "5",
-      "service": "S3",
-      "name": "S3 Data Lake",
-      "notes": "Stores over 5 PB of uncompressed newline-separated JSON data"
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Interactive SQL analysis over raw S3 data"
     },
     {
       "id": "6",
       "service": "Lambda",
       "name": "Lambda",
-      "notes": "Normalizes JSON into CSV for Redshift"
+      "notes": "Normalizes JSON into CSV format"
     },
     {
       "id": "7",
       "service": "RedShift",
       "name": "Redshift",
-      "notes": "Performs long-term aggregation and data warehousing"
-    },
-    {
-      "id": "8",
-      "service": "Athena",
-      "name": "Athena",
-      "notes": "Queries historical JSON data in S3 directly"
+      "notes": "Data warehouse for long-term aggregate processing"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "0",
       "type": "data",
-      "notes": "Reports sent to API"
+      "notes": "Speedtest reports sent to Kinesis stream"
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Enrichment step querying fact tables"
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "API drops reports to Kinesis"
+      "notes": "Responses exposed back to end consumers"
     },
     {
-      "source": "2",
+      "source": "1",
       "target": "3",
-      "flow_id": 1,
+      "flow_id": 3,
       "seq": "3",
       "type": "data",
-      "notes": "Data enriched using facts from RDS"
+      "notes": "Enriched report data streamed to Firehose"
     },
     {
-      "source": "2",
+      "source": "3",
       "target": "4",
-      "flow_id": 1,
+      "flow_id": 4,
       "seq": "4",
       "type": "data",
-      "notes": "Enriched data written to Firehose"
+      "notes": "Compressed JSON written to S3 Data Lake"
     },
     {
       "source": "4",
-      "target": "5",
-      "flow_id": 1,
+      "target": "6",
+      "flow_id": 5,
       "seq": "5",
       "type": "data",
-      "notes": "Writes JSON to S3"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Triggers on new S3 objects"
+      "notes": "Object creation triggers Lambda job"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 2,
-      "seq": "2",
+      "flow_id": 6,
+      "seq": "6",
       "type": "data",
-      "notes": "Loads normalized CSV to Redshift"
+      "notes": "CSV data loaded into Redshift tables"
     },
     {
       "source": "7",
-      "target": "3",
-      "flow_id": 2,
-      "seq": "3",
+      "target": "2",
+      "flow_id": 7,
+      "seq": "7",
       "type": "data",
-      "notes": "Aggregates written back to RDS"
+      "notes": "Aggregated insights saved back to RDS"
     },
     {
-      "source": "3",
-      "target": "1",
-      "flow_id": 2,
-      "seq": "4",
-      "type": "data",
-      "notes": "Insights served to consumers"
-    },
-    {
-      "source": "8",
-      "target": "5",
-      "flow_id": 3,
-      "seq": "1",
-      "type": "data",
-      "notes": "Athena queries data lake directly"
+      "source": "5",
+      "target": "4",
+      "flow_id": 8,
+      "seq": "8",
+      "type": "meta",
+      "notes": "Athena queries raw data stored in S3"
     }
   ]
 }

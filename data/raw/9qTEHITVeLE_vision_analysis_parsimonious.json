@@ -1,194 +1,170 @@
 {
-  "step_by_step_reasoning": "1. Identify nodes from visual diagram:\n   - Top-left: EKS ('EKS') labeled 'EKS / MetaManager'\n   - Below EKS: OpenSearch icon ('OpenSearch') labeled 'Elasticsearch / Neo4j'\n   - Data Lake area:\n     - S3 bucket ('S3') labeled 'S3 Data Lake'\n     - Kafka box ('ThirdParty') labeled 'Kafka'\n     - EMR box ('EMR') labeled 'EMR'\n   - Bottom row:\n     - Database icon ('OnPremDC') labeled 'Multiple Data Sources'\n     - Applications puzzle icon ('ThirdParty') labeled 'Applications'\n     - User icon ('UserCompanyAgent') labeled 'DA/DS'\n   - Right column:\n     - RDS icon ('RDS') labeled 'RDS'\n     - Vertica icon ('ThirdParty') labeled 'Vertica'\n\n2. Trace connections (edges) and directionality based on visible arrowheads:\n   - Multiple Data Sources <-> Kafka (dual arrows: incoming and outgoing)\n   - Applications <-> EMR (dual arrows: incoming and outgoing)\n   - Kafka <-> S3 (dual arrows)\n   - EMR <-> S3 (dual arrows)\n   - EKS -> OpenSearch and OpenSearch -> EKS\n   - EKS -> Kafka (pink control/meta line from MetaManager to Kafka)\n   - S3 -> RDS (arrow from S3 to RDS)\n   - EMR -> Vertica (arrow from EMR to Vertica)\n   - Vertica -> S3 (arrow looping back up to S3)\n   - Vertica -> DA/DS (arrow from Vertica to DA/DS user icon)",
+  "step_by_step_reasoning": "1. Identify Nodes: Inspecting the whiteboard diagram, we observe the following distinct boxes and icons:\n   - Top-Left: EKS cluster running Meta Manager ('EKS').\n   - Below EKS: Elasticsearch and Neo4j for metastore indexing ('OpenSearch').\n   - Bottom-Left: 'Multiple Data Sources' (ThirdParty / database icon).\n   - Bottom-Middle: 'Applications' (ThirdParty / puzzle icon).\n   - Bottom-Right: 'DA/DS' analysts/scientists (UserCompanyAnalyst).\n   - Central Data Lake Box: 'S3 Data Lake' (S3), 'Kafka' (MSK), and 'EMR' (EMR).\n   - Right Side: 'RDS' (RDS) and 'Vertica' (ThirdParty).\n\n2. Identify Edges based strictly on drawn arrows:\n   - Multiple Data Sources -> EKS (metadata discovery arrow going up).\n   - EKS -> OpenSearch (arrow down to Elasticsearch/Neo4j).\n   - Multiple Data Sources <-> MSK (bidirectional vertical arrows).\n   - MSK <-> S3 (bidirectional arrows for streaming ingest/egress).\n   - Applications <-> EMR (bidirectional vertical arrows).\n   - EMR <-> S3 (bidirectional arrows between processing and storage).\n   - S3 -> RDS (arrow pointing to RDS).\n   - EMR -> Vertica (arrow pointing to Vertica).\n\n3. Sequence flow_id and seq logically from data sources/ingest to metadata, processing, and downstream analytics stores.",
   "graph": {
-    "name": "Majid Al Futtaim Data Grid Architecture",
+    "name": "Majid Al Futtaim Centralized Data Lake and Streaming Architecture",
     "link": "",
-    "categories": "Data Lake & Analytics",
+    "categories": "Data Lake, Analytics & Streaming",
     "graph_usable": true,
-    "notes": "Centralized data lake and streaming platform built on AWS with EKS MetaManager, Kafka, EMR, S3, and downstream data stores."
+    "notes": "Architecture showing data ingestion via Kafka and EMR into an S3 Data Lake, managed by MetaManager on EKS with Elasticsearch/Neo4j metastore, and serving RDS and Vertica analytics data stores."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "OnPremDC",
-      "name": "Multiple Data Sources",
-      "notes": "External data sources feeding into Kafka"
+      "service": "EKS",
+      "name": "Meta Manager (EKS)",
+      "notes": "EKS cluster hosting MetaManager microservices"
     },
     {
       "id": "1",
-      "service": "ThirdParty",
-      "name": "Applications",
-      "notes": "Business applications interacting with EMR"
+      "service": "OpenSearch",
+      "name": "Elasticsearch / Neo4j",
+      "notes": "Metastore for metadata discovery and indexing"
     },
     {
       "id": "2",
       "service": "ThirdParty",
-      "name": "Kafka",
-      "notes": "Enterprise streaming platform (600 topics)"
+      "name": "Multiple Data Sources",
+      "notes": "On-premise and regional database sources"
     },
     {
       "id": "3",
-      "service": "EMR",
-      "name": "EMR",
-      "notes": "Data processing and analytics engine"
+      "service": "MSK",
+      "name": "Kafka",
+      "notes": "Enterprise streaming platform"
     },
     {
       "id": "4",
       "service": "S3",
       "name": "S3 Data Lake",
-      "notes": "Centralized S3 Data Lake (60TB)"
+      "notes": "Centralized 60TB Data Lake"
     },
     {
       "id": "5",
-      "service": "EKS",
-      "name": "MetaManager",
-      "notes": "Microservices running on EKS acting as data catalog & control brain"
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Big data processing and transformation"
     },
     {
       "id": "6",
-      "service": "OpenSearch",
-      "name": "Elasticsearch / Neo4j",
-      "notes": "MetaStore combination of document and graph database"
+      "service": "ThirdParty",
+      "name": "Applications",
+      "notes": "Business and loyalty applications"
     },
     {
       "id": "7",
       "service": "RDS",
       "name": "RDS",
-      "notes": "Relational data store for OLTP and analytics"
+      "notes": "Relational data store for consumed analytics"
     },
     {
       "id": "8",
       "service": "ThirdParty",
       "name": "Vertica",
-      "notes": "Analytics database store"
+      "notes": "Data warehouse analytics engine"
     },
     {
       "id": "9",
-      "service": "UserCompanyAgent",
+      "service": "UserCompanyAnalyst",
       "name": "DA / DS",
-      "notes": "Data Analysts and Data Scientists consuming analytics"
+      "notes": "Data Analysts and Data Scientists"
     }
   ],
   "edges": [
     {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Metadata extracted by MetaManager"
+    },
+    {
       "source": "0",
-      "target": "2",
-      "flow_id": 1,
-      "seq": "1a",
-      "type": "data",
-      "notes": "Ingest data from multiple sources to Kafka"
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Stores discovered schema and graph metadata"
     },
     {
       "source": "2",
-      "target": "0",
-      "flow_id": 1,
-      "seq": "1b",
-      "type": "data",
-      "notes": "Publish data back to sources"
-    },
-    {
-      "source": "1",
       "target": "3",
-      "flow_id": 2,
-      "seq": "2a",
+      "flow_id": 1,
+      "seq": "0",
       "type": "data",
-      "notes": "Applications integration with EMR"
+      "notes": "Streams data from source databases to Kafka"
     },
     {
       "source": "3",
-      "target": "1",
-      "flow_id": 2,
-      "seq": "2b",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "EMR data feed back to applications"
+      "notes": "Returns processed streaming events to data sources"
     },
     {
-      "source": "5",
-      "target": "6",
-      "flow_id": 3,
-      "seq": "3a",
-      "type": "meta",
-      "notes": "MetaManager indexing metadata into MetaStore"
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ingests Kafka streams into S3 Data Lake"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads data back from S3 into Kafka topics"
     },
     {
       "source": "6",
       "target": "5",
-      "flow_id": 3,
-      "seq": "3b",
-      "type": "meta",
-      "notes": "Lookup metadata schema from MetaStore"
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Application data processed via EMR"
     },
     {
       "source": "5",
-      "target": "2",
-      "flow_id": 4,
-      "seq": "4",
-      "type": "meta",
-      "notes": "MetaManager governance applied to streaming data"
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR sends updates/events back to applications"
     },
     {
-      "source": "2",
+      "source": "5",
       "target": "4",
-      "flow_id": 5,
-      "seq": "5a",
+      "flow_id": 2,
+      "seq": "2",
       "type": "data",
-      "notes": "Stream topics into S3 Data Lake"
+      "notes": "EMR writes batch/transformed data to S3 Data Lake"
     },
     {
       "source": "4",
-      "target": "2",
-      "flow_id": 5,
-      "seq": "5b",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
       "type": "data",
-      "notes": "Read streams from S3 Data Lake"
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 6,
-      "seq": "6a",
-      "type": "data",
-      "notes": "Process and store results in S3 Data Lake"
-    },
-    {
-      "source": "4",
-      "target": "3",
-      "flow_id": 6,
-      "seq": "6b",
-      "type": "data",
-      "notes": "Read raw data from S3 Data Lake"
+      "notes": "EMR reads raw data from S3 Data Lake"
     },
     {
       "source": "4",
       "target": "7",
-      "flow_id": 7,
-      "seq": "7",
+      "flow_id": 3,
+      "seq": "0",
       "type": "data",
-      "notes": "Export data from S3 to RDS"
+      "notes": "Publishes curated datasets to RDS"
     },
     {
-      "source": "3",
+      "source": "5",
       "target": "8",
-      "flow_id": 8,
-      "seq": "8",
+      "flow_id": 3,
+      "seq": "1",
       "type": "data",
-      "notes": "Load data from EMR into Vertica"
-    },
-    {
-      "source": "8",
-      "target": "4",
-      "flow_id": 9,
-      "seq": "9",
-      "type": "data",
-      "notes": "Sync analytics data back to S3"
-    },
-    {
-      "source": "8",
-      "target": "9",
-      "flow_id": 10,
-      "seq": "10",
-      "type": "data",
-      "notes": "Data Analysts and Data Scientists querying Vertica"
+      "notes": "Loads processed data into Vertica for OLAP"
     }
   ]
 }

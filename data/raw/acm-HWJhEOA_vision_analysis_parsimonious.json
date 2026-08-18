@@ -1,78 +1,84 @@
 {
-  "step_by_step_reasoning": "The analysis began by identifying the overall graph's purpose and name, 'CrazyWall', from the visual diagram and transcript. Nodes were then extracted by strictly adhering to the 'visual-first' rule, focusing on distinct icons and bounded boxes. Floating text like 'API CRAZYWALL', 'API BLOCKING', and 'Blocking' were not made into nodes but were used to inform edge notes. AWS service nodes were mapped to the exact strings from the provided list. Non-AWS components with distinct icons (Pi Event Processor, Ticketing System, Neptune ML) were categorized as 'ThirdParty' as they are either custom systems or not explicitly in the AWS service list. Edges were drawn based on visible arrows on the whiteboard. Logical flow IDs and sequential `seq` values were assigned, starting with data ingestion and progressing through real-time processing, decision making, API interactions, and future ML integration. Special attention was paid to the constraint of not creating speculative return paths unless explicitly drawn, and only using services from the provided list. The '90%' and '35K' labels were treated as explanatory text or metrics related to specific processes (BeanStalk's precision, blocked users count) and not distinct nodes or direct edge labels in a way that would require new nodes.",
+  "step_by_step_reasoning": "The whiteboard architecture depicts 'CrazyWall', a fraud detection system at Careem divided into 'Historical' (top) and 'Real Time' (bottom) processing layers. Historical ETL reads from S3, processed by EMR, loading user identity graph data into Neptune. Real-time events enter via SQS into Elastic Beanstalk (core codebase), which writes/reads to Neptune for user graph lookup. Classification results are written to RDS, while suspicious/high-value customer alerts flow through an API (API Blocking) to a Ticketing System. Graph query access is exposed via API (API Crazywall) to Users and a UI. Neptune ML is shown as a future ML integration block.",
   "graph": {
-    "name": "CrazyWall",
-    "link": "N/A",
-    "categories": "Fraud Detection, Graph Database, Real-time Processing, Historical Data Processing",
+    "name": "Careem Fraud Detection System (CrazyWall)",
+    "link": "",
+    "categories": "Fraud Detection, Graph Analytics, Real-Time Data Pipeline",
     "graph_usable": true,
-    "notes": "Karim's 'CrazyWall' fraud detection system integrates historical user data with real-time event processing. Historical data from S3 is processed via EMR and loaded into Neptune, a graph database representing user identities and relationships. Real-time user events are captured by a custom 'Pi Event Processor', streamed through SQS, and processed by Elastic Beanstalk. Beanstalk writes processed data to Neptune and performs rule-based fraud detection. Fraud decisions are stored in RDS, with high-value cases routed to a 'Ticketing System' for manual review. The system also exposes an API for other teams and a blocking API. Future plans involve integrating Neptune ML for enhanced prediction accuracy."
+    "notes": "System uses historical data batch processing via S3 and EMR into Neptune, alongside real-time event processing through SQS, Elastic Beanstalk, and Neptune."
   },
   "nodes": [
     {
       "id": "0",
       "service": "S3",
-      "name": "S3",
-      "notes": "Hosts the data warehouse with historical user data."
+      "name": "S3 Data Warehouse",
+      "notes": "Stores historical user data"
     },
     {
       "id": "1",
       "service": "EMR",
-      "name": "EMR",
-      "notes": "Extracts and processes historical data from S3 using PySpark ETL, transforming it for Neptune."
+      "name": "EMR Cluster",
+      "notes": "Extracts and transforms historical data using PySpark"
     },
     {
       "id": "2",
       "service": "Neptune",
-      "name": "Neptune",
-      "notes": "Graph database storing historical and real-time user identities, data points, and relationships for fraud detection. Used for both initial data load and real-time lookups."
+      "name": "Neptune Graph Database",
+      "notes": "Stores historical snapshot and real-time graph of user identities and attributes"
     },
     {
       "id": "3",
-      "service": "ThirdParty",
-      "name": "Pi Event Processor",
-      "notes": "Custom system developed by Kareem engineers to process every user event (login, ride, purchase) on the app in real-time."
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Streams real-time user action events"
     },
     {
       "id": "4",
-      "service": "SQS",
-      "name": "SQS",
-      "notes": "Queue for streaming real-time events from the Pi Event Processor to Elastic Beanstalk."
+      "service": "BeanStalk",
+      "name": "Elastic Beanstalk",
+      "notes": "Core codebase processing events, executing fraud rules, and querying graph"
     },
     {
       "id": "5",
-      "service": "BeanStalk",
-      "name": "Elastic Beanstalk",
-      "notes": "Core codebase that processes and transforms real-time event data, writes to Neptune, performs rule-based fraud detection, and provides APIs for graph queries and blocking."
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "Stores fraud classification decisions"
     },
     {
       "id": "6",
-      "service": "UserConsumerWeb",
-      "name": "Users",
-      "notes": "Represents end-users interacting with the Karim application, performing actions that generate events."
+      "service": "ApiGateway",
+      "name": "API Crazywall",
+      "notes": "API exposing graph queries to downstream consumers"
     },
     {
       "id": "7",
-      "service": "UserCompanyInternalPlatform",
-      "name": "UI",
-      "notes": "Internal user interface used by Kareem teams to query and view user identity details in the graph via an API."
+      "service": "UserConsumerWeb",
+      "name": "Users",
+      "notes": "Internal Careem teams/consumers querying user identities"
     },
     {
       "id": "8",
-      "service": "RDS",
-      "name": "RDS",
-      "notes": "Stores fraud classification decisions made by the Elastic Beanstalk application."
+      "service": "ThirdParty",
+      "name": "UI",
+      "notes": "Visualization UI to view user identity graphs"
     },
     {
       "id": "9",
-      "service": "ThirdParty",
-      "name": "Ticketing System",
-      "notes": "An external ticketing system for manual review of high-value customers classified as potentially fraudulent."
+      "service": "ApiGateway",
+      "name": "API Blocking",
+      "notes": "API routing blocking and manual review decisions"
     },
     {
       "id": "10",
       "service": "ThirdParty",
+      "name": "Ticketing System",
+      "notes": "Manual review queue for high-value customer fraud alerts"
+    },
+    {
+      "id": "11",
+      "service": "Neptune",
       "name": "Neptune ML",
-      "notes": "Future integration (version 2) for training deep learning models (graph convolutional network) on the Neptune graph to improve fraud prediction accuracy, replacing the rule-based system in Elastic Beanstalk."
+      "notes": "Planned deep learning / GCN model component on graph data"
     }
   ],
   "edges": [
@@ -82,7 +88,7 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Historical data is extracted from S3 by EMR."
+      "notes": "Historical data batch extract"
     },
     {
       "source": "1",
@@ -90,103 +96,79 @@
       "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "EMR runs an ETL pipeline using PySpark to load transformed historical data into the Neptune graph database."
-    },
-    {
-      "source": "6",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "User actions on the application generate real-time events processed by the Pi Event Processor."
+      "notes": "ETL loads formatted graph data into Neptune"
     },
     {
       "source": "3",
       "target": "4",
       "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Real-time user events streamed into Elastic Beanstalk"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Real-time user events are streamed from the Pi Event Processor into an SQS queue."
+      "notes": "Writes new event/user data to graph database"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Reads user profile and surrounding graph neighbors for classification"
     },
     {
       "source": "4",
       "target": "5",
       "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "The Elastic Beanstalk core codebase consumes events from the SQS queue."
-    },
-    {
-      "source": "5",
-      "target": "2",
-      "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Processed and transformed real-time event data is written to the Neptune graph database."
+      "notes": "Writes classification decision to RDS"
     },
     {
-      "source": "2",
-      "target": "5",
+      "source": "4",
+      "target": "9",
       "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "After an event, Elastic Beanstalk performs a second read to extract user data and surrounding neighbors from Neptune for fraud analysis."
+      "notes": "Routes suspicious account actions for high-value users"
     },
     {
-      "source": "5",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "Fraud classification decisions from Elastic Beanstalk's rule-based system are written to RDS."
-    },
-    {
-      "source": "8",
-      "target": "9",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Decisions for high-value customers identified as potentially fraudulent are sent to a ticketing system for manual review."
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 3,
-      "seq": "0",
-      "type": "data",
-      "notes": "Elastic Beanstalk exposes a 'CrazyWall' API allowing users/downstream tasks to query graph data about user identities."
-    },
-    {
-      "source": "5",
-      "target": "7",
-      "flow_id": 3,
-      "seq": "1",
-      "type": "data",
-      "notes": "Elastic Beanstalk exposes a 'CrazyWall' API allowing internal UIs to query graph data about user identities."
-    },
-    {
-      "source": "5",
-      "target": "8",
-      "flow_id": 4,
-      "seq": "0",
-      "type": "data",
-      "notes": "Elastic Beanstalk provides a 'Blocking' API that interacts with RDS to manage fraud decisions and user blocking (for lower value users, automatically blocked)."
-    },
-    {
-      "source": "2",
+      "source": "9",
       "target": "10",
-      "flow_id": 5,
-      "seq": "0",
+      "flow_id": 1,
+      "seq": "5",
       "type": "data",
-      "notes": "Neptune ML trains deep learning models using data from the Neptune graph database."
+      "notes": "Creates tickets in ticketing system for manual review"
     },
     {
-      "source": "10",
-      "target": "5",
-      "flow_id": 5,
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Exposes graph querying via API"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Neptune ML's predictions or trained models will be used by Elastic Beanstalk to enhance fraud detection accuracy."
+      "notes": "Returns graph data for downstream ML/team tasks"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Renders user identity graph on UI"
     }
   ]
 }

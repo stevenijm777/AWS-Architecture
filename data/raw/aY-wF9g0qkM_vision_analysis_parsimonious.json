@@ -1,140 +1,140 @@
 {
-  "step_by_step_reasoning": "The architecture was derived by first identifying all visual components on the whiteboard diagram. This included icons for SFTP, S3, Lambda, Rekognition, and two user/actor icons (one with a camera, one general user). The text labels associated with these icons were used to determine the AWS service where applicable. The transcript was then used to confirm service names and provide additional context, such as 'Amazon Transfer Family' for SFTP and the two distinct processing layers ('INSTANT' and 'BATCH'). Grouped dashed boxes were treated as logical groupings, with individual services within them represented as separate nodes as per the visual cues. Edges were drawn strictly based on the arrows present on the whiteboard, following the flow of data from the camera, through processing, to the end-user. Flow IDs and sequence numbers were assigned to represent the logical progression of data through the system, starting with image ingestion, followed by instant and batch processing, and finally user access.",
+  "step_by_step_reasoning": "1. Identified actors: Camera icon top-left (UserConsumerCamera) and Web Browser top-right (UserConsumerWeb).\n2. Identified ingestion nodes: AWS Transfer Family (SFTP) and S3 bucket on the left.\n3. Identified processing nodes: Instant layer (Lambda, Rekognition) and Batch layer (Lambda, Rekognition Custom Labels).\n4. Identified output storage node: S3 bucket on the right.\n5. Connected nodes via visible visual arrows on the whiteboard canvas strictly following edge directions.",
   "graph": {
-    "name": "B2B Multi-tenant Construction Site Monitoring and Progress Solution",
+    "name": "Global DataNet - Construction Site Image Obfuscation Architecture",
     "link": "",
-    "categories": "Image Processing, Serverless, AI/ML, Data Ingestion, Storage",
+    "categories": "Serverless AI Image Processing",
     "graph_usable": true,
-    "notes": "This architecture describes a B2B multi-tenant solution for construction site monitoring that processes and obfuscates images using serverless components and Amazon Rekognition, including custom labels for enhanced detection. It handles about 86,000 images daily."
+    "notes": "Architecture ingests construction site images via SFTP to S3, processes them instantly and in batch using Lambda and Amazon Rekognition to blur sensitive data, and delivers results via S3."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerCamera",
-      "name": "Construction Site Camera",
-      "notes": "Cameras worldwide ingesting approximately 86,000 images per day."
+      "name": "Construction Cameras",
+      "notes": "Edge cameras uploading site images"
     },
     {
       "id": "1",
       "service": "TransferFamily",
-      "name": "SFTP",
-      "notes": "Amazon Transfer Family (SFTP) used by each tenant to connect their camera easily."
+      "name": "AWS Transfer Family (SFTP)",
+      "notes": "SFTP endpoint for camera ingestion"
     },
     {
       "id": "2",
       "service": "S3",
-      "name": "Input S3 Bucket",
-      "notes": "First injection layer where raw images are stored before processing."
+      "name": "Ingestion S3 Bucket",
+      "notes": "Stores incoming raw images"
     },
     {
       "id": "3",
       "service": "Lambda",
-      "name": "Instant Processor Lambda",
-      "notes": "AWS Lambda function for immediate processing of newly uploaded images in the 'INSTANT' layer."
+      "name": "Instant Processing Lambda",
+      "notes": "Triggers immediate image blurring"
     },
     {
       "id": "4",
       "service": "Rekognition",
-      "name": "Instant Rekognition",
-      "notes": "Amazon Rekognition used in the 'INSTANT' layer to find coordinates for blurring persons and license plates."
+      "name": "Amazon Rekognition",
+      "notes": "Detects faces and license plates"
     },
     {
       "id": "5",
-      "service": "S3",
-      "name": "Processed Images S3 Bucket",
-      "notes": "Bucket storing processed (blurred) images, serving as the platform for customers."
+      "service": "Lambda",
+      "name": "Batch Processing Lambda",
+      "notes": "Scheduled overnight batch job"
     },
     {
       "id": "6",
-      "service": "Lambda",
-      "name": "Batch Processor Lambda",
-      "notes": "AWS Lambda function for batch processing, running overnight, in the 'BATCH' layer."
+      "service": "Rekognition",
+      "name": "Rekognition Custom Labels",
+      "notes": "Custom trained model for construction workers"
     },
     {
       "id": "7",
-      "service": "Rekognition",
-      "name": "Rekognition Custom Labels",
-      "notes": "Amazon Rekognition with custom labels, trained on construction workers, used in the 'BATCH' layer to improve accuracy."
+      "service": "S3",
+      "name": "Platform S3 Bucket",
+      "notes": "Stores processed/blurred images"
     },
     {
       "id": "8",
       "service": "UserConsumerWeb",
-      "name": "Customer Web Platform User",
-      "notes": "Customers access processed images and project progress via an S3-backed website."
+      "name": "Tenant Web Portal",
+      "notes": "End users viewing construction progress"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 0,
-      "seq": "0",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "Image ingestion from cameras to SFTP endpoint."
+      "notes": "Cameras upload images via SFTP"
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 0,
-      "seq": "1",
+      "flow_id": 1,
+      "seq": "2a",
       "type": "data",
-      "notes": "Images are uploaded to the initial S3 bucket for storage."
+      "notes": "SFTP writes raw images to ingestion S3 bucket"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Bidirectional transfer interaction"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "2",
+      "flow_id": 2,
+      "seq": "1",
       "type": "data",
-      "notes": "New image uploads to S3 trigger the instant processing Lambda function."
+      "notes": "S3 event triggers instant Lambda processing"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 0,
-      "seq": "3",
+      "flow_id": 2,
+      "seq": "2",
       "type": "data",
-      "notes": "Lambda invokes Amazon Rekognition for instant image analysis (blurring persons/license plates)."
+      "notes": "Lambda invokes Rekognition for object/face detection"
     },
     {
       "source": "4",
-      "target": "5",
-      "flow_id": 0,
-      "seq": "4",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
       "type": "data",
-      "notes": "Processed images from instant analysis are stored in the output S3 bucket."
+      "notes": "Processed image saved to platform S3 bucket"
     },
     {
-      "source": "2",
+      "source": "5",
       "target": "6",
-      "flow_id": 1,
-      "seq": "0",
+      "flow_id": 3,
+      "seq": "1",
       "type": "data",
-      "notes": "Images in the input S3 bucket are processed by the batch Lambda (e.g., on a schedule)."
+      "notes": "Batch Lambda runs custom label detection"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 3,
+      "seq": "2",
       "type": "data",
-      "notes": "Batch Lambda invokes Amazon Rekognition with custom labels for specific object detection (e.g., construction workers)."
+      "notes": "Batch output saved to platform S3 bucket"
     },
     {
       "source": "7",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "Results from batch processing (improved accuracy findings) are stored in the output S3 bucket."
-    },
-    {
-      "source": "5",
       "target": "8",
-      "flow_id": 2,
-      "seq": "0",
+      "flow_id": 4,
+      "seq": "1",
       "type": "data",
-      "notes": "Users access the processed and archived images via a platform hosted from the S3 website bucket."
+      "notes": "Processed images served to web client platform"
     }
   ]
 }

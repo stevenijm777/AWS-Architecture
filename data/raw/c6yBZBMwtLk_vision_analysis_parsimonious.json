@@ -1,176 +1,155 @@
 {
-  "step_by_step_reasoning": "The architecture diagram shows a video ingestion and on-demand clipping workflow. Starting on the left (on-premises), live camera feeds go to two AWS Elemental Live appliances for redundancy. These stream to AWS Elemental MediaPackage, which writes video segments to an Amazon S3 bucket. Below, an on-premises MAM system communicates bi-directionally with Amazon API Gateway to trigger video processing jobs. API Gateway invokes AWS Step Functions, which orchestrates reading video files from the top S3 bucket, logging state/metadata to Amazon DynamoDB, and instructing AWS Elemental MediaConvert to generate clips and poster images stored into a final origin S3 bucket.",
-  "graph": {
-    "name": "RSI Serverless MAM Architecture",
-    "link": "",
-    "categories": "Media & Entertainment, Serverless",
-    "graph_usable": true,
-    "notes": "Hybrid media workflow combining on-premises live encoders with AWS serverless video clipping and distribution pipeline."
-  },
-  "nodes": [
-    {
-      "id": "0",
-      "service": "UserConsumerCamera",
-      "name": "Live Video Source",
-      "notes": "SDI stream sources"
-    },
-    {
-      "id": "1",
-      "service": "ElementalLive",
-      "name": "Elemental Live Primary",
-      "notes": "On-premises live encoder 1"
-    },
-    {
-      "id": "2",
-      "service": "ElementalLive",
-      "name": "Elemental Live Secondary",
-      "notes": "On-premises live encoder 2"
-    },
-    {
-      "id": "3",
-      "service": "MediaPackage",
-      "name": "AWS Elemental MediaPackage",
-      "notes": "Records incoming live streams"
-    },
-    {
-      "id": "4",
-      "service": "S3",
-      "name": "14-Day Rolling Archive S3",
-      "notes": "Stores 14-day chunks playlist"
-    },
-    {
-      "id": "5",
-      "service": "MAM",
-      "name": "On-Premises MAM",
-      "notes": "Media asset management backend and client"
-    },
-    {
-      "id": "6",
-      "service": "ApiGateway",
-      "name": "Amazon API Gateway",
-      "notes": "Entry point for editing requests"
-    },
-    {
-      "id": "7",
-      "service": "StepFunctions",
-      "name": "AWS Step Functions",
-      "notes": "Workflow orchestrator"
-    },
-    {
-      "id": "8",
-      "service": "DynamoDB",
-      "name": "Amazon DynamoDB",
-      "notes": "Stores workflow events and metadata"
-    },
-    {
-      "id": "9",
-      "service": "MediaConvert",
-      "name": "AWS Elemental MediaConvert",
-      "notes": "Transcoding and clipping service"
-    },
-    {
-      "id": "10",
-      "service": "S3",
-      "name": "Origin S3 Bucket",
-      "notes": "Origin server for web/mobile players"
-    }
-  ],
-  "edges": [
-    {
-      "source": "0",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "0",
-      "type": "data",
-      "notes": "Live SDI feed to primary appliance"
-    },
-    {
-      "source": "0",
-      "target": "2",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Live SDI feed to secondary appliance"
-    },
-    {
-      "source": "1",
-      "target": "3",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "Streams to MediaPackage"
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 0,
-      "seq": "3",
-      "type": "data",
-      "notes": "Streams to MediaPackage"
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 0,
-      "seq": "4",
-      "type": "data",
-      "notes": "Saves chunked playlist into S3"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "0",
-      "type": "data",
-      "notes": "Triggers edit/clip events via API Gateway"
-    },
-    {
-      "source": "6",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "Returns responses back to MAM"
-    },
-    {
-      "source": "6",
-      "target": "7",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "Passes metadata to Step Functions"
-    },
-    {
-      "source": "4",
-      "target": "7",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Step Functions reads video files from archive S3"
-    },
-    {
-      "source": "7",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Logs event states and metadata to DynamoDB"
-    },
-    {
-      "source": "7",
-      "target": "9",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Sends transcoding/cutting order to MediaConvert"
-    },
-    {
-      "source": "9",
-      "target": "10",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "Stores finished renditions and posters to origin S3"
-    }
-  ]
+  "video_id": "c6yBZBMwtLk",
+  "prompt_version": "v9",
+  "model": "gemini-3.6-flash",
+  "extracted_graph": {
+    "nodes": [
+      {
+        "id": "camera",
+        "service": "Camera",
+        "name": "Camera",
+        "type": "on_prem"
+      },
+      {
+        "id": "elemental_live_1",
+        "service": "AWS Elemental Live",
+        "name": "ELEMENTAL LIVE",
+        "type": "on_prem"
+      },
+      {
+        "id": "elemental_live_2",
+        "service": "AWS Elemental Live",
+        "name": "ELEMENTAL LIVE",
+        "type": "on_prem"
+      },
+      {
+        "id": "mam",
+        "service": "MAM",
+        "name": "MAM",
+        "type": "on_prem"
+      },
+      {
+        "id": "mediapackage",
+        "service": "MediaPackage",
+        "name": "MEDIAPACKAGE",
+        "type": "aws_service"
+      },
+      {
+        "id": "s3_top",
+        "service": "S3",
+        "name": "S3",
+        "type": "aws_service"
+      },
+      {
+        "id": "api_gw",
+        "service": "API Gateway",
+        "name": "API GW",
+        "type": "aws_service"
+      },
+      {
+        "id": "step_fn",
+        "service": "Step Functions",
+        "name": "STEP FN",
+        "type": "aws_service"
+      },
+      {
+        "id": "dynamo",
+        "service": "DynamoDB",
+        "name": "DYNAMO",
+        "type": "aws_service"
+      },
+      {
+        "id": "mediaconvert",
+        "service": "MediaConvert",
+        "name": "MEDIACONVERT",
+        "type": "aws_service"
+      },
+      {
+        "id": "s3_bottom",
+        "service": "S3",
+        "name": "S3",
+        "type": "aws_service"
+      }
+    ],
+    "edges": [
+      {
+        "source": "camera",
+        "target": "elemental_live_1",
+        "label": "video stream",
+        "type": "data_flow"
+      },
+      {
+        "source": "camera",
+        "target": "elemental_live_2",
+        "label": "video stream",
+        "type": "data_flow"
+      },
+      {
+        "source": "elemental_live_1",
+        "target": "mediapackage",
+        "label": "live stream",
+        "type": "data_flow"
+      },
+      {
+        "source": "elemental_live_2",
+        "target": "mediapackage",
+        "label": "live stream",
+        "type": "data_flow"
+      },
+      {
+        "source": "mediapackage",
+        "target": "s3_top",
+        "label": "archive",
+        "type": "data_flow"
+      },
+      {
+        "source": "s3_top",
+        "target": "step_fn",
+        "label": "reads assets",
+        "type": "data_flow"
+      },
+      {
+        "source": "mam",
+        "target": "api_gw",
+        "label": "API requests",
+        "type": "data_flow"
+      },
+      {
+        "source": "api_gw",
+        "target": "step_fn",
+        "label": "triggers workflow",
+        "type": "triggers"
+      },
+      {
+        "source": "api_gw",
+        "target": "dynamo",
+        "label": "metadata",
+        "type": "data_flow"
+      },
+      {
+        "source": "step_fn",
+        "target": "mediaconvert",
+        "label": "transcode job",
+        "type": "triggers"
+      },
+      {
+        "source": "step_fn",
+        "target": "dynamo",
+        "label": "status updates",
+        "type": "data_flow"
+      },
+      {
+        "source": "mediaconvert",
+        "target": "s3_bottom",
+        "label": "transcoded files",
+        "type": "data_flow"
+      },
+      {
+        "source": "mediaconvert",
+        "target": "dynamo",
+        "label": "job status",
+        "type": "data_flow"
+      }
+    ]
+  }
 }

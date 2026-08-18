@@ -1,82 +1,82 @@
 {
-  "step_by_step_reasoning": "The visual architecture shows user requests passing through External Data to an Application Load Balancer, which forwards traffic to a Pricing Engine running on Amazon ECS. The Pricing Engine stores the payload in ElastiCache (Redis Payload) and pushes jobs to ElastiCache Task Queues. CPU and GPU Pricing Workers (ECS) monitor the Task Queues, move jobs to Processing Queues, retrieve/compute payloads from Redis Payload, and save results back. A Pub/Sub channel in Redis notifies the Pricing Engine upon completion.",
+  "step_by_step_reasoning": "1. Identify Actors & Components:\n- 'Users' drawn as a user icon on the far left.\n- 'External Data' drawn as a cloud icon.\n- 'Application Load Balancer' represented by an ALB icon.\n- An orange boundary box representing 'Amazon Elastic Container Service (Amazon ECS)' containing three component nodes: 'Pricing Engine', 'Pricing Workers (CPU)', and 'Pricing Workers (GPU)'.\n- A purple boundary box representing 'Amazon ElastiCache for Redis' containing four internal components: 'Task Queues', 'Processing Queues', 'Pup/Sub', and 'Payload'.\n\n2. Trace Edges:\n- Yellow arrow from Users down to External Data.\n- Yellow arrow from External Data up to Application Load Balancer.\n- Yellow arrow from Application Load Balancer to Pricing Engine.\n- Yellow arrows from Pricing Engine to Task Queues and Payload.\n- Yellow arrows connecting Task Queues, Processing Queues, Pricing Workers (CPU), and Pricing Workers (GPU).\n- Yellow arrows connecting Pricing Workers (CPU) and Pricing Workers (GPU) bidirectionally/multi-line with Payload.\n- 'Pup/Sub' is drawn inside ElastiCache without active arrows connected to it.",
   "graph": {
-    "name": "DBS Bank Quantitative Pricing Engine",
+    "name": "DBS Bank Quantitative Pricing Engine Architecture",
     "link": "",
-    "categories": "Compute, Ingestion, Caching",
+    "categories": "Financial Services, High-Performance Computing",
     "graph_usable": true,
-    "notes": "Quantitative pricing engine built on AWS ECS and Redis."
+    "notes": "Architecture for DBS Bank's quantitative pricing engine built on AWS ECS and ElastiCache for Redis."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserCompanyAgent",
+      "service": "UserConsumerWeb",
       "name": "Users",
-      "notes": "Internal traders"
+      "notes": "Internal traders initiating pricing requests"
     },
     {
       "id": "1",
       "service": "ThirdParty",
       "name": "External Data",
-      "notes": "Market data source"
+      "notes": "External market data source"
     },
     {
       "id": "2",
       "service": "ALB",
       "name": "Application Load Balancer",
-      "notes": "Distributes incoming traffic"
+      "notes": "Distributes incoming trading platform traffic"
     },
     {
       "id": "3",
       "service": "ECS",
       "name": "Pricing Engine",
-      "notes": "Engine task container"
+      "notes": "Routes task metadata and payload data"
     },
     {
       "id": "4",
       "service": "ECS",
       "name": "Pricing Workers (CPU)",
-      "notes": "CPU-based calculation workers"
+      "notes": "CPU-based pricing computation workers"
     },
     {
       "id": "5",
       "service": "ECS",
       "name": "Pricing Workers (GPU)",
-      "notes": "GPU-accelerated workers"
+      "notes": "GPU-accelerated pricing computation workers"
     },
     {
       "id": "6",
       "service": "ElastiCache",
       "name": "Task Queues",
-      "notes": "Redis task queue"
+      "notes": "Stores job IDs and pending tasks"
     },
     {
       "id": "7",
       "service": "ElastiCache",
       "name": "Processing Queues",
-      "notes": "Redis in-progress queue"
+      "notes": "Stores in-flight task items being processed by workers"
     },
     {
       "id": "8",
       "service": "ElastiCache",
-      "name": "Pub/Sub",
-      "notes": "Redis notification channel"
+      "name": "Pup/Sub",
+      "notes": "PubSub channel for result availability notifications"
     },
     {
       "id": "9",
       "service": "ElastiCache",
       "name": "Payload",
-      "notes": "Redis cache storing request/response data"
+      "notes": "Stores full trade and market data payloads and computation results"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 1,
+      "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Traders integrate external data"
+      "notes": "User triggers request incorporating external market data"
     },
     {
       "source": "1",
@@ -84,71 +84,87 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Sends payload to ALB"
+      "notes": "External data routed into Application Load Balancer"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 1,
+      "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "Routes request to Pricing Engine"
-    },
-    {
-      "source": "3",
-      "target": "9",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Stores accurate payload into Redis"
+      "notes": "ALB routes request traffic into Pricing Engine"
     },
     {
       "source": "3",
       "target": "6",
-      "flow_id": 1,
-      "seq": "4",
+      "flow_id": 3,
+      "seq": "3a",
       "type": "data",
-      "notes": "Enqueues job ID into task queue"
+      "notes": "Pricing engine places job ID into Task Queues"
+    },
+    {
+      "source": "3",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "3b",
+      "type": "data",
+      "notes": "Pricing engine stores data payload in Redis Payload cache"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 4,
+      "seq": "4a",
+      "type": "data",
+      "notes": "CPU pricing workers monitor and pick tasks from Task Queues"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 1,
-      "seq": "5",
+      "flow_id": 4,
+      "seq": "4b",
       "type": "data",
-      "notes": "Task popped to processing queue"
-    },
-    {
-      "source": "4",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "0",
-      "type": "data",
-      "notes": "CPU worker monitors task queue"
+      "notes": "Popped tasks moved into Processing Queues"
     },
     {
       "source": "4",
       "target": "9",
-      "flow_id": 2,
-      "seq": "1",
+      "flow_id": 5,
+      "seq": "5a",
       "type": "data",
-      "notes": "Reads payload and writes computed result"
+      "notes": "CPU worker retrieves payload from Redis Payload"
     },
     {
-      "source": "5",
-      "target": "6",
-      "flow_id": 3,
-      "seq": "0",
+      "source": "9",
+      "target": "4",
+      "flow_id": 5,
+      "seq": "5b",
       "type": "data",
-      "notes": "GPU worker monitors task queue"
+      "notes": "CPU worker saves calculation results back into Redis Payload"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 6,
+      "seq": "6a",
+      "type": "data",
+      "notes": "GPU workers monitor dedicated GPU tasks in Task Queues"
     },
     {
       "source": "5",
       "target": "9",
-      "flow_id": 3,
-      "seq": "1",
+      "flow_id": 7,
+      "seq": "7a",
       "type": "data",
-      "notes": "Reads payload and writes computed result"
+      "notes": "GPU worker fetches payload from Redis Payload"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 7,
+      "seq": "7b",
+      "type": "data",
+      "notes": "GPU worker stores computed results back into Redis Payload"
     }
   ]
 }

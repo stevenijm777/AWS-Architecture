@@ -1,142 +1,126 @@
 {
-  "step_by_step_reasoning": "We identify nodes visually from the whiteboard: SQS, Lambda, DynamoDB, Step Functions, Neptune, Gremlin (mapped as ThirdParty), S3, and Glue. We then map the drawn arrows to sequential flow edges: SQS triggers Lambda, Lambda interacts bidirectionally with DynamoDB to retrieve configurations, Step Functions interact bidirectionally with DynamoDB to read and write status, Step Functions trigger and scale Neptune, Gremlin executes bidirectional queries on Neptune, Gremlin exports results to S3, and S3 catalogs data to Glue.",
+  "step_by_step_reasoning": "The whiteboard architecture shows a data processing pipeline that begins with SQS receiving incoming event notifications. SQS triggers a Lambda function ('Job Initiator Lambda'). Lambda reads/writes configuration and state to DynamoDB. Lambda also triggers AWS Step Functions, which receives input/state from DynamoDB as well. Step Functions scales and orchestrates loading data into Amazon Neptune. Gremlin queries traverse Neptune and export graph output data to Amazon S3. Finally, AWS Glue catalogs the data stored in S3 for broad access.",
   "graph": {
-    "name": "HomeSite Insurance Graph-Based User Relationship Pipeline",
-    "link": "https://www.youtube.com/watch?v=Fst6vA28Nco",
-    "categories": "Analytics, Databases",
+    "name": "Homesite Insurance - Serverless Graph Database ETL Pipeline",
+    "link": "",
+    "categories": "Data Lake / Analytics / Graph Database",
     "graph_usable": true,
-    "notes": "Serverless pipeline orchestrating ingestion of customer interactions into Amazon Neptune to build a property graph, with results exported to S3 and cataloged via Glue."
+    "notes": "Architecture uses SQS, Lambda, DynamoDB, Step Functions, Neptune, Gremlin, S3, and Glue to process customer web data into a graph database and export results to S3."
   },
   "nodes": [
     {
       "id": "0",
       "service": "SQS",
-      "name": "SQS Queue",
-      "notes": "Receives events from upstream pipelines to orchestrate stages."
+      "name": "SQS",
+      "notes": "Orchestrates incoming event triggers from upstream data pipelines"
     },
     {
       "id": "1",
       "service": "Lambda",
       "name": "Job Initiator Lambda",
-      "notes": "Triggered by SQS to retrieve configuration and initiate orchestration."
+      "notes": "Triggered by SQS; reads pipeline config from DynamoDB and initiates Step Functions"
     },
     {
       "id": "2",
       "service": "DynamoDB",
       "name": "DynamoDB",
-      "notes": "Stores pipeline configurations and execution exit status."
+      "notes": "Stores pipeline configurations as JSON and tracks job exit status"
     },
     {
       "id": "3",
       "service": "StepFunctions",
-      "name": "Step Functions",
-      "notes": "Coordinates complex, long-running ETL processes and scales Neptune."
+      "name": "Step Function",
+      "notes": "Coordinates detailed ETL execution steps and scales Neptune cluster"
     },
     {
       "id": "4",
       "service": "Neptune",
-      "name": "Amazon Neptune",
-      "notes": "Graph database hosting vertices and edges of user relationships."
+      "name": "Neptune",
+      "notes": "Stores property graph model of customer interactions, vertices, and edges"
     },
     {
       "id": "5",
       "service": "ThirdParty",
       "name": "Gremlin",
-      "notes": "Traversal language and client used to query the Neptune graph."
+      "notes": "Executes graph queries to traverse model and export data to S3"
     },
     {
       "id": "6",
       "service": "S3",
-      "name": "Amazon S3",
-      "notes": "Stores exported query results for cost-effective broad access."
+      "name": "S3",
+      "notes": "Stores exported query results and data for serverless querying"
     },
     {
       "id": "7",
       "service": "Glue",
-      "name": "AWS Glue",
-      "notes": "Catalogs the data stored in Amazon S3."
+      "name": "Glue",
+      "notes": "Catalogs exported data in S3 for access via Athena"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "0",
       "type": "data",
-      "notes": "SQS triggers Lambda"
+      "notes": "SQS triggers Job Initiator Lambda"
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 1,
-      "seq": "2",
+      "seq": "1",
       "type": "data",
-      "notes": "Lambda queries pipeline definition"
-    },
-    {
-      "source": "2",
-      "target": "1",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "DynamoDB returns pipeline definition"
+      "notes": "Lambda reads pipeline definition and exit status from DynamoDB"
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 1,
-      "seq": "4",
+      "flow_id": 2,
+      "seq": "2",
       "type": "data",
-      "notes": "Step Function reads job state"
+      "notes": "DynamoDB configuration feeds into Step Functions coordination"
     },
     {
-      "source": "3",
-      "target": "2",
-      "flow_id": 1,
-      "seq": "5",
+      "source": "1",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "3",
       "type": "data",
-      "notes": "Step Function writes job execution status"
+      "notes": "Lambda kicks off execution of Step Functions"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 1,
-      "seq": "6",
+      "flow_id": 4,
+      "seq": "4",
       "type": "data",
-      "notes": "Step Function loads data and scales Neptune cluster"
+      "notes": "Step Functions scales up and loads vertices and edges to Neptune"
     },
     {
       "source": "4",
       "target": "5",
-      "flow_id": 1,
-      "seq": "7",
+      "flow_id": 5,
+      "seq": "5",
       "type": "data",
-      "notes": "Neptune returns graph results to Gremlin"
-    },
-    {
-      "source": "5",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "8",
-      "type": "data",
-      "notes": "Gremlin executes queries against Neptune"
+      "notes": "Gremlin queries traverse the graph stored in Neptune"
     },
     {
       "source": "5",
       "target": "6",
-      "flow_id": 1,
-      "seq": "9",
+      "flow_id": 6,
+      "seq": "6",
       "type": "data",
-      "notes": "Gremlin exports graph query output to S3"
+      "notes": "Gremlin exports query results to S3"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 1,
-      "seq": "10",
+      "flow_id": 7,
+      "seq": "7",
       "type": "meta",
-      "notes": "S3 datasets are cataloged in AWS Glue"
+      "notes": "Glue catalogs data stored in S3"
     }
   ]
 }

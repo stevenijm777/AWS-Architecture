@@ -1,164 +1,112 @@
 {
-  "step_by_step_reasoning": "The architecture is extracted by analyzing clients (mobile, web, and focus camera) uploading content to S3 and registering jobs in SQS. Custom scaling is handled by a Lambda function reading metrics from CloudWatch and SQS, then scaling a Spot Fleet of EC2 instances. The EC2 instances process the transcoding jobs and write output back to S3.",
+  "step_by_step_reasoning": "The architecture diagram shows video ingestion and transcoding workflow for Huddle. 1. End-user client devices (mobile app, web platform, Huddle focus cameras) upload video content to an S3 bucket and concurrently enqueue job messages into AWS SQS. 2. SQS queue metrics are collected by CloudWatch, which triggers a Lambda function. The Lambda function evaluates queue depth vs instance count and instructs Spot Fleet (Auto Scaling) to scale compute resources. 3. SQS delivers messages to EC2 instances managed by Spot Fleet for video transcoding. 4. Once transcoding completes on EC2, the playable output video is saved back into S3.",
   "graph": {
-    "name": "Huddle Video Transcoding Architecture",
-    "link": "https://www.youtube.com/watch?v=FqSPh9Yp0lY",
-    "categories": "Media and Entertainment, Serverless",
+    "name": "Huddle Video Transcoding Architecture at Scale",
+    "link": "",
+    "categories": "Media & Analytics",
     "graph_usable": true,
-    "notes": "Cost-effective, highly scalable video ingestion and transcoding system using Spot Fleet, Lambda, SQS, and S3."
+    "notes": "Cost-effective, highly scalable video transcoding pipeline utilizing SQS, Spot Fleet, EC2, Lambda, and CloudWatch."
   },
   "nodes": [
     {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Mobile, Web & Camera Apps",
+      "notes": "Coaching video producers (Mobile App, Web Platform, Huddle Focus Cameras)"
+    },
+    {
       "id": "1",
-      "service": "UserConsumerMobile",
-      "name": "Mobile App",
-      "notes": "Coaches upload video using the Huddle mobile app."
+      "service": "S3",
+      "name": "",
+      "notes": "Stores uploaded raw video content and final playable transcoded videos"
     },
     {
       "id": "2",
-      "service": "UserConsumerWeb",
-      "name": "Web Platform",
-      "notes": "Coaches upload video using the web interface."
+      "service": "SQS",
+      "name": "",
+      "notes": "Prioritized job queues for incoming transcoding tasks"
     },
     {
       "id": "3",
-      "service": "UserConsumerCamera",
-      "name": "Huddle Focus Camera",
-      "notes": "Dedicated camera system uploading games directly."
+      "service": "CloudWatch",
+      "name": "",
+      "notes": "Monitors SQS queue depth metrics"
     },
     {
       "id": "4",
-      "service": "S3",
-      "name": "S3 Ingest & Storage",
-      "notes": "Stores both raw incoming videos and transcoded playable media."
+      "service": "Lambda",
+      "name": "",
+      "notes": "Calculates instance-to-message ratio for custom target tracking scaling"
     },
     {
       "id": "5",
-      "service": "SQS",
-      "name": "SQS Queues",
-      "notes": "Prioritized queues based on performance requirements and file size."
+      "service": "AutoScaling",
+      "name": "Spot Fleet",
+      "notes": "Manages fleet of spot instances for transcoding workloads"
     },
     {
       "id": "6",
-      "service": "CloudWatch",
-      "name": "CloudWatch Metrics",
-      "notes": "Collects queue depth and scaling metrics."
-    },
-    {
-      "id": "7",
-      "service": "Lambda",
-      "name": "Scaling Lambda",
-      "notes": "Evaluates custom ratios to calculate scaling needs."
-    },
-    {
-      "id": "8",
-      "service": "AutoScaling",
-      "name": "Spot Fleet",
-      "notes": "Manages autoscaling of Spot EC2 instances to optimize costs."
-    },
-    {
-      "id": "9",
       "service": "EC2",
-      "name": "EC2 Transcoding Instances",
-      "notes": "Runs transcoding jobs in parallel."
+      "name": "",
+      "notes": "Transcoding compute instances"
     }
   ],
   "edges": [
     {
-      "source": "1",
-      "target": "4",
-      "flow_id": 1,
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Uploads raw video content"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
       "seq": "1",
       "type": "data",
-      "notes": "Uploads raw video to S3."
+      "notes": "Sends transcoding job message to queue"
     },
     {
       "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Pushes metrics on queue length and message depth"
+    },
+    {
+      "source": "3",
       "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Triggers custom autoscaling metric evaluation"
+    },
+    {
+      "source": "4",
+      "target": "5",
       "flow_id": 1,
       "seq": "2",
-      "type": "data",
-      "notes": "Uploads raw video to S3."
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Uploads raw video to S3."
-    },
-    {
-      "source": "1",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Enqueues transcoding task metadata."
+      "type": "meta",
+      "notes": "Informs Spot Fleet to scale in or out based on current ratio"
     },
     {
       "source": "2",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Enqueues transcoding task metadata."
-    },
-    {
-      "source": "3",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "Enqueues transcoding task metadata."
-    },
-    {
-      "source": "5",
-      "target": "7",
+      "target": "6",
       "flow_id": 2,
-      "seq": "1",
+      "seq": "0",
       "type": "data",
-      "notes": "Lambda tracks SQS message volumes."
+      "notes": "EC2 worker instances consume transcoding jobs"
     },
     {
       "source": "6",
-      "target": "7",
+      "target": "1",
       "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Lambda pulls CloudWatch metrics."
-    },
-    {
-      "source": "7",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Instructs Spot Fleet to scale in or out."
-    },
-    {
-      "source": "5",
-      "target": "9",
-      "flow_id": 3,
       "seq": "1",
       "type": "data",
-      "notes": "EC2 instances process queued messages."
-    },
-    {
-      "source": "8",
-      "target": "9",
-      "flow_id": 3,
-      "seq": "2",
-      "type": "meta",
-      "notes": "Spins up or terminates EC2 instances."
-    },
-    {
-      "source": "9",
-      "target": "4",
-      "flow_id": 3,
-      "seq": "3",
-      "type": "data",
-      "notes": "Saves transcoded files back into S3."
+      "notes": "Saves transcoded playable video output back to S3"
     }
   ]
 }

@@ -1,158 +1,158 @@
 {
-  "step_by_step_reasoning": "First, we identify the visual nodes and components on the whiteboard diagram under the 'CUSTOMER', 'AWS', and 'SNYK' partitions. On the left, we map 'CODEPIPELINE' and 'S3 OBJECTS' as S3 and CodePipeline services under Customer. Directly below is another 'CODEPIPELINE' node under the AWS partition. On the right under Snyk, we map 'API GATEWAY' (ApiGateway), 'DYNAMODB' (DynamoDB), 'STEP FUNCTIONS' (StepFunctions), 'EVENTBRIDGE' (EventBridge), and 'LAMBDA' (Lambda). Next, we identify the physical arrows connecting these nodes: a curved double-headed arrow between Customer CodePipeline and AWS CodePipeline, a horizontal double-headed arrow between Customer CodePipeline and S3 Objects, a directed arrow from AWS CodePipeline to Snyk's API Gateway, a double-headed arrow between API Gateway and DynamoDB, a directed arrow from AWS CodePipeline to Snyk's Lambda, a directed arrow from Lambda to EventBridge, a double-headed arrow between Step Functions and EventBridge, and a long directed arrow from Step Functions back to AWS CodePipeline. We assign logical flow IDs and sequence numbers to represent the setup phase and subsequent scanning executions.",
+  "step_by_step_reasoning": "The whiteboard architecture diagram shows two main partitions: Customer/AWS on the left and Snyk infrastructure on the right. On the left side, under Customer, there is a CodePipeline icon connected bidirectionally to an S3 Objects bucket and bidirectionally to an AWS CodePipeline icon under the AWS label. On the right side (Snyk infrastructure), AWS CodePipeline connects to API Gateway (which connects bidirectionally to DynamoDB) for initial setup and authentication. For continuous scanning flows, AWS CodePipeline triggers Lambda, which writes state into EventBridge. EventBridge interacts bidirectionally with Step Functions, which performs complex scan logic and reports results back to AWS CodePipeline. All nodes are extracted using exact AWS service names from the allowed vocabulary, and edges strictly reflect drawn visual connections.",
   "graph": {
-    "name": "Snyk Developer-First AWS CodePipeline Integration",
-    "link": "https://www.youtube.com/watch?v=FOfbE_D_Y2E",
-    "categories": "Developer Tools, Security",
+    "name": "Snyk Security Integration with AWS CodePipeline",
+    "link": "",
+    "categories": "Security & DevOps",
     "graph_usable": true,
-    "notes": " whiteboards a secure integration that allows developers to run security scans on their application code directly within AWS CodePipeline using Snyk's API and Serverless infrastructure."
+    "notes": "Snyk security controls integration with AWS CodePipeline for vulnerability scanning during build pipelines."
   },
   "nodes": [
     {
-      "id": "1",
+      "id": "0",
       "service": "CodePipeline",
       "name": "Customer CodePipeline",
-      "notes": "The customer's active CI/CD pipeline integrated with Snyk"
+      "notes": "CodePipeline running in Customer account"
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 Objects",
+      "notes": "S3 bucket holding build artifacts and source code copies"
     },
     {
       "id": "2",
-      "service": "S3",
-      "name": "S3 Objects",
-      "notes": "S3 bucket storing code artifacts used during pipeline run"
+      "service": "CodePipeline",
+      "name": "AWS CodePipeline",
+      "notes": "AWS CodePipeline service instance"
     },
     {
       "id": "3",
-      "service": "CodePipeline",
-      "name": "AWS CodePipeline",
-      "notes": "AWS CodePipeline service management plane"
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "API Gateway endpoint in Snyk infrastructure"
     },
     {
       "id": "4",
-      "service": "ApiGateway",
-      "name": "API Gateway",
-      "notes": "Snyk API Gateway endpoint for initial setup and authentication"
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DynamoDB storing customer and pipeline metadata associations"
     },
     {
       "id": "5",
-      "service": "DynamoDB",
-      "name": "DynamoDB",
-      "notes": "Stores customer configuration metadata and pipeline mappings"
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Lambda function handling incoming pipeline executions"
     },
     {
       "id": "6",
-      "service": "StepFunctions",
-      "name": "Step Functions",
-      "notes": "Coordinates the scanning workflows and processes artifacts"
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "EventBridge for event bus and state management"
     },
     {
       "id": "7",
-      "service": "EventBridge",
-      "name": "EventBridge",
-      "notes": "Tracks pipeline state and triggers the Step Functions scan"
-    },
-    {
-      "id": "8",
-      "service": "Lambda",
-      "name": "Lambda",
-      "notes": "Receives subsequent execution trigger events from AWS CodePipeline"
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Step Functions orchestrating vulnerability scanning workflow"
     }
   ],
   "edges": [
     {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "CodePipeline retrieves/stores source objects in S3"
+    },
+    {
       "source": "1",
-      "target": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 provides artifacts to CodePipeline"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer CodePipeline communicates with AWS CodePipeline service"
+    },
+    {
+      "source": "2",
+      "target": "0",
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Customer registers and enables Snyk integration in CodePipeline"
+      "notes": "AWS CodePipeline syncs state back to Customer CodePipeline"
     },
     {
-      "source": "3",
-      "target": "1",
-      "flow_id": 1,
-      "seq": "2",
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
       "type": "data",
-      "notes": "AWS CodePipeline updates status back to Customer's console"
+      "notes": "Initial setup/auth directed to Snyk API Gateway"
     },
     {
       "source": "3",
       "target": "4",
-      "flow_id": 1,
-      "seq": "3",
+      "flow_id": 2,
+      "seq": "1",
       "type": "data",
-      "notes": "AWS CodePipeline redirects user to Snyk's API Gateway for OAuth/Configuration"
+      "notes": "API Gateway stores metadata in DynamoDB"
     },
     {
       "source": "4",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "API Gateway writes configuration and mapping metadata to DynamoDB"
-    },
-    {
-      "source": "5",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Confirms record storage to Snyk UI flow"
-    },
-    {
-      "source": "3",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Subsequent pipeline runs trigger the Snyk Lambda function"
-    },
-    {
-      "source": "8",
-      "target": "7",
+      "target": "3",
       "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "Lambda registers event state changes in EventBridge"
+      "notes": "DynamoDB returns association metadata"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pipeline run triggers Snyk Lambda function"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda writes state information to EventBridge"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "EventBridge triggers scan state machine in Step Functions"
     },
     {
       "source": "7",
       "target": "6",
-      "flow_id": 2,
+      "flow_id": 3,
       "seq": "3",
       "type": "data",
-      "notes": "EventBridge triggers Step Functions workflow execution"
+      "notes": "Step Functions updates execution state in EventBridge"
     },
     {
-      "source": "6",
-      "target": "7",
-      "flow_id": 2,
-      "seq": "4",
-      "type": "data",
-      "notes": "Updates state machine status during scan processing"
-    },
-    {
-      "source": "6",
-      "target": "3",
-      "flow_id": 2,
-      "seq": "5",
-      "type": "data",
-      "notes": "Step Functions request artifact locations and feed scan results back to CodePipeline"
-    },
-    {
-      "source": "1",
+      "source": "7",
       "target": "2",
       "flow_id": 3,
-      "seq": "1",
+      "seq": "4",
       "type": "data",
-      "notes": "CodePipeline copies workspace artifacts into the customer S3 bucket"
-    },
-    {
-      "source": "2",
-      "target": "1",
-      "flow_id": 3,
-      "seq": "2",
-      "type": "data",
-      "notes": "Source files and packages are pulled or prepared for scanning operations"
+      "notes": "Step Functions returns scan report back to CodePipeline"
     }
   ]
 }

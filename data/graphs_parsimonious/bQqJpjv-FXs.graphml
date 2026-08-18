@@ -14,81 +14,92 @@
   <key id="d0" for="graph" attr.name="name" attr.type="string" />
   <graph edgedefault="directed">
     <node id="0">
-      <data key="d5">Garden Device</data>
+      <data key="d5">Smart Garden Device</data>
       <data key="d6">UserConsumerIOT</data>
-      <data key="d7">Internet-connected small garden device with sensors (water level, humidity, temperature) running FreeRTOS and sending state updates.</data>
+      <data key="d7">Internet-connected garden device running FreeRTOS with sensors</data>
     </node>
     <node id="1">
-      <data key="d5">Mobile Application</data>
-      <data key="d6">UserConsumerMobile</data>
-      <data key="d7">User's mobile application for receiving push notifications (e.g., low water alerts) and providing feedback or actions back to the system.</data>
+      <data key="d5">AWS IoT Core</data>
+      <data key="d6">IoTCore</data>
+      <data key="d7">Handles device shadow state updates and topic rules</data>
     </node>
     <node id="2">
-      <data key="d5">IoT Core</data>
-      <data key="d6">IoTCore</data>
-      <data key="d7">Ingests sensor data from garden devices via MQTT and utilizes the device shadow service to replicate garden state, triggering topic rules for further processing.</data>
+      <data key="d5">AWS Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Processes state change events and enriches metadata</data>
     </node>
     <node id="3">
-      <data key="d5">Garden Logic Lambda</data>
-      <data key="d6">Lambda</data>
-      <data key="d7">Processes state changes from IoT Core topic rules, combines metadata, and interacts with Pinpoint for notifications or updates Pinpoint based on user feedback.</data>
+      <data key="d5">Amazon Pinpoint</data>
+      <data key="d6">Pinpoint</data>
+      <data key="d7">Manages journeys, endpoint attributes, and sends push notifications</data>
     </node>
     <node id="4">
-      <data key="d5">Pinpoint</data>
-      <data key="d6">Pinpoint</data>
-      <data key="d7">Sends targeted push notifications to users based on garden state (e.g., low water), manages user segments, journeys, and campaign interactions.</data>
+      <data key="d5">Mobile Application</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">User mobile app receiving notifications and sending user updates</data>
     </node>
     <node id="5">
-      <data key="d5">API Gateway</data>
+      <data key="d5">Amazon API Gateway</data>
       <data key="d6">ApiGateway</data>
-      <data key="d7">Provides an endpoint for the mobile application to send user feedback and actions (e.g., 'watered plant', 'ignored notification') back to the system.</data>
+      <data key="d7">Ingests user interactions and feedback from the mobile app</data>
     </node>
-    <edge source="0" target="2" id="0">
+    <node id="6">
+      <data key="d5">Metadata Database</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores plant metadata, date, plant type, and user interaction feedback</data>
+    </node>
+    <edge source="0" target="1" id="0">
       <data key="d8">0</data>
-      <data key="d9">Sensor readings (water level, relative humidity, temperature) sent from the garden device via MQTT to IoT Core's device shadow.</data>
-      <data key="d10">0.0</data>
+      <data key="d9">Garden sends sensor telemetry (water level, RH, temp) to IoT Core</data>
+      <data key="d10">0</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="1" target="5" id="0">
+    <edge source="1" target="0" id="0">
       <data key="d8">1</data>
-      <data key="d9">User actions or feedback (e.g., 'I watered my plant', 'acknowledged notification') sent from the mobile application to API Gateway.</data>
-      <data key="d10">1.0</data>
+      <data key="d9">IoT Core syncs state/shadow back to garden device</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Topic Rule (TR) triggers Lambda on state changes of interest</data>
+      <data key="d10">2</data>
       <data key="d11">data</data>
     </edge>
     <edge source="2" target="3" id="0">
-      <data key="d8">0</data>
-      <data key="d9">IoT Core topic rule triggers Lambda upon detection of specific garden state changes (e.g., low water level).</data>
-      <data key="d10">0.1</data>
+      <data key="d8">4</data>
+      <data key="d9">Lambda populates endpoint attributes table in Pinpoint</data>
+      <data key="d10">4</data>
       <data key="d11">data</data>
     </edge>
     <edge source="3" target="4" id="0">
-      <data key="d8">0</data>
-      <data key="d9">Lambda sends enriched garden state information and user details to Pinpoint to initiate a targeted push notification campaign.</data>
-      <data key="d10">0.2</data>
+      <data key="d8">5</data>
+      <data key="d9">Pinpoint sends push notifications to user's mobile app</data>
+      <data key="d10">5</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="3" target="4" id="1">
-      <data key="d8">1</data>
-      <data key="d9">Lambda updates Pinpoint attributes or segments based on user feedback to influence future notification strategy (e.g., increasing aggressiveness for ignored notifications or giving credit for positive actions).</data>
-      <data key="d10">1.2</data>
-      <data key="d11">meta</data>
-    </edge>
-    <edge source="4" target="1" id="0">
-      <data key="d8">0</data>
-      <data key="d9">Pinpoint sends push notifications (e.g., 'Your garden needs water!') to the user's mobile application.</data>
-      <data key="d10">0.3</data>
+    <edge source="4" target="5" id="0">
+      <data key="d8">6</data>
+      <data key="d9">User actions and feedback are sent from mobile app to API Gateway</data>
+      <data key="d10">6</data>
       <data key="d11">data</data>
     </edge>
-    <edge source="5" target="3" id="0">
-      <data key="d8">1</data>
-      <data key="d9">API Gateway forwards user feedback requests to Lambda for processing and association of meta information.</data>
-      <data key="d10">1.1</data>
+    <edge source="5" target="6" id="0">
+      <data key="d8">7</data>
+      <data key="d9">API Gateway updates user interaction and feedback metadata in database</data>
+      <data key="d10">7</data>
       <data key="d11">data</data>
     </edge>
-    <data key="d0">Smart Garden IoT and Notification System</data>
-    <data key="d1">https://www.youtube.com/watch?v=kYcI8D8x3_k</data>
-    <data key="d2">This architecture describes an internet-connected small garden system that monitors plant health and provides guidance to users via a mobile application. It leverages AWS IoT Core for device data ingestion, Lambda for processing, Pinpoint for push notifications, and API Gateway for handling user feedback.</data>
-    <data key="d3">IoT, Mobile, Serverless, Notifications</data>
+    <edge source="6" target="2" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Lambda fetches plant metadata (date planted, plant type) from database</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Eden - Smart Garden Notification System</data>
+    <data key="d1" />
+    <data key="d2">System processes garden sensor state changes, enriches events with database metadata, triggers mobile notifications via Pinpoint, and records user feedback via API Gateway.</data>
+    <data key="d3">IoT, Mobile Application, Event-Driven</data>
     <data key="d4">True</data>
   </graph>
 </graphml>

@@ -1,66 +1,66 @@
 {
-  "step_by_step_reasoning": "The whiteboard architecture shows a multi-tier data ingestion and storage pipeline between a Customer AWS environment and Splunk's AWS environment. On the Customer side, data originates from a data source (UserCompanyDataStream), Lambda, Kinesis Firehose, and an S3 bucket. Data flows into Splunk's environment via two Elastic Load Balancers (ELB): standard HEC data and Lambda logs pass through the top ELB, while Kinesis Data Firehose routes through the bottom ELB. Both ELBs forward traffic to Splunk's EC2 caching/indexing tier in an Auto Scaling group. EC2 offloads infrequently searched data to an S3 bucket and archives cold data to Glacier (S3). Splunk S3 also supports dynamic data self-storage exporting back into the Customer S3 bucket.",
+  "step_by_step_reasoning": "1. Identify components on Customer side: 'Data' source (ThirdParty actor), 'Lambda', 'Kinesis Firehose', and 'S3' bucket.\n2. Identify components on Splunk side: two 'ELB' load balancers, an 'EC2' instance block, a 'Glacier' storage bucket (mapped to AWS service S3), and an 'S3' storage bucket.\n3. Map visual pink arrows drawn on the board to form exact directed edges:\n - Data -> Top ELB\n - EC2 -> Glacier\n - EC2 -> Splunk S3\n - Splunk S3 -> Customer S3",
   "graph": {
-    "name": "Splunk Cloud Architecture on AWS",
+    "name": "Splunk Cloud Storage Architecture",
     "link": "",
-    "categories": "Analytics & Data Ingestion",
+    "categories": "Storage & Analytics",
     "graph_usable": true,
-    "notes": "Shows data ingestion paths from Customer environment into Splunk Cloud using ELB, EC2, and multi-tier S3/Glacier storage."
+    "notes": "Architecture showing data ingestion into Splunk Cloud and multi-tier storage with S3 and Glacier."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserCompanyDataStream",
-      "name": "DATA",
+      "service": "ThirdParty",
+      "name": "Data",
       "notes": "Customer data source"
     },
     {
       "id": "1",
       "service": "Lambda",
-      "name": "LAMBDA",
-      "notes": "Customer serverless data source"
+      "name": "Lambda",
+      "notes": "Serverless data sender"
     },
     {
       "id": "2",
       "service": "Firehose",
-      "name": "KINESIS FIREHOSE",
-      "notes": "Customer Kinesis Data Firehose"
+      "name": "Kinesis Firehose",
+      "notes": "Streaming data sender"
     },
     {
       "id": "3",
       "service": "S3",
       "name": "Customer S3",
-      "notes": "Customer S3 bucket for exported self-storage data"
+      "notes": "Customer-owned destination S3 bucket"
     },
     {
       "id": "4",
       "service": "ELB",
-      "name": "ELB (HEC)",
-      "notes": "Splunk Elastic Load Balancer for HEC traffic"
+      "name": "Top ELB",
+      "notes": "Load balancer for HEC data"
     },
     {
       "id": "5",
       "service": "ELB",
-      "name": "ELB (Firehose)",
-      "notes": "Splunk Elastic Load Balancer with sticky sessions for Firehose"
+      "name": "Bottom ELB",
+      "notes": "Load balancer for Firehose data"
     },
     {
       "id": "6",
       "service": "EC2",
       "name": "EC2",
-      "notes": "Splunk indexers and search heads in Auto Scaling group"
+      "notes": "Compute and cache tier"
     },
     {
       "id": "7",
       "service": "S3",
-      "name": "GLACIER",
-      "notes": "Splunk long-term cold archive"
+      "name": "Glacier",
+      "notes": "Cold storage archiving"
     },
     {
       "id": "8",
       "service": "S3",
       "name": "Splunk S3",
-      "notes": "Splunk cluster S3 storage backend"
+      "notes": "Warm data storage tier"
     }
   ],
   "edges": [
@@ -70,63 +70,31 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "Data sent into Splunk via HEC load balancer"
-    },
-    {
-      "source": "1",
-      "target": "4",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Lambda function streams data directly to Splunk ELB"
-    },
-    {
-      "source": "2",
-      "target": "5",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "Kinesis Firehose streams data to dedicated sticky ELB"
-    },
-    {
-      "source": "4",
-      "target": "6",
-      "flow_id": 0,
-      "seq": "3",
-      "type": "data",
-      "notes": "HEC ELB distributes traffic to EC2 indexers"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 0,
-      "seq": "4",
-      "type": "data",
-      "notes": "Firehose ELB distributes sticky session traffic to EC2"
+      "notes": "Data sent directly to top ELB"
     },
     {
       "source": "6",
       "target": "7",
-      "flow_id": 0,
-      "seq": "5",
+      "flow_id": 1,
+      "seq": "0",
       "type": "data",
       "notes": "EC2 archives cold data to Glacier"
     },
     {
       "source": "6",
       "target": "8",
-      "flow_id": 0,
-      "seq": "6",
+      "flow_id": 1,
+      "seq": "1",
       "type": "data",
-      "notes": "EC2 shuttles unsearched data off to S3 bucket"
+      "notes": "EC2 offloads unsearched data to S3"
     },
     {
       "source": "8",
       "target": "3",
-      "flow_id": 0,
-      "seq": "7",
+      "flow_id": 2,
+      "seq": "0",
       "type": "data",
-      "notes": "Dynamic data self-storage exports data directly into Customer S3 bucket"
+      "notes": "Self-storage export from Splunk S3 to Customer S3"
     }
   ]
 }

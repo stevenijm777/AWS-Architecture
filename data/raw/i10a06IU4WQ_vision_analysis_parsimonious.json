@@ -1,148 +1,140 @@
 {
-  "step_by_step_reasoning": "The architecture diagram depicts Pinterest's token vending solution to grant granular, secure data access to Hadoop/Presto/Spark clusters running on Amazon EC2. The visual nodes drawn include the internal developers/users, EC2 instances, a custom Token Vending service, an LDAP directory, AWS STS, two IAM Managed Policies (MP1 and MP2), and two Amazon S3 buckets. The arrows map the sequence from user authentication via Kerberos, calling the Token Vending service, fetching group mapping from LDAP, generating session tokens with restricted policies from AWS STS, and using these tokens to directly query the S3 buckets.",
+  "step_by_step_reasoning": "1. Identify actors and services: User icon (UserCompanyDeveloper), EC2 instances running Hadoop (EC2), custom Token Vending Service (ThirdParty), internal LDAP Directory (ThirdParty), AWS STS (STS), Managed Policies MP1 and MP2 (IAM), and S3 Buckets (S3).\n2. Trace connections based on physical whiteboard arrows:\n   - User connects to EC2 via Kerberos.\n   - EC2 credentials provider requests tokens from Token Vending Service.\n   - Token Vending queries LDAP for group memberships.\n   - Token Vending calls STS AssumeRole with specific managed policies.\n   - STS applies Managed Policy 1 (MP1) and Managed Policy 2 (MP2).\n   - MP1 grants access to S3 Bucket 1 and MP2 grants access to S3 Bucket 2.\n   - EC2 uses the returned STS tokens to directly access data in S3.",
   "graph": {
-    "name": "Pinterest: Dynamic S3 Data Access Control using AWS STS",
-    "link": "https://www.youtube.com/watch?v=0bTf9_bX6Lg",
-    "categories": "Security & Compliance, Analytics",
+    "name": "Pinterest Fine-Grained S3 Data Access Architecture",
+    "link": "",
+    "categories": "Security & Data Governance",
     "graph_usable": true,
-    "notes": "Whiteboard diagram illustrating Pinterest's architecture for secure, dynamic, and scalable data access to S3 buckets using AWS STS and session policies mapped via LDAP."
+    "notes": "Pinterest uses a custom Token Vending Service integrated with LDAP and AWS STS session policies to dynamically grant fine-grained S3 bucket access to EC2-based data processing clusters."
   },
   "nodes": [
     {
-      "id": "user_developer",
+      "id": "0",
       "service": "UserCompanyDeveloper",
-      "name": "Pinterest Users / Engineers",
-      "notes": "Internal users running analytical queries or workflows on big data clusters."
+      "name": "Users / Services",
+      "notes": "Internal Pinterest users or automated workflows authenticating via Kerberos"
     },
     {
-      "id": "ec2_clusters",
+      "id": "1",
       "service": "EC2",
-      "name": "Big Data Clusters (EC2)",
-      "notes": "Hadoop, Spark, and Presto clusters running on EC2."
+      "name": "EC2 Data Clusters",
+      "notes": "Hosts data engineering services like Hadoop, Spark, and Presto"
     },
     {
-      "id": "token_vending",
-      "service": "EC2",
+      "id": "2",
+      "service": "ThirdParty",
       "name": "Token Vending Service",
-      "notes": "An internal custom service that maps Pinterest LDAP groups to AWS IAM policies."
+      "notes": "Custom Pinterest service bridging internal LDAP authentication with AWS STS policies"
     },
     {
-      "id": "ldap_service",
-      "service": "UserCompanyInternalPlatform",
-      "name": "LDAP Directory",
-      "notes": "Pinterest's internal LDAP directory storing user group details."
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "LDAP Service",
+      "notes": "Internal user directory managing group memberships and access rights"
     },
     {
-      "id": "sts_service",
+      "id": "4",
       "service": "STS",
       "name": "AWS STS",
-      "notes": "AWS Security Token Service that creates temporary security credentials."
+      "notes": "Generates temporary security credentials using AssumeRole with session policies"
     },
     {
-      "id": "iam_mp1",
+      "id": "5",
       "service": "IAM",
       "name": "Managed Policy 1 (MP1)",
-      "notes": "An IAM Managed Policy defining access rules for the first dataset."
+      "notes": "Managed policy restricting access to S3 Bucket 1"
     },
     {
-      "id": "iam_mp2",
+      "id": "6",
       "service": "IAM",
       "name": "Managed Policy 2 (MP2)",
-      "notes": "An IAM Managed Policy defining access rules for the second dataset."
+      "notes": "Managed policy restricting access to S3 Bucket 2"
     },
     {
-      "id": "s3_bucket_1",
+      "id": "7",
       "service": "S3",
       "name": "S3 Bucket 1",
-      "notes": "Amazon S3 bucket containing dataset 1."
+      "notes": "Target data bucket 1"
     },
     {
-      "id": "s3_bucket_2",
+      "id": "8",
       "service": "S3",
       "name": "S3 Bucket 2",
-      "notes": "Amazon S3 bucket containing dataset 2."
+      "notes": "Target data bucket 2"
     }
   ],
   "edges": [
     {
-      "source": "user_developer",
-      "target": "ec2_clusters",
+      "source": "0",
+      "target": "1",
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "User initiates jobs on EC2 using Kerberos authentication."
+      "notes": "Authenticates using Kerberos"
     },
     {
-      "source": "ec2_clusters",
-      "target": "token_vending",
+      "source": "1",
+      "target": "2",
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "The EC2 cluster credentials provider requests temporary credentials from the Token Vending Service."
+      "notes": "Credentials provider calls Token Vending Service"
     },
     {
-      "source": "token_vending",
-      "target": "ldap_service",
+      "source": "2",
+      "target": "3",
       "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Token Vending Service queries LDAP to find the user's groups."
+      "notes": "Queries user group memberships in LDAP"
     },
     {
-      "source": "token_vending",
-      "target": "sts_service",
+      "source": "2",
+      "target": "4",
       "flow_id": 1,
       "seq": "4",
       "type": "data",
-      "notes": "Token Vending Service calls AssumeRole on AWS STS with the base role."
+      "notes": "Calls AssumeRole passing base role and intersected managed policies"
     },
     {
-      "source": "token_vending",
-      "target": "iam_mp1",
+      "source": "4",
+      "target": "5",
       "flow_id": 1,
-      "seq": "5a",
-      "type": "data",
-      "notes": "Matches user groups and requests an STS token intersected with Managed Policy 1."
+      "seq": "5",
+      "type": "meta",
+      "notes": "Applies Managed Policy 1 session policy"
     },
     {
-      "source": "token_vending",
-      "target": "iam_mp2",
+      "source": "4",
+      "target": "6",
       "flow_id": 1,
-      "seq": "5b",
-      "type": "data",
-      "notes": "Matches user groups and requests an STS token intersected with Managed Policy 2."
+      "seq": "6",
+      "type": "meta",
+      "notes": "Applies Managed Policy 2 session policy"
     },
     {
-      "source": "ec2_clusters",
-      "target": "iam_mp1",
+      "source": "5",
+      "target": "7",
       "flow_id": 1,
-      "seq": "6a",
-      "type": "data",
-      "notes": "EC2 cluster uses the scoped token to gain access permitted by Managed Policy 1."
+      "seq": "7",
+      "type": "meta",
+      "notes": "Grants permission to S3 Bucket 1"
     },
     {
-      "source": "ec2_clusters",
-      "target": "iam_mp2",
+      "source": "6",
+      "target": "8",
       "flow_id": 1,
-      "seq": "6b",
-      "type": "data",
-      "notes": "EC2 cluster uses the scoped token to gain access permitted by Managed Policy 2."
+      "seq": "8",
+      "type": "meta",
+      "notes": "Grants permission to S3 Bucket 2"
     },
     {
-      "source": "iam_mp1",
-      "target": "s3_bucket_1",
+      "source": "1",
+      "target": "8",
       "flow_id": 1,
-      "seq": "7a",
+      "seq": "9",
       "type": "data",
-      "notes": "Policy grants access to read or write data in S3 Bucket 1."
-    },
-    {
-      "source": "iam_mp2",
-      "target": "s3_bucket_2",
-      "flow_id": 1,
-      "seq": "7b",
-      "type": "data",
-      "notes": "Policy grants access to read or write data in S3 Bucket 2."
+      "notes": "EC2 reads directly from S3 using STS token"
     }
   ]
 }

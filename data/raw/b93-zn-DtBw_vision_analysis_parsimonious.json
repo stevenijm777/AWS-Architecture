@@ -1,78 +1,72 @@
 {
-  "step_by_step_reasoning": "The architecture was extracted by first identifying all distinct visual elements (icons and labeled services/actors) on the whiteboard. Floating text that was clearly a source for an arrow (like 'RDS S3 FTP API') was interpreted as a 'ThirdParty' actor to satisfy the 'arrow-driven edges' rule while adhering to the 'omit floating text' rule for individual nodes. Each identified component was assigned a unique ID. Subsequently, all visible arrows connecting these components were mapped as edges. The transcript was then used to enrich the `notes` field for both nodes and edges, clarifying their roles and interactions, and to confirm the logical flow of data (`flow_id` and `seq`). Conflicts between visual representation and transcript details were resolved by prioritizing the visual diagram for node and edge existence, and using the transcript for explanatory context.",
+  "step_by_step_reasoning": "The architecture diagram depicts JD Power's AI Cloud data lake solution. Users interact via a Web Console (UserConsumerWeb) authenticated by Amazon Cognito. Data ingestion connections stream into S3 from various sources (RDS, S3, FTP, API). Ingestion triggers AWS Lambda, which invokes AWS Glue for out-of-the-box crawling or AWS Fargate for custom crawling. Catalogs are stored in Glue. Athena executes query transformations on S3, while data is loaded into Amazon Redshift for analytical platform reporting. Fargate also hosts Jupyter and RStudio environments for Machine Learning workloads.",
   "graph": {
-    "name": "JD Power AI Cloud Data Lake Solution",
+    "name": "JD Power AI Cloud Data Lake Architecture",
     "link": "",
-    "categories": "Data Lake, Analytics, Machine Learning, Data Ingestion",
+    "categories": "Data Lake & Analytics",
     "graph_usable": true,
-    "notes": "Architecture for JD Power's AI Cloud data lake solution, designed for ingesting various data sources, cataloging, transforming, and enabling analytics and machine learning workloads."
+    "notes": "Data lake architecture using S3, Glue, Fargate, Lambda, Athena, and Redshift for analytics and machine learning."
   },
   "nodes": [
     {
       "id": "0",
       "service": "UserConsumerWeb",
-      "name": "Web Console User",
-      "notes": "User interacting with the web console for data ingestion and system access."
+      "name": "Web Console",
+      "notes": "User web interface for data ingestion and platform interactions."
     },
     {
       "id": "1",
       "service": "Cognito",
-      "name": "User Authentication",
-      "notes": "Authenticates users logging into the web console."
+      "name": "Cognito",
+      "notes": "User authentication and identity management."
     },
     {
       "id": "2",
-      "service": "ThirdParty",
-      "name": "External Data Sources",
-      "notes": "Represents various external data sources including RDS instances, S3 buckets, FTP locations, and APIs, from which JD Power ingests data."
+      "service": "S3",
+      "name": "S3",
+      "notes": "Centralized S3 data lake storage."
     },
     {
       "id": "3",
-      "service": "S3",
-      "name": "Data Lake Storage",
-      "notes": "Centralized storage for all ingested raw and processed data, acting as the foundation of the data lake."
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Data cataloging and standard crawling."
     },
     {
       "id": "4",
-      "service": "Glue",
-      "name": "Data Catalog & ETL",
-      "notes": "Used to crawl data sources, create catalogs of data, and perform initial ETL operations, including moving data to S3."
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Executes logic to trigger Glue or fallback custom crawlers."
     },
     {
       "id": "5",
-      "service": "Lambda",
-      "name": "Custom Crawler Trigger",
-      "notes": "A serverless function that is triggered when Glue cannot process a file, initiating custom crawlers on Fargate."
+      "service": "Fargate",
+      "name": "Fargate",
+      "notes": "Runs custom crawlers and hosts Jupyter/RStudio endpoints."
     },
     {
       "id": "6",
-      "service": "Fargate",
-      "name": "Custom Crawlers & ML Endpoints",
-      "notes": "Runs custom crawlers for special file formats not handled by Glue, and hosts Jupyter Notebook/RStudio endpoints for data scientists."
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Interactive querying and Parquet data transformations."
     },
     {
       "id": "7",
-      "service": "Athena",
-      "name": "Ad-hoc Query & Transformation",
-      "notes": "Used for most data analytical and transformation activities, including converting data to Parquet format and applying cleaning rules."
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Data warehouse supporting dashboarding analytics."
     },
     {
       "id": "8",
-      "service": "Redshift",
-      "name": "Data Warehouse",
-      "notes": "Serves as a data warehouse, exposing transformed data to analytical platforms for dashboard creation."
+      "service": "ThirdParty",
+      "name": "Analytics",
+      "notes": "Analytics platform and dashboards."
     },
     {
       "id": "9",
-      "service": "Analytics",
-      "name": "Dashboard Platform",
-      "notes": "Analytical platform where dashboards are created using data from Redshift."
-    },
-    {
-      "id": "10",
-      "service": "Machine Learning",
-      "name": "ML Development",
-      "notes": "Platform where data scientists build and train machine learning models, utilizing Fargate-provisioned environments."
+      "service": "ThirdParty",
+      "name": "Machine Learning",
+      "notes": "Machine learning workspace and model building."
     }
   ],
   "edges": [
@@ -82,95 +76,79 @@
       "flow_id": 0,
       "seq": "0",
       "type": "data",
-      "notes": "User logs into the web console and is authenticated by Cognito."
+      "notes": "Authenticates user session."
     },
     {
       "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Ingests data into central S3 storage."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers crawler orchestration via Lambda."
+    },
+    {
+      "source": "4",
       "target": "3",
-      "flow_id": 0,
+      "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "User interaction with the data ingestion module through the web console leads to data storage in S3."
+      "notes": "Invokes standard Glue crawler."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Invokes custom Fargate crawler if standard cataloging fails."
     },
     {
       "source": "2",
       "target": "3",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "Raw data from various external sources (RDS, S3, FTP, APIs) is moved into S3 buckets."
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 1,
+      "flow_id": 3,
       "seq": "0",
       "type": "data",
-      "notes": "Glue crawls data stored in S3 to create catalogs and prepare it for analysis."
+      "notes": "Glue crawls data inside S3 to generate catalog."
     },
     {
-      "source": "4",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "1",
+      "source": "2",
+      "target": "6",
+      "flow_id": 4,
+      "seq": "0",
       "type": "data",
-      "notes": "Glue processes data, creates catalogs, and saves processed or cataloged data back into S3 buckets."
+      "notes": "Athena queries and transforms S3 data."
     },
     {
-      "source": "1",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "2",
+      "source": "2",
+      "target": "7",
+      "flow_id": 5,
+      "seq": "0",
       "type": "data",
-      "notes": "Once authenticated, user actions in the data ingestion module can trigger a Lambda function for custom processing."
+      "notes": "Loads transformed data into Redshift data warehouse."
     },
     {
       "source": "5",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Lambda triggers custom crawlers running on Fargate for handling special file formats that Glue cannot process natively."
-    },
-    {
-      "source": "3",
-      "target": "7",
-      "flow_id": 2,
+      "target": "8",
+      "flow_id": 6,
       "seq": "0",
       "type": "data",
-      "notes": "Athena queries and transforms data directly from S3, performing activities like Parquet conversion and cleaning."
-    },
-    {
-      "source": "4",
-      "target": "7",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Athena utilizes the catalogs created by Glue to understand and query the data structure."
+      "notes": "Provides hosted endpoints to analytics tools."
     },
     {
       "source": "7",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Transformed and cleaned data from Athena is moved to Redshift to build a data warehouse for advanced analytics."
-    },
-    {
-      "source": "8",
       "target": "9",
-      "flow_id": 3,
+      "flow_id": 7,
       "seq": "0",
       "type": "data",
-      "notes": "Redshift exposes the prepared data to an analytical platform for creating dashboards and reports."
-    },
-    {
-      "source": "6",
-      "target": "10",
-      "flow_id": 3,
-      "seq": "1",
-      "type": "data",
-      "notes": "Fargate is used to provision Jupyter Notebook or RStudio endpoints, providing an environment for data scientists to work on the Machine Learning platform."
+      "notes": "Feeds warehouse data into ML modeling platform."
     }
   ]
 }

@@ -1,96 +1,96 @@
 {
-  "step_by_step_reasoning": "1. Identify all whiteboard visual components: Deep Agent (external actor), CloudFront (CDN), Lambda@Edge Viewer Request and Origin Response, two DynamoDB tables, and an S3 bucket origin.\n2. Establish node IDs and map them to standard AWS services and actor categories.\n3. Trace physical lines: Agent to CloudFront ('get' request), Viewer Request Lambda@Edge to both DynamoDB tables, and bidirectional arrows between CloudFront and S3.\n4. Define logical sequencing for flows starting from the agent request.",
+  "step_by_step_reasoning": "1. Identify the actor node: 'Agent' (labeled 'deep Agent') on the left side, mapped to 'UserCompanyAgent'.\n2. Identify CloudFront nodes and attached Lambda@Edge functions:\n   - 'CloudFront' (Amazon CloudFront service icon).\n   - 'VIEWER REQUEST' Lambda@Edge function above CloudFront (service 'LambdaAtEdge').\n   - 'ORIGIN RESPONSE' Lambda@Edge function below CloudFront (service 'LambdaAtEdge').\n3. Identify backend databases and storage on the right side of the green dashed line:\n   - Top 'DYNAMODB' icon (service 'DynamoDB').\n   - Middle 'DYNAMODB' icon (service 'DynamoDB').\n   - Bottom 'S3' icon (service 'S3').\n4. Extract arrow connections:\n   - Agent -> CloudFront (labeled 'get').\n   - Viewer Request Lambda@Edge -> Top DynamoDB.\n   - Viewer Request Lambda@Edge -> Middle DynamoDB.\n   - CloudFront -> S3.\n   - S3 -> CloudFront.",
   "graph": {
-    "name": "Real-Time Statistics and Rolling Upgrades at the Edge",
-    "link": "https://www.youtube.com/watch?v=F0fC1Z6_WJ4",
-    "categories": "Security, Content Delivery, Real-time Analytics",
+    "name": "Deep Instinct - Real-Time Request Analysis & Control with Lambda@Edge",
+    "link": "",
+    "categories": "Security & Real-Time Analytics",
     "graph_usable": true,
-    "notes": "Architectural representation of Deep Instinct's real-time statistics and agent upgrade distribution using Lambda@Edge, CloudFront, DynamoDB, and S3."
+    "notes": "Architecture showing how Deep Instinct uses Lambda@Edge at Viewer Request and Origin Response stages with CloudFront, DynamoDB, and S3 for real-time statistics and gradual rolling updates."
   },
   "nodes": [
     {
-      "id": "1",
-      "service": "ThirdParty",
+      "id": "0",
+      "service": "UserCompanyAgent",
       "name": "Deep Agent",
-      "notes": "Cybersecurity agent deployed on client machines requesting files and updates."
+      "notes": "Deep Instinct agent installed on client endpoints"
+    },
+    {
+      "id": "1",
+      "service": "LambdaAtEdge",
+      "name": "Viewer Request Lambda@Edge",
+      "notes": "Intercepts viewer requests to log real-time stats and control rate limits/updates"
     },
     {
       "id": "2",
       "service": "CloudFront",
       "name": "CloudFront",
-      "notes": "Caches content and routes incoming agent requests globally."
+      "notes": "Amazon CloudFront content delivery network"
     },
     {
       "id": "3",
       "service": "LambdaAtEdge",
-      "name": "Lambda@Edge (Viewer Request)",
-      "notes": "Intercepts agent requests to parse unique IDs, track stats, and evaluate upgrade eligibility."
+      "name": "Origin Response Lambda@Edge",
+      "notes": "Modifies response headers/body based on agent identification stored in DynamoDB"
     },
     {
       "id": "4",
-      "service": "LambdaAtEdge",
-      "name": "Lambda@Edge (Origin Response)",
-      "notes": "Modifies original responses from S3 before delivering them to agents."
+      "service": "DynamoDB",
+      "name": "DynamoDB (Real-time Stats)",
+      "notes": "Stores real-time request statistics"
     },
     {
       "id": "5",
       "service": "DynamoDB",
-      "name": "DynamoDB (Statistics)",
-      "notes": "Stores high-volume real-time stats extracted by the viewer request function."
+      "name": "DynamoDB (Agent Tracking & Upgrades)",
+      "notes": "Tracks agent unique identifiers and request counts for gradual rollouts"
     },
     {
       "id": "6",
-      "service": "DynamoDB",
-      "name": "DynamoDB (State & Rollout)",
-      "notes": "Maintains state details and rate limits to coordinate rolling agent upgrades."
-    },
-    {
-      "id": "7",
       "service": "S3",
       "name": "S3 Origin",
-      "notes": "Houses agent upgrade packages and static software distribution files."
+      "notes": "Stores static content and agent upgrade binaries"
     }
   ],
   "edges": [
     {
-      "source": "1",
+      "source": "0",
       "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Agent issues GET request to CloudFront"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Viewer request function injects real-time stats into DynamoDB"
+    },
+    {
+      "source": "1",
+      "target": "5",
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Agent sends signed GET requests containing unique identifier to CloudFront."
-    },
-    {
-      "source": "3",
-      "target": "5",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Viewer request function writes real-time statistics to the stats table."
-    },
-    {
-      "source": "3",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Viewer request function tracks rollout state and monitors rate limits per agent."
+      "notes": "Viewer request function logs request identifiers into DynamoDB for rollout state tracking"
     },
     {
       "source": "2",
-      "target": "7",
-      "flow_id": 3,
-      "seq": "1",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
       "type": "data",
-      "notes": "CloudFront forwards cache-miss requests to S3 origin."
+      "notes": "CloudFront fetches update/content from S3 origin"
     },
     {
-      "source": "7",
+      "source": "6",
       "target": "2",
-      "flow_id": 3,
-      "seq": "2",
+      "flow_id": 2,
+      "seq": "1",
       "type": "data",
-      "notes": "S3 returns requested assets to CloudFront."
+      "notes": "S3 returns content back to CloudFront"
     }
   ]
 }

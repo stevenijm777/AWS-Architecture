@@ -1,24 +1,24 @@
 {
-  "step_by_step_reasoning": "The architecture diagram shows Ticketmaster's checkout platform. User requests come into a CDN layer (CloudFront). From the CDN, page rendering traffic is routed to Next.js running on Amazon EKS. API traffic is routed to AWS AppSync. Quick, single-step data operations go from AppSync to AWS Lambda, which interacts with Amazon DynamoDB. Complex, multi-step operations like checkout purchase workflows are orchestrated by AWS Step Functions. Amazon DynamoDB uses Global Tables to replicate data across multiple active-active AWS regions.",
+  "step_by_step_reasoning": "The whiteboard shows an architecture for Ticketmaster's checkout system. At the top, users interact through a CDN layer (CloudFront). The CDN routes web page rendering requests to EKS running Next.js, and API requests to AWS AppSync. AppSync handles queries and mutations, routing single-step operations to AWS Lambda (which reads/writes to Amazon DynamoDB) and complex multi-step workflows to AWS Step Functions ('Step Functions Purchase'). DynamoDB uses Global Tables with cross-region replication indicated by a double-headed arrow spanning regions.",
   "graph": {
-    "name": "Ticketmaster Multi-Region Checkout Architecture",
+    "name": "Ticketmaster Active-Active Multi-Region Checkout Architecture",
     "link": "",
-    "categories": "Web & Mobile, Serverless, Multi-Region",
+    "categories": "Serverless & Web Architecture",
     "graph_usable": true,
-    "notes": "Ticketmaster checkout architecture utilizing EKS, AppSync, Lambda, Step Functions, and DynamoDB multi-region replication."
+    "notes": "Active-active multi-region architecture using Next.js on EKS, AppSync, Lambda, Step Functions, and DynamoDB Global Tables."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "UserConsumerWebMobile",
-      "name": "Fans / Users",
-      "notes": "Fans accessing the Ticketmaster website or app"
+      "service": "UserConsumerWeb",
+      "name": "User / Fans",
+      "notes": "Fans accessing the checkout portal"
     },
     {
       "id": "1",
       "service": "CloudFront",
       "name": "CDN",
-      "notes": "CDN layer performing latency/geo-routing and health checks across regions"
+      "notes": "Handles geo-routing and latency-based routing across regions"
     },
     {
       "id": "2",
@@ -30,83 +30,91 @@
       "id": "3",
       "service": "AppSync",
       "name": "APPSYNC",
-      "notes": "Centralized GraphQL API gateway with WebSocket support"
+      "notes": "Central API layer exposing GraphQL queries, mutations, and WebSocket subscriptions"
     },
     {
       "id": "4",
       "service": "Lambda",
       "name": "LAMBDA",
-      "notes": "Executes single-step operations and data transformations"
+      "notes": "Executes single-step operations and data retrieval"
     },
     {
       "id": "5",
       "service": "StepFunctions",
       "name": "STEP FUNCTIONS PURCHASE",
-      "notes": "Handles multi-step workflows such as processing ticket purchases"
+      "notes": "Orchestrates multi-step purchase and order workflows"
     },
     {
       "id": "6",
       "service": "DynamoDB",
       "name": "DYNAMODB",
-      "notes": "Stores session and event data using Global Tables for cross-region replication"
+      "notes": "Global tables for multi-region data persistence"
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "0",
       "type": "data",
-      "notes": "User requests enter via the CDN"
+      "notes": "User requests routed to CDN"
     },
     {
       "source": "1",
       "target": "2",
       "flow_id": 1,
-      "seq": "2",
+      "seq": "1",
       "type": "data",
-      "notes": "Page rendering requests routed to Next.js on EKS"
+      "notes": "Page rendering requests sent to EKS"
     },
     {
       "source": "1",
       "target": "3",
       "flow_id": 2,
-      "seq": "1",
+      "seq": "2a",
       "type": "data",
       "notes": "API requests routed to AppSync"
     },
     {
       "source": "3",
-      "target": "4",
+      "target": "1",
       "flow_id": 2,
-      "seq": "2",
+      "seq": "2b",
       "type": "data",
-      "notes": "Single-step queries/mutations execute Lambda functions"
+      "notes": "WebSocket responses back to CDN/client"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "AppSync triggers Lambda for simple operations"
     },
     {
       "source": "4",
       "target": "6",
-      "flow_id": 2,
-      "seq": "3",
+      "flow_id": 3,
+      "seq": "4",
       "type": "data",
-      "notes": "Lambda reads/writes data from DynamoDB"
+      "notes": "Lambda queries/updates DynamoDB"
     },
     {
       "source": "3",
       "target": "5",
-      "flow_id": 3,
-      "seq": "1",
+      "flow_id": 4,
+      "seq": "3",
       "type": "data",
-      "notes": "Complex purchase mutations trigger Step Functions"
+      "notes": "AppSync executes Step Functions purchase workflow"
     },
     {
       "source": "6",
       "target": "6",
-      "flow_id": 4,
-      "seq": "1",
+      "flow_id": 5,
+      "seq": "5",
       "type": "data",
-      "notes": "DynamoDB Global Tables replicate state across regions"
+      "notes": "DynamoDB Global Tables replication across regions"
     }
   ]
 }

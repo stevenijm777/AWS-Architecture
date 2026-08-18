@@ -1,72 +1,72 @@
 {
-  "step_by_step_reasoning": "The architecture diagram displays two parallel ingestion paths. Path 1: Sales data from an on-premises database passes through a VPN, is captured via DMS, and flows into Amazon Redshift, which connects to the S3-based Data Lake. Path 2: Flat files land in an S3 drop bucket, triggering an SQS message queue which invokes an initiator Lambda function. This Lambda queries metadata from DynamoDB and writes files to the Data Lake. A second processing Lambda is triggered by Data Lake S3 events to merge datasets and export the output back to the Data Lake and into Redshift for business users. All nodes represent physical icons on the board, and edges trace the physically drawn arrows.",
+  "step_by_step_reasoning": "The architecture diagram shows two main data ingests into Redshift and S3 Data Lake. In the bottom flow, on-premises data (ONPREM) connects through an AWS VPN to DMS, which migrates/loads data directly into Amazon Redshift. In the top flow, order files land in an S3 drop bucket, which sends notification messages to SQS. SQS triggers an initiator Lambda function that queries/retrieves metadata from DynamoDB and writes raw/refined files into an S3 Data Lake bucket. S3 events on the Data Lake then trigger a second Lambda function that processes/merges data and loads it into Redshift. There is also a direct data link from the Data Lake to Redshift.",
   "graph": {
-    "name": "Veritiv Serverless Data Lake and Sales Analytics Architecture",
-    "link": "https://www.youtube.com/watch?v=8Yf7-U0A0-w",
-    "categories": "Data Lake & Analytics",
+    "name": "Veritiv Sales and Demand Analytics Architecture",
+    "link": "",
+    "categories": "Analytics, Data Migration",
     "graph_usable": true,
-    "notes": "This serverless analytics pipeline automates the ingestion of demand and sales invoice data into Amazon Redshift and an Amazon S3-based data lake."
+    "notes": "Architecture showing ingestion of on-premises sales data via DMS and S3-based event-driven processing pipeline into Redshift and Data Lake."
   },
   "nodes": [
     {
       "id": "0",
       "service": "OnPremDC",
-      "name": "On-Premises Data Center",
-      "notes": "Stores sales invoice data."
+      "name": "ONPREM",
+      "notes": "On-premises database containing sales and invoice data"
     },
     {
       "id": "1",
       "service": "VPN",
-      "name": "AWS VPN",
-      "notes": "Secure connection from on-premise."
+      "name": "VPN",
+      "notes": "AWS VPN connection securing data in transit from on-premises"
     },
     {
       "id": "2",
       "service": "DMS",
-      "name": "AWS Database Migration Service",
-      "notes": "Performs change data capture (CDC) to migrate sales records."
+      "name": "DMS",
+      "notes": "AWS Database Migration Service with CDC pulling sales data"
     },
     {
       "id": "3",
       "service": "RedShift",
-      "name": "Amazon Redshift",
-      "notes": "Data warehouse storing aggregated demand and sales records."
+      "name": "REDSHIFT",
+      "notes": "Amazon Redshift cluster storing analytics data for query and reporting"
     },
     {
       "id": "4",
       "service": "S3",
-      "name": "S3 Drop Bucket",
-      "notes": "Receives incoming order flat files from ERP."
+      "name": "S3",
+      "notes": "S3 drop bucket receiving order flat files"
     },
     {
       "id": "5",
       "service": "SQS",
-      "name": "Amazon SQS",
-      "notes": "Decouples and queues message notifications."
+      "name": "SQS",
+      "notes": "SQS queue handling messaging from S3 file landings"
     },
     {
       "id": "6",
       "service": "Lambda",
-      "name": "Initiator Lambda",
-      "notes": "Queries file metadata and moves raw files to the data lake."
+      "name": "LAMBDA",
+      "notes": "Initiator Lambda function that retrieves metadata from DynamoDB"
     },
     {
       "id": "7",
       "service": "DynamoDB",
-      "name": "Amazon DynamoDB",
-      "notes": "Stores metadata about the incoming files."
+      "name": "DYNAMODB",
+      "notes": "DynamoDB table storing file metadata and pipeline information"
     },
     {
       "id": "8",
       "service": "S3",
-      "name": "Amazon S3 Data Lake",
-      "notes": "Central storage repository containing raw and refined zones."
+      "name": "DATA LAKE",
+      "notes": "Data Lake S3 buckets storing raw and refined data"
     },
     {
       "id": "9",
       "service": "Lambda",
-      "name": "Processing/Merge Lambda",
-      "notes": "Merges sales/inventory data and runs demand forecasting logic."
+      "name": "LAMBDA",
+      "notes": "Complex Lambda function performing data merging and demand stats model calculations"
     }
   ],
   "edges": [
@@ -76,7 +76,7 @@
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "Pipes transactional data over VPN."
+      "notes": "On-prem data piped through VPN"
     },
     {
       "source": "1",
@@ -84,7 +84,7 @@
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "Reaches AWS DMS."
+      "notes": "VPN traffic received by DMS"
     },
     {
       "source": "2",
@@ -92,15 +92,7 @@
       "flow_id": 1,
       "seq": "3",
       "type": "data",
-      "notes": "Loads CDC data into Redshift."
-    },
-    {
-      "source": "3",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Shares structured sales records with the Data Lake."
+      "notes": "DMS populates data into Redshift cluster"
     },
     {
       "source": "4",
@@ -108,7 +100,7 @@
       "flow_id": 2,
       "seq": "1",
       "type": "data",
-      "notes": "Publishes event notification to SQS."
+      "notes": "File landing kicks off SQS event"
     },
     {
       "source": "5",
@@ -116,7 +108,7 @@
       "flow_id": 2,
       "seq": "2",
       "type": "data",
-      "notes": "Triggers initiator Lambda."
+      "notes": "SQS triggers initiator Lambda job"
     },
     {
       "source": "6",
@@ -124,7 +116,7 @@
       "flow_id": 2,
       "seq": "3",
       "type": "data",
-      "notes": "Requests metadata."
+      "notes": "Lambda queries DynamoDB for file metadata"
     },
     {
       "source": "7",
@@ -132,7 +124,7 @@
       "flow_id": 2,
       "seq": "4",
       "type": "data",
-      "notes": "Returns metadata response."
+      "notes": "DynamoDB returns metadata to Lambda"
     },
     {
       "source": "6",
@@ -140,7 +132,7 @@
       "flow_id": 2,
       "seq": "5",
       "type": "data",
-      "notes": "Writes structured files into Data Lake zones."
+      "notes": "Lambda populates raw and refined data into Data Lake"
     },
     {
       "source": "8",
@@ -148,23 +140,23 @@
       "flow_id": 2,
       "seq": "6",
       "type": "data",
-      "notes": "S3 event triggers processing Lambda."
-    },
-    {
-      "source": "9",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "7",
-      "type": "data",
-      "notes": "Writes refined output files back to Data Lake."
+      "notes": "Data Lake S3 trigger launches transformation Lambda job"
     },
     {
       "source": "9",
       "target": "3",
       "flow_id": 2,
+      "seq": "7",
+      "type": "data",
+      "notes": "Transformation Lambda feeds merged/demand data into Redshift"
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 2,
       "seq": "8",
       "type": "data",
-      "notes": "Loads completed demand results into Redshift."
+      "notes": "Data Lake directly readable / available to Redshift"
     }
   ]
 }

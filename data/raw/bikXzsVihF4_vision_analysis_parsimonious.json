@@ -1,118 +1,118 @@
 {
-  "step_by_step_reasoning": "1. Visual Node Identification: The whiteboard diagram is divided into 'CHILD' account and 'CENTRAL' account sections. Under CHILD account, we visually observe nodes for IAM, Backup, CloudTrail, CloudFormation, and a third-party box labeled 'SNOW' (ServiceNow). Under CENTRAL account, we observe nodes for EventBridge, Step Functions, and QuickSight.\n2. Visual Edge Identification:\n   - ServiceNow ('SNOW') points directly to CloudFormation.\n   - CloudFormation points upwards to IAM.\n   - IAM points down to CloudTrail.\n   - CloudTrail points across the boundary to EventBridge in Central account.\n   - EventBridge points up to Step Functions.\n   - Step Functions points back across the boundary to Backup in Child account.\n   - IAM also points directly right to Backup (granting access to Backup Vaults).\n   - QuickSight is present visually in the Central account without explicit arrows connected to it.\n3. Alignment with Audio Transcript: The transcript confirms that creating an IAM role generates a CloudTrail event forwarded to EventBridge in the Central account, triggering Step Functions to automatically manage Backup vaults/policies. For restores, ServiceNow triggers CloudFormation to grant JIT access via IAM to the Backup vault.",
+  "step_by_step_reasoning": "1. Identified external actor ServiceNow (SNOW) triggering CloudFormation in the Child account.\n2. Identified nodes in the Child account: CloudFormation, IAM, CloudTrail, and Backup.\n3. Identified nodes in the Central account: EventBridge, Step Functions, and QuickSight.\n4. Mapped visually drawn connections: SNOW -> CloudFormation -> IAM -> CloudTrail -> EventBridge -> StepFunctions -> Backup, as well as IAM -> Backup.\n5. QuickSight is depicted visually as a standalone icon in the Central account without explicit drawn lines.",
   "graph": {
-    "name": "United Airlines Centralized Backup and Restore Architecture",
+    "name": "United Airlines - Centralized Backup Solution",
     "link": "",
-    "categories": "Backup & Restore, Multi-Account Governance",
+    "categories": "Backup & Disaster Recovery, Security & Governance",
     "graph_usable": true,
-    "notes": "Architecture illustrating automated backup policy enforcement and JIT restore management across multi-account AWS environment."
+    "notes": "Architecture showing automated cross-account backup and restore workflows using AWS Step Functions, EventBridge, CloudTrail, IAM, and Backup."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "ThirdParty",
+      "service": "ServiceNow",
       "name": "ServiceNow",
-      "notes": "External ticketing system used for HelpHub restore requests"
+      "notes": "HelpHub request triggers restore flow"
     },
     {
       "id": "1",
       "service": "CloudFormation",
       "name": "CloudFormation",
-      "notes": "Triggers creation of temporary IAM role for JIT restore access"
+      "notes": "Creates temporary JIT IAM roles for access"
     },
     {
       "id": "2",
       "service": "IAM",
       "name": "IAM",
-      "notes": "Application IAM role created in child account"
+      "notes": "IAM role creation triggers CloudTrail event"
     },
     {
       "id": "3",
       "service": "CloudTrail",
       "name": "CloudTrail",
-      "notes": "Captures IAM role creation events"
+      "notes": "Captures IAM role creation event"
     },
     {
       "id": "4",
-      "service": "EventBridge",
-      "name": "EventBridge",
-      "notes": "Central account EventBridge receives CloudTrail events"
+      "service": "Backup",
+      "name": "Backup",
+      "notes": "AWS Backup vaults and policy management"
     },
     {
       "id": "5",
-      "service": "StepFunctions",
-      "name": "Step Functions",
-      "notes": "Orchestrates Lambda functions to create backup vaults and policies"
+      "service": "EventBridge",
+      "name": "EventBridge",
+      "notes": "Central event bus receiving events from Child accounts"
     },
     {
       "id": "6",
-      "service": "Backup",
-      "name": "AWS Backup",
-      "notes": "Manages backup vaults and policies per application"
+      "service": "StepFunctions",
+      "name": "Step Function",
+      "notes": "Orchestrates Lambda functions to configure Backup vaults/policies"
     },
     {
       "id": "7",
       "service": "QuickSight",
       "name": "QuickSight",
-      "notes": "Provides operational dashboards and visibility into backup operations"
+      "notes": "Dashboarding for operation teams"
     }
   ],
   "edges": [
     {
-      "source": "2",
-      "target": "3",
+      "source": "0",
+      "target": "1",
       "flow_id": 1,
       "seq": "1",
       "type": "data",
-      "notes": "IAM role creation triggers CloudTrail event"
+      "notes": "ServiceNow triggers CloudFormation template"
     },
     {
-      "source": "3",
-      "target": "4",
+      "source": "1",
+      "target": "2",
       "flow_id": 1,
       "seq": "2",
       "type": "data",
-      "notes": "CloudTrail event forwarded to central EventBridge"
+      "notes": "CloudFormation creates IAM role"
     },
     {
-      "source": "4",
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "IAM role creation logs event to CloudTrail"
+    },
+    {
+      "source": "3",
       "target": "5",
-      "flow_id": 1,
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudTrail forwards event to central EventBridge"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
       "seq": "3",
       "type": "data",
       "notes": "EventBridge triggers Step Functions workflow"
     },
     {
-      "source": "5",
-      "target": "6",
-      "flow_id": 1,
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
       "seq": "4",
       "type": "data",
-      "notes": "Step Functions creates/configures AWS Backup vault and policies"
-    },
-    {
-      "source": "0",
-      "target": "1",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "ServiceNow triggers CloudFormation stack execution upon restore request"
-    },
-    {
-      "source": "1",
-      "target": "2",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "CloudFormation creates temporary JIT IAM role"
+      "notes": "Step Functions configures AWS Backup vault and policies"
     },
     {
       "source": "2",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1",
       "type": "data",
-      "notes": "IAM role provides temporary access to specific application backup vault"
+      "notes": "IAM role grants access to AWS Backup vault"
     }
   ]
 }

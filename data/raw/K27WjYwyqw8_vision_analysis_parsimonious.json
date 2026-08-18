@@ -1,134 +1,120 @@
 {
-  "step_by_step_reasoning": "The visual whiteboard architecture depicts a real-time call authentication and fraud detection pipeline. The pipeline starts with a customer (ThirdParty) sending SIP metadata to API Gateway. API Gateway triggers an authorization Lambda (top Lambda), which validates credentials against DynamoDB. Once authenticated, the request is passed to the main 'vera call' Lambda (bottom Lambda), which calls a SageMaker endpoint for spoofing/fraud risk prediction and returns a score back to the customer. Concurrently, the bottom Lambda asynchronously pushes the metadata to SQS, which then writes to S3 to allow SageMaker to periodically retrain the machine learning models. I have extracted all 8 nodes (including the external ThirdParty actor) and traced the arrows accurately according to the visual lines drawn on the board.",
+  "step_by_step_reasoning": "The architecture diagram features seven AWS nodes: API Gateway receiving incoming SIP call metadata, two Lambda functions (one for custom authorization and one for VeraCall logic), DynamoDB for lookup, SageMaker for fraud prediction, and SQS with S3 for data persistence and model training. Physical green arrows indicate the request flow and data persistence path.",
   "graph": {
-    "name": "NextCaller Phone Fraud Detection",
+    "name": "Nextcaller Phone Fraud Detection Architecture",
     "link": "",
-    "categories": "Security, Machine Learning",
+    "categories": "Security, Machine Learning, Serverless",
     "graph_usable": true,
-    "notes": "Serverless architecture for real-time SIP metadata fraud detection and automatic machine learning model retraining."
+    "notes": "Serverless architecture for real-time phone call authentication and fraud detection using machine learning."
   },
   "nodes": [
     {
       "id": "0",
-      "service": "ThirdParty",
-      "name": "Customer",
-      "notes": "Sends real-time JSON-encoded SIP call metadata and receives a fraud risk score."
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point receiving incoming call metadata."
     },
     {
       "id": "1",
-      "service": "ApiGateway",
-      "name": "API Gateway",
-      "notes": "Ingests metadata requests and handles API routing."
+      "service": "Lambda",
+      "name": "Custom Authorizer Lambda",
+      "notes": "Authenticates incoming API key credentials."
     },
     {
       "id": "2",
-      "service": "Lambda",
-      "name": "Authorizer Lambda",
-      "notes": "Custom authorizer that authenticates credentials using DynamoDB."
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores customer authentication details."
     },
     {
       "id": "3",
       "service": "Lambda",
-      "name": "Vera Call Lambda",
-      "notes": "The main product Lambda that evaluates the rules engine, requests predictions from SageMaker, and forwards metadata to SQS."
+      "name": "VeraCall Lambda",
+      "notes": "Executes core business logic and fraud rules."
     },
     {
       "id": "4",
-      "service": "DynamoDB",
-      "name": "DynamoDB",
-      "notes": "Stores customer credentials and API keys."
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Buffers call metadata for asynchronous storage."
     },
     {
       "id": "5",
-      "service": "SageMaker",
-      "name": "SageMaker",
-      "notes": "Hosts the prediction endpoint and manages model notebook/training jobs."
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores encrypted call metadata for training."
     },
     {
       "id": "6",
-      "service": "SQS",
-      "name": "SQS",
-      "notes": "Queues incoming metadata to decouple storage from real-time evaluation."
-    },
-    {
-      "id": "7",
-      "service": "S3",
-      "name": "S3",
-      "notes": "Encrypted S3 bucket storing customer metadata for training."
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Runs real-time fraud inference and model training."
     }
   ],
   "edges": [
     {
       "source": "0",
       "target": "1",
-      "flow_id": 1,
-      "seq": "1",
+      "flow_id": 0,
+      "seq": "0",
       "type": "data",
-      "notes": "Sends SIP metadata payload."
+      "notes": "Routes request to custom authorizer."
     },
     {
       "source": "1",
       "target": "2",
-      "flow_id": 1,
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries customer lookup information."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
       "seq": "2",
       "type": "data",
-      "notes": "Triggers authorization check."
-    },
-    {
-      "source": "2",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Looks up credentials in DynamoDB."
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Passes request to Vera Call Lambda."
-    },
-    {
-      "source": "3",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Invokes SageMaker endpoint for fraud risk prediction."
-    },
-    {
-      "source": "3",
-      "target": "0",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "Returns response with risk score to the customer."
+      "notes": "Passes authenticated context to main handler."
     },
     {
       "source": "3",
       "target": "6",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Pushes call metadata asynchronously to SQS queue."
-    },
-    {
-      "source": "6",
-      "target": "7",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Persists metadata in encrypted S3 bucket."
-    },
-    {
-      "source": "7",
-      "target": "5",
-      "flow_id": 2,
+      "flow_id": 0,
       "seq": "3",
       "type": "data",
-      "notes": "SageMaker retrieves stored metadata from S3 to retrain models."
+      "notes": "Requests inference prediction score."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Sends call metadata to queue."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Persists metadata in encrypted bucket."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Provides dataset for retraining model."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Returns risk score back to API Gateway."
     }
   ]
 }
