@@ -1,0 +1,188 @@
+{
+  "step_by_step_reasoning": "1. Identifies the system components from the architecture diagram and video transcript: Portal (ThirdParty), Amazon MSK, AWS Fargate (Orchestrator), AWS Fargate (Processing), Amazon EMR, Amazon SageMaker, Amazon EventBridge, Amazon OpenSearch, and AWS Fargate (Notifier).\n2. Validates all service names against the valid vocabulary list, mapping external client entry points to ThirdParty and AWS services to their exact official names.\n3. Establishes the sequential workflows:\n   - Flow 0: Campaign execution initiation from Portal to MSK, triggering the Orchestration Fargate consumer to construct an execution plan written back to MSK.\n   - Flow 1: Operational processing units consuming messages from MSK to run EMR pre-processing and SageMaker batch transform/training tasks, emitting status events to EventBridge which route back to processing Fargate, updating MSK and OpenSearch metadata.\n   - Flow 2: Completion notification triggered via Notifier Fargate consumer, updating final status in OpenSearch, notifying Portal, and enabling status queries from OpenSearch to Portal.",
+  "graph": {
+    "name": "Experian MLOps Batch Transform Architecture",
+    "link": "https://www.youtube.com/watch?v=OTPyxlTjWp0",
+    "categories": "Machine Learning & MLOps, Data Analytics, Event-Driven Architecture",
+    "graph_usable": true,
+    "notes": "Architecture processes hundreds of batch campaigns, thousands of models, and tens of billions of consumer records monthly using an event-driven decoupled model execution pipeline."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Portal",
+      "notes": "Client portal used by data scientists to initiate batch processing campaigns."
+    },
+    {
+      "id": "1",
+      "service": "MSK",
+      "name": "Amazon Managed Streaming for Apache Kafka",
+      "notes": "Central streaming message broker handling topics between orchestrator, processing units, and notifiers."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "AWS Fargate (Orchestrator)",
+      "notes": "Orchestration consumer running on Fargate that determines the campaign execution plan."
+    },
+    {
+      "id": "3",
+      "service": "Fargate",
+      "name": "AWS Fargate (Processing)",
+      "notes": "Operational processing consumer on Fargate executing modular tasks within parallel functional units."
+    },
+    {
+      "id": "4",
+      "service": "EMR",
+      "name": "Amazon EMR Cluster",
+      "notes": "EMR cluster used for pre-processing heterogeneous input data into standard formats."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "SageMaker service handling model testing, training, and batch transform job executions."
+    },
+    {
+      "id": "6",
+      "service": "EventBridge",
+      "name": "Amazon EventBridge",
+      "notes": "Event bus collecting job status and state changes from EMR and SageMaker."
+    },
+    {
+      "id": "7",
+      "service": "OpenSearch",
+      "name": "Amazon OpenSearch Service",
+      "notes": "Metadata store tracking real-time job execution state and history for API querying."
+    },
+    {
+      "id": "8",
+      "service": "Fargate",
+      "name": "AWS Fargate (Notifier)",
+      "notes": "Action and notifier consumer on Fargate triggered when a campaign completes execution."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data scientist initiates batch campaign request from portal to MSK topic."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "MSK topic triggers Fargate Orchestrator consumer."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Orchestrator determines execution plan and writes plan messages back to MSK topic."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "MSK execution topic triggers operational processing Fargate consumer."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Processing Fargate triggers data pre-processing on EMR cluster."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Processing Fargate triggers batch transform / training job on SageMaker."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "EMR emits job state change events to EventBridge."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "control",
+      "notes": "SageMaker emits job state change events to EventBridge."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "EventBridge routes event triggers to processing Fargate consumer to determine next task sequence."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Processing Fargate writes execution status update to MSK for downstream consumers."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4'",
+      "type": "data",
+      "notes": "Processing Fargate writes job execution state into OpenSearch metadata store."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "MSK triggers Notifier Fargate consumer upon campaign phase or final completion."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Notifier Fargate updates final campaign status in OpenSearch."
+    },
+    {
+      "source": "8",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Notifier Fargate pushes completion notification to Portal."
+    },
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Portal APIs query OpenSearch metadata store to present real-time campaign status to users."
+    }
+  ]
+}

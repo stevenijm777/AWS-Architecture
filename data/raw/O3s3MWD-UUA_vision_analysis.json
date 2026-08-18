@@ -1,0 +1,158 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates Monzo's core banking payment processing platform on AWS. The journey begins when a user taps a card at a payment terminal, sending transaction details through third-party payment schemes into Monzo's physical data centers and over AWS Direct Connect into the AWS cloud. Inside Amazon EKS, the transaction first hits the Tokenization Microservice to strip sensitive credit card details. The request then flows to the Cards Microservice (verifying card status against the Cards Table in Amazon Keyspaces), the Account Microservice (verifying account linkage against the Account Table in Keyspaces), and the Ledger Microservice (performing double-entry bookkeeping calculations). Once validated, a synchronous authorization response travels back down through Direct Connect to the terminal. AWS WAF, Application Load Balancer, and AWS Nitro Enclaves provide security and runtime isolation across the infrastructure.",
+  "graph": {
+    "name": "Monzo Core Banking Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=O3s3MWD-UUA",
+    "categories": "financial_services, compute, container, database",
+    "graph_usable": true,
+    "notes": "Monzo processes millions of synchronous payment transactions using Amazon EKS microservices and Amazon Keyspaces for low-latency NoSQL state persistence."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerPOS",
+      "name": "User",
+      "notes": "Monzo customer initiating a payment at a point-of-sale terminal"
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Payment schemes",
+      "notes": "External payment scheme network and physical data centers"
+    },
+    {
+      "id": "2",
+      "service": "DirectConnect",
+      "name": "AWS Direct Connect",
+      "notes": "Dedicated network link connecting physical data centers to AWS"
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "Tokenization Microservice",
+      "notes": "Removes sensitive card details and replaces them with internal tokens"
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Cards Microservice",
+      "notes": "Validates card state and block/freeze flags"
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "Cards Table",
+      "notes": "Amazon Keyspaces table storing card state and metadata"
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "Account Microservice",
+      "notes": "Verifies account status and card linkage"
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Account Table",
+      "notes": "Amazon Keyspaces table storing customer account details"
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "Ledger Microservice",
+      "notes": "Calculates ledger balances and handles double-entry bookkeeping"
+    },
+    {
+      "id": "9",
+      "service": "WAF",
+      "name": "AWS WAF",
+      "notes": "Web Application Firewall protecting external entry points"
+    },
+    {
+      "id": "10",
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Balances incoming HTTP/HTTPS traffic to platform services"
+    },
+    {
+      "id": "11",
+      "service": "EC2",
+      "name": "AWS Nitro Enclaves",
+      "notes": "Provides isolated compute environments for sensitive data processing"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer taps card at terminal, sending payment details through scheme"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Payment network routes transaction into Monzo's Direct Connect"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Direct Connect routes payload into Tokenization Microservice on EKS"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Tokenized request passed to Cards Microservice for card validation"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Cards Microservice queries Cards Table in Keyspaces"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "Request passes to Account Microservice"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Account Microservice reads account state from Keyspaces"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "control",
+      "notes": "Request passes to Ledger Microservice for balance check"
+    },
+    {
+      "source": "8",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Synchronous authorization result returned back out through Direct Connect"
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "step_by_step_reasoning": "The architecture represents GE's Virtual Multi-Factor Authentication (MFA) platform on AWS. The process follows two primary logical workflows:\n\n1. Access Request & Approval Workflow (Flow 0):\n- User sends a request containing account ID and reason via API Gateway (Node 0).\n- API Gateway triggers the Validation Lambda (Node 1) to validate request parameters and API key linkage.\n- Validation Lambda kicks off Step Functions (Node 2), which coordinates the approval workflow.\n- Step Functions sends an email notification to approvers via SES (Node 3) and logs request metadata to DynamoDB (Node 4).\n\n2. Token Readout Workflow (Flow 1):\n- After approval, a user requests an MFA token readout via API Gateway (Node 0), triggering Readout Lambda (Node 5).\n- Readout Lambda checks request approval status in DynamoDB (Node 4).\n- Upon status confirmation from DynamoDB, Readout Lambda retrieves and decrypts the secret hash stored in Secrets Manager (Node 6).\n- Secrets Manager returns the secret, and Readout Lambda generates the 6-digit one-time code and returns it to API Gateway (Node 0).",
+  "graph": {
+    "name": "GE Virtual Multi-Factor Authentication Platform",
+    "link": "https://www.youtube.com/watch?v=SoN0xClcS2E",
+    "categories": "Security & Compliance",
+    "graph_usable": true,
+    "notes": "Serverless virtual MFA system replacing hardware MFA tokens for secure root account access."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives access requests with API keys and routes token readout calls."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Validation Lambda",
+      "notes": "Validates request parameters and ties request IDs to the caller's API key."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates the approval workflow with built-in timeouts (e.g. 24-hour approval window)."
+    },
+    {
+      "id": "3",
+      "service": "SES",
+      "name": "SES",
+      "notes": "Sends approval notification emails to designated approvers."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores full audit records including requester IP, user agent, approval status, and approver details."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Readout Lambda",
+      "notes": "Verifies approval status, retrieves secret from Secrets Manager, and generates 6-digit MFA codes."
+    },
+    {
+      "id": "6",
+      "service": "SecretsManager",
+      "name": "Secrets Manager",
+      "notes": "Stores and encrypts account secret hashes required to generate virtual MFA tokens."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway triggers Validation Lambda upon receiving an access request."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Validation Lambda starts Step Functions approval workflow execution."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "control",
+      "notes": "Step Functions triggers SES to send approval email to approvers."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Step Functions records request info and approval tracking into DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway passes token readout request to Readout Lambda."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Readout Lambda queries DynamoDB to verify request approval status."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB returns approval status and request validation details."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Readout Lambda requests secret hash for the target account."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Secrets Manager decrypts and returns secret hash to Readout Lambda."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Readout Lambda generates and returns the 6-digit MFA token to API Gateway."
+    }
+  ]
+}

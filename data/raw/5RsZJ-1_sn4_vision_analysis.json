@@ -1,0 +1,254 @@
+{
+  "step_by_step_reasoning": "1. Identified core architecture nodes based on visual layout and transcript description for Glidewell Laboratories IoT and telemetry architecture.\n2. Formatted 20 nodes covering ingestion sources (MSK, Apps DynamoDB, IoT Core, S3), processing pipelines (Job Queue/Lambda/DynamoDB, OEE Queue/Lambda/DynamoDB), central statistical processing (Lambda, Statistics DynamoDB), notification channels (SNS, SES), as well as Dashboard and Ticketing sub-components.\n3. Defined flows:\n   - Flow 0: MSK Ingestion Stream into Job DynamoDB.\n   - Flow 1: Job Queue pipeline receiving input from Apps DynamoDB and IoT Core, triggering Lambda, and storing to Job DynamoDB.\n   - Flow 2: OEE pipeline receiving machine data from IoT Core into OEE SQS, processed by Lambda into OEE DynamoDB.\n   - Flow 3: Statistical aggregation pulling from Job DynamoDB, OEE DynamoDB, and S3 evals bucket into Statistical Lambda, storing results in Statistics DynamoDB.\n   - Flow 4: Automated alerts and notification flows to SNS and SES based on calculated statistical thresholds.",
+  "graph": {
+    "name": "Glidewell Laboratories IoT Restorations Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=5RsZJ-1_sn4",
+    "categories": "IoT, Analytics, Serverless Telemetry",
+    "graph_usable": true,
+    "notes": "Architecture for processing high-volume manufacturing telemetry from dental restoration milling machines and apps, scaling down message ingestion to ~1 million messages daily to trigger recalibrations and alerts."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "MSK",
+      "name": "Amazon Managed Streaming for Apache Kafka",
+      "notes": "Handles incoming event streams at the top left of the whiteboard."
+    },
+    {
+      "id": "1",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB (Apps Data)",
+      "notes": "Stores data coming from external apps (~20 machines)."
+    },
+    {
+      "id": "2",
+      "service": "IoTCore",
+      "name": "AWS IoT Core",
+      "notes": "Central IoT platform connected to approximately 40 milling machines."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda (MSK Ingestion)",
+      "notes": "Ingests data directly from Amazon MSK into Job DynamoDB."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Amazon SQS (Job Queue)",
+      "notes": "Queues job-related telemetry from IoT Core and Apps DynamoDB."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "AWS Lambda (Job Processing)",
+      "notes": "Processes messages from Job SQS Queue."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB (Job Storage)",
+      "notes": "Stores consolidated job telemetry and restoration status."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "Amazon SQS (OEE Queue)",
+      "notes": "Queues Overall Equipment Effectiveness (OEE) telemetry from IoT Core."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "AWS Lambda (OEE Processing)",
+      "notes": "Processes machine performance and OEE metrics."
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB (OEE Storage)",
+      "notes": "Stores processed OEE metrics."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores evaluations and feedback received from dentists."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "AWS Lambda (Statistical Service)",
+      "notes": "Calculates granular machine, app, and operational statistics and monitors built-in thresholds."
+    },
+    {
+      "id": "12",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB (Statistics Storage)",
+      "notes": "Stores output statistics and trend records."
+    },
+    {
+      "id": "13",
+      "service": "SNS",
+      "name": "Amazon SNS",
+      "notes": "Sends real-time threshold notifications to support channels (e.g., Teams)."
+    },
+    {
+      "id": "14",
+      "service": "SES",
+      "name": "Amazon SES",
+      "notes": "Sends email alerts to supervisors and managers."
+    },
+    {
+      "id": "15",
+      "service": "Cognito",
+      "name": "Amazon Cognito",
+      "notes": "Provides authentication for proprietary analytics dashboard."
+    },
+    {
+      "id": "16",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "API layer backing executive dashboard analytics."
+    },
+    {
+      "id": "17",
+      "service": "Lambda",
+      "name": "AWS Lambda (Dashboard Service)",
+      "notes": "Backend service for serving dynamic analytics queries."
+    },
+    {
+      "id": "18",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB (Ticketing Data)",
+      "notes": "Stores internal support tickets and maintenance history."
+    },
+    {
+      "id": "19",
+      "service": "Lambda",
+      "name": "AWS Lambda (Ticketing Service)",
+      "notes": "Handles automated ticket creation for degraded machines."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "MSK triggers MSK ingestion Lambda."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "MSK ingestion Lambda writes data to Job Storage DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "App data sent to Job Queue SQS."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "IoT Core forwards device job data to Job Queue SQS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Job Queue triggers Job Processing Lambda."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Job Processing Lambda persists processed data to Job Storage DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "IoT Core streams OEE machine telemetry into OEE Queue SQS."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "OEE Queue triggers OEE Processing Lambda."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "OEE Processing Lambda writes machine OEE data into OEE Storage DynamoDB."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Statistical Lambda reads dentist evals stored in S3."
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Statistical Lambda reads job records from Job Storage DynamoDB."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Statistical Lambda reads OEE metrics from OEE Storage DynamoDB."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Calculated statistics are stored in Statistics Storage DynamoDB."
+    },
+    {
+      "source": "11",
+      "target": "13",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "control",
+      "notes": "Statistical service publishes threshold alert messages to SNS."
+    },
+    {
+      "source": "12",
+      "target": "14",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "control",
+      "notes": "Statistics DynamoDB triggers email notifications via SES for managers and supervisors."
+    }
+  ]
+}

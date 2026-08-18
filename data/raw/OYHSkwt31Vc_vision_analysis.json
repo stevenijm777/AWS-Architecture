@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "1. Identify all nodes from the visual inventory and audio transcript: Plato Robot, Remote Devices, AWS IoT Greengrass (on-site router), AWS IoT Core, IoT Rule, IoT Shadow, Amazon Kinesis, Amazon OpenSearch Service, Amazon S3, AWS Lambda, and Amazon EKS.\n2. Assign strict allowed service types: 'ThirdParty' for non-AWS devices (Plato Robot, Remote Devices), 'Greengrass', 'IoTCore', 'Kinesis', 'OpenSearch', 'S3', 'Lambda', and 'EKS'.\n3. Construct logical workflows:\n   - Flow 0: Site registration from Amazon EKS backend to AWS IoT Core.\n   - Flow 1: On-site local command dispatch from Remote Devices through AWS IoT Greengrass to Plato Robot, and telemetry feedback back to Greengrass.\n   - Flow 2: Cloud-to-site software deployments from AWS IoT Core to AWS IoT Greengrass.\n   - Flow 3: Cloud ingestion pipeline from Greengrass -> IoT Core -> IoT Rule -> Kinesis -> OpenSearch (real-time visualization) and S3 (long-term storage).",
+  "graph": {
+    "name": "AWS IoT Architecture for Plato Robot Edge and Cloud Analytics",
+    "link": "https://www.youtube.com/watch?v=OYHSkwt31Vc",
+    "categories": "IoT, Analytics, Edge Computing",
+    "graph_usable": true,
+    "notes": "Architecture for Plato restaurant helper robot by United Robotics Group. On-site local operation is managed by AWS IoT Greengrass running on a dedicated local router without requiring external internet connectivity. Robots hold up to 30 days of data storage offline. When internet is available, telemetry events stream through IoT Core, Kinesis, OpenSearch, and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Plato Robot",
+      "notes": "On-site waiter assistant robot carrying up to 30 days of local offline storage."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Remote Devices",
+      "notes": "Tablet device used by restaurant staff to command table deliveries."
+    },
+    {
+      "id": "2",
+      "service": "Greengrass",
+      "name": "AWS IoT Greengrass",
+      "notes": "Runs locally on a router at the client site to secure local device communications offline."
+    },
+    {
+      "id": "3",
+      "service": "IoTCore",
+      "name": "AWS IoT Core",
+      "notes": "Central message broker in AWS VPC for cloud sync and device deployments."
+    },
+    {
+      "id": "4",
+      "service": "IoTCore",
+      "name": "IoT Rule",
+      "notes": "Evaluates incoming MQTT topics like event/mission data and routes to Kinesis."
+    },
+    {
+      "id": "5",
+      "service": "IoTCore",
+      "name": "IoT Shadow",
+      "notes": "Maintains persistent state representation for devices."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Amazon Kinesis",
+      "notes": "Streams real-time event logs and mission telemetry."
+    },
+    {
+      "id": "7",
+      "service": "OpenSearch",
+      "name": "Amazon OpenSearch Service",
+      "notes": "Provides near real-time operational visualization and monitoring."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores historical mission data and logs for long-term queries."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Serverless compute function in AWS VPC."
+    },
+    {
+      "id": "10",
+      "service": "EKS",
+      "name": "Amazon EKS",
+      "notes": "Backend container cluster managing client site definitions and device registration."
+    }
+  ],
+  "edges": [
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "EKS backend defines client sites and associates devices into AWS IoT Core."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Staff dispatches navigation command from tablet to IoT Greengrass."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "IoT Greengrass routes local navigation command to Plato Robot."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Plato Robot sends telemetry, events, and status back to local IoT Greengrass."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Pushes software deployments and updates from AWS IoT Core to site Greengrass."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Syncs site telemetry to cloud when internet connection is established."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "Evaluates message topics against defined IoT Rules."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers streaming ingestion into Amazon Kinesis."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Streams data to OpenSearch for near real-time operational dashboards."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "3'",
+      "type": "data",
+      "notes": "Persists event logs and mission data into S3 for long-term analytics."
+    }
+  ]
+}

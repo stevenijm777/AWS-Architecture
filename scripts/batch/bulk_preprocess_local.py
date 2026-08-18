@@ -71,10 +71,11 @@ def main():
     frames_dir = Path("data/frames")
 
     preprocessed_count = 0
-    limit = 50
+    limit = 60
 
     rem_before, prev_done = count_remaining_to_preprocess(df, raw_dir, frames_dir)
     console.print(f"Iniciando procesamiento local masivo. Meta: {limit} videos.")
+
     console.print(f"Videos procesados previamente: {prev_done} | Pendientes antes de iniciar: {rem_before}")
 
     for idx, row in df.iterrows():

@@ -67,23 +67,23 @@ def is_valid_graphml(path: Path) -> bool:
 
 def get_missing_standard_ids(force: bool = False) -> list[str]:
     gt_dir = DATA_DIR / "cloudscape_gt"
-    gt_vids = sorted([f.stem for f in gt_dir.glob("*.graphml")]) if gt_dir.exists() else []
+    gt_vids = set([f.stem for f in gt_dir.glob("*.graphml")]) if gt_dir.exists() else set()
     std_vids = (
         {f.stem for f in GRAPHS_DIR.glob("*.graphml") if is_valid_graphml(f)}
         if GRAPHS_DIR.exists() else set()
     )
 
-    target_ids = []
-    for vid in gt_vids:
-        if vid in std_vids and not force:
-            continue
-        wb_path = GOOD_WHITEBOARD_DIR / f"{vid}.jpg"
-        ts_path = RAW_DIR / f"{vid}_transcript.json"
+    wb_vids = set([f.stem for f in GOOD_WHITEBOARD_DIR.glob("*.jpg")]) if GOOD_WHITEBOARD_DIR.exists() else set()
+    ts_vids = set([f.name.replace("_transcript.json", "") for f in RAW_DIR.glob("*_transcript.json")]) if RAW_DIR.exists() else set()
 
-        if wb_path.exists() and ts_path.exists():
-            target_ids.append(vid)
+    ready_all = wb_vids & ts_vids
+    missing_all = ready_all - std_vids if not force else ready_all
 
-    return target_ids
+    gt_missing = sorted(list(missing_all & gt_vids))
+    non_gt_missing = sorted(list(missing_all - gt_vids))
+
+    return gt_missing + non_gt_missing
+
 
 
 
