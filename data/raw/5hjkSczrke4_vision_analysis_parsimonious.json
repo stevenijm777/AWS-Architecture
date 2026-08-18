@@ -1,218 +1,173 @@
 {
-  "step_by_step_reasoning": "Analyze the whiteboard architecture and transcript to identify the three main layers: Process, Store, and Consume. We map the external vehicle sources (left) to a landing S3 bucket via a REST API, which triggers SQS queues processed by EKS. Processed data is sent to S3 and orchestrated by Step Functions, then stored in Elasticsearch and CockroachDB. Finally, the consume layer exposes REST APIs via API Gateway and a Web App backed by another EKS cluster, serving external city planners and operators.",
-  "graph": {
-    "name": "Mobileye Dynamic RAM Platform",
-    "link": "https://www.youtube.com/watch?v=5hjkSczrke4",
-    "categories": "data_ingestion, interactive, compute_intensive",
-    "graph_usable": true,
-    "notes": "Dynamic RAM is a multi-layer mobility intelligence platform processing vehicle telemetry to provide city planners with road and traffic insights."
-  },
-  "nodes": [
-    {
-      "id": "0",
-      "service": "ThirdParty",
-      "name": "Vehicles",
-      "notes": "Anonymized telemetry and visual inspections sent from cars."
-    },
-    {
-      "id": "1",
-      "service": "ThirdParty",
-      "name": "REST API",
-      "notes": "Ingestion REST API in a separate AWS account."
-    },
-    {
-      "id": "2",
-      "service": "S3",
-      "name": "Ingestion S3",
-      "notes": "Stores raw ingested vehicle data."
-    },
-    {
-      "id": "3",
-      "service": "SQS",
-      "name": "SQS Queue",
-      "notes": "Buffers raw messages for scaling downstream processing."
-    },
-    {
-      "id": "4",
-      "service": "EKS",
-      "name": "Processing EKS",
-      "notes": "Autoscaling workers that process vehicle data."
-    },
-    {
-      "id": "5",
-      "service": "Step Functions",
-      "name": "Step Functions",
-      "notes": "Orchestrates algorithm flows and Lambda functions."
-    },
-    {
-      "id": "6",
-      "service": "S3",
-      "name": "Store S3",
-      "notes": "Stores preprocessed and formatted data."
-    },
-    {
-      "id": "7",
-      "service": "OpenSearch",
-      "name": "Elasticsearch",
-      "notes": "Document store for quick queries and self-indexing."
-    },
-    {
-      "id": "8",
-      "service": "ThirdParty",
-      "name": "CockroachDB",
-      "notes": "Relational DB running on EKS for frequent updates."
-    },
-    {
-      "id": "9",
-      "service": "API Gateway",
-      "name": "API Gateway",
-      "notes": "Exposes secure REST APIs to consumers."
-    },
-    {
-      "id": "10",
-      "service": "EKS",
-      "name": "Consume EKS",
-      "notes": "EKS cluster serving the frontend and REST APIs."
-    },
-    {
-      "id": "11",
-      "service": "ThirdParty",
-      "name": "Web App",
-      "notes": "Frontend application for platform insights."
-    },
-    {
-      "id": "12",
-      "service": "UserConsumerWeb",
-      "name": "City Planners",
-      "notes": "Consumes REST APIs for road segment and traffic insights."
-    },
-    {
-      "id": "13",
-      "service": "UserConsumerWeb",
-      "name": "End Users",
-      "notes": "Users accessing the web application dashboard."
-    }
-  ],
-  "edges": [
-    {
-      "source": "0",
-      "target": "1",
-      "flow_id": 0,
-      "seq": "1",
-      "type": "data",
-      "notes": "Vehicles upload telemetry"
-    },
-    {
-      "source": "1",
-      "target": "2",
-      "flow_id": 0,
-      "seq": "2",
-      "type": "data",
-      "notes": "Saves raw data"
-    },
-    {
-      "source": "2",
-      "target": "3",
-      "flow_id": 1,
-      "seq": "1",
-      "type": "data",
-      "notes": "Triggers processing queue"
-    },
-    {
-      "source": "3",
-      "target": "4",
-      "flow_id": 1,
-      "seq": "2",
-      "type": "data",
-      "notes": "EKS pulls from queue"
-    },
-    {
-      "source": "4",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "3",
-      "type": "data",
-      "notes": "Stores preprocessed files"
-    },
-    {
-      "source": "4",
-      "target": "5",
-      "flow_id": 1,
-      "seq": "4",
-      "type": "data",
-      "notes": "Invokes algorithms"
-    },
-    {
-      "source": "5",
-      "target": "6",
-      "flow_id": 1,
-      "seq": "5",
-      "type": "data",
-      "notes": "Saves algorithm results"
-    },
-    {
-      "source": "4",
-      "target": "7",
-      "flow_id": 1,
-      "seq": "6",
-      "type": "data",
-      "notes": "Saves indexed records"
-    },
-    {
-      "source": "4",
-      "target": "8",
-      "flow_id": 1,
-      "seq": "7",
-      "type": "data",
-      "notes": "Saves relational updates"
-    },
-    {
-      "source": "12",
-      "target": "9",
-      "flow_id": 2,
-      "seq": "1",
-      "type": "data",
-      "notes": "Planners request API data"
-    },
-    {
-      "source": "9",
-      "target": "6",
-      "flow_id": 2,
-      "seq": "2",
-      "type": "data",
-      "notes": "Retrieves S3 stored insights"
-    },
-    {
-      "source": "13",
-      "target": "11",
-      "flow_id": 2,
-      "seq": "3",
-      "type": "data",
-      "notes": "Accesses frontend dashboard"
-    },
-    {
-      "source": "11",
-      "target": "10",
-      "flow_id": 2,
-      "seq": "4",
-      "type": "data",
-      "notes": "Queries backend app server"
-    },
-    {
-      "source": "10",
-      "target": "7",
-      "flow_id": 2,
-      "seq": "5",
-      "type": "data",
-      "notes": "Fetches document metrics"
-    },
-    {
-      "source": "10",
-      "target": "8",
-      "flow_id": 2,
-      "seq": "6",
-      "type": "data",
-      "notes": "Fetches high-frequency updates"
-    }
-  ]
+  "video_id": "5hjkSczrke4",
+  "prompt_version": "v9",
+  "model": "gemini-3.6-flash",
+  "extracted_graph": {
+    "nodes": [
+      {
+        "id": "vehicle",
+        "service": "UserConsumerIOT",
+        "name": "Vehicles",
+        "type": "user_actor"
+      },
+      {
+        "id": "s3_raw",
+        "service": "S3",
+        "name": "S3 Raw Store",
+        "type": "aws_service"
+      },
+      {
+        "id": "sqs",
+        "service": "SQS",
+        "name": "SQS",
+        "type": "aws_service"
+      },
+      {
+        "id": "eks_process",
+        "service": "EKS",
+        "name": "EKS Processing",
+        "type": "aws_service"
+      },
+      {
+        "id": "step_functions",
+        "service": "Step Functions",
+        "name": "Step Functions",
+        "type": "aws_service"
+      },
+      {
+        "id": "s3_store",
+        "service": "S3",
+        "name": "S3 Processed Store",
+        "type": "aws_service"
+      },
+      {
+        "id": "cockroachdb",
+        "service": "CockroachDB",
+        "name": "CockroachDB",
+        "type": "third_party"
+      },
+      {
+        "id": "elasticsearch",
+        "service": "ElasticSearch",
+        "name": "ElasticSearch",
+        "type": "third_party"
+      },
+      {
+        "id": "api_gateway",
+        "service": "API Gateway",
+        "name": "API Gateway",
+        "type": "aws_service"
+      },
+      {
+        "id": "eks_consume",
+        "service": "EKS",
+        "name": "EKS Serving",
+        "type": "aws_service"
+      },
+      {
+        "id": "webapp",
+        "service": "ThirdParty",
+        "name": "WebApp",
+        "type": "third_party"
+      },
+      {
+        "id": "user_enterprise",
+        "service": "UserPartnerEnterprise",
+        "name": "Enterprise Partners",
+        "type": "user_actor"
+      },
+      {
+        "id": "user_consumer",
+        "service": "UserConsumerWeb",
+        "name": "End Users",
+        "type": "user_actor"
+      }
+    ],
+    "edges": [
+      {
+        "source": "vehicle",
+        "target": "s3_raw",
+        "label": "REST API",
+        "type": "data_flow"
+      },
+      {
+        "source": "s3_raw",
+        "target": "sqs",
+        "label": "event",
+        "type": "triggers"
+      },
+      {
+        "source": "sqs",
+        "target": "eks_process",
+        "label": "pull message",
+        "type": "data_flow"
+      },
+      {
+        "source": "eks_process",
+        "target": "step_functions",
+        "label": "triggers",
+        "type": "triggers"
+      },
+      {
+        "source": "eks_process",
+        "target": "s3_store",
+        "label": "write data",
+        "type": "writes_to"
+      },
+      {
+        "source": "step_functions",
+        "target": "s3_store",
+        "label": "write data",
+        "type": "writes_to"
+      },
+      {
+        "source": "eks_process",
+        "target": "cockroachdb",
+        "label": "write structured data",
+        "type": "writes_to"
+      },
+      {
+        "source": "eks_process",
+        "target": "elasticsearch",
+        "label": "index data",
+        "type": "writes_to"
+      },
+      {
+        "source": "s3_store",
+        "target": "api_gateway",
+        "label": "read data",
+        "type": "reads_from"
+      },
+      {
+        "source": "api_gateway",
+        "target": "user_enterprise",
+        "label": "API access",
+        "type": "data_flow"
+      },
+      {
+        "source": "cockroachdb",
+        "target": "eks_consume",
+        "label": "query data",
+        "type": "reads_from"
+      },
+      {
+        "source": "elasticsearch",
+        "target": "eks_consume",
+        "label": "search data",
+        "type": "reads_from"
+      },
+      {
+        "source": "eks_consume",
+        "target": "webapp",
+        "label": "serve app",
+        "type": "data_flow"
+      },
+      {
+        "source": "webapp",
+        "target": "user_consumer",
+        "label": "user access",
+        "type": "data_flow"
+      }
+    ]
+  }
 }
