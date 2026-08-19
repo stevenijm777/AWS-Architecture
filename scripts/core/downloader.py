@@ -4,6 +4,7 @@ downloader.py — YouTube video & metadata download via yt-dlp
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -83,13 +84,36 @@ def download_video(url: str, output_dir: Path | None = None) -> dict[str, Any]:
         "writethumbnail": False,
         "quiet": False,
         "no_warnings": False,
-        "extractor_args": {"youtube": ["player_client=android"]},
+        # YouTube serves roughly the first 10 MB and then answers 403 to clients
+        # it cannot attach a valid Proof-of-Origin token to. The "android" client
+        # used to work but now hits that cap; "mweb" plus a session downloads in
+        # full. Override with YTDLP_PLAYER_CLIENT if the working client changes.
+        #
+        # NOTE: the Python API takes a dict of lists here. The CLI-style
+        # ["player_client=android"] that used to sit in this slot was silently
+        # ignored, so every download actually ran on yt-dlp's default client.
+        "extractor_args": {
+            "youtube": {"player_client": [os.getenv("YTDLP_PLAYER_CLIENT", "mweb")]}
+        },
         "progress_hooks": [_progress_hook],
     }
+
+    # A session is what lets the chosen client past the 10 MB cap. Either a
+    # cookies.txt next to scripts/, or a browser profile named in
+    # YTDLP_COOKIES_FROM_BROWSER (e.g. "chromium:Profile-YT").
+    cookies_from_browser = os.getenv("YTDLP_COOKIES_FROM_BROWSER", "").strip()
 
     if cookies_path.exists():
         ydl_opts["cookiefile"] = str(cookies_path)
         console.print("[green]✓[/] Using cookies from cookies.txt")
+    elif cookies_from_browser:
+        browser, _, profile = cookies_from_browser.partition(":")
+        ydl_opts["cookiesfrombrowser"] = (browser, profile or None, None, None)
+        console.print(f"[green]✓[/] Using cookies from browser: {cookies_from_browser}")
+    else:
+        console.print(
+            "[yellow]⚠[/] No cookies configured — downloads over ~10 MB will likely fail with HTTP 403."
+        )
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         console.print(f"\n[bold cyan]⬇  Downloading:[/] {url}")
