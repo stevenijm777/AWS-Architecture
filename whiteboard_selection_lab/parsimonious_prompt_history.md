@@ -9408,3 +9408,144 @@ Return ONLY valid JSON (no markdown fences):
 | :---: | :---: |
 | ![QhdFIHbB7T4 Whiteboard](../data/good_whiteboard/QhdFIHbB7T4.jpg) | ![QhdFIHbB7T4 Vision](../Graphs/QhdFIHbB7T4_vision.png) |
 
+
+
+---
+
+## [Registro 40] - 2026-08-18
+* **Vídeos Evaluados:** 10 vídeos candidatos de la base general
+* **Modelo utilizado:** `gemini-3.6-flash`
+* **Modo:** Parsimonioso (1 sola fase, Prompt v9)
+
+### Resultados Detallados por Vídeo:
+
+#### Video `S3G4pb-x8tQ` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **8** |
+| **Número de Aristas** | — | — | — | **8** |
+| **Extracción Completada** | — | — | — | **8 Nodos / 8 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![S3G4pb-x8tQ Whiteboard](../data/good_whiteboard/S3G4pb-x8tQ.jpg) | ![S3G4pb-x8tQ Vision](../Graphs/S3G4pb-x8tQ_vision.png) |
+
+#### Video `SoN0xClcS2E` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **7** |
+| **Número de Aristas** | — | — | — | **8** |
+| **Extracción Completada** | — | — | — | **7 Nodos / 8 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![SoN0xClcS2E Whiteboard](../data/good_whiteboard/SoN0xClcS2E.jpg) | ![SoN0xClcS2E Vision](../Graphs/SoN0xClcS2E_vision.png) |
+
+#### Video `TBKmeolOdSw` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **12** |
+| **Número de Aristas** | — | — | — | **11** |
+| **Extracción Completada** | — | — | — | **12 Nodos / 11 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![TBKmeolOdSw Whiteboard](../data/good_whiteboard/TBKmeolOdSw.jpg) | ![TBKmeolOdSw Vision](../Graphs/TBKmeolOdSw_vision.png) |
+
+#### Video `UpVF8jMB4yY` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **11** |
+| **Número de Aristas** | — | — | — | **10** |
+| **Extracción Completada** | — | — | — | **11 Nodos / 10 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![UpVF8jMB4yY Whiteboard](../data/good_whiteboard/UpVF8jMB4yY.jpg) | ![UpVF8jMB4yY Vision](../Graphs/UpVF8jMB4yY_vision.png) |
+
+#### Video `V6rYfjJG3BE` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **8** |
+| **Número de Aristas** | — | — | — | **5** |
+| **Extracción Completada** | — | — | — | **8 Nodos / 5 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![V6rYfjJG3BE Whiteboard](../data/good_whiteboard/V6rYfjJG3BE.jpg) | ![V6rYfjJG3BE Vision](../Graphs/V6rYfjJG3BE_vision.png) |
+
+#### Video `VJZsgsY_sXY` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **13** |
+| **Número de Aristas** | — | — | — | **13** |
+| **Extracción Completada** | — | — | — | **13 Nodos / 13 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![VJZsgsY_sXY Whiteboard](../data/good_whiteboard/VJZsgsY_sXY.jpg) | ![VJZsgsY_sXY Vision](../Graphs/VJZsgsY_sXY_vision.png) |
+
+#### Video `VuoMhsYON1E` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **15** |
+| **Número de Aristas** | — | — | — | **10** |
+| **Extracción Completada** | — | — | — | **15 Nodos / 10 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![VuoMhsYON1E Whiteboard](../data/good_whiteboard/VuoMhsYON1E.jpg) | ![VuoMhsYON1E Vision](../Graphs/VuoMhsYON1E_vision.png) |
+
+#### Video `W4QzOaKCX2Y` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **11** |
+| **Número de Aristas** | — | — | — | **9** |
+| **Extracción Completada** | — | — | — | **11 Nodos / 9 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![W4QzOaKCX2Y Whiteboard](../data/good_whiteboard/W4QzOaKCX2Y.jpg) | ![W4QzOaKCX2Y Vision](../Graphs/W4QzOaKCX2Y_vision.png) |
+
+#### Video `WojdRyYDvDM` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **9** |
+| **Número de Aristas** | — | — | — | **5** |
+| **Extracción Completada** | — | — | — | **9 Nodos / 5 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![WojdRyYDvDM Whiteboard](../data/good_whiteboard/WojdRyYDvDM.jpg) | ![WojdRyYDvDM Vision](../Graphs/WojdRyYDvDM_vision.png) |
+
+#### Video `XCnul-AjrNU` - 
+| Métrica | Ground Truth | Standard Original | Parsimonious Original | Nueva Prueba (**Prompt v9 gemini-3.6-flash**) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Número de Nodos** | — | — | — | **8** |
+| **Número de Aristas** | — | — | — | **12** |
+| **Extracción Completada** | — | — | — | **8 Nodos / 12 Aristas** |
+
+* **Modelo Utilizado:** `gemini-3.6-flash`
+
+| 🖼️ Pizarra | 🕸️ Grafo Parsimonioso (Prompt v9) |
+| :---: | :---: |
+| ![XCnul-AjrNU Whiteboard](../data/good_whiteboard/XCnul-AjrNU.jpg) | ![XCnul-AjrNU Vision](../Graphs/XCnul-AjrNU_vision.png) |
+
