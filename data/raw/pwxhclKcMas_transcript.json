@@ -1,0 +1,232 @@
+[
+  {
+    "start": 0.0,
+    "end": 17.0,
+    "text": "You're watching This is My Architecture. My name is Tobi from AWS. I'm joined today by Alexei from Depop."
+  },
+  {
+    "start": 17.0,
+    "end": 20.0,
+    "text": "So welcome Alexei. Do you want to tell us a bit about Depop?"
+  },
+  {
+    "start": 20.0,
+    "end": 26.0,
+    "text": "Yeah, sure. Depop is a social marketplace. Our users buy and sell stuff between each other."
+  },
+  {
+    "start": 26.0,
+    "end": 30.0,
+    "text": "That's mostly clothing but other things as well. You should try it out."
+  },
+  {
+    "start": 30.0,
+    "end": 35.0,
+    "text": "I will. But first, I want you to tell us about your data pipeline, your data architecture."
+  },
+  {
+    "start": 35.0,
+    "end": 40.0,
+    "text": "Sure. Is this an engine that enables a product recommendation engine type functionality?"
+  },
+  {
+    "start": 40.0,
+    "end": 45.0,
+    "text": "Also, yeah. It provides a common interface for all our different teams in the business."
+  },
+  {
+    "start": 45.0,
+    "end": 55.0,
+    "text": "But it enables the product recommendation engine as well. That's one of the first use cases of the data architecture itself."
+  },
+  {
+    "start": 55.0,
+    "end": 61.0,
+    "text": "Great. So do you want to talk me through the data flow? I guess we've got a kind of an ETL pipeline across the middle there, have we?"
+  },
+  {
+    "start": 61.0,
+    "end": 76.0,
+    "text": "Yeah. All our services, they send events to Kinesis. Then we have this in-house built Lambda fan-out system by which we separate all these events in multiple Kinesis streams."
+  },
+  {
+    "start": 76.0,
+    "end": 85.0,
+    "text": "So they all start going around here and around here. And we do this to separate them by different topics so they are ready to be processed by glue."
+  },
+  {
+    "start": 85.0,
+    "end": 92.0,
+    "text": "Okay. So the events that are coming into the Kinesis stream here, can you give me an example of what sort of event? Is that like a user clicks on a product?"
+  },
+  {
+    "start": 92.0,
+    "end": 107.0,
+    "text": "Anything really. Anything that happens on the system goes into Kinesis from our services. It all creates, deletes, updates of all the entities, products, users, profiles. All of it goes through this pipeline, through this stream."
+  },
+  {
+    "start": 107.0,
+    "end": 117.0,
+    "text": "Okay. And you mentioned you've got a fan out here of multiple Kinesis streams that's triggered by this Lambda function. Why did you create that fan out there? Why was that needed?"
+  },
+  {
+    "start": 117.0,
+    "end": 133.0,
+    "text": "Yeah. This is to prepare the data for being processed by glue. Glue, to make the data glue friendly, we separate it in different S3 in the same bucket, but under different S3 keys under the same bucket."
+  },
+  {
+    "start": 133.0,
+    "end": 139.0,
+    "text": "And this allows glue to create separate schemas for each type of event."
+  },
+  {
+    "start": 139.0,
+    "end": 146.0,
+    "text": "Okay. So in other words, by having multiple Kinesis streams, you could separate different data types"
+  },
+  {
+    "start": 146.0,
+    "end": 149.0,
+    "text": "and enable glue to create a schema for each of them."
+  },
+  {
+    "start": 149.0,
+    "end": 166.0,
+    "text": "Absolutely. This was quite a tricky bit because it was all, like all the events go through this Lambda and it was falling behind all the time because it has to really scale up the right amount, the right amount of invocations to handle all the data coming through."
+  },
+  {
+    "start": 166.0,
+    "end": 178.0,
+    "text": "I can mention like we do hundreds of thousands of invocations to our API at peak time. So the number of events that go through this Lambda, we had to optimize it quite a lot."
+  },
+  {
+    "start": 178.0,
+    "end": 187.0,
+    "text": "Okay. Great. So we've got your multiple Kinesis streams here. They're going to be writing, is it they're writing raw data to S3 first of all?"
+  },
+  {
+    "start": 187.0,
+    "end": 200.0,
+    "text": "Yeah, JSON. It's data is in JSON and it's the raw representation of our events. And after that, we process them with glue. There are these ETL jobs in glue and they do normalization of data."
+  },
+  {
+    "start": 200.0,
+    "end": 210.0,
+    "text": "They actually resolve some type mismatching. So they do cleanup of the data before converting it to a different format optimized for Athena. That is parquet."
+  },
+  {
+    "start": 210.0,
+    "end": 216.0,
+    "text": "Okay. So glue is going to change that raw JSON data into a processed parquet."
+  },
+  {
+    "start": 216.0,
+    "end": 227.0,
+    "text": "Yeah, it's just a different bucket. So there are two S3 buckets and glue using ETLs writes to both of these buckets."
+  },
+  {
+    "start": 227.0,
+    "end": 234.0,
+    "text": "Okay. Great. I can see we've got Athena Lambda EMR up here. Do you want to tell us a bit about the role that Athena plays first of all?"
+  },
+  {
+    "start": 234.0,
+    "end": 248.0,
+    "text": "Yeah, as I said before, this is a use case of this pipeline and it's like one way we use Athena for it's to prepare the dataset for the product recommendations engine."
+  },
+  {
+    "start": 248.0,
+    "end": 262.0,
+    "text": "So we make a huge query using Athena that reads from here. And this dataset, we then spin off an EMR cluster on this dataset."
+  },
+  {
+    "start": 262.0,
+    "end": 271.0,
+    "text": "And EMR cluster, what it does is does lots of processing to compute rankings and scoring products and users based on this dataset."
+  },
+  {
+    "start": 271.0,
+    "end": 286.0,
+    "text": "In this dataset, there is anything that is about users and products. So likes, comments, anything that might give us the ability to recommend something meaningful to you and our user base."
+  },
+  {
+    "start": 286.0,
+    "end": 293.0,
+    "text": "Okay, I get it. So in a sense, this up here is your product recommendation engine. Is Lambda doing the scheduling to schedule that?"
+  },
+  {
+    "start": 293.0,
+    "end": 306.0,
+    "text": "It runs on a scheduled basis. Basically, all of this runs. Initially, it was every 12 hours. Then we optimize the process and now we run it every four or five hours."
+  },
+  {
+    "start": 306.0,
+    "end": 312.0,
+    "text": "Okay. Yeah. So that's going to run a SQL query via Athena."
+  },
+  {
+    "start": 312.0,
+    "end": 313.0,
+    "text": "Absolutely."
+  },
+  {
+    "start": 313.0,
+    "end": 318.0,
+    "text": "And then EMR does the data processing to produce those rankings to say, here's the top recommendation for this particular user."
+  },
+  {
+    "start": 318.0,
+    "end": 329.0,
+    "text": "Correct. It spins off a query. As soon as the query comes back, it spins off the EMR cluster. The EMR cluster does the processing and populates an in-memory data store, Redis."
+  },
+  {
+    "start": 329.0,
+    "end": 330.0,
+    "text": "Okay. Yeah."
+  },
+  {
+    "start": 330.0,
+    "end": 337.0,
+    "text": "Great. Okay. Super. And what sort of challenges have you had when you've been building this system? Did it always look like this or...?"
+  },
+  {
+    "start": 337.0,
+    "end": 347.0,
+    "text": "Many challenges all over the place. So initially, we started by using Redshift and we were storing all our data into Redshift, but we decided that we would have to do a lot of data."
+  },
+  {
+    "start": 347.0,
+    "end": 360.0,
+    "text": "But we decided that we wanted something that was going to need less maintenance. So maintaining a Redis cluster is still quite involving. It's quite an overhead."
+  },
+  {
+    "start": 360.0,
+    "end": 368.0,
+    "text": "So we wanted something that was more flexible in terms of maintenance, but also in terms of changing of the data types in the schema."
+  },
+  {
+    "start": 368.0,
+    "end": 381.0,
+    "text": "So we went through a similar architecture to this, but without the fanout. So we were storing all the events into S3, all in the same bucket, all under the same namespace, key space."
+  },
+  {
+    "start": 381.0,
+    "end": 394.0,
+    "text": "And this didn't play very well with Glue. Glue was mixing up all the events under the same schema and made it hard to actually compute the parquet from the JSON and process these events."
+  },
+  {
+    "start": 394.0,
+    "end": 404.0,
+    "text": "So we started experimenting. So initially, we thought AWS was going to provide something around these lines, but then we built it ourselves. We built something that works for us. Yes."
+  },
+  {
+    "start": 404.0,
+    "end": 407.0,
+    "text": "Okay. Great. Thanks very much for sharing today, Alexei. Thank you. Thank you very much."
+  },
+  {
+    "start": 407.0,
+    "end": 409.0,
+    "text": "And thanks for watching. This is my architecture."
+  }
+]
