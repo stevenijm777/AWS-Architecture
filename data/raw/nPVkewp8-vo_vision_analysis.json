@@ -1,0 +1,190 @@
+{
+  "step_by_step_reasoning": "The architecture depicted on the whiteboard and described in the video implements a personalized notification pipeline for snaq.me using AWS services.\n\n1. **Segment Generation & File Upload:** AWS Batch executes custom segmentation algorithms and triggers Lambda 1, which generates segment information files and uploads them into an S3 bucket.\n2. **Event Trigger & Workflow Initiation:** Uploading the file triggers an S3 Put Object event, which sends a notification to SNS (also used for email notifications on file upload status). SNS passes the event to Lambda 2, which starts the Step Functions state workflow.\n3. **Pinpoint Import & Campaign Execution:** Step Functions orchestrates a state machine containing DynamoDB and Lambda 3. Lambda 3 fetches Pinpoint project metadata from DynamoDB and invokes Pinpoint's CreateImportJob API. Pinpoint reads the segment file directly from S3. Lambda 3 polls Pinpoint in a 30-second loop until import completion, after which it invokes Pinpoint's CreateCampaign API.\n4. **Notification Delivery:** Pinpoint distributes personalized content through two channels: direct Email messaging to end users, and a custom channel triggering Lambda 4, which calls the LINE API to send notifications directly to LINE users.",
+  "graph": {
+    "name": "snaq.me Personalized Notification Architecture with Amazon Pinpoint",
+    "link": "https://www.youtube.com/watch?v=nPVkewp8-vo",
+    "categories": "Messaging & Targeting, Event-Driven Processing, Serverless Orchestration",
+    "graph_usable": true,
+    "notes": "Architecture built by snaq.me using AWS Batch, S3, SNS, Step Functions, DynamoDB, Amazon Pinpoint, and AWS Lambda to deliver personalized email and LINE messages, reducing routine workload by 4 hours per week."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Batch",
+      "name": "BATCH",
+      "notes": "Executes batch segmentation algorithms."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "LAMBDA_1",
+      "notes": "Processes segmentation algorithm outputs and uploads segment files to S3."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores generated user segment files."
+    },
+    {
+      "id": "3",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Receives S3 PutObject event notifications and forwards them to Lambda."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA_2",
+      "notes": "Triggered by SNS to invoke the Step Functions workflow."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "Orchestrates campaign import and execution state machine."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Stores Amazon Pinpoint project configuration metadata."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA_3",
+      "notes": "Retrieves project metadata from DynamoDB, calls Pinpoint import/campaign APIs, and polls job status."
+    },
+    {
+      "id": "8",
+      "service": "Pinpoint",
+      "name": "PINPOINT",
+      "notes": "Central targeting engine that imports segment data and delivers messages."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "LAMBDA_4",
+      "notes": "Functions as a Pinpoint custom channel handler for sending LINE messages."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWebMobile",
+      "name": "Email Recipients",
+      "notes": "End users receiving personalized email communications."
+    },
+    {
+      "id": "11",
+      "service": "UserConsumerWebMobile",
+      "name": "LINE Recipients",
+      "notes": "End users receiving personalized notifications via LINE messenger."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "AWS Batch triggers Lambda processing upon algorithm execution."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda uploads segment files to S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 upload event triggers SNS topic notification."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS notification passes payload to Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda starts Step Functions execution workflow."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda fetches Pinpoint project configuration from DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda invokes Pinpoint CreateImportJob API."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pinpoint imports segment file directly from S3."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "meta",
+      "notes": "30-second loop checking import job status."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "control",
+      "notes": "Lambda invokes Pinpoint CreateCampaign API when import finishes."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pinpoint delivers email notifications directly to targeted recipients."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Pinpoint triggers custom channel Lambda function for LINE messaging."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda calls LINE API to push personalized messages to LINE recipients."
+    }
+  ]
+}

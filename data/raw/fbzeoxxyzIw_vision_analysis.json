@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "1. Analyze Visual Inventory & Audio Transcript:\n   - Physical sensors on production machines send pulses to AWS Greengrass edge gateways (one per machine).\n   - AWS Greengrass local counting engine aggregates sensor events and sends count messages via AWS IoT Core rules to trigger a Lambda function ('Lambda Ingestion').\n   - Lambda Ingestion calculates and updates the machine state in Amazon DynamoDB.\n   - Shop floor operators use a smartphone/tablet application powered by AWS Amplify to view real-time state and submit container completion reports.\n   - Amplify calls Amazon API Gateway, which forwards requests to a backend Lambda function ('Lambda API').\n   - Lambda API reads real-time machine state from DynamoDB and pushes completed container event reports to Amazon SQS.\n   - Amazon SQS queues batch messages and delivers them to an external ERP system.\n2. Pruning & Node Rules:\n   - Generic human actor icon 'User' is pruned according to Rule 5.\n   - Non-AWS services ('Sensor' and 'ERP') are mapped to 'ThirdParty'.\n   - Dual Lambda functions perform distinct architectural roles (Ingestion vs API), so they are preserved as distinct nodes.\n3. Logical Edge & Flow Segmentation:\n   - Flow 0 (Ingestion): Sensor -> Greengrass -> Lambda Ingestion -> DynamoDB.\n   - Flow 1 (User App & Reporting): Amplify -> API Gateway -> Lambda API -> DynamoDB / SQS -> ERP.",
+  "graph": {
+    "name": "Maxinear Real-time Piece Counting Architecture",
+    "link": "https://www.youtube.com/watch?v=fbzeoxxyzIw",
+    "categories": "IoT, Manufacturing, Serverless",
+    "graph_usable": true,
+    "notes": "Architecture for real-time piece counting on manufacturing shop floor using AWS IoT Greengrass, Lambda, DynamoDB, Amplify, API Gateway, SQS, and ERP integration."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Sensor",
+      "notes": "Physical sensor attached to production machines that detects bolts falling through light grids."
+    },
+    {
+      "id": "1",
+      "service": "Greengrass",
+      "name": "Greengrass",
+      "notes": "Edge gateway running local counting engine to transform varying sensor messages."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda Ingestion",
+      "notes": "Triggered via AWS IoT Core rules to derive machine states from incoming count messages."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores current real-time machine state data."
+    },
+    {
+      "id": "4",
+      "service": "Amplify",
+      "name": "Amplify",
+      "notes": "Hosts and powers smartphone and tablet application for shop floor operators."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Provides API endpoints for the shop floor application."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda API",
+      "notes": "Queries DynamoDB state for the user application and processes reported batch/container completion events."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues reported container events before sending batch updates to the external ERP system."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "ERP",
+      "notes": "External ERP system receiving batch production reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sensor sends pulses to AWS Greengrass edge gateway upon bolt detection."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "AWS Greengrass sends local count messages via AWS IoT Core rules to trigger Lambda Ingestion."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda Ingestion writes updated machine state into DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Amplify mobile app calls API Gateway endpoints to fetch state and submit reports."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway forwards application requests to Lambda API."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda API reads state data from DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda API sends completed container events to SQS."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "SQS delivers queued report updates to external ERP system."
+    }
+  ]
+}

@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "1. Identified all visual nodes on the whiteboard and corroborated them with the transcript: Datastore 1, Datastore 2, Amazon S3, AWS Lambda (Pull Data), Amazon Redshift, Amazon EventBridge, Amazon SES, AWS Transfer SFTP, AWS Lambda (Web Backend), Amazon CloudFront, and Customers.\n2. Mapped each node to a strictly valid service from the vocabulary list (e.g. RedShift, TransferFamily, S3, UserConsumerWeb, ThirdParty).\n3. Identified distinct functional workflows:\n   - Flow 0: Push ingestion from Datastore 1 to S3 and into Redshift.\n   - Flow 1: Pull ingestion from Datastore 2 via Lambda into Redshift.\n   - Flow 2: Scheduled batch processing via EventBridge querying Redshift and distributing via SES and AWS Transfer SFTP.\n   - Flow 3: Customer interactive reporting via CloudFront, Angular web app, Lambda, and Redshift.\n4. Added relevant architectural constraints and context into node notes.",
+  "graph": {
+    "name": "Xylem Data Lake Architecture",
+    "link": "https://www.youtube.com/watch?v=UpVF8jMB4yY",
+    "categories": "Analytics, Data Lake, Serverless, IoT",
+    "graph_usable": true,
+    "notes": "Serverless event-driven IoT data lake architecture for Xylem smart metering networks."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Datastore 1",
+      "notes": "External IT system sending file uploads to S3."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Amazon S3 Data storage",
+      "notes": "Data lake bucket receiving file uploads and emitting S3 events to trigger data loading."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Datastore 2",
+      "notes": "External application exposing REST APIs polled by Lambda."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda Pull Data",
+      "notes": "Lambda function that polls Datastore 2 REST APIs and inserts pulled data into Redshift."
+    },
+    {
+      "id": "4",
+      "service": "RedShift",
+      "name": "Amazon Redshift",
+      "notes": "Central columnar database composed of 11 clusters spread across 3 global regions for customer data isolation."
+    },
+    {
+      "id": "5",
+      "service": "EventBridge",
+      "name": "Amazon EventBridge",
+      "notes": "EventBridge Scheduler running batch jobs to extract data from Redshift and drive outbound processes."
+    },
+    {
+      "id": "6",
+      "service": "SES",
+      "name": "Amazon SES",
+      "notes": "Sends email reports triggered by batch jobs."
+    },
+    {
+      "id": "7",
+      "service": "TransferFamily",
+      "name": "AWS Transfer",
+      "notes": "AWS Transfer Family SFTP instance used to publish data files to internal/external destinations."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Backend API Lambda querying Redshift on behalf of the customer web application."
+    },
+    {
+      "id": "9",
+      "service": "CloudFront",
+      "name": "Amazon CloudFront",
+      "notes": "CDN distribution hosting the Angular web application, integrated with Keycloak authentication and WAF."
+    },
+    {
+      "id": "10",
+      "service": "UserConsumerWeb",
+      "name": "Customers",
+      "notes": "End-user customers accessing the web application to view metrics and generate reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Datastore 1 sends data files directly into S3."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 events trigger Lambda to load ingested file data into Redshift."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Lambda polls REST API endpoint on Datastore 2."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda inserts pulled REST API data into Redshift."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EventBridge scheduler runs batch queries against Redshift."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "EventBridge triggers report distribution via SES email."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "EventBridge batch job publishes exported data to AWS Transfer SFTP instance."
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customers navigate to Angular web app hosted on CloudFront."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Angular web frontend forwards requests to backend AWS Lambda."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Backend Lambda executes queries against Amazon Redshift to retrieve reporting data."
+    }
+  ]
+}

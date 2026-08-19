@@ -1,0 +1,148 @@
+{
+  "step_by_step_reasoning": "1. Identify all 9 visual/verbal entities from the World Model and transcribe them to nodes with correct schema properties and mapped service types.\n2. Add detailed operational notes extracted from the transcript to each node (e.g., MSK high frequency events, EKS feature bank and 10x scalability, Neptune graph relationships, Redis cache, DynamoDB user profiles, RDS event history joins).\n3. Map all visual arrows to logical directional edges, grouped into two distinct flows: device event ingestion and feature enrichment (Flow 0), and real-time fraud prediction API processing (Flow 1).\n4. Ensure all valid service types match the exact allowed vocabulary and generate a valid parseable JSON output.",
+  "graph": {
+    "name": "GrabDefence Real-Time Fraud Detection Architecture",
+    "link": "https://www.youtube.com/watch?v=ebngmAqbe-k",
+    "categories": "AWS",
+    "graph_usable": true,
+    "notes": "Architecture for GrabDefence, a B2B fraud prediction platform processing high-frequency signals, building feature banks on EKS, storing graph relationships in Neptune, and returning real-time fraud predictions to external clients via API Gateway."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "User Devices",
+      "notes": "Runs the GrabDefence SDK to collect device signals such as Wi-Fi, IP address, and emulation/spoofing checks."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerAPI",
+      "name": "GrabDefence Client Services",
+      "notes": "External B2B client backend services submitting transaction events for real-time fraud prediction."
+    },
+    {
+      "id": "2",
+      "service": "MSK",
+      "name": "Amazon Managed Streaming for Apache Kafka",
+      "notes": "Ingests high-frequency signal events (hundreds per second) and streams them to downstream feature bank and graph processing."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Exposes entry point APIs for client services to request fraud predictions."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Amazon Elastic Kubernetes Service (Amazon EKS)",
+      "notes": "Hosts the central feature bank, ML model building, and real-time prediction engines. Can dynamically scale 10x within minutes."
+    },
+    {
+      "id": "5",
+      "service": "Neptune",
+      "name": "Amazon Neptune",
+      "notes": "Graph database capturing hidden fraud networks and shared entity attributes (e.g., shared Wi-Fi, IP, or credit cards)."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "Amazon ElastiCache (Redis)",
+      "notes": "In-memory caching layer storing pre-computed features for ultra-fast prediction retrieval."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores key-value user profile data with fast attribute lookup in dedicated per-tenant tables."
+    },
+    {
+      "id": "8",
+      "service": "RDS",
+      "name": "Amazon Relational Database Service (Amazon RDS)",
+      "notes": "Stores multi-event user histories for performing analytical joins over recent time windows in dedicated per-tenant instances."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Streams collected SDK device signals to Kafka at high frequency."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingests stream data into Neptune graph database to build network relationships."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Streams event signals to EKS for central feature bank computation."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Client service submits transaction prediction request via API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes request payload to prediction engine on EKS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "EKS queries graph patterns and network signals from Neptune."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "EKS reads and updates cached feature computations in Redis."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2''",
+      "type": "data",
+      "notes": "EKS fetches user profile attributes from DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2'''",
+      "type": "data",
+      "notes": "EKS queries historical multi-event joins from RDS."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "API Gateway returns final non-biased fraud decision response to client service."
+    }
+  ]
+}

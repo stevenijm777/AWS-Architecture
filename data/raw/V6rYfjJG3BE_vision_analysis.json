@@ -1,0 +1,124 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows T-Mobile's Digital Commerce Platform distributed across active stacks (US West and US East). Users access the platform via API Gateway, which maintains sticky sessions and routes traffic to a self-managed Kubernetes cluster running on Amazon EC2. The application on EC2 uses Amazon ElastiCache to cache customer context data and Amazon RDS to persist active cart transactions. Cart updates are asynchronously streamed via Amazon Kinesis to an AWS Lambda function, which writes the cart data to Amazon DynamoDB Global Tables to enable multi-region rehydration during traffic rerouting or regional failovers. Amazon OpenSearch Service is used for searching non-transactional catalog and promotional data. All details are preserved accurately without inventing unmentioned infrastructure layers.",
+  "graph": {
+    "name": "T-Mobile Digital Commerce Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=V6rYfjJG3BE",
+    "categories": "Multi-Region Resilient E-Commerce Architecture",
+    "graph_usable": true,
+    "notes": "Multi-region active-passive architecture using API Gateway sticky routing, self-managed K8s on EC2, ElastiCache, RDS, and DynamoDB Global Tables with Kinesis and Lambda for asynchronous real-time cart state sync across US East and US West regions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Users",
+      "notes": "End-user customers accessing e-commerce website or digital care channels."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Acts as entry point and manages traffic stickiness to specific stack regions."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "Amazon EC2",
+      "notes": "Hosts self-managed Kubernetes cluster running application microservices."
+    },
+    {
+      "id": "3",
+      "service": "ElastiCache",
+      "name": "Amazon ElastiCache",
+      "notes": "Caches dynamic customer context data retrieved from internal domains."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Relational database persisting active customer cart transactions within the local stack."
+    },
+    {
+      "id": "5",
+      "service": "OpenSearch",
+      "name": "Amazon OpenSearch Service",
+      "notes": "Indexes non-transactional catalog, product, and promotional search data."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Amazon Kinesis",
+      "notes": "Real-time data stream capturing cart changes asynchronously."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Processes stream events from Kinesis and updates cross-region datastores."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Global table storing replicated cart state across regions for rehydration."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User interacts with the e-commerce web platform via API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes request with stickiness to self-managed Kubernetes application on EC2."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Application populates and retrieves customer context data in ElastiCache."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2''",
+      "type": "data",
+      "notes": "Application stores full active transaction and cart state into RDS."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Application asynchronously streams cart changes to Kinesis without blocking request."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Kinesis triggers Lambda function in real-time."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda writes cart state to DynamoDB Global Table for cross-region hydration."
+    }
+  ]
+}

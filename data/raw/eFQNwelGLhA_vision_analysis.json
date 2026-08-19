@@ -1,0 +1,206 @@
+{
+  "step_by_step_reasoning": "1. Identify system entry points: Live video feed captured by a camera at a stadium outputs to two distinct physical encoders for redundant encoding.\n2. Identify network connection: Encoders output cross-connected streams to two AWS Direct Connect instances to guarantee high availability and SLA.\n3. Ingestion into Cloud: Direct Connect links distribute streams redundantly into two AWS Elemental MediaConnect instances.\n4. Branching Use Case 1 (High Quality Client Ingestion): MediaConnect 1 routes high-quality live streams directly to a client's AWS MediaConnect instance in the same region.\n5. Branching Use Case 2 (Low Quality / Transcoding & Distribution): MediaConnect 2 streams content to EC2 instances for video transcoding into mezzanine formats, which are stored in Amazon S3 for live, replay, and VOD.\n6. Edge Delivery: Amazon S3 serves as the origin for Amazon CloudFront, which delivers the content globally to the final end-user audience.",
+  "graph": {
+    "name": "Eurovision Services Live Video Ingest and Distribution Architecture",
+    "link": "https://www.youtube.com/watch?v=eFQNwelGLhA",
+    "categories": "Media & Live Streaming Services",
+    "graph_usable": true,
+    "notes": "Redundant, high-availability architecture for live IP video broadcasting, ingestion, transcoding, and worldwide distribution using AWS Elemental MediaConnect, Direct Connect, EC2, S3, and CloudFront."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerCamera",
+      "name": "Camera",
+      "notes": "Camera in stadium capturing live video feed"
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Encoder 1",
+      "notes": "Primary on-premises hardware encoder to reduce bandwidth usage"
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Encoder 2",
+      "notes": "Secondary redundant on-premises hardware encoder"
+    },
+    {
+      "id": "3",
+      "service": "DirectConnect",
+      "name": "Direct Connect 1",
+      "notes": "Primary Direct Connect interface into AWS region"
+    },
+    {
+      "id": "4",
+      "service": "DirectConnect",
+      "name": "Direct Connect 2",
+      "notes": "Redundant Direct Connect interface into AWS region"
+    },
+    {
+      "id": "5",
+      "service": "MediaConnect",
+      "name": "MediaConnect 1",
+      "notes": "Primary AWS Elemental MediaConnect flow aggregator using ST 2022-7 protocol"
+    },
+    {
+      "id": "6",
+      "service": "MediaConnect",
+      "name": "MediaConnect 2",
+      "notes": "Redundant AWS Elemental MediaConnect flow aggregator"
+    },
+    {
+      "id": "7",
+      "service": "MediaConnect",
+      "name": "Client MediaConnect",
+      "notes": "Client-owned MediaConnect instance receiving high-quality bitrate stream in the same region"
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "EC2 compute instances performing video transcoding into mezzanine formats"
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 storage for mezzanine video formats, supporting VOD and replay"
+    },
+    {
+      "id": "10",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN for global B2B2C video content distribution"
+    },
+    {
+      "id": "11",
+      "service": "UserConsumerWebMobile",
+      "name": "Audience",
+      "notes": "Global end-user viewing audience"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Camera feeds live video to primary encoder"
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Camera feeds live video to redundant encoder"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Encoder 1 outputs primary video stream to Direct Connect 1"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Encoder 1 outputs redundant video stream to Direct Connect 2"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1''",
+      "type": "data",
+      "notes": "Encoder 2 outputs redundant video stream to Direct Connect 1"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'''",
+      "type": "data",
+      "notes": "Encoder 2 outputs primary video stream to Direct Connect 2"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Direct Connect 1 routes video stream to MediaConnect 1"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Direct Connect 1 routes video stream to MediaConnect 2"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2''",
+      "type": "data",
+      "notes": "Direct Connect 2 routes video stream to MediaConnect 1"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2'''",
+      "type": "data",
+      "notes": "Direct Connect 2 routes video stream to MediaConnect 2"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "MediaConnect 1 delivers high-quality bitrate stream directly to Client MediaConnect"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "MediaConnect 2 routes feed to EC2 for transcoding"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 injects transcoded mezzanine video files into S3 bucket"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 bucket serves as origin for CloudFront distribution"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "CloudFront distributes live video, VOD, and replay content to end-user audience"
+    }
+  ]
+}

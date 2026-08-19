@@ -1,0 +1,204 @@
+{
+  "step_by_step_reasoning": "The architecture represents i-Scream EDU's AI Learning Record (AI 생활기록부) pipeline.\n1. **Data Collection & Transformation**: Student learning devices (tablet, desktop, mobile) send behavioral data in JSON format to API Gateway, which streams it through Kinesis Data Firehose. Firehose triggers a Data Transformation Lambda that interacts with DynamoDB (for fast lookup of installed app information) and an Aurora database (for indexed querying of learning contents and quizzes). The transformed data is written into Amazon S3.\n2. **Classification**: New objects in S3 invoke a Classification Lambda that analyzes context attributes, categorizes the data, and writes the classified data back into S3.\n3. **ETL & Data Warehousing**: AWS Glue crawls the classified data in S3 and executes scheduled PySpark ETL jobs to load structured data into Amazon Redshift.\n4. **Analysis Orchestration & Serving**: AWS Step Functions orchestrates dozens of analysis Lambda functions that read data from Redshift, process learning records, and save analysis results into an Aurora Service DB. Finally, this Aurora DB serves the AI learning record analysis back to student and parent user devices.",
+  "graph": {
+    "name": "i-Scream EDU AI Learning Record Architecture",
+    "link": "https://www.youtube.com/watch?v=VJZsgsY_sXY",
+    "categories": "Data Lake, Real-time Streaming, Serverless ETL, AI Analytics",
+    "graph_usable": true,
+    "notes": "Architecture processes behavioral data from student learning tablets via Kinesis Firehose, S3, Glue, Redshift, and Step Functions to power the AI Learning Record service."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User Devices",
+      "notes": "Tablets, desktops, and mobile phones used by students and parents."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Receives JSON formatted behavioral event data from student devices."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "FIREHOSE",
+      "notes": "Buffers streaming data and invokes transformation Lambda at set intervals."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA (Data Transformation)",
+      "notes": "Transforms streaming data using enrichment records from DynamoDB and Aurora."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Stores app installation info for fast key-value lookups."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "AURORA (Top)",
+      "notes": "Stores learning content and quiz metadata for indexed queries."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores transformed raw data and classified objects organized by type and date."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA (Classification)",
+      "notes": "Triggered by S3 object creation to classify objects based on context attributes."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "GLUE",
+      "notes": "Crawls S3 metadata and executes PySpark ETL scripts on schedule."
+    },
+    {
+      "id": "9",
+      "service": "RedShift",
+      "name": "REDSHIFT",
+      "notes": "Data warehouse used for learning evaluation and usage analytics."
+    },
+    {
+      "id": "10",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTION",
+      "notes": "Orchestrates analysis Lambda functions in sequence."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "LAMBDA (Analysis)",
+      "notes": "Executes analytics workflows reading from Redshift and writing results to Aurora."
+    },
+    {
+      "id": "12",
+      "service": "Aurora",
+      "name": "AURORA (Service DB)",
+      "notes": "Dedicated service database serving AI learning record results to user devices."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User devices send student behavioral event data in JSON format to API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway streams data payloads directly to Kinesis Data Firehose."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Firehose invokes Lambda at batch intervals for inline data transformation."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Transformation Lambda queries installed app information from DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Transformation Lambda queries learning contents and quiz metadata from Aurora."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Firehose delivers transformed data objects into S3 storage."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "New S3 object creation triggers the Classification Lambda."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Classification Lambda uploads classified data objects back to S3."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "AWS Glue crawls and reads classified data partitions from S3."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue PySpark ETL job loads processed data into Amazon Redshift."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Step Functions workflow reads analytics data from Redshift."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions orchestrates execution of multiple analysis Lambda functions."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Analysis Lambda functions write analyzed learning records into Aurora Service DB."
+    },
+    {
+      "source": "12",
+      "target": "0",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Aurora Service DB serves AI learning record results to student tablets, parent mobile apps, and web."
+    }
+  ]
+}

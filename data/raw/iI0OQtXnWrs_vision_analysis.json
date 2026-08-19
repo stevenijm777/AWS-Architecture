@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "1. Identified system entry point: 'Users' (represented as UserConsumerWeb) uploading documents to the Turnitin web application.\n2. Ingestion pipeline: SNS receives upload notifications and pushes messages into an SQS queue for buffering up to 2 million papers daily.\n3. Rules and Processing: An Orchestrator Lambda (written in Java) reads from SQS to validate document eligibility based on length and language rules. Valid papers are handed off to a Processing Lambda (written in Python) which strips out non-prose elements (headers, footers) and creates sentence sliding windows.\n4. Inference: Processing Lambda sends 10 sentence segments in parallel to an Amazon SageMaker endpoint running on EC2 for AI inference score calculation, then aggregates sentence scores.\n5. Persistence and Retrieval: The Processing Lambda passes aggregated scores back to the Orchestrator Lambda, which writes the sentence and document scores into DynamoDB. A Micro Front End (MFE) component queries the Orchestrator Lambda to fetch document evaluation scores stored in DynamoDB for instructor display.",
+  "graph": {
+    "name": "Turnitin Generative AI Academic Integrity Architecture",
+    "link": "https://www.youtube.com/watch?v=iI0OQtXnWrs",
+    "categories": "Generative AI, Event-Driven",
+    "graph_usable": true,
+    "notes": "Turnitin processes up to 2 million papers per day using an event-driven architecture with AWS Lambda, SageMaker on EC2, and DynamoDB across three AWS regions (US, Europe, Asia Pacific)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Users",
+      "notes": "Students and instructors uploading academic papers directly or via integrations."
+    },
+    {
+      "id": "1",
+      "service": "SNS",
+      "name": "Amazon Simple Notification Service (Amazon SNS)",
+      "notes": "SNS topic triggered when a paper is uploaded and ready for processing."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Amazon Simple Queue Service (Amazon SQS)",
+      "notes": "SQS queue buffering up to 2 million incoming paper messages per day."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS Lambda (Orchestrator)",
+      "notes": "Java-based orchestrator and rules engine determining paper processing eligibility."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "AWS Lambda (Processing)",
+      "notes": "Python-based processing Lambda breaking down prose text into sentence sliding windows."
+    },
+    {
+      "id": "5",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "SageMaker endpoint running on EC2 for high-concurrency generative AI inference."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores document and sentence-level AI evaluation scores."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "MFE",
+      "notes": "Micro Front End web component embedded into existing user-facing applications."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User uploads paper to platform, triggering an SNS notification topic."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS pushes paper upload event to the SQS queue."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Orchestrator Lambda polls SQS queue and applies filtering rules."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Orchestrator Lambda invokes Processing Lambda for sentence segmentation."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Processing Lambda sends sentence sliding windows in parallel to SageMaker endpoint."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "SageMaker returns AI sentence inference results back to Processing Lambda."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Processing Lambda returns aggregated document and sentence scores to Orchestrator Lambda."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Orchestrator Lambda persists sentence and paper score records into DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Micro Front End component queries Orchestrator Lambda to retrieve paper score details."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "DynamoDB returns paper analysis records to Orchestrator Lambda to display in MFE."
+    }
+  ]
+}

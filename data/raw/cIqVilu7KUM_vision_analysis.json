@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates BNX's event-driven auto scaling system designed to handle extreme traffic spikes (up to 9 million TPM) when artists post on Weverse. Two main event flows are depicted: Scheduled Events and Unexpected Events. 1) Scheduled Events flow from Calendar to Scheduled AWS Lambda, which adjusts the Auto Scaling Group capacity. 2) Unexpected Events flow from the Push Server to API Gateway, triggering an Unexpected AWS Lambda that dynamically adjusts the Auto Scaling Group. 3) For scale-in, CloudWatch monitors traffic levels and triggers the Unexpected AWS Lambda to scale down instances when traffic normalizes. 4) Goployer, an open-source deployment tool created by BNX, interacts directly with the Auto Scaling Group to manage deployment configuration as code.",
+  "graph": {
+    "name": "BNX Event-Driven Auto Scaling Architecture",
+    "link": "https://www.youtube.com/watch?v=cIqVilu7KUM",
+    "categories": "Compute, Auto Scaling, Serverless, DevOps",
+    "graph_usable": true,
+    "notes": "Architecture uses AWS Lambda and AutoScaling with Spot Instances (70% spot, saving ~50% EC2 cost) to handle traffic spikes up to 9M TPM."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "PUSH SERVER",
+      "notes": "Sends push notifications to millions of users when artists create new content, while simultaneously calling API Gateway."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Receives API calls from the Push Server during unexpected traffic events and triggers the AWS Lambda scale-out process."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AWS LAMBDA (Unexpected)",
+      "notes": "Handles unexpected event spikes by adjusting Auto Scaling Group capacity and handles scale-in logic when triggered by CloudWatch."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "AWS LAMBDA (Scheduled)",
+      "notes": "Handles scheduled events based on pre-planned events in the Calendar component to pre-provision Auto Scaling capacity."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "CALENDAR",
+      "notes": "Represents scheduled calendar triggers for pre-planned artist events."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH",
+      "notes": "Monitors API traffic patterns and triggers AWS Lambda to initiate scale-in when traffic returns to baseline levels."
+    },
+    {
+      "id": "6",
+      "service": "AutoScaling",
+      "name": "AUTOSCALING GROUP",
+      "notes": "Manages compute instances, utilizing 70% Spot Instances to eliminate cold start latency and reduce costs by up to 50%."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "goployer",
+      "notes": "Open-source deployment tool developed by BNX to automate Auto Scaling Group deployments using manifest files (Deployment as Code)."
+    }
+  ],
+  "edges": [
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Scheduled Lambda checks scheduled calendar events."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Scheduled Lambda adjusts Auto Scaling Group target capacity prior to planned event."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Push Server calls API Gateway endpoint upon post creation."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda function to handle unexpected spike."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Unexpected Lambda modifies Auto Scaling Group instance count to meet demand."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "CloudWatch rule triggers Lambda to check traffic levels and scale in when activity returns to normal."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "Goployer provisions and automates Auto Scaling Group deployment process based on manifest configuration."
+    }
+  ]
+}

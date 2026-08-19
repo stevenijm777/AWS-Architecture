@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1. Identified all architecture components from the whiteboard visual inventory and transcript: Edge Network (UserCompanyEdge), Amazon S3 Ingest (S3), Amazon SNS Ingest (SNS), Amazon SQS Transformer (SQS), Amazon EC2 Auto Scaling Transformer (AutoScaling), Amazon RDS Tracking (RDS), Amazon S3 Warehouse (S3), Amazon SNS Warehouse (SNS), Amazon SQS Aggregator (SQS), Amazon EC2 Aggregator (EC2), Amazon Athena (Athena), and Consumers (UserConsumerAPI).\n2. Assigned valid taxonomy categories to the service types for each node.\n3. Defined three distinct logical workflows: Ingestion & Transformation (Flow 0), Aggregation Pipeline (Flow 1), and Consumer Query Execution (Flow 2).\n4. Verified edge directions and flow sequences against the visual arrows drawn on the diagram and transcript narrative.",
+  "graph": {
+    "name": "Verkara Global DNS Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=W4QzOaKCX2Y",
+    "categories": "Data Analytics, Compute, Storage",
+    "graph_usable": true,
+    "notes": "Architecture ingests DNS exhaust logs (~530B daily transactions, ~20TB compressed) from global edge locations into S3, transforms compressed data into Parquet using EC2 Auto Scaling, aggregates microsecond-level records into minute/hour/day tables, and provides Athena query isolation for consumers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyEdge",
+      "name": "Edge Network",
+      "notes": "Global DNS resolvers generating 530B daily transactions and ~400k compressed files (~20TB)."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Amazon S3 (Ingest)",
+      "notes": "Ingest bucket for raw compressed DNS exhaust log files uploaded from edge locations."
+    },
+    {
+      "id": "2",
+      "service": "SNS",
+      "name": "Amazon SNS (Ingest)",
+      "notes": "Receives object creation notifications from S3 Ingest bucket."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Amazon SQS (Transformer)",
+      "notes": "Queues file processing notifications for the transformer worker instances."
+    },
+    {
+      "id": "4",
+      "service": "AutoScaling",
+      "name": "Amazon EC2 Auto Scaling (Transformer)",
+      "notes": "Extracts, enhances, and converts compressed raw files into optimized Parquet format."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "Amazon S3 (Warehouse)",
+      "notes": "Warehouse storage containing partitioned Parquet tables for raw and aggregated data with lifecycle policies."
+    },
+    {
+      "id": "6",
+      "service": "SNS",
+      "name": "Amazon SNS (Warehouse)",
+      "notes": "Triggers notifications when raw transformed Parquet data arrives in the warehouse."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "Amazon SQS (Aggregator)",
+      "notes": "Queues raw Parquet warehouse arrival notifications for aggregator workers."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "Amazon EC2 (Aggregator)",
+      "notes": "Aggregates microsecond-level data into minute, hour, and day table granularities."
+    },
+    {
+      "id": "9",
+      "service": "RDS",
+      "name": "Amazon RDS (Tracking)",
+      "notes": "Database tracking state and metadata for ingestion/processing operations."
+    },
+    {
+      "id": "10",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Serverless query engine reading S3 warehouse data with query execution isolation."
+    },
+    {
+      "id": "11",
+      "service": "UserConsumerAPI",
+      "name": "Consumers",
+      "notes": "Internal reporting users and external API customers executing queries against Athena."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Edge network uploads compressed DNS exhaust log files to S3 Ingest bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 triggers event notification to SNS upon file upload."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "SNS forwards notification to SQS Transformer queue."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Auto Scaling EC2 Transformer workers pull processing jobs from SQS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Transformers output processed Parquet files to S3 Warehouse."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 Warehouse sends event notification to SNS on raw Parquet arrival."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS forwards notification to SQS Aggregator queue."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "EC2 Aggregator instances consume tasks from SQS queue."
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Consumers issue queries through Amazon Athena."
+    },
+    {
+      "source": "10",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries data stored in S3 Warehouse tables."
+    }
+  ]
+}

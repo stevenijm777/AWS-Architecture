@@ -1,0 +1,172 @@
+{
+  "step_by_step_reasoning": "The architecture shows an automated AI damage estimation pipeline for CCC's Estimate STP solution handling 4.1 million weekly transactions. 1) User submits API request with callback URL via API Gateway to an initial Lambda function, which generates a prediction ID, writes a tracking record to DynamoDB, and returns a pre-signed S3 URL to bypass API Gateway payload limits. 2) User uploads claim photos to S3, which triggers a Lambda listener to look up execution parameters in DynamoDB and start AWS Step Functions. 3) Step Functions orchestrates a series of parallel/sequential SageMaker asynchronous inference endpoints representing the AI ensemble. 4) Upon completion of each SageMaker task, a callback Lambda function updates Step Functions using task tokens and queries DynamoDB for the callback URL. 5) Finally, the callback Lambda notifies the user with a pre-signed S3 download URL for retrieving line-level damage estimates directly from S3.",
+  "graph": {
+    "name": "CCC Estimate STP Architecture",
+    "link": "https://www.youtube.com/watch?v=XCnul-AjrNU",
+    "categories": "AI/ML, Serverless Data Pipeline, Claim Processing",
+    "graph_usable": true,
+    "notes": "Handles ~4.1 million transactions per week using asynchronous SageMaker model endpoints orchestrated by Step Functions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerAPI",
+      "name": "User (Initiator)",
+      "notes": "Client application initiating prediction request with callback URL."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Receives initial API request to select service and callback setup."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AWS Lambda (Request Processor)",
+      "notes": "Generates prediction ID, writes DynamoDB record, and generates pre-signed S3 URL."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores transaction tracking records and callback metadata."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Stores input vehicle photos and final generated estimate outputs."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates parallel and sequential execution of AI ensemble model steps."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "Amazon SageMaker",
+      "notes": "Runs asynchronous prediction endpoints for AI models."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "AWS Lambda (Callback / Token Return)",
+      "notes": "Handles completion notifications, returns task tokens to Step Functions, and triggers user callbacks."
+    },
+    {
+      "id": "8",
+      "service": "UserConsumerAPI",
+      "name": "User (Receiver)",
+      "notes": "Client application receiving callback and downloading final estimates."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step 1: User sends request with desired service and callback URL."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway routes initiation request to Request Processor Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda creates tracking record with prediction ID in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns pre-signed S3 upload URL back via API Gateway to bypass payload limits."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Step 2: User uploads vehicle claim photos directly to S3 using pre-signed URL."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 bucket event listener triggers Lambda on photo upload completion."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda looks up DynamoDB step configuration and invokes Step Functions execution."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Steps 3-7: Step Functions invokes SageMaker asynchronous endpoints for AI models."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "SageMaker notifies Callback Lambda upon prediction completion."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Lambda returns task token to Step Functions to proceed to the next step in the ensemble."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Callback Lambda queries DynamoDB to retrieve original callback URL upon ensemble completion."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step 8: Lambda calls original user callback URL with pre-signed S3 download URL."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Step 9: User downloads final line-level estimate output directly from S3."
+    }
+  ]
+}
