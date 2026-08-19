@@ -86,15 +86,16 @@ callejones sin salida que vale la pena preservar.
 
 ### 2.1 Standard
 
-- [ ] **Sincronizar el prompt del lab con producción y re-correr los 14.**
-      `batch_prompt_test.py` tiene su propia copia bajo un comentario que dice
-      *"Identical to vision_analyzer.py"*, y ya no lo es: producción corre
-      *"Expert Cloud Architecture Transcriber… transcribe EXACTLY"* (3984 chars),
-      el lab sigue con *"expert AWS Solutions Architect… generalize your
-      reasoning"* (2523 chars). Instrucciones opuestas. Consecuencia medida: el
-      lab da 65.28% de Edge F1 sobre los mismos 14 videos que producción puntúa
-      en 58.01%. **Bloquea todo lo demás de esta sección** — hasta resolverlo no
-      se sabe qué mide el lab.
+- [ ] **Sincronizar `batch_prompt_test.py` con producción y re-correr los 14.**
+      Tiene su propia copia del prompt bajo un comentario que dice *"Identical to
+      vision_analyzer.py"*, y no lo es: producción corre *"Expert Cloud
+      Architecture Transcriber… transcribe EXACTLY"* (3974 chars), ese archivo
+      sigue con *"expert AWS Solutions Architect… generalize your reasoning"*
+      (2513 chars) — es el `V0_BASELINE`. Instrucciones opuestas.
+      Eso explica la discrepancia de 7 puntos que había medido (65.28% de Edge
+      F1 en el lab contra 58.01% en producción, mismos 14 videos): **no estaban
+      corriendo el mismo prompt**. Nota: el notebook `prompt_batch_ablation_lab`
+      sí usa el prompt correcto; el desincronizado es solo el `.py`.
 - [ ] **Decidir sobre V7.** Gana a V6 en ambas métricas (90.58/65.73 vs
       89.94/65.28) y ataca la debilidad conocida: ~33% del GT es bidireccional
       contra ~11% en V6. No promover hasta cerrar el punto anterior — la mejora
@@ -103,12 +104,35 @@ callejones sin salida que vale la pena preservar.
       commit `a7b218f` (12:34) que cambió el prompt de Stage 2. Lo normal es
       editar y commitear después, así que casi seguro usaron el prompt actual,
       pero no es demostrable por timestamps.
-- [ ] **Archivar el prompt en cada corrida.** Hashear el texto del prompt dentro
-      del `run.json`. Los prompts de la generación 2 (V5, V6, V7) ya son
-      irrecuperables: `--experiment-label` solo pone sufijo al archivo de salida
-      y las variantes se editaban en el mismo sitio, pisándose. Parsimonious sí
-      lo tiene resuelto con `parsimonious_prompt_history.md` (79 registros con
-      texto completo).
+- [x] **~~Los prompts de la generación 2 son irrecuperables~~ — CORREGIDO
+      (2026-08-19).** Esa afirmación era **falsa**. La escribí mirando solo
+      `batch_prompt_test.py` sin revisar
+      `whiteboard_selection_lab/prompt_batch_ablation_lab.ipynb`, donde están
+      **todos** los prompts (Stage 1 y Stage 2), definidos de forma componible.
+      Ya están extraídos a `src/configs/prompts/` con su SHA-256 vía
+      [`extract_prompts.py`](../scripts/utils/extract_prompts.py).
+      Además quedó demostrado qué corre producción: la celda 9
+      (`STAGE2_V6_CORRECTED`, sha `ed1d85054d73…`) es byte-idéntica a
+      `vision_analyzer.py`, y Stage 1 es `STAGE1_V0_BASELINE`. Los 299 grafos
+      son ese par.
+- [ ] **Desambiguar constantes redefinidas** (el problema real, más acotado).
+      El notebook tiene 5 celdas alternativas de selección y cada una redefine
+      las constantes base, así que un mismo nombre significa textos distintos:
+
+      | Constante | celda 7 | celda 8 | celda 9 | celda 10 |
+      |---|---:|---:|---:|---:|
+      | `STAGE2_V0_BASELINE` | 2513 | 2375 | — | — |
+      | `STAGE2_V4_ANTI_HALLUCINATION` | 3422 | 2904 | — | — |
+      | `STAGE2_V5_STRICT_ROUTING` | 3737 | 3256 | — | — |
+      | `STAGE2_V6_CORRECTED` | 3887 | — | **3974** | 3835 |
+
+      Los `batch_results_*.json` guardan el *nombre* de la versión, no un hash,
+      así que las filas de generación 2 de la tabla de ablación no se pueden
+      atar a un texto concreto. Falta que `evaluate_standard.py` grabe el hash
+      del prompt en cada `run.json`.
+- [ ] **Sincronizar `batch_prompt_test.py`** (esto sí sigue vigente). Su Stage 2
+      son 2513 chars del V0 viejo contra los 3974 de producción — el texto
+      correcto está en la celda 9 del notebook, así que ahora es un copy-paste.
 - [ ] **Tracker.** `processed_tracker.json` arrastra 5 etiquetas históricas
       (`version_1/2/3/9_parsimonious/10_parsimonious`) y hoy hay tres fuentes de
       verdad para lo mismo: el tracker, el progress JSON del batch y los

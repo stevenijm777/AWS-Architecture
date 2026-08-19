@@ -181,17 +181,62 @@ explained by sample composition. Candidate causes, unresolved:
 Until this is resolved, **lab numbers and production numbers are not comparable**,
 and the ablation table above ranks variants only relative to each other.
 
-### The prompts behind the numbers no longer exist
+### The prompts are preserved — but the version names are ambiguous
 
-`--experiment-label` only suffixes the output filename; it does not select a
-prompt. Variants were applied by editing the templates in `batch_prompt_test.py`
-in place and re-running. Each edit overwrote the previous one, so for the
-generation-2 rows there is a metric and a name but **no recoverable prompt**.
-`experiment_history.json` stores a prose `prompt_diff_description`, not the text,
-and covers only generation 1.
+An earlier revision of this document claimed the generation-2 prompts were
+unrecoverable. **That was wrong.** It was written from `batch_prompt_test.py`,
+where the templates were indeed overwritten in place, without checking
+[`prompt_batch_ablation_lab.ipynb`](../whiteboard_selection_lab/prompt_batch_ablation_lab.ipynb),
+which holds all of them.
 
-Parsimonious does not have this problem — `parsimonious_prompt_history.md`
-archives the full text of all 79 records. Standard has no equivalent.
+The notebook defines each version compositionally, which makes every delta
+explicit and is better practice than duplicating whole prompts:
+
+```python
+V4 = V0.replace(TOXIC_INTRO, NEW_INTRO_TRANSCRIBER).replace(...) + ANTI_HALLUCINATION_RULES
+V5 = V4 + STRICT_ROUTING_RULES
+V6 = V4 + CONTAINMENT_ROUTING_RULE
+V7 = V6 + RETURN_PATH_RULES
+```
+
+The real problem is different, and narrower: **the notebook has five alternative
+selection cells, and each redefines the base constants.** The same name therefore
+denotes different text depending on which cell ran:
+
+| Constant | cell 7 | cell 8 | cell 9 | cell 10 |
+|---|---:|---:|---:|---:|
+| `STAGE2_V0_BASELINE` | 2513 | 2375 | — | — |
+| `STAGE2_V4_ANTI_HALLUCINATION` | 3422 | 2904 | — | — |
+| `STAGE2_V5_STRICT_ROUTING` | 3737 | 3256 | — | — |
+| `STAGE2_V6_CORRECTED` | 3887 | — | **3974** | 3835 |
+
+*(whitespace-normalised character counts)*
+
+So `batch_results_V6_corrected_v2.json` names a prompt that has three candidate
+texts, and the filename alone does not say which one produced it. That is the
+gap to close — not lost prompts, but unresolvable references.
+
+**Which one production runs is now settled.** The cell-9 `STAGE2_V6_CORRECTED`
+is byte-identical to `MFR_STAGE_2_PROMPT_TEMPLATE` in `vision_analyzer.py`
+(sha256 `ed1d85054d73…`), and cell-6 `STAGE1_V0_BASELINE` matches Stage 1
+(`497d30164f48…`). All 299 production graphs run that pair. This was previously
+listed here as an open question; it is answered.
+
+Every variant is now materialised outside the notebook by
+[`extract_prompts.py`](../scripts/utils/extract_prompts.py) into
+`src/configs/prompts/`, one `.txt` per version plus a `MANIFEST.json` carrying
+each SHA-256. Texts that share a name but differ get a `__cellN` suffix rather
+than overwriting each other. Hashes are over whitespace-normalised text, so
+reindenting a prompt does not change its identity.
+
+One variant resists extraction: cell 11's `STAGE2_V7_RETURN_FLOWS` builds on
+constants defined in an earlier cell, so it only resolves in a live session with
+the right run order. Cell 7 defines a `STAGE2_V7_RETURN_FLOWS` that does extract
+cleanly, but there is no guarantee the two are the same text.
+
+Parsimonious solved this differently and arguably better:
+`parsimonious_prompt_history.md` archives the full text of all 79 records inline,
+so no reconstruction is needed at all.
 
 ---
 
@@ -212,8 +257,17 @@ starting 11:41 — before the commit, though working-tree edits normally precede
 commits, so they were probably produced with the current prompt. Not provable
 from timestamps. Re-running those 28 would remove the doubt.
 
-**Prompt archival.** Whatever prompt a run uses should be hashed into its
-`run.json`, so this section never has to be written again.
+**Disambiguate the redefined constants.** Three different texts answer to
+`STAGE2_V6_CORRECTED`, and two each to `V0_BASELINE`, `V4_ANTI_HALLUCINATION`
+and `V5_STRICT_ROUTING`. Every `batch_results_*.json` records a version *name*,
+not a hash, so the generation-2 rows in the ablation table cannot currently be
+tied to a specific text. Resolving it means either checking which cell was last
+run before each result file, or accepting the rows as approximate.
+
+**Prompt archival in runs.** `src/configs/prompts/MANIFEST.json` now gives every
+variant a stable SHA-256. The remaining step is for `evaluate_standard.py` to
+record the hash of the prompt that produced the graphs into each `run.json`, so
+a result can never again name a prompt it cannot prove.
 
 ---
 
