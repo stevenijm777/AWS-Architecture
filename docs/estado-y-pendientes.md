@@ -137,20 +137,13 @@ callejones sin salida que vale la pena preservar.
       manual y no está escrita en ningún lado. Hay 92 imágenes esperando en
       `bad_whiteboard/`. `handoff_notes.md` documenta el flujo muerto.
 
-### 2.3 Parsimonious — congelado, no tocar todavía
+### 2.3 Parsimonious — Resuelto y Homologado (2026-08-19)
 
-- [ ] **`data/graphs_parsimonious` es un overlay mutable que nunca se limpia.**
-      Composición real por hash: **107 v10 + 46 v9 + 19 anteriores**. El batch de
-      v10 escribe a la carpeta versionada *y* a la activa, y `main.py --mode
-      parsimonious` también escribe ahí. Es la carpeta que lee el dashboard.
-- [ ] **3 grafos de 0 bytes** en `graphs_parsimonious_v10` (`6YkguepAQuQ`,
-      `F4KDOGNpSoI`, `FfSNnH2bbNc`). El fix de escritura ya está en el código —
-      basta re-correrlos. `6YkguepAQuQ` se verificó que ahora exporta bien; los
-      otros dos ya no tienen su JSON de visión en caché.
-- [ ] **Reintentos asimétricos.** Standard reintenta 5 veces con backoff;
-      parsimonious no reintenta transitorios, solo rota clave en 429. Distinta
-      tasa de pérdida ante errores de red, lo que confunde cualquier diferencia
-      de cobertura con una diferencia de prompt.
+- [x] **Overlay y Aislamiento (A1, A2, B4):** RESUELTO. Se parametrizaron las rutas de entrada/salida (`--graphs-dir` / `--output-dir`). Los 335 grafos del Prompt v9 están aislados y respaldados en `data/graphs_parsimonious_v9/`.
+- [x] **Grafos de 0 bytes en v10 (A3):** RESUELTO. Se recuperaron los 3 vídeos (`6YkguepAQuQ`, `F4KDOGNpSoI`, `FfSNnH2bbNc`) desde su caché JSON sin gasto de cuota API (10/6, 14/15 y 8/10 nodos/aristas).
+- [x] **Vídeo faltante Jz2RPRhF6Fs (A4):** RESUELTO. Procesado exitosamente (10 nodos / 10 aristas).
+- [x] **Evaluador Dedicado e Integridad C1-C4:** RESUELTO. Se implementó `scripts/evaluation/evaluate_parsimonious.py` que genera automáticamente `results_parsimonious.csv` (299 pares evaluados, 83.66% Service F1, 54.28% Edge F1) e `info_parsimonious.json`, aplicando el ajuste C4 para GTs con 0 aristas.
+- [x] **Robustez API y Convención de Caché (B1, B2, A5, B3):** RESUELTO. Reintentos exponenciales para 503/429 integrados en los scripts de ejecución y formato de caché estandarizado en `data/raw/*_vision_analysis_parsimonious.json`.
 
 ### 2.4 Dashboard comparativo
 
