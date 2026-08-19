@@ -1,0 +1,312 @@
+[
+  {
+    "start": 0.0,
+    "end": 14.0,
+    "text": "Hi, I'm John and welcome to another episode of This is My Architecture."
+  },
+  {
+    "start": 14.0,
+    "end": 16.0,
+    "text": "I'm joined today by Dave from the Met Office."
+  },
+  {
+    "start": 16.0,
+    "end": 19.0,
+    "text": "Dave, maybe you could tell us a little bit more about what the Met Office do."
+  },
+  {
+    "start": 19.0,
+    "end": 22.0,
+    "text": "Sure. Well, the Met Office is the UK's National Weather and Climate Service."
+  },
+  {
+    "start": 22.0,
+    "end": 29.0,
+    "text": "And we provide forecasts 24-7, 365 days a year to the public, to the media, to the armed forces, to local government."
+  },
+  {
+    "start": 29.0,
+    "end": 31.0,
+    "text": "A massive wide range of industry."
+  },
+  {
+    "start": 31.0,
+    "end": 34.0,
+    "text": "And I know you work with the Severe Weather Warning System, right?"
+  },
+  {
+    "start": 34.0,
+    "end": 35.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 35.0,
+    "end": 37.0,
+    "text": "So, could you tell us a bit more about that?"
+  },
+  {
+    "start": 37.0,
+    "end": 44.0,
+    "text": "Sure. Well, the Severe Weather Warning System is a way of alerting the general public and the various responder communities"
+  },
+  {
+    "start": 44.0,
+    "end": 48.0,
+    "text": "that there is a weather situation coming that may have a significant impact on their lives."
+  },
+  {
+    "start": 48.0,
+    "end": 54.0,
+    "text": "And that might range from travel disruption to power altitudes, potentially to property damage or even to loss of life."
+  },
+  {
+    "start": 54.0,
+    "end": 58.0,
+    "text": "Well, pretty critical infrastructure, right? And this is all running on AWS, is that correct?"
+  },
+  {
+    "start": 58.0,
+    "end": 61.0,
+    "text": "It's all running on AWS, yeah. We've done that in the last sort of 18 months."
+  },
+  {
+    "start": 61.0,
+    "end": 64.0,
+    "text": "Right, okay. So maybe you could take us through how this works."
+  },
+  {
+    "start": 64.0,
+    "end": 71.0,
+    "text": "Sure. Well, this, the bit we're going to describe today is the dissemination of this information out specifically to our first responder community."
+  },
+  {
+    "start": 71.0,
+    "end": 77.0,
+    "text": "So we need to get our warnings out quite quickly to them. That's the fire ambulance and to local government so they can get ready of their responses."
+  },
+  {
+    "start": 77.0,
+    "end": 78.0,
+    "text": "Mm-hm."
+  },
+  {
+    "start": 78.0,
+    "end": 85.0,
+    "text": "So what happens here is we start, the heart of this thing is our API that we've built recently, which describes the current warning situation."
+  },
+  {
+    "start": 85.0,
+    "end": 92.0,
+    "text": "And we start the process off with a CloudWatch event. And this triggers a set of step functions."
+  },
+  {
+    "start": 92.0,
+    "end": 103.0,
+    "text": "Now, the step functions are effectively a state machine of lambdas that go through a series of processes to create messaging around our warnings and then disseminate them out to our customers."
+  },
+  {
+    "start": 103.0,
+    "end": 109.0,
+    "text": "So the first thing the step function will do is it will check to see if it's the active region, because we have cross-region resiliency."
+  },
+  {
+    "start": 109.0,
+    "end": 115.0,
+    "text": "So am I the active region? If I'm the active region, it will come back to our API and see if there's a warning in it."
+  },
+  {
+    "start": 115.0,
+    "end": 120.0,
+    "text": "Assuming there is a warning enforced at that particular moment in time, if there's not, this whole thing just stops."
+  },
+  {
+    "start": 120.0,
+    "end": 126.0,
+    "text": "We store the warning, we store the state as a JSON object in an S3 bucket."
+  },
+  {
+    "start": 126.0,
+    "end": 133.0,
+    "text": "At that point, a number of step functions are kicked off, a number of lambdas, which will do creation of some PDF artifacts,"
+  },
+  {
+    "start": 133.0,
+    "end": 140.0,
+    "text": "because part of the product that we create is a PDF that we send out, the email content, some SMS content, text content."
+  },
+  {
+    "start": 140.0,
+    "end": 147.0,
+    "text": "It goes through a series of steps creating that content. Then we'll retrieve via an S3 bucket the customer preferences."
+  },
+  {
+    "start": 147.0,
+    "end": 154.0,
+    "text": "So this is the responder community describing how they want to receive it, whether they want to receive SMS or email or anything like that."
+  },
+  {
+    "start": 154.0,
+    "end": 159.0,
+    "text": "The S3 bucket is a store of preferences that have come from our on-premise system."
+  },
+  {
+    "start": 159.0,
+    "end": 162.0,
+    "text": "This is polled regularly to keep up to date and kept in sync."
+  },
+  {
+    "start": 162.0,
+    "end": 173.0,
+    "text": "This is pulled back. These two data sets are merged together and we create a set of messages that we fire out via a third-party API to send out SMS, send out email, send out text."
+  },
+  {
+    "start": 173.0,
+    "end": 180.0,
+    "text": "Right, okay. So if I understand you correctly, it looks like pretty much the whole orchestration is managed via step functions."
+  },
+  {
+    "start": 180.0,
+    "end": 181.0,
+    "text": "Yeah, absolutely. Is that right?"
+  },
+  {
+    "start": 181.0,
+    "end": 183.0,
+    "text": "Any particular reason why you've done that?"
+  },
+  {
+    "start": 183.0,
+    "end": 194.0,
+    "text": "So step functions was new to us and fairly new AWS service when we came to this, but we discovered that when we were looking at the process by which we wanted to create the warnings,"
+  },
+  {
+    "start": 194.0,
+    "end": 199.0,
+    "text": "it was a fairly straightforward, linear workflow that could be perfectly managed by step functions."
+  },
+  {
+    "start": 199.0,
+    "end": 206.0,
+    "text": "And what step functions gives us is the orchestration of each of these steps, managing the inputs and outputs between each Lambda to create the system."
+  },
+  {
+    "start": 206.0,
+    "end": 214.0,
+    "text": "Okay, okay. And like we've already said, this is obviously supercritical infrastructure. How have you ensured resiliency here?"
+  },
+  {
+    "start": 214.0,
+    "end": 225.0,
+    "text": "Resiliency, yeah. So the serverless nature, we've got cross-AZ resiliency just by using the Lambda and the S3 kind of things, but we've also got cross-regional resiliency in this particular system."
+  },
+  {
+    "start": 225.0,
+    "end": 234.0,
+    "text": "And so the first, actually the first Lambda that this thing is kicked off, it checks to see if it's the active region. If it is, it will continue. If it's not, if it's the passive one, it will just go back to sleep."
+  },
+  {
+    "start": 234.0,
+    "end": 244.0,
+    "text": "And there's a time job where they communicate, cross-talk to each other to say, I'm the active region. And if they get that message, the other one becomes passive. If it doesn't get it after a certain amount of time, it kicks up and becomes the active region."
+  },
+  {
+    "start": 244.0,
+    "end": 252.0,
+    "text": "Right. Okay. Very good. So cross-region resiliency. And as you say, cross-AZ, because as you rightly point out, you've got a serverless architecture here."
+  },
+  {
+    "start": 252.0,
+    "end": 261.0,
+    "text": "Yeah. So the services themselves, of course, are region-wide. Any other benefits of that or any other particular reasons you've gone with a serverless architecture?"
+  },
+  {
+    "start": 261.0,
+    "end": 271.0,
+    "text": "Two big reasons. Performance is one. We had our existing warning system in an on-prem shared service environment, which was occasionally competing."
+  },
+  {
+    "start": 271.0,
+    "end": 277.0,
+    "text": "Although it was the highest priority job in that sort of set of services, it was competing for resources."
+  },
+  {
+    "start": 277.0,
+    "end": 285.0,
+    "text": "So occasionally we could see that messaging taking up to 15 minutes for those messages to get out. This version we're generally within a minute."
+  },
+  {
+    "start": 285.0,
+    "end": 295.0,
+    "text": "The other one, the other big thing for us is cost. Warnings by their nature are active, you know, fairly quick notice, but at other times nothing's happening."
+  },
+  {
+    "start": 295.0,
+    "end": 301.0,
+    "text": "But we have to have a scaled up architecture ready to handle that on-prem, you know, burning money when it wasn't doing anything."
+  },
+  {
+    "start": 301.0,
+    "end": 308.0,
+    "text": "Right. And we've managed to, by doing this in serverless, we've reduced the costs conservatively to be maybe 5% of what the old system cost us."
+  },
+  {
+    "start": 308.0,
+    "end": 314.0,
+    "text": "Wow. Less than 5% of the old cost. And, of course, that's because it's all consumption-based charging on the services."
+  },
+  {
+    "start": 314.0,
+    "end": 326.0,
+    "text": "Absolutely. So when they're idle, you're not really being charged. Okay. Right. Okay. And I think you mentioned as well that as a whole, this new solution means that you're able to deliver messages much faster."
+  },
+  {
+    "start": 326.0,
+    "end": 333.0,
+    "text": "Isn't that right? Yes, absolutely. Yeah. We're getting that time down, as I think I said earlier, from about 15 minutes to maybe one to two minutes max."
+  },
+  {
+    "start": 333.0,
+    "end": 337.0,
+    "text": "So for the nature of the warnings we're talking about, that's obviously super important. Time is critical."
+  },
+  {
+    "start": 337.0,
+    "end": 341.0,
+    "text": "Okay. Okay. Any other changes that you would be looking to make in future?"
+  },
+  {
+    "start": 341.0,
+    "end": 349.0,
+    "text": "Yeah. I think over time we'll mature this solution. I think the CloudWatch event is the starter for it rather than being a sort of triggered timed polling job."
+  },
+  {
+    "start": 349.0,
+    "end": 354.0,
+    "text": "I think it makes much more sense to use something like an SNS topic to say, actually, we've just created a warning."
+  },
+  {
+    "start": 354.0,
+    "end": 360.0,
+    "text": "So that would save, okay, it would save a very small amount of compute that's actually going on here, but everything counts."
+  },
+  {
+    "start": 360.0,
+    "end": 371.0,
+    "text": "The biggest change is once we move our on-prem customer preferences and customer systems out into the Cloud, we'll be able to make this more of a real-time checking rather than having to have a cached sort of store there."
+  },
+  {
+    "start": 371.0,
+    "end": 381.0,
+    "text": "Wow. Okay. So in sum, you've got a solution here that provides cross-AZ, cross-region resiliency, massive reductions in cost. It's really impressive. Thanks very much for sharing."
+  },
+  {
+    "start": 381.0,
+    "end": 382.0,
+    "text": "No problem."
+  },
+  {
+    "start": 382.0,
+    "end": 389.0,
+    "text": "And thanks for joining us on another episode of This is My Architecture."
+  }
+]

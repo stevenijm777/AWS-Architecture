@@ -1,0 +1,482 @@
+[
+  {
+    "start": 0.0,
+    "end": 16.8,
+    "text": "Hi, I'm Toby from AWS. Welcome to This Is My Architecture. I'm joined today by Damian from Tandem. Hi, Damian."
+  },
+  {
+    "start": 16.8,
+    "end": 17.8,
+    "text": "Hi, good to be here."
+  },
+  {
+    "start": 17.8,
+    "end": 18.6,
+    "text": "Good, welcome."
+  },
+  {
+    "start": 18.6,
+    "end": 19.6,
+    "text": "Thanks."
+  },
+  {
+    "start": 19.6,
+    "end": 21.6,
+    "text": "Tell me a bit about Tandem."
+  },
+  {
+    "start": 21.6,
+    "end": 28.6,
+    "text": "So everyone wants to be better at managing their money and Tandem thinks that your bank should be doing more for you."
+  },
+  {
+    "start": 28.6,
+    "end": 42.400000000000006,
+    "text": "They have all your transaction data. They know what you spend your money on. They could be providing you with more insights on how you need to get to the end of the month, how much you can save, that kind of thing."
+  },
+  {
+    "start": 42.400000000000006,
+    "end": 50.400000000000006,
+    "text": "Sure. Okay. So I know you're a data scientist and I see we've got Kinesis here. It looks like a data pipeline. Do you want to talk me through what we've got here?"
+  },
+  {
+    "start": 50.4,
+    "end": 68.2,
+    "text": "Yeah. So to start with, Tandem not only provides your standard banking services, we also connect to pretty much all other banks in the UK to consume all of the transaction data that you might have."
+  },
+  {
+    "start": 68.2,
+    "end": 88.0,
+    "text": "So coming in before this, there's another service which will do the account aggregation that goes and scrapes the websites for your bank. And when that's done, there'll be an event here published on the Kinesis stream to say this user's account has been updated."
+  },
+  {
+    "start": 88.0,
+    "end": 96.0,
+    "text": "Okay. So that might be a collection of say monthly statements from a particular third party bank that that user's using and you bring it into Kinesis."
+  },
+  {
+    "start": 96.0,
+    "end": 102.0,
+    "text": "Yeah. And that could be, we trigger that by a schedule or when the user logs in and refreshes their app."
+  },
+  {
+    "start": 102.0,
+    "end": 110.0,
+    "text": "Okay. So that's typically going to be like a CSV file maybe, you know, date, description, amount, something like that and a list of those."
+  },
+  {
+    "start": 110.0,
+    "end": 112.0,
+    "text": "That's what comes back from the bank."
+  },
+  {
+    "start": 112.0,
+    "end": 113.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 113.0,
+    "end": 116.0,
+    "text": "That goes into RDS by the other service."
+  },
+  {
+    "start": 116.0,
+    "end": 117.0,
+    "text": "Okay."
+  },
+  {
+    "start": 117.0,
+    "end": 127.0,
+    "text": "What we get here on the Kinesis stream is an account ID and we're listening for this event to happen to know that we need to go and do something for that user."
+  },
+  {
+    "start": 127.0,
+    "end": 128.0,
+    "text": "Okay."
+  },
+  {
+    "start": 128.0,
+    "end": 137.0,
+    "text": "This Lambda function here, we've purposely made it very lean and very fast."
+  },
+  {
+    "start": 137.0,
+    "end": 145.0,
+    "text": "All it's basically doing is taking in transactions which are in the RDS database."
+  },
+  {
+    "start": 145.0,
+    "end": 150.0,
+    "text": "So that's going to do a SQL query to RDS to say, give me the transactions for user ABC."
+  },
+  {
+    "start": 150.0,
+    "end": 151.0,
+    "text": "Exactly."
+  },
+  {
+    "start": 151.0,
+    "end": 152.0,
+    "text": "Okay."
+  },
+  {
+    "start": 152.0,
+    "end": 169.0,
+    "text": "And then it's gathering those up into batches of say a hundred and then publishing a new message to SQS, which is all the strings that are the transaction descriptions."
+  },
+  {
+    "start": 169.0,
+    "end": 170.0,
+    "text": "Okay."
+  },
+  {
+    "start": 170.0,
+    "end": 175.0,
+    "text": "So we've still got effectively the raw data that's come from those third party banks."
+  },
+  {
+    "start": 175.0,
+    "end": 177.0,
+    "text": "So it's going to hit the SQS queue."
+  },
+  {
+    "start": 177.0,
+    "end": 178.0,
+    "text": "And I see we've got Lambda here."
+  },
+  {
+    "start": 178.0,
+    "end": 181.0,
+    "text": "Is this where you're doing some sort of processing to understand those strings?"
+  },
+  {
+    "start": 181.0,
+    "end": 182.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 182.0,
+    "end": 191.0,
+    "text": "So originally this Lambda that does all the work was connected directly to Kinesis."
+  },
+  {
+    "start": 191.0,
+    "end": 200.0,
+    "text": "But to do the processing that it needs to do takes a few seconds and we've got tens of millions of transactions coming in here."
+  },
+  {
+    "start": 200.0,
+    "end": 208.0,
+    "text": "So there's only one Lambda that you can have connected to a Kinesis shard at a time and they work sequentially."
+  },
+  {
+    "start": 208.0,
+    "end": 212.0,
+    "text": "So it meant we could never keep up with the data that was incoming."
+  },
+  {
+    "start": 212.0,
+    "end": 213.0,
+    "text": "Okay."
+  },
+  {
+    "start": 213.0,
+    "end": 217.0,
+    "text": "So using SQS and Lambda with a second tier of Lambda, you've got a fan out system here with you?"
+  },
+  {
+    "start": 217.0,
+    "end": 218.0,
+    "text": "Yeah, exactly."
+  },
+  {
+    "start": 218.0,
+    "end": 219.0,
+    "text": "So there's lots of these."
+  },
+  {
+    "start": 219.0,
+    "end": 222.0,
+    "text": "It can scale out to pretty much anything."
+  },
+  {
+    "start": 222.0,
+    "end": 223.0,
+    "text": "Okay."
+  },
+  {
+    "start": 223.0,
+    "end": 230.0,
+    "text": "And this is the part which does the NLP, the natural language processing."
+  },
+  {
+    "start": 230.0,
+    "end": 232.0,
+    "text": "What are you using for that?"
+  },
+  {
+    "start": 232.0,
+    "end": 234.0,
+    "text": "What sort of code base or what libraries?"
+  },
+  {
+    "start": 234.0,
+    "end": 237.0,
+    "text": "It's a tool called Antler."
+  },
+  {
+    "start": 237.0,
+    "end": 239.0,
+    "text": "It does parser generation."
+  },
+  {
+    "start": 239.0,
+    "end": 243.0,
+    "text": "So we write a domain specific grammar file."
+  },
+  {
+    "start": 243.0,
+    "end": 247.0,
+    "text": "That gets compiled into Python code."
+  },
+  {
+    "start": 247.0,
+    "end": 250.0,
+    "text": "We bundle that up in a Lambda function."
+  },
+  {
+    "start": 250.0,
+    "end": 254.0,
+    "text": "And there's blue logic to connect all the other bits."
+  },
+  {
+    "start": 254.0,
+    "end": 255.0,
+    "text": "Okay."
+  },
+  {
+    "start": 255.0,
+    "end": 266.0,
+    "text": "So the types of dictionary listings you've got in there would be things like, you know, merchant name, currencies, those sorts of things, dates, obviously."
+  },
+  {
+    "start": 266.0,
+    "end": 267.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 267.0,
+    "end": 271.0,
+    "text": "We want to extract exchange rates, merchant location."
+  },
+  {
+    "start": 271.0,
+    "end": 272.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 272.0,
+    "end": 273.0,
+    "text": "Okay."
+  },
+  {
+    "start": 273.0,
+    "end": 279.0,
+    "text": "And once you've done that, then you're writing that, if you like, that cleansed data or that enriched data, you're writing that to a lot of data."
+  },
+  {
+    "start": 279.0,
+    "end": 281.0,
+    "text": "So you're writing that to RDS, are you?"
+  },
+  {
+    "start": 281.0,
+    "end": 282.0,
+    "text": "Yes."
+  },
+  {
+    "start": 282.0,
+    "end": 286.0,
+    "text": "We have a table here which has all the columns for all those fields."
+  },
+  {
+    "start": 286.0,
+    "end": 297.0,
+    "text": "We're storing those process transactions along with a version of the model that's run so we can analyze it later, compare it back later."
+  },
+  {
+    "start": 297.0,
+    "end": 298.0,
+    "text": "So nice forward thinking there."
+  },
+  {
+    "start": 298.0,
+    "end": 305.0,
+    "text": "So every transaction you write, you write the version of the model which was used to process that?"
+  },
+  {
+    "start": 305.0,
+    "end": 306.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 306.0,
+    "end": 307.0,
+    "text": "Okay."
+  },
+  {
+    "start": 307.0,
+    "end": 311.0,
+    "text": "That allows us to iterate on our model development as new features get noticed."
+  },
+  {
+    "start": 311.0,
+    "end": 316.0,
+    "text": "And I guess updating the NLP model here is a big part of your focus, isn't it?"
+  },
+  {
+    "start": 316.0,
+    "end": 319.0,
+    "text": "So how do you manage those updates to the model?"
+  },
+  {
+    "start": 319.0,
+    "end": 320.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 320.0,
+    "end": 330.0,
+    "text": "We've built our own tool which bundles up the Lambda plus all the Python dependencies, the C extensions, and some shared object stuff."
+  },
+  {
+    "start": 330.0,
+    "end": 335.0,
+    "text": "That's actually being published as an open source tool."
+  },
+  {
+    "start": 335.0,
+    "end": 340.0,
+    "text": "So that gets deployed through Jenkins and CloudFormation."
+  },
+  {
+    "start": 340.0,
+    "end": 341.0,
+    "text": "Okay."
+  },
+  {
+    "start": 341.0,
+    "end": 342.0,
+    "text": "Good."
+  },
+  {
+    "start": 342.0,
+    "end": 343.0,
+    "text": "All right."
+  },
+  {
+    "start": 343.0,
+    "end": 345.0,
+    "text": "And then I guess I can see we've also got Kinesis here."
+  },
+  {
+    "start": 345.0,
+    "end": 348.0,
+    "text": "Is this where you're going to publish the results or is that a, what is that?"
+  },
+  {
+    "start": 348.0,
+    "end": 349.0,
+    "text": "Is that an event stream or?"
+  },
+  {
+    "start": 349.0,
+    "end": 350.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 350.0,
+    "end": 355.0,
+    "text": "So when we've got to this point, the data science part is done."
+  },
+  {
+    "start": 355.0,
+    "end": 362.0,
+    "text": "We, we are saying that the customer transactions have been finished."
+  },
+  {
+    "start": 362.0,
+    "end": 367.0,
+    "text": "And it's up to another part within the organization to trigger from that event."
+  },
+  {
+    "start": 367.0,
+    "end": 374.0,
+    "text": "So it might be picking up those and refreshing the app with the friendly descriptions."
+  },
+  {
+    "start": 374.0,
+    "end": 375.0,
+    "text": "Okay."
+  },
+  {
+    "start": 375.0,
+    "end": 376.0,
+    "text": "Those transactions."
+  },
+  {
+    "start": 376.0,
+    "end": 383.0,
+    "text": "And, you know, I, I, I, I personally, I'd like to say that, you know, the, the value you're giving your end users here is, is pretty considerable."
+  },
+  {
+    "start": 383.0,
+    "end": 389.0,
+    "text": "As someone who spent hours with an Excel file going through household expense items, you know, I can see that this would be really valuable."
+  },
+  {
+    "start": 389.0,
+    "end": 390.0,
+    "text": "So I'm tempted to give it a try."
+  },
+  {
+    "start": 390.0,
+    "end": 391.0,
+    "text": "Yeah."
+  },
+  {
+    "start": 391.0,
+    "end": 397.0,
+    "text": "And this is just the first, well, one of the first steps towards building more models on the top of it."
+  },
+  {
+    "start": 397.0,
+    "end": 402.0,
+    "text": "Once we actually extract these features, we've got an enriched data set."
+  },
+  {
+    "start": 402.0,
+    "end": 403.0,
+    "text": "Great."
+  },
+  {
+    "start": 403.0,
+    "end": 404.0,
+    "text": "Well, thanks Damien for sharing today."
+  },
+  {
+    "start": 404.0,
+    "end": 405.0,
+    "text": "Thank you."
+  },
+  {
+    "start": 405.0,
+    "end": 406.0,
+    "text": "And thanks for watching."
+  },
+  {
+    "start": 406.0,
+    "end": 407.0,
+    "text": "This is my architecture."
+  }
+]
