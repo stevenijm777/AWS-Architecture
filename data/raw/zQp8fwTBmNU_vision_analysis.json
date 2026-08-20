@@ -1,0 +1,178 @@
+{
+  "step_by_step_reasoning": "The architecture diagram displays Tally Prime on AWS using a multi-account structure split between an Admin account and Customer Pod accounts.\n\n1. User Authentication Flow (Admin Account):\n- The user initiates authentication request via API Gateway (LOGIN API).\n- LOGIN API triggers the Auth Lambda function.\n- Auth Lambda sends a second-level authentication request to the external Tally.net backend server.\n- Auth Lambda interacts with AWS KMS (Customer Master Key) to generate/sign the authentication token.\n- Key material and signed secret tokens are returned back through Auth Lambda and API Gateway to the User.\n\n2. User Session Execution Flow (Pod Account):\n- The user connects using NICE DCV (via Web Browser or Thick Client) through Amazon CloudFront.\n- Lambda@Edge (L@E) on CloudFront routes the request to the correct Application Load Balancer (ALB).\n- ALB distributes traffic to target EC2 instances running Docker containers with Wine and Tally Prime inside an ECS cluster.\n- Container instances re-authenticate session requests back with the Auth Lambda in the Admin Account.",
+  "graph": {
+    "name": "Tally Prime on AWS Multi-Account Architecture",
+    "link": "https://www.youtube.com/watch?v=zQp8fwTBmNU",
+    "categories": "Compute, Security, Networking & Content Delivery",
+    "graph_usable": true,
+    "notes": "Tally Prime on AWS serves over 7 million users across 2 million SMBs using horizontal scaling with multi-account Pod structures and dual authentication."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "USER",
+      "notes": "7 million users / 2 million SMBs connecting via Browser or Thick Client with NICE DCV."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "LOGIN API",
+      "notes": "API Gateway endpoint in the Admin account receiving authentication requests."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AUTH",
+      "notes": "Lambda function handling dual authentication logic in the Admin account."
+    },
+    {
+      "id": "3",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "AWS Key Management Service managing Customer Master Keys (CMK) for token signing."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "TALLY.NET",
+      "notes": "Tally.net backend server performing second-level user authentication."
+    },
+    {
+      "id": "5",
+      "service": "CloudFront",
+      "name": "CLOUD FRONT",
+      "notes": "CloudFront distribution handling incoming session traffic in the Pod account."
+    },
+    {
+      "id": "6",
+      "service": "LambdaAtEdge",
+      "name": "L@E",
+      "notes": "Lambda@Edge function routing traffic to the correct ALB across pod accounts."
+    },
+    {
+      "id": "7",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer directing session traffic to ECS container targets."
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "ECS cluster managing container workloads running on Linux EC2 instances."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "CONTAINER + WINE",
+      "notes": "Linux EC2 instance running Docker container with Wine layer for Tally Prime desktop app."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User initiates authentication request to Login API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Login API Gateway invokes Auth Lambda function."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Auth Lambda verifies credentials with Tally.net backend."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Auth Lambda requests key signing operations from KMS."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "KMS returns cryptographic token materials to Auth Lambda."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Auth Lambda returns generated session token to Login API."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Login API returns session authentication token to User."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User connects via NICE DCV through CloudFront using authentication token."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudFront triggers Lambda@Edge for routing dynamic pod selection."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda@Edge routes request to appropriate ALB."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "ALB routes session connection to target Container running Tally Prime with Wine."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3'",
+      "type": "control",
+      "notes": "ECS cluster orchestrates and manages container lifecycle on Linux EC2."
+    },
+    {
+      "source": "9",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Container re-authenticates active session back with Auth Lambda in Admin account."
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "step_by_step_reasoning": "1. Identified system components from the whiteboard visual model and transcript: Route 53, ALB, CloudFront, API Server (EC2), Chatting Server (EC2), Streaming Server (EC2), NGINX Server (EC2), ElastiCache (Redis), RDS Aurora, DocumentDB, S3, AWS Lambda, and Rekognition Content Moderation. Generic human stick figures (DJ, Listener) were pruned per Rule 5, keeping ALB and CloudFront as entry points.\n2. Service names were normalized strictly against the valid AWS vocabulary list.\n3. Segmented logical flows based on audio explanations and visual connections:\n   - Flow 0: Live room creation, user interaction routing, and state persistence (Route 53 -> ALB -> API Server -> Chatting Server / Streaming Server / RDS Aurora / DocumentDB / ElastiCache).\n   - Flow 1: Audio streaming and dynamic routing (CloudFront -> NGINX Server -> ElastiCache / Streaming Server -> ElastiCache).\n   - Flow 2: Real-time chat Pub/Sub and automated background image moderation (Chatting Server -> ElastiCache / S3 -> Lambda -> Rekognition).",
+  "graph": {
+    "name": "Spoon Radio Real-Time Audio Streaming Architecture",
+    "link": "https://www.youtube.com/watch?v=qL3hDtrTeLs",
+    "categories": "Audio Streaming, Dynamic Routing, Content Moderation, Global Infrastructure",
+    "graph_usable": true,
+    "notes": "Spoon Radio utilizes Route 53 for latency-based multi-region routing, ALB/CloudFront for entry points, EC2 clusters for API, Chatting, Streaming, and NGINX servers, ElastiCache Redis for ranking/pub-sub/dynamic routing metadata, RDS Aurora and DocumentDB for personalized recommendations, and S3 + Lambda + Rekognition for automated content moderation."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Uses latency-based routing policies across multiple AWS regions to minimize latency."
+    },
+    {
+      "id": "1",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer routing room creation and API requests to backend API servers."
+    },
+    {
+      "id": "2",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "Content Delivery Network delivering live audio streams to listeners."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Chatting Server",
+      "notes": "Manages live chat rooms and handles messaging via ElastiCache Pub/Sub."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "API Server",
+      "notes": "Handles API requests for room creation, user interactions, and feeds."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Streaming Server",
+      "notes": "Deployed across multiple regions to handle real-time live audio streaming."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "NGINX Server",
+      "notes": "Proxies live audio streams from CloudFront based on dynamic routing metadata."
+    },
+    {
+      "id": "7",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "ElastiCache Redis used for real-time ranking data, chat Pub/Sub, and dynamic streaming routing metadata."
+    },
+    {
+      "id": "8",
+      "service": "RDS",
+      "name": "RDS AURORA",
+      "notes": "Stores primary user interaction and room metadata for personalized recommendations."
+    },
+    {
+      "id": "9",
+      "service": "DocumentDB",
+      "name": "DOCUMENT DB",
+      "notes": "Stores user activity behavior data used alongside Aurora to build personalized feeds."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores uploaded user content including background images."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "AWS LAMBDA",
+      "notes": "Triggered on S3 image uploads to invoke content moderation analysis."
+    },
+    {
+      "id": "12",
+      "service": "Rekognition",
+      "name": "REKOGNITION CONTENT MODERATION",
+      "notes": "Analyzes uploaded background images to detect and filter inappropriate content."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Route 53 routes incoming requests to ALB using latency-based routing."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB forwards room creation requests to API Server."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Server requests Chatting Server to create a chat room."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "control",
+      "notes": "API Server requests allocation of a Streaming Server."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "API Server stores room metadata in RDS Aurora."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "API Server logs user behavior data in DocumentDB."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "API Server updates real-time ranking data in ElastiCache Redis."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront routes live streaming requests to backend NGINX Server."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "NGINX Server queries ElastiCache Redis for dynamic routing metadata."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "NGINX Server proxies stream traffic to assigned Streaming Server."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Streaming Server queries and syncs dynamic routing info with ElastiCache Redis."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Chatting Server processes real-time messaging using ElastiCache Redis Pub/Sub."
+    },
+    {
+      "source": "3",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Chatting Server stores background images uploaded by DJs into S3."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 triggers AWS Lambda upon image upload."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "control",
+      "notes": "AWS Lambda invokes Rekognition Content Moderation to inspect images."
+    }
+  ]
+}

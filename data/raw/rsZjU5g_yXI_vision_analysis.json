@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The architecture represents Cookpad's security log monitoring system divided into three main phases: Collection, Retention, and Analysis.\n1. Collection: EC2 instances send Syslog logs via Fluentd to Kinesis Data Firehose, which outputs to S3. AWS CloudTrail writes management logs directly to S3. A third-party service delivers logs via a Lambda function to S3.\n2. Retention: All raw logs are collected without predefined schemas in Amazon S3, storing ~330M logs/day (~270 GB). S3 Lifecycle policies manage retention periods.\n3. Analysis: S3 triggers three separate analysis mechanisms: a Lambda function for real-time alerting (sending alerts to Slack), a Lambda function for forwarding log data to Graylog backed by Amazon Elasticsearch Service (OpenSearch), and Amazon Athena querying S3 for long-term audit purposes.",
+  "graph": {
+    "name": "Cookpad Security Log Monitoring Architecture",
+    "link": "https://www.youtube.com/watch?v=rsZjU5g_yXI",
+    "categories": "Security, Log Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "Processes ~330M logs/day (~270 GB) at a Lambda cost of ~$2/day. Eliminates strict log schema requirements upon collection by storing raw logs directly in S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Generates Syslog messages collected by Fluentd agent."
+    },
+    {
+      "id": "1",
+      "service": "Firehose",
+      "name": "FIREHOSE",
+      "notes": "Buffers and streams Syslog data into S3."
+    },
+    {
+      "id": "2",
+      "service": "CloudTrail",
+      "name": "CLOUDTRAIL",
+      "notes": "Directly delivers AWS audit logs into S3."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "3RD PARTY SERVICE",
+      "notes": "External service providing security logs."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA (Collection)",
+      "notes": "Ingests logs from 3rd party service and saves them to S3."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central log repository. Stores ~330M logs (~270 GB) daily without schema constraints. Retention managed via S3 Lifecycle policies."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA (Alerts)",
+      "notes": "Scans logs for short-term alerting and sends notifications to Slack."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "LAMBDA (Search)",
+      "notes": "Forwards processed logs to Graylog for medium/long-term search capabilities."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Amazon Elasticsearch Service serving as the backend engine for Graylog."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Queries raw historical log data stored in S3 for long-term auditing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 sends Syslog messages to Kinesis Data Firehose using Fluentd."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Firehose delivers aggregated logs to S3."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudTrail directly writes audit logs to S3."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Third-party service delivers log data to Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda saves third-party log data into S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 feeds or triggers Lambda for real-time alert processing."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "S3 delivers log data to Lambda for search indexing preparation."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda forwards log data to Graylog / Elasticsearch backend."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries raw historical logs stored directly in S3."
+    }
+  ]
+}

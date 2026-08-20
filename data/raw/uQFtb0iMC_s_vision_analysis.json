@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "The Media Analysis Solution on AWS automatically processes and extracts metadata from media files (video, audio, or images) uploaded to Amazon S3. An S3 bucket notification triggers an AWS Lambda function, which starts an AWS Step Functions state machine. Step Functions orchestrates processing across multiple parallel branches: a Custom ML Model branch (represented via SageMaker) that indexes custom model metadata into Elasticsearch (OpenSearch); an Amazon Rekognition branch for visual analysis (object, face, and scene detection) that sends metadata to Elasticsearch; and an audio processing branch starting with AWS Elemental MediaConvert, which extracts audio tracks from videos to bypass size limits before passing the audio to Amazon Transcribe. Amazon Transcribe converts speech to text, writing transcription metadata directly to Elasticsearch while also feeding the text into Amazon Comprehend for natural language processing (entity extraction and sentiment analysis), which then outputs sentiment and entity metadata to Elasticsearch.",
+  "graph": {
+    "name": "AWS Media Analysis Solution",
+    "link": "https://www.youtube.com/watch?v=uQFtb0iMC_s",
+    "categories": "Media & Entertainment, Machine Learning, Serverless",
+    "graph_usable": true,
+    "notes": "Serverless media analysis architecture coordinating vision, speech, and NLP ML services via Step Functions and indexing output in Elasticsearch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores uploaded media files (video, audio, images)."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Triggered by S3 object creation event to start Step Functions workflow."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates parallel analysis workflows across AI/ML services."
+    },
+    {
+      "id": "3",
+      "service": "SageMaker",
+      "name": "Custom ML Model",
+      "notes": "Extensible branch for running custom trained ML models."
+    },
+    {
+      "id": "4",
+      "service": "Rekognition",
+      "name": "Rekognition",
+      "notes": "Extracts computer vision metadata (objects, scenes, people) from images/videos."
+    },
+    {
+      "id": "5",
+      "service": "MediaConvert",
+      "name": "Media Convert",
+      "notes": "Extracts audio from video files to comply with Transcribe payload limits."
+    },
+    {
+      "id": "6",
+      "service": "Transcribe",
+      "name": "Transcribe",
+      "notes": "Converts extracted audio into text transcriptions via automatic speech recognition."
+    },
+    {
+      "id": "7",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Analyzes transcribed text for entities, key phrases, and sentiment."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Central persistence layer storing structured metadata JSON for search capabilities."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 object creation triggers Lambda function."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda invokes Step Functions state machine execution."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step Functions invokes custom ML model branch."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Custom model analysis metadata saved to Elasticsearch."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step Functions triggers Rekognition analysis."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Rekognition visual metadata saved to Elasticsearch."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step Functions invokes MediaConvert to extract audio track."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Extracted audio sent to Transcribe."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transcribed text forwarded to Comprehend for NLP analysis."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Transcribe text output saved to Elasticsearch."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "Comprehend entity and sentiment metadata saved to Elasticsearch."
+    }
+  ]
+}

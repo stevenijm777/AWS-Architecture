@@ -1,0 +1,121 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Ingests events from client-side JavaScript running on travel partner web pages.</data>
+    </node>
+    <node id="1">
+      <data key="d5">ECS</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Runs containerized backend services and ad servers that publish events via Kinesis Producer Library (KPL).</data>
+    </node>
+    <node id="2">
+      <data key="d5">Ingestion Kinesis Stream</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Buffers incoming high-volume events encoded in binary Avro format with schema fingerprints.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Schema S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Hosts schema registry definitions and reference data; kept outside VPC to avoid ENI cold-start and scaling issues.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Processor Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Processes raw streams per event type, resolving schemas using fingerprints from S3.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Processed Kinesis Stream</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Serves as the central integration stream for real-time dashboards, ML models, and downstream storage pipelines.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Kinesis Firehose</data>
+      <data key="d6">Firehose</data>
+      <data key="d7">Delivers streamed processed events directly into S3 partitioned by event type.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Storage S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores raw Avro files, which are batch deduplicated, concatenated, and converted to Parquet format.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Athena</data>
+      <data key="d6">Athena</data>
+      <data key="d7">Provides interactive ad-hoc querying on Parquet data in S3 for analysts and data scientists.</data>
+    </node>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">API Gateway sends client web event payloads to the Ingestion Kinesis Stream.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">ECS services publish Avro-formatted server events to the Ingestion Kinesis Stream.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Ingestion Kinesis Stream triggers Processor Lambda functions for event parsing.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Processor Lambda reads schema definitions and reference data from the Schema S3 bucket.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Processor Lambda writes parsed and enriched events to the Processed Kinesis Stream.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Processed events flow into Kinesis Firehose for batching into S3.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Kinesis Firehose writes raw Avro file batches into the Storage S3 Bucket.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Batch job reads raw Avro files in S3, deduplicates, concatenates, and converts them to Parquet format.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Athena queries the partitioned Parquet files stored in the S3 bucket.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Intent Serverless Data Analytics Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=yVgxqT1vikk</data>
+    <data key="d2">Serverless data processing architecture processing billions of travel/commerce events per day using Kinesis streams, Lambda, Firehose, S3, and Athena.</data>
+    <data key="d3">analytics, serverless, data engineering</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

@@ -1,0 +1,188 @@
+{
+  "step_by_step_reasoning": "The architecture illustrates a lightweight PCI-compliant infrastructure hosted on AWS for Houghton Mifflin Harcourt (HMH). User requests enter via an Imperva WAF, which routes application traffic to e-commerce applications (1, 2, and 3) or payment processing requests directly to an external ThirdParty Payment Processor (PP). To isolate credit card data handling, iframe content (JS and CSS) is fronted by CloudFront distributions (Primary and Secondary for redundancy) backed by corresponding primary and secondary S3 buckets. S3 access logs are aggregated into a central S3 Access Logs Bucket. Any changes to files trigger an SNS notification, while AWS Config monitors S3 bucket compliance and security configurations.",
+  "graph": {
+    "name": "HMH Lightweight PCI Compliance Infrastructure",
+    "link": "https://www.youtube.com/watch?v=sSa4ikC8-Jc",
+    "categories": "PCI Compliance, Static Asset Hosting, Security and Governance",
+    "graph_usable": true,
+    "notes": "HMH decoupled PCI compliance requirements from core applications by using isolated S3 buckets and CloudFront to serve iframe JavaScript/CSS, with centralized logging and change notification via S3, SNS, and AWS Config."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End users interacting with HMH e-commerce web applications."
+    },
+    {
+      "id": "1",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "Imperva WAF with application delivery capability routing traffic to e-commerce backends or iframe CDN."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Payment Processor (PP)",
+      "notes": "External third-party payment processor processing credit card transactions and returning tokens."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "E-Commerce Application 1",
+      "notes": "E-commerce backend application 1."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "E-Commerce Application 2",
+      "notes": "E-commerce backend application 2."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "E-Commerce Application 3",
+      "notes": "E-commerce backend application 3."
+    },
+    {
+      "id": "6",
+      "service": "CloudFront",
+      "name": "CloudFront Primary",
+      "notes": "Primary CloudFront CDN fronting JS and CSS static assets for iframes."
+    },
+    {
+      "id": "7",
+      "service": "CloudFront",
+      "name": "CloudFront Secondary",
+      "notes": "Secondary CloudFront CDN providing redundancy for iframe asset delivery."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 Primary",
+      "notes": "Primary S3 bucket storing JavaScript and style sheet files loaded into the payment iframe."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 Secondary",
+      "notes": "Secondary S3 bucket holding redundant static iframe assets."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 Access Logs Bucket",
+      "notes": "Centralized S3 bucket collecting access logs from primary and secondary S3 buckets."
+    },
+    {
+      "id": "11",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "SNS topic sending alerts if any changes occur in the S3 bucket or JS files."
+    },
+    {
+      "id": "12",
+      "service": "AWSConfig",
+      "name": "AWS Config",
+      "notes": "AWS Config tracking and auditing configuration compliance of S3 buckets."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends web requests to the WAF."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "WAF routes payment transaction requests to external Payment Processor."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "WAF forwards traffic to E-Commerce Application 1."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1''",
+      "type": "data",
+      "notes": "WAF forwards traffic to E-Commerce Application 2."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1'''",
+      "type": "data",
+      "notes": "WAF forwards traffic to E-Commerce Application 3."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "WAF routes iframe static content requests to CloudFront Primary."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront Primary fetches iframe JS and CSS assets from S3 Primary."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "CloudFront Secondary fetches iframe JS and CSS assets from S3 Secondary."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Primary S3 bucket delivers access logs to central logging bucket."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Secondary S3 bucket delivers access logs to central logging bucket."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Central logging S3 bucket publishes change notifications to SNS."
+    },
+    {
+      "source": "10",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "AWS Config monitors and audits configurations of the S3 buckets."
+    }
+  ]
+}

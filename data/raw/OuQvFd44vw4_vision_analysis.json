@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. **Entity Identification**: From the whiteboard and audio transcript, we identify ten active system components: CloudWatch-triggered Lambda function (Training Trigger), Secrets Manager, Econda API, SageMaker Pre-processing Job, SageMaker GPU Training Job, ECR (custom container registry), S3 (model artifact storage), Lambda function (Deployment Trigger), ECS (real-time inference service), and Personalization Service (Econda Audience Relationship Platform).\n2. **Service Mapping**: Map each entity to valid AWS/User services from the provided vocabulary list:\n   - Lambda (Training Trigger) -> Lambda\n   - Secrets Manager -> SecretsManager\n   - Econda API -> ThirdParty\n   - SageMaker (Pre-processing) -> SageMaker\n   - SageMaker (Training) -> SageMaker\n   - ECR -> ECR\n   - S3 -> S3\n   - Lambda (Deployment Trigger) -> Lambda\n   - ECS -> ECS\n   - Personalization Service (ARP) -> ThirdParty\n3. **Flow Breakdown**:\n   - **Flow 0 (Training Workflow)**: Lambda fetches client credentials from Secrets Manager, starts SageMaker pre-processing job. Pre-processing job fetches/exchanges data with Econda API, then triggers SageMaker GPU training job (which uses images from ECR). Once training completes, model artifacts are saved to S3.\n   - **Flow 1 (Deployment Workflow)**: S3 upload event triggers deployment Lambda function, which updates or builds the ECS inference service.\n   - **Flow 2 (Real-time Inference)**: Personalization Service (Econda ARP) sends inference requests to the ECS service and receives responses.\n4. **Formatting**: Ensure single-line JSON format with strict schema alignment and zero unescaped control characters.",
+  "graph": {
+    "name": "Econda Automated Model Training and Real-Time Inference Architecture",
+    "link": "https://www.youtube.com/watch?v=OuQvFd44vw4",
+    "categories": "Machine Learning, Analytics, Real-Time Inference",
+    "graph_usable": true,
+    "notes": "Automated workflow that runs daily per-client deep learning model training using SageMaker and serves real-time personalization recommendations via ECS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Lambda",
+      "name": "Lambda (Training Trigger)",
+      "notes": "Triggered daily via CloudWatch to initiate client-specific pre-processing."
+    },
+    {
+      "id": "1",
+      "service": "SecretsManager",
+      "name": "Secrets Manager",
+      "notes": "Stores client-specific credentials and configuration profiles."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Econda API",
+      "notes": "External API delivering raw data to SageMaker for pre-processing."
+    },
+    {
+      "id": "3",
+      "service": "SageMaker",
+      "name": "SageMaker (Pre-processing)",
+      "notes": "Runs initial data retrieval and pre-processing tasks prior to model training."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker (Training)",
+      "notes": "Executes deep learning training algorithms on GPU-empowered instances."
+    },
+    {
+      "id": "5",
+      "service": "ECR",
+      "name": "ECR",
+      "notes": "Stores custom Docker container images and manages algorithm versioning via tags."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores uploaded trained model artifacts after training completion."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Deployment Trigger)",
+      "notes": "Triggered by S3 model upload events to build or update ECS service deployments."
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs cost-effective, 24/7 real-time model inference service integrated with ALB."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Personalization Service (ARP)",
+      "notes": "Econda Audience Relationship Platform requesting real-time personalization recommendations."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fetches client credentials and profiles."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Triggers the SageMaker pre-processing job."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Requests client data from Econda API."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns raw data for preparation."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Triggers the GPU training job upon pre-processing completion."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Provides custom container image tagged with specific algorithm versions."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Uploads trained model artifacts to S3 bucket."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 event triggers deployment Lambda function."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Builds or updates the ECS inference service."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Sends real-time inference/personalization requests to ECS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Returns personalized recommendations to the ARP platform."
+    }
+  ]
+}

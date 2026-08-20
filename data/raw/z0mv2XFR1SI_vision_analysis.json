@@ -1,0 +1,196 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents Samsung Game Launcher's video recommendation pipeline. It consists of two primary operational domains: 'Model Creation & Learning' (bottom) and 'Content Analysis' (top), plus a serving layer for game users.\n\n1. Model Creation & Learning:\n- Crawler collects text data from WEB sources.\n- Crawler stores the dataset into Amazon S3.\n- Crawler triggers Amazon Comprehend to build a Custom Classification model, pointing to the dataset in S3.\n\n2. Content Analysis & Processing:\n- Another Crawler collects video content metadata from VIDEO sources and stores it in RDS Aurora.\n- AWS Lambda periodically triggers Video Analyzer.\n- Video Analyzer requests text relevance analysis from Amazon Comprehend using the custom model.\n- Video Analyzer writes matching scores and metadata into RDS Aurora.\n- EMR reads and processes score data from RDS Aurora, filtering videos that exceed a specified relevance score threshold.\n- EMR stores filtered high-score video recommendation data into DynamoDB.\n\n3. Recommendation Retrieval:\n- Game Users query Content API to retrieve video recommendations.\n- Content API reads recommendation records directly from DynamoDB.",
+  "graph": {
+    "name": "Samsung Game Launcher Video Recommendation Architecture",
+    "link": "https://www.youtube.com/watch?v=z0mv2XFR1SI",
+    "categories": "AI/ML, Recommendation Engine, Big Data",
+    "graph_usable": true,
+    "notes": "Architecture for Samsung Game Launcher's AI-driven video recommendation system using Amazon Comprehend Custom Classification to evaluate video relevance based on web data and content analysis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Game Users",
+      "notes": "Samsung Galaxy smartphone users utilizing Game Launcher"
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Content API",
+      "notes": "API gateway/microservice handling client recommendation queries"
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Fast NoSQL database storing filtered video recommendations above threshold score"
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Elastic MapReduce cluster filtering and processing video scores from RDS Aurora"
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "RDS Aurora",
+      "notes": "Relational database storing video metadata and analyzed game matching scores"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Periodically triggers the Video Analyzer microservice"
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Video Analyzer",
+      "notes": "Extracts text/titles from collected videos and queries Comprehend for classification"
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Crawler (Content Analysis)",
+      "notes": "Crawls video content from video source platforms"
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "VIDEO",
+      "notes": "External video source platforms"
+    },
+    {
+      "id": "9",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Amazon Comprehend providing Custom Classification model training and inference"
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores text dataset used as input for Comprehend model creation"
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "Crawler (Model Creation)",
+      "notes": "Crawls game-related text from the web and triggers Comprehend model creation"
+    },
+    {
+      "id": "12",
+      "service": "ThirdParty",
+      "name": "WEB",
+      "notes": "External web data sources"
+    }
+  ],
+  "edges": [
+    {
+      "source": "12",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Crawler collects game-related text data from web sources"
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Crawler saves training text data into S3 bucket"
+    },
+    {
+      "source": "11",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Crawler requests model creation in Amazon Comprehend"
+    },
+    {
+      "source": "10",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "S3 provides training dataset as input to Comprehend for model creation"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Crawler collects video content from external video source"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Crawler stores ingested video metadata into RDS Aurora"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "AWS Lambda periodically invokes Video Analyzer execution"
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Video Analyzer sends video text to Comprehend for relevance scoring"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Video Analyzer writes video classification results and matching scores into RDS Aurora"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "EMR reads video score data from RDS Aurora for analysis"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "EMR writes filtered recommendations exceeding score threshold into DynamoDB"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Game Users request video recommendations via Game Launcher app"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Content API retrieves recommended video data from DynamoDB"
+    }
+  ]
+}

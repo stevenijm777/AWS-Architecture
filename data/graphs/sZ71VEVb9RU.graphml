@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Meeting application A</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Application agnostic meeting platform input source.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Amazon API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Entry point for summarization requests and status queries.</data>
+    </node>
+    <node id="2">
+      <data key="d5">AWS Lambda Post Transcript</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Processes request, saves metadata to DynamoDB and uploads transcripts to S3.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Amazon DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores meeting metadata and customer configuration for 600+ customers; updated with status upon completion.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Amazon S3 (Transcripts)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores full meeting transcriptions (often 500+ pages).</data>
+    </node>
+    <node id="5">
+      <data key="d5">AWS Step Functions Workflow</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates parallel map state workflow upon S3 transcript upload.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Map Parallelization</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Splits transcripts into agenda items and runs parallel summarization requests to Bedrock.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Amazon Bedrock</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Uses foundational models (e.g. Claude V3) to generate agenda-level summaries.</data>
+    </node>
+    <node id="8">
+      <data key="d5">AWS Lambda (Aggregator)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Aggregates individual agenda summaries into a final document.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Amazon S3 (Summaries)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores completed, aggregated meeting summary documents.</data>
+    </node>
+    <node id="10">
+      <data key="d5">AWS Lambda Get Status &amp; Summary</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Retrieves process status and final summary for clients; preserves status in DynamoDB.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Meeting application sends summarization request and transcript.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">API Gateway triggers Post Transcript Lambda.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">API Gateway routes client status and summary requests to Get Status &amp; Summary Lambda.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Post Transcript Lambda writes meeting and customer metadata to DynamoDB.</data>
+      <data key="d10">2'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Post Transcript Lambda uploads transcript files to S3 bucket.</data>
+      <data key="d10">2''</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">S3 transcript upload triggers Step Functions workflow.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Step Functions executes Map Parallelization Lambda state.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Map Parallelization Lambda invokes Amazon Bedrock models in parallel per agenda item.</data>
+      <data key="d10">2'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Parallel map outputs are passed to Aggregator Lambda.</data>
+      <data key="d10">2''</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Aggregator Lambda stores final aggregated summary document in S3.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="1" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Get Status &amp; Summary Lambda returns processing result/summary back through API Gateway.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="3" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Get Status &amp; Summary Lambda checks and preserves status in DynamoDB.</data>
+      <data key="d10">1''</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Granicus GovMeetings Automated Meeting Summarization Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=sZ71VEVb9RU</data>
+    <data key="d2">Granicus GovMeetings platform uses AWS Step Functions, Lambda, Bedrock, S3, and DynamoDB to automatically divide 500+ page transcriptions into agenda items, summarize them in parallel using generative AI models, and aggregate the summary for civic clerks.</data>
+    <data key="d3">AI/ML, Serverless, Workflow Orchestration</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

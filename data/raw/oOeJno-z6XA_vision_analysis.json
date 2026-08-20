@@ -1,0 +1,182 @@
+{
+  "step_by_step_reasoning": "The architecture diagram displays PTS's (Taiwan Public Television Service) video processing and streaming workflow on AWS. 1) Media upload and automated VOD transcoding flow: Media files are ingested via AWS Transfer Family (Transfer for SFTP) into an S3 Input bucket. The upload triggers an AWS Step Functions workflow, which invokes a notification Lambda function to send status updates to a Slack channel, and triggers AWS Elemental MediaConvert to perform video transcoding. Transcoded video output is written to an S3 Output bucket, which serves content through Amazon CloudFront. 2) Video editing workflow: An automated clip editing request with timecodes is received via Amazon API Gateway, invoking a Clip Editor Lambda function that instructs MediaConvert to remove black screens and output the processed video back into the S3 Input bucket to restart the automated transcoding pipeline. 3) Live streaming flow: An on-premises hardware Encoder streams live HLS content to AWS Elemental MediaStore, which acts as the origin for Amazon CloudFront to deliver live streams. Generic human actor nodes (Content Provider, Admin, Viewer) are pruned according to node pruning rules.",
+  "graph": {
+    "name": "PTS AWS Automated Media Transcoding and Live Streaming Architecture",
+    "link": "https://www.youtube.com/watch?v=oOeJno-z6XA",
+    "categories": "Media & Entertainment, Video Transcoding, Live Streaming",
+    "graph_usable": true,
+    "notes": "Automated VOD transcoding pipeline using AWS Transfer Family, Step Functions, MediaConvert, and CloudFront, along with API Gateway-driven clip editing and MediaStore live streaming."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "TransferFamily",
+      "name": "Transfer for SFTP",
+      "notes": "SFTP endpoint used by content providers to upload raw media files."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 (Input)",
+      "notes": "Input bucket storing raw ingested media and edited clips triggering the transcoding workflow."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Step Function",
+      "notes": "Orchestrates the transcoding workflow, managing notification and transcoding tasks."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda (Notification)",
+      "notes": "Sends workflow updates and alerts to Slack."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": "Third-party messaging channel for team alerts and monitoring."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives video timecode information for automated black-screen editing requests."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Clip Editor)",
+      "notes": "Invoked by API Gateway to trigger MediaConvert for clip editing."
+    },
+    {
+      "id": "7",
+      "service": "MediaConvert",
+      "name": "MediaConvert",
+      "notes": "Performs accelerated 4K video transcoding with QPBR and automated clip editing."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 (Output)",
+      "notes": "Output bucket storing transcoded media files ready for distribution."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Encoder",
+      "notes": "On-premises live hardware encoder streaming HLS content."
+    },
+    {
+      "id": "10",
+      "service": "MediaStore",
+      "name": "MediaStore",
+      "notes": "AWS Elemental MediaStore serving as high-performance origin for live streams."
+    },
+    {
+      "id": "11",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN delivering both VOD content and live streams to end viewers."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "SFTP server stores uploaded content into S3 Input bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 event triggers the Step Functions transcoding workflow."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Step Functions triggers notification Lambda."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda posts status notifications to Slack channel."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "control",
+      "notes": "Step Functions triggers MediaConvert transcoding job."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "MediaConvert writes transcoded output files to S3 Output bucket."
+    },
+    {
+      "source": "8",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "data",
+      "notes": "S3 Output bucket serves transcoded VOD content via CloudFront CDN."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway triggers Clip Editor Lambda with editing timecodes."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda instructs MediaConvert to perform automated clip editing."
+    },
+    {
+      "source": "7",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "MediaConvert places edited video clip back into S3 Input bucket to restart transcoding pipeline."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Hardware encoder streams live HLS content directly to MediaStore."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "MediaStore serves live video content to CloudFront CDN."
+    }
+  ]
+}

@@ -1,0 +1,198 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates a serverless conversational AI system developed by Ketchum Consulting on AWS. Incoming user interaction from channels like Twitter enters via API Gateway, which forwards the payload to a Lambda Proxy. The Lambda Proxy uses Amazon Comprehend to translate non-English queries into English. The processed query is routed to Amazon Lex for initial automated response handling. If Lex cannot satisfactorily resolve the query, it escalates to Amazon SageMaker for contextual responses, and if needed, further escalates to a human Team Lead (TL). The Team Lead performs corrections and feeds updated data into SageMaker Training, which continuously retrains and updates both SageMaker and Lex models. Concurrently, conversation data is passed asynchronously from the Lambda Proxy to Amazon SNS, triggering a Lambda Data Processor that persists interaction data into Amazon RDS and indexes it in Amazon OpenSearch (Elasticsearch). Finally, Amazon QuickSight pulls data from RDS and OpenSearch to provide operational analytics and business intelligence dashboards.",
+  "graph": {
+    "name": "Ketchum Consulting Conversational AI Architecture",
+    "link": "https://www.youtube.com/watch?v=dAQhNjwkOX8",
+    "categories": "AI/ML, Serverless, Analytics",
+    "graph_usable": true,
+    "notes": "Serverless conversational AI platform built on AWS handling hundreds of thousands of conversations per month across multiple channels and languages."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point receiving conversation requests from external channels like Twitter."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda Proxy",
+      "notes": "Handles language translation orchestration and conversation routing."
+    },
+    {
+      "id": "2",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Translates non-English conversations back into the English base language."
+    },
+    {
+      "id": "3",
+      "service": "Lex",
+      "name": "Lex",
+      "notes": "Provides automated first-line conversational responses."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Provides contextually aware fallback answers for escalated queries."
+    },
+    {
+      "id": "5",
+      "service": "UserCompanyAgent",
+      "name": "TL",
+      "notes": "Team lead performing corrections and approvals on AI responses."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "Training",
+      "notes": "Builds and retrains conversational models based on feedback data."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Asynchronously broadcasts conversation datasets downstream."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda Data Processor",
+      "notes": "Processes conversation data and stores it into persistent databases and search indices."
+    },
+    {
+      "id": "9",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores historical conversation data for analytics and retraining."
+    },
+    {
+      "id": "10",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Stores search indices used for AI interaction monitoring."
+    },
+    {
+      "id": "11",
+      "service": "QuickSight",
+      "name": "QuickSight",
+      "notes": "Generates analytics dashboards and KPIs from RDS and Elasticsearch data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway routes incoming request payload to Lambda Proxy."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda Proxy sends query text to Comprehend for language translation."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda Proxy forwards translated conversation text to Lex for standard answers."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lex escalates unsatisfied queries to SageMaker for contextual answers."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Unresolved interactions escalate from SageMaker to a human Team Lead."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Team Lead submits response corrections to SageMaker Training."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Retrained model is deployed back into SageMaker."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "control",
+      "notes": "Updated model updates Lex conversational intents."
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Lambda Proxy asynchronously streams conversation data to SNS."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS triggers Lambda Data Processor."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda Data Processor stores conversation records in RDS."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Lambda Data Processor indexes conversation data into Elasticsearch."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "QuickSight queries RDS for conversation history and KPIs."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "data",
+      "notes": "QuickSight reads search performance data from Elasticsearch."
+    }
+  ]
+}

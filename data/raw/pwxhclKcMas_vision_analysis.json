@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Identify entities from the video and world model base input: initial Kinesis ingestion stream, fan-out Lambda function, topic-separated Multiple Kinesis streams, S3 storage for JSON/Parquet, AWS Glue ETL, Athena query engine, scheduling Lambda, and EMR cluster.\n2. Map every component service type strictly to the valid vocabulary list (Kinesis, Lambda, S3, Glue, Athena, EMR).\n3. Assign sequential string IDs ('0' through '7') to each node.\n4. Segment architectural flow into logical pipelines: real-time event fan-out (flow 0), Glue data normalization and Parquet conversion (flow 1), and recommendation engine batch execution (flow 2).\n5. Construct strict unidirectional edges matching visual arrows and transcript descriptions with proper flow IDs, sequential order, and interaction types (data vs. control).",
+  "graph": {
+    "name": "Depop Data Architecture and Recommendation Engine",
+    "link": "https://www.youtube.com/watch?v=pwxhclKcMas",
+    "categories": "analytics, data_pipeline, serverless",
+    "graph_usable": true,
+    "notes": "Architecture diagram detailing Depop's event-driven data ingestion pipeline and product recommendation engine leveraging AWS Kinesis, Lambda, Glue, S3, Athena, and EMR."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Ingestion stream receiving all system events (creates, updates, deletes) from Depop services."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "In-house fan-out Lambda function optimized to handle hundreds of thousands of peak invocations."
+    },
+    {
+      "id": "2",
+      "service": "Kinesis",
+      "name": "Multiple Kinesis Streams",
+      "notes": "Topic-separated streams used to categorize event data for downstream Glue processing."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores both raw JSON event data and processed Parquet data in S3 buckets under distinct key spaces."
+    },
+    {
+      "id": "4",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Runs ETL jobs to perform data normalization, resolve type mismatches, and convert JSON to Parquet format."
+    },
+    {
+      "id": "5",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Executes SQL queries on Parquet data in S3 to prepare datasets for the recommendation engine."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (Scheduler)",
+      "notes": "Schedules and orchestrates the recommendation pipeline every 4 to 5 hours."
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Spins up EMR cluster post-query completion to calculate product/user rankings and scores."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Services send user actions and system events into the primary Kinesis stream."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Fan-out Lambda fans out incoming events into distinct topic-based Kinesis streams."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Topic streams write raw JSON data to S3 under specific key paths."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Glue ETL jobs read raw JSON, normalize schema, and write Athena-optimized Parquet data back to S3."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Lambda scheduler triggers Athena SQL query execution on a schedule."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries normalized Parquet datasets stored in S3."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "Athena query completion triggers the spin-up of an EMR cluster to perform scoring algorithms."
+    }
+  ]
+}

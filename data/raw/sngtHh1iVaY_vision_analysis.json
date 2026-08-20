@@ -1,0 +1,316 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates 30MHz's IoT and ML pipeline on AWS for smart agriculture. IoT sensor data collected at greenhouses is routed via Greengrass to AWS IoT Core, buffered through SQS, stored/indexed in Amazon Elasticsearch (OpenSearch), and processed by a Live Inference Lambda function. The training pipeline uses CodePipeline, CodeBuild, and ECR to trigger SageMaker training jobs fed by S3 training data and external Zensie API data. Model artifacts are written to S3, evaluated via a dedicated Lambda, stored in DynamoDB, and served through a Model Serving Lambda accessible via API Gateway.",
+  "graph": {
+    "name": "30MHz Autonomous Agriculture Machine Learning and IoT Platform Architecture",
+    "link": "https://www.youtube.com/watch?v=sngtHh1iVaY",
+    "categories": "IoT, Machine Learning, Serverless, Smart Agriculture",
+    "graph_usable": true,
+    "notes": "Shows real-time sensor data ingest, ML model training automation via Amazon SageMaker, and real-time model inference and deployment."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "DevTools",
+      "name": "Code repository",
+      "notes": "External git code repository containing model training and service code."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Zensie API",
+      "notes": "External API source providing supplementary environmental or crop data."
+    },
+    {
+      "id": "2",
+      "service": "Greengrass",
+      "name": "Greengrass",
+      "notes": "AWS Greengrass deployed on edge hardware in grower greenhouses for local data collection and offline buffering."
+    },
+    {
+      "id": "3",
+      "service": "CodePipeline",
+      "name": "AWS CodePipeline",
+      "notes": "Orchestrates CI/CD build and deployment stages."
+    },
+    {
+      "id": "4",
+      "service": "CodeBuild",
+      "name": "AWS Codebuild",
+      "notes": "Builds docker containers for model training and preprocessing."
+    },
+    {
+      "id": "5",
+      "service": "ECR",
+      "name": "Elastic container registry",
+      "notes": "Stores container images used by SageMaker for training."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Start training",
+      "notes": "Lambda function triggering SageMaker pre-processing and training jobs."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Get status",
+      "notes": "Lambda function checking the progress and status of active SageMaker jobs."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Evaluate model",
+      "notes": "Lambda function validating model metrics and performance post-training."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Training data loading",
+      "notes": "Lambda function preparing and populating training datasets."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 Bucket training data",
+      "notes": "S3 storage bucket containing curated training datasets."
+    },
+    {
+      "id": "11",
+      "service": "SageMaker",
+      "name": "Sagemaker pre-processing & training job",
+      "notes": "Amazon SageMaker executing containerized pre-processing and model training."
+    },
+    {
+      "id": "12",
+      "service": "S3",
+      "name": "S3 Bucket model artifacts",
+      "notes": "S3 storage bucket containing trained model artifacts and weights."
+    },
+    {
+      "id": "13",
+      "service": "IoTCore",
+      "name": "IoT Core",
+      "notes": "Ingests telemetry streams from Greengrass edge devices."
+    },
+    {
+      "id": "14",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Decouples and buffers IoT messages before ingestion into search index."
+    },
+    {
+      "id": "15",
+      "service": "OpenSearch",
+      "name": "Amazon Elasticsearch",
+      "notes": "Indexes and searches incoming sensor telemetry."
+    },
+    {
+      "id": "16",
+      "service": "Lambda",
+      "name": "Live inference Lambda",
+      "notes": "Executes real-time inference on incoming greenhouse telemetry."
+    },
+    {
+      "id": "17",
+      "service": "Lambda",
+      "name": "Model serving Lambda",
+      "notes": "Loads active model artifacts to serve predictions to external consumers."
+    },
+    {
+      "id": "18",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Persists model metadata, evaluation scores, and serving parameters."
+    },
+    {
+      "id": "19",
+      "service": "Lambda",
+      "name": "Testing Lambda",
+      "notes": "Executes synthetic/integration tests against model serving endpoint."
+    },
+    {
+      "id": "20",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Exposes HTTP API endpoints for real-time model inference."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Code repository pushes updates to AWS CodePipeline."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "CodePipeline triggers AWS CodeBuild."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "CodeBuild publishes built training containers to Elastic Container Registry."
+    },
+    {
+      "source": "5",
+      "target": "11",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Container image pulled from ECR to execute SageMaker training job."
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Start training Lambda triggers SageMaker pre-processing and training job."
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Get status Lambda queries SageMaker job execution status."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Training data loading Lambda writes datasets to S3 bucket."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 training data bucket supplies data to SageMaker training job."
+    },
+    {
+      "source": "1",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Zensie API feeds external data directly into SageMaker job."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "SageMaker exports output model artifacts to S3 model bucket."
+    },
+    {
+      "source": "8",
+      "target": "12",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Evaluate model Lambda reads trained model artifacts for verification."
+    },
+    {
+      "source": "8",
+      "target": "18",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Evaluate model Lambda records evaluation metrics into DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "13",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Greengrass edge device transmits field sensor data to AWS IoT Core."
+    },
+    {
+      "source": "13",
+      "target": "14",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "AWS IoT Core forwards messages to SQS queue."
+    },
+    {
+      "source": "14",
+      "target": "15",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "SQS delivers telemetry records to Amazon Elasticsearch."
+    },
+    {
+      "source": "15",
+      "target": "16",
+      "flow_id": 4,
+      "seq": "3",
+      "type": "data",
+      "notes": "Amazon Elasticsearch triggers Live inference Lambda with query data."
+    },
+    {
+      "source": "16",
+      "target": "9",
+      "flow_id": 4,
+      "seq": "4",
+      "type": "control",
+      "notes": "Live inference Lambda triggers Training data loading Lambda for feedback retraining."
+    },
+    {
+      "source": "16",
+      "target": "17",
+      "flow_id": 4,
+      "seq": "5",
+      "type": "data",
+      "notes": "Live inference Lambda invokes Model serving Lambda."
+    },
+    {
+      "source": "12",
+      "target": "17",
+      "flow_id": 5,
+      "seq": "0",
+      "type": "data",
+      "notes": "Model serving Lambda loads model artifacts from S3."
+    },
+    {
+      "source": "17",
+      "target": "18",
+      "flow_id": 5,
+      "seq": "1",
+      "type": "data",
+      "notes": "Model serving Lambda logs inference state/metadata to DynamoDB."
+    },
+    {
+      "source": "17",
+      "target": "19",
+      "flow_id": 5,
+      "seq": "2",
+      "type": "control",
+      "notes": "Model serving Lambda interacts with Testing Lambda."
+    },
+    {
+      "source": "17",
+      "target": "20",
+      "flow_id": 5,
+      "seq": "3",
+      "type": "data",
+      "notes": "Model serving Lambda serves predictions via Amazon API Gateway."
+    }
+  ]
+}
