@@ -1,0 +1,150 @@
+{
+  "step_by_step_reasoning": "1. Identified core infrastructure components from the visual diagram and audio transcript: CloudFront, AWS Shield, ECS, Kinesis Firehose, S3, Lambda, DynamoDB, and API Gateway.\n2. Pruned generic stick figures (actors) per Rule 5, using system entry/exit points (CloudFront, API Gateway) for workflow routing.\n3. Mapped all service names directly to valid AWS vocabulary types.\n4. Structured distinct logical flows:\n   - Flow 0: Raw ad interaction ingestion via CloudFront -> ECS -> Kinesis Firehose -> S3 raw storage.\n   - Flow 1: Periodic batch aggregation by Lambda pulling from S3 and writing aggregated outputs to S3 and DynamoDB.\n   - Flow 2: Analytics dashboard querying from API Gateway to DynamoDB and S3, with routing to CloudFront.\n   - Flow 3: AWS Shield protection covering traffic to prevent cost scaling during DDoS attacks.",
+  "graph": {
+    "name": "Equinix Serverless Ad Tech Ingestion and Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=DxHO2TWVN8I",
+    "categories": "AdTech Analytics, Serverless Data Pipeline",
+    "graph_usable": true,
+    "notes": "Serverless ad tech platform handling up to 15,000 events per second. Uses CloudFront, ECS container receivers in Go, Kinesis Firehose, S3, Lambda, DynamoDB, API Gateway, and AWS Shield for DDoS/cost protection."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Receives user web interaction events (clicks, impressions)."
+    },
+    {
+      "id": "1",
+      "service": "Shield",
+      "name": "Shield",
+      "notes": "Provides DDoS and cost protection against attack traffic spikes."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Docker cluster running Go receiver services."
+    },
+    {
+      "id": "3",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Aggregates and streams raw events to storage."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores raw user interaction data and processed analytical datasets."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Runs scheduled aggregations every 5 minutes."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores aggregated metrics and key business outputs."
+    },
+    {
+      "id": "7",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Fronts backend requests for real-time analytics data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront routes incoming user ad interaction events to ECS receivers."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "ECS Go receivers push event messages to Kinesis Firehose."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis Firehose writes raw streaming interaction logs into S3."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda reads raw event data from S3 every 5 minutes."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda writes aggregated output analytics back into S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Lambda populates aggregated query results into DynamoDB tables."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway retrieves aggregated analytics metrics from DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway queries analytical data stored in S3."
+    },
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Gateway connects back across CloudFront distribution network."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "CloudFront edge traffic is monitored and protected by AWS Shield."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Shield mitigates attack volume to safeguard backend storage cost models."
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "The architecture is transcribed directly from the provided visual entities, visual connections, and transcript. It represents a cryptocurrency wallet system with N-to-N mapping between client companies (e.g., Company A, Company B) and cryptocurrency networks (e.g., Bitcoin, Ethereum). Flow 0 captures the withdrawal path: Company A EC2 uses CloudHSM for key access, sends a withdrawal request via API Gateway, which invokes the Withdrawal Lambda to interact with the Docker blockchain node. Flow 1 captures the deposit path: block/transaction data from the Docker container is processed by Deposit Lambda, written to DynamoDB, and streamed to SNS, which distributes block notifications to tenant Lambda consumers (e.g., Company B Lambda). Flow 2 covers storage persistence (EBS volume backing Docker) and secondary tenant key management (Company B CloudHSM and EC2).",
+  "graph": {
+    "name": "Simplex Cryptocurrency Wallet System Architecture",
+    "link": "https://www.youtube.com/watch?v=U8xlmurP-6o",
+    "categories": "Financial Services",
+    "graph_usable": true,
+    "notes": "Multi-tenant, multi-currency cryptocurrency wallet architecture using serverless and AWS CloudHSM for secure private key management."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudHSM",
+      "name": "CloudHSM (Company A)",
+      "notes": "Manages private keys securely in a separate VPC exposed via PrivateLink."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 (Company A)",
+      "notes": "Company A server initiating withdrawal requests."
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Per-currency service entry point for withdrawal requests."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Withdrawal Lambda",
+      "notes": "Executes withdrawal logic for the target cryptocurrency."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Docker Container",
+      "notes": "Blockchain node container participating in the cryptocurrency network."
+    },
+    {
+      "id": "5",
+      "service": "EBS",
+      "name": "EBS Volume",
+      "notes": "Persists blockchain block data with regular snapshots to enable fast node catch-up."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Deposit Lambda",
+      "notes": "Processes incoming transaction/block data from the Docker blockchain node."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores transaction and block data, streaming updates upon changes."
+    },
+    {
+      "id": "8",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Publishes block notifications to company services."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Company B Lambda",
+      "notes": "Consumer service endpoint receiving deposit block notifications."
+    },
+    {
+      "id": "10",
+      "service": "CloudHSM",
+      "name": "CloudHSM (Company B)",
+      "notes": "Private key management for Company B."
+    },
+    {
+      "id": "11",
+      "service": "EC2",
+      "name": "EC2 (Company B)",
+      "notes": "Company B application server instance."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "CloudHSM secures private key operations for Company A."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Company A sends a withdrawal request to the currency API Gateway."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Gateway triggers Withdrawal Lambda."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Withdrawal Lambda submits transfer request to Docker node."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Docker container passes block and transaction data to Deposit Lambda."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Deposit Lambda writes transaction/block data to DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "DynamoDB stream triggers SNS block notifications."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "SNS notifies Company B service Lambda of new deposit blocks."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EBS Volume provides persistent block data storage for Docker container."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "CloudHSM manages private keys for Company B EC2 instance."
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates a zero-downtime deployment strategy used by WAG Labs. Incoming public traffic enters through an Application Load Balancer (ALB). The ALB routes traffic to an HAProxy cluster (a self-managed proxy). HAProxy periodically queries AWS Route 53 to resolve CNAME endpoints determining active production and canary target destinations. Traffic is then conditionally routed to the Blue Cluster (existing live EC2 instances) or shifted gradually (e.g., 10% canary) to the Green Cluster (new EC2 deployment instances).",
+  "graph": {
+    "name": "WAG Labs Canary Deployment Architecture with HAProxy and Route 53",
+    "link": "https://www.youtube.com/watch?v=e3N5ZuHh7G0",
+    "categories": "Deployment Strategy, Dynamic Routing, Blue-Green Deployment",
+    "graph_usable": true,
+    "notes": "Architecture showcases canary deployments managed by an HAProxy cluster querying internal Route 53 CNAME records to shift traffic between Blue and Green EC2 clusters."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Entry point receiving incoming public user traffic."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "HAProxy",
+      "notes": "Self-managed proxy layer that regularly queries Route 53 to determine active/canary targets."
+    },
+    {
+      "id": "2",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "DNS service queried by HAProxy to dynamically resolve target CNAME records."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Blue Cluster",
+      "notes": "Live production cluster running current application version on EC2."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Green Cluster",
+      "notes": "New deployment cluster on EC2 receiving canary or cutover traffic."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "meta",
+      "notes": "HAProxy periodically queries Route 53 to resolve active CNAME targets."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "ALB forwards incoming client requests to HAProxy."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "HAProxy routes production traffic to the active Blue cluster."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "HAProxy routes canary (e.g. 10%) or cutover traffic to the Green cluster."
+    }
+  ]
+}

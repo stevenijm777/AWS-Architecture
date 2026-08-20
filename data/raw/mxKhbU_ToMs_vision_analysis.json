@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "1. **Identify Nodes**: \n   - Top-left User (`UserConsumerWeb`) making requests via HTTPS to EC2.\n   - Legacy .NET Monolith running on `EC2`.\n   - Event router using AWS `Lambda`.\n   - Fan-out messaging using AWS `SNS`.\n   - SQS queues for microservice decoupling: Top Queue (`SQS`), Bottom Queue (`SQS`), and Dead Letter Queue (`SQS` DLQ).\n   - Custom application suite (`ThirdParty`) named Crypt Keeper (comprising Morktician, MorkDB, Lazarus) that stores and revives dead letter messages.\n   - Operator/Internal user (`UserCompanyDeveloper`) accessing the Crypt Keeper management interface.\n\n2. **Identify Flows & Edges**:\n   - **Flow 0 (Event Processing Pipeline)**:\n     - User -> EC2 (HTTPS requests)\n     - EC2 -> Lambda (Generates events)\n     - Lambda -> SNS (Publishes events)\n     - SNS -> SQS Top Queue & SQS Bottom Queue (Fan-out event distribution)\n   - **Flow 1 (Dead Letter Management & Replay)**:\n     - SQS Bottom Queue -> DLQ (Moves unhandled/fatal error messages)\n     - DLQ -> Crypt Keeper (Consumes and stores failed messages into MorkDB)\n     - Team Member -> Crypt Keeper (Inspects/monitors dead letters via Morktician UI)\n     - Crypt Keeper -> SQS Top Queue (Lazarus scheduled process replays/revives dead messages back into queue)",
+  "graph": {
+    "name": "MindTouch - Modernizing Legacy .NET Applications",
+    "link": "https://www.youtube.com/watch?v=mxKhbU_ToMs",
+    "categories": "Migration & Modernization, Messaging & Serverless",
+    "graph_usable": true,
+    "notes": "Architecture showing how MindTouch modernizes a legacy .NET monolith on EC2 using Lambda, SNS, SQS, and a custom dead-letter handling application called Crypt Keeper."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "External user interacting with the application via HTTPS."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Monolith",
+      "notes": "Legacy .NET application running on EC2 that processes web requests and emits events."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Event Router Lambda",
+      "notes": "Serverless function that receives events from the EC2 monolith and routes them to SNS."
+    },
+    {
+      "id": "3",
+      "service": "SNS",
+      "name": "SNS Topic",
+      "notes": "Fans out events to subscribed SQS queues for downstream microservices."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS Top Queue",
+      "notes": "Queue supplying messages to target microservice worker."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS Bottom Queue",
+      "notes": "Queue supplying messages to microservice worker; routes fatal errors to DLQ."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "Dead Letter Queue",
+      "notes": "Holds unresolvable or fatal messages sent from processing queues."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Crypt Keeper",
+      "notes": "Custom system containing Morktician UI, MorkDB, and Lazarus replay engine for dead letter management."
+    },
+    {
+      "id": "8",
+      "service": "UserCompanyDeveloper",
+      "name": "Team Member",
+      "notes": "Internal developer/operator managing dead letters through the Crypt Keeper web interface."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends HTTPS requests to the EC2 monolith."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Monolith generates events and invokes Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda publishes event payloads to SNS topics."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "control",
+      "notes": "SNS delivers messages to SQS top queue."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3''",
+      "type": "control",
+      "notes": "SNS delivers messages to SQS bottom queue."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Fatal errors or exhausted retries are moved to the DLQ."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Crypt Keeper consumes messages from DLQ into MorkDB."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Team member views and manages dead letters in Crypt Keeper."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lazarus revives dead messages and replays them back into target SQS queue."
+    }
+  ]
+}

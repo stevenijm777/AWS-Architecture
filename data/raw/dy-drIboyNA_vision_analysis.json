@@ -1,0 +1,182 @@
+{
+  "step_by_step_reasoning": "The architecture diagram split into a write-intensive side and a read-intensive side for Health Direct Australia's national directory service. On the write side, incoming requests arrive either via API Gateway (Write) which routes to Lambda functions (written in Node.js) that buffer events into Kinesis (Write Buffer), or via direct file drops (e.g., Medicare files) into S3 (Raw Data). EMR (running Apache Spark state machines continuously) consumes from both Kinesis Write Buffer and S3 Raw Data, performs quality assurance/de-duplication/cleaning, outputs Parquet data to S3 (Data Lake), and publishes structured updates into Kinesis (Read Buffer). On the read side, Kinesis (Read Buffer) feeds DynamoDB for high-availability domain queries. DynamoDB Streams then replicate updates into OpenSearch (Elasticsearch) for semantic and spatial searching. Athena queries the long-term append-log data lake stored in S3 (Data Lake) and interacts with DynamoDB for structured reporting. Finally, API Gateway (Read) paired with Lambda (Read) serves read consumer APIs and widgets for external integrations. All JSON values are transcribed following strict vocabulary and topological rules.",
+  "graph": {
+    "name": "Health Direct Australia Read/Write Segregated Architecture",
+    "link": "https://www.youtube.com/watch?v=dy-drIboyNA",
+    "categories": "Healthcare Data Lake & High-Availability Directory Service",
+    "graph_usable": true,
+    "notes": "National directory architecture processing ~90 million hits per month. Architecture clearly segregates write-intensive quality assurance processing from high-velocity read-intensive domain API queries."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "API Gateway (Write)",
+      "notes": "Entry point for write APIs."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda (Write)",
+      "notes": "Microservices running Node.js to execute write logic."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (Raw Data)",
+      "notes": "Stores raw file drops such as Medicare practitioner data files."
+    },
+    {
+      "id": "3",
+      "service": "Kinesis",
+      "name": "Kinesis (Write Buffer)",
+      "notes": "Buffers write requests and maintains ordering of event payloads."
+    },
+    {
+      "id": "4",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs persistent hot Apache Spark applications/state machines for data staging, QA, and validation."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Data Lake)",
+      "notes": "Stores longitudinal Parquet append-log datasets retention-compliant up to 25+ years."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Kinesis (Read Buffer)",
+      "notes": "Output buffer stream for validated data ready to be pushed to read stores."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "High-availability domain-driven read database."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Used for semantic, spatial, and condition-based search indexing."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Main query engine for data lake reporting and structured queries against S3/DynamoDB."
+    },
+    {
+      "id": "10",
+      "service": "ApiGateway",
+      "name": "API Gateway (Read)",
+      "notes": "Entry point for consumer read APIs and embedded search widgets."
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Lambda (Read)",
+      "notes": "Executes consumer read microservices."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway triggers write Lambda function."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda publishes write payload event to Kinesis write buffer."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "EMR Spark cluster reads incoming payloads from Kinesis write buffer."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR processes raw input files dropped into raw S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR writes structured gold Parquet files to S3 data lake."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries append-log data lake stored in S3."
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Athena references structured domain representation in DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR publishes QA-checked output records to read Kinesis stream."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Buffered output updates DynamoDB domain tables."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB Streams replicate domain updates to Elasticsearch."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "control",
+      "notes": "Consumer read API Gateway invokes read Lambda microservice."
+    },
+    {
+      "source": "11",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Read Lambda queries DynamoDB for domain lookups."
+    }
+  ]
+}

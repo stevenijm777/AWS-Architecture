@@ -1,0 +1,140 @@
+{
+  "step_by_step_reasoning": "The architecture shows an automated, event-driven batch processing workflow for regulatory compliance files. 1. Customers upload files to an S3 Uploads Bucket, which sends event notifications to an SQS queue. 2. A CloudWatch scheduled event triggers a Queue Checker Lambda function every 5 minutes. The Lambda checks the SQS queue for new jobs and triggers Step Functions. 3. Step Functions invokes an Intermediate Lambda function to launch a dedicated Windows EC2 instance for batch processing. The EC2 instance retrieves software setup/configuration from an S3 Config Bucket, reports task execution status back to Step Functions, and stores batch execution outputs into an RDS (SQL Server) database.",
+  "graph": {
+    "name": "FICO Serverless & On-Demand Batch Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=W5qVQr-n5M8",
+    "categories": "Batch Processing, Event-Driven Architecture, Compliance",
+    "graph_usable": true,
+    "notes": "FICO's batch workflow uses S3, SQS, CloudWatch, Lambda, Step Functions, EC2 (Windows), and SQL Server (RDS) to perform compliance checks on customer uploaded transaction files."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Bucket (Uploads)",
+      "notes": "S3 bucket where customer transaction files are uploaded."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "SQS Queue",
+      "notes": "Job queue holding file upload notifications."
+    },
+    {
+      "id": "2",
+      "service": "CloudWatch",
+      "name": "CloudWatch Event",
+      "notes": "Scheduled rule triggering Lambda queue checker every 5 minutes."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda (Queue Checker)",
+      "notes": "Inspects SQS queue and triggers Step Functions workflow."
+    },
+    {
+      "id": "4",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Manages execution, waiting, retries, and task orchestration."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (Intermediate)",
+      "notes": "Intermediate function invoked by Step Functions to launch EC2."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 Instance",
+      "notes": "Windows Server 2016 instance running batch processing."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3 Bucket (Config)",
+      "notes": "Stores software dependencies and configuration data for instance initialization."
+    },
+    {
+      "id": "8",
+      "service": "RDS",
+      "name": "SQL Server",
+      "notes": "Database storing batch processing results for reporting and case management."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 bucket sends file upload event notification to SQS queue."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch event periodically invokes Queue Checker Lambda."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Lambda polls SQS queue for unprocessed upload jobs."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lambda initiates Step Functions workflow execution."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step Functions triggers Intermediate Lambda to launch processing instance."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Lambda provisions and launches on-demand Windows EC2 instance."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "EC2 downloads dependencies and configuration from S3 bucket."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "meta",
+      "notes": "EC2 communicates task status and execution back to Step Functions."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "EC2 writes batch job output to SQL Server database."
+    }
+  ]
+}

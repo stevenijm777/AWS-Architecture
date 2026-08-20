@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The architecture diagram depicts a high-scale travel platform (Al Musafir / Seera Group) handling approximately 300k requests/minute. Content and initial requests originate from users (UserConsumerWebMobile) and enter CloudFront. Static assets are fetched from S3 into CloudFront, while Lambda@Edge performs intelligent edge routing based on device type and region. CloudFront routes incoming traffic to a group of around 60 Load Balancers (ELB), which split traffic between legacy monolithic systems on EC2 and containerized microservices on EKS (~250 microservices across 1400 pods). On the data layer, both legacy and EKS services interact with self-managed MongoDB and Kafka running on EC2 instances, while EKS microservices also connect to RDS for transactional database operations. Monitoring infrastructure includes self-managed tools on EC2 (Prometheus, ELK) alongside CloudWatch for pod health, logging, and alerts.",
+  "graph": {
+    "name": "Seera Group Microservices Architecture",
+    "link": "https://www.youtube.com/watch?v=a6kqyqTNJM4",
+    "categories": "Web Architecture, Microservices, Event-Driven",
+    "graph_usable": true,
+    "notes": "Architectural transcription of Seera Group's migration from legacy monolithic EC2 workloads to microservices hosted on AWS EKS with edge routing via CloudFront/Lambda@Edge."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "USER",
+      "notes": "Handles ~300k requests per minute across web and mobile platforms."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "notes": "Content delivery network acting as the primary entry point."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores images and heavy static content."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Lambda@Edge functions that inspect request headers for region and device routing."
+    },
+    {
+      "id": "4",
+      "service": "ELB",
+      "name": "LOAD BALANCER",
+      "notes": "Around 60 load balancers distributing traffic between legacy monoliths and microservices."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "LEGACY",
+      "notes": "Monolithic backend applications running on traditional EC2 instances."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Kubernetes cluster hosting ~250 microservices across 1400 pods."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "MONGO/KAFKA",
+      "notes": "Self-managed MongoDB for NoSQL storage and Kafka for event-driven messaging on EC2."
+    },
+    {
+      "id": "8",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Managed relational database for transactional SQL workloads."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Runs internal observability and logging tools (Prometheus, ELK)."
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH",
+      "notes": "Monitors pod health and ties into alerting mechanisms."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User traffic routes into CloudFront CDN."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Static content served from S3 through CloudFront."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Lambda@Edge provides routing intelligence based on client region/device."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "CloudFront routes request traffic to backend load balancers."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Load balancers forward non-migrated requests to legacy monolith systems on EC2."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Load balancers forward microservices traffic to EKS clusters."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Legacy EC2 services interact with Mongo/Kafka cluster."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "EKS microservices connect to MongoDB and produce/consume Kafka events."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0''",
+      "type": "data",
+      "notes": "EKS microservices connect to RDS for transactional SQL operations."
+    },
+    {
+      "source": "1",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Infrastructure metrics and traffic data connected to EC2 monitoring tools."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Internal monitoring tools aggregate pod health and send logs to CloudWatch."
+    }
+  ]
+}

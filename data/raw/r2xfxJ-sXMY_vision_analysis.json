@@ -1,0 +1,160 @@
+{
+  "step_by_step_reasoning": "The architecture describes Haptik's analytics ingestion platform for conversational AI chatbots, handling both real-time metrics and long-term archival. Real-time chat metadata from Mobile, Web, and Messaging Platforms streams into Kinesis. The real-time branch pulls data from Kinesis into Logstash on EC2, indexes it into Elasticsearch (OpenSearch), and serves an in-house custom dashboard for clients and internal monitoring. The archival branch triggers a Lambda function from Kinesis to store batch data in S3, where AWS Glue catalogs the schema and Amazon Athena queries historical dataset metrics.",
+  "graph": {
+    "name": "Haptik Conversational AI Analytics Architecture",
+    "link": "https://www.youtube.com/watch?v=r2xfxJ-sXMY",
+    "categories": "Analytics, Streaming, Data Archival",
+    "graph_usable": true,
+    "notes": "Haptik processes over 40-50 million chat and voice messages monthly across channels (Web, Mobile, WhatsApp, Facebook, Twitter). Metadata streams into Kinesis and splits into real-time analytics (Logstash, Elasticsearch, Custom Dashboard) and historical batch archival (Lambda, S3, Glue, Athena)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile",
+      "notes": "Mobile app entrypoint generating conversation metadata."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerWeb",
+      "name": "Web",
+      "notes": "Web browser interface generating conversation metadata."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Messaging Platforms",
+      "notes": "Messaging channels including WhatsApp, Facebook, and Twitter."
+    },
+    {
+      "id": "3",
+      "service": "Kinesis",
+      "name": "Kinesis",
+      "notes": "Central streaming data store ingesting conversation metadata across all channels."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Logstash",
+      "notes": "Self-managed Logstash compute layer pulling stream data, transforming payloads, and indexing to Elasticsearch."
+    },
+    {
+      "id": "5",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Multi-AZ Elasticsearch cluster for real-time indexing and search."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Dashboard",
+      "notes": "Custom in-house real-time analytics dashboard accessible to internal teams and clients."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Triggered by Kinesis events to process conversation batch records for archival."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Data lake storage for multi-year historical chatbot data."
+    },
+    {
+      "id": "9",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Extracts schema and updates data catalog for S3 historical storage."
+    },
+    {
+      "id": "10",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "SQL query engine using Glue catalog schema to analyze historical data in S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile client sends conversation metadata to Kinesis stream."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Web client sends conversation metadata to Kinesis stream."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Messaging platform channels send conversation metadata to Kinesis stream."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Logstash pulls real-time conversation data stream from Kinesis."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Logstash transforms and indexes data into Elasticsearch."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Custom dashboard queries real-time metrics and conversation trends from Elasticsearch."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Kinesis triggers Lambda function upon event arrival for historical pipeline processing."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda processes batch data and stores it long term in S3 bucket."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "AWS Glue crawls S3 storage to define catalog schema."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Glue catalog provides schema definition to Amazon Athena for querying S3."
+    }
+  ]
+}

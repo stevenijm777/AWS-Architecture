@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores uploaded high-resolution webcam images and resulting deep-zoom image tiles.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Step Functions</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates the entire serverless processing workflow based on incoming camera configuration.</data>
+    </node>
+    <node id="2">
+      <data key="d5">ANALYZE</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Parallel Lambda functions that run machine learning analysis on image data.</data>
+    </node>
+    <node id="3">
+      <data key="d5">REKOGNITION</data>
+      <data key="d6">Rekognition</data>
+      <data key="d7">AWS Rekognition used for scene recognition, weather detection, and mood/labeling.</data>
+    </node>
+    <node id="4">
+      <data key="d5">ML</data>
+      <data key="d6">AmazonML</data>
+      <data key="d7">Custom deep learning framework used for object detection on image data.</data>
+    </node>
+    <node id="5">
+      <data key="d5">PROCESS</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Parallel Lambda functions for image transformation (rotation, blurring/pixelation) and deep-zoom tiling.</data>
+    </node>
+    <node id="6">
+      <data key="d5">PERSIST</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Parallel Lambda functions responsible for persisting image metadata.</data>
+    </node>
+    <node id="7">
+      <data key="d5">RDS</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Relational database used to store image metadata.</data>
+    </node>
+    <node id="8">
+      <data key="d5">DYNAMODB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">NoSQL database used to store image metadata.</data>
+    </node>
+    <node id="9">
+      <data key="d5">SNS</data>
+      <data key="d6">SNS</data>
+      <data key="d7">Publishes notifications upon completion of processing for a given image.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">New S3 image upload triggers Step Functions workflow execution.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions invokes the ANALYZE Lambda stage if analysis is enabled in config.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions invokes the PROCESS Lambda stage directly or following the analysis step.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">ANALYZE Lambda invokes AWS Rekognition for scene detection.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">ANALYZE Lambda invokes deep learning ML framework for object detection.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="0" id="0">
+      <data key="d8">2</data>
+      <data key="d9">PROCESS Lambda stores generated image tiles and modified images back into S3.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">PROCESS Lambda passes metadata down to the PERSIST Lambda stage.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">3</data>
+      <data key="d9">PERSIST Lambda writes extracted metadata into RDS.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="8" id="0">
+      <data key="d8">3</data>
+      <data key="d9">PERSIST Lambda writes extracted metadata into DynamoDB.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="9" id="0">
+      <data key="d8">3</data>
+      <data key="d9">PERSIST Lambda publishes notification to SNS signaling completion.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">HighResCam Image Processing Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=chQ1phTqvnY</data>
+    <data key="d2">Handles processing high-resolution webcam images (20-40 Megapixels) uploaded to S3. Processed deep-zoom image tiles (up to 200 tiles per image) are stored back in S3 while metadata is saved in RDS and DynamoDB, followed by an SNS notification.</data>
+    <data key="d3">AI &amp; Machine Learning, Media &amp; Entertainment, Serverless</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

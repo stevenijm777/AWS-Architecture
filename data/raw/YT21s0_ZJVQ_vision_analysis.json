@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "1. Identified nodes from visual architecture and audio transcript across Singapore, Beijing, and Tokyo regions.\n2. Identified deployment CI/CD flow from CodeBuild in Development Environment Singapore, which retrieves encryption keys from KMS and triggers CloudFormation templates in both Staging/Production Singapore and Staging/Production Beijing.\n3. Identified data aggregation flow where AWS Glue extracts data from RDS instances in both Singapore and Beijing to be stored in the central S3 Datalake in Tokyo.\n4. Mapped all service names directly to the valid vocabulary list and mapped all connections with appropriate flow IDs, sequence numbers, and types.",
+  "graph": {
+    "name": "Ampos Multi-Region Architecture and Data Lake",
+    "link": "https://www.youtube.com/watch?v=YT21s0_ZJVQ",
+    "categories": "Cross-Region CI/CD and Multi-Region Data Aggregation",
+    "graph_usable": true,
+    "notes": "Ampos uses a multi-region setup with Development and Staging/Production environments in Singapore, Staging/Production in Beijing, and a centralized Datalake in Tokyo. CodeBuild manages deployment to both global and China regions using KMS for secret management and CloudFormation for automated deployments. Glue aggregates data from RDS databases in Singapore and Beijing into S3 in Tokyo."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Located in Development Environment Singapore; holds keys for secret and package distribution across regions."
+    },
+    {
+      "id": "1",
+      "service": "CodeBuild",
+      "name": "CodeBuild",
+      "notes": "Located in Development Environment Singapore; triggers package distribution and CloudFormation deployments."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "APP Servers (Dev)",
+      "notes": "Development application servers located in Singapore."
+    },
+    {
+      "id": "3",
+      "service": "ECR",
+      "name": "ECR (Singapore)",
+      "notes": "Container registry for Staging / Production Singapore."
+    },
+    {
+      "id": "4",
+      "service": "CloudFormation",
+      "name": "CloudFormation (Singapore)",
+      "notes": "Automates resource deployment in Staging / Production Singapore."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "APP Servers (Singapore)",
+      "notes": "Application servers running in Staging / Production Singapore."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "RDS (Singapore)",
+      "notes": "Production database hosting Southeast Asia customer data."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Centralized datalake storage located in Tokyo."
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "ETL service in Tokyo that extracts data from Singapore and Beijing RDS instances."
+    },
+    {
+      "id": "9",
+      "service": "ECR",
+      "name": "ECR (Beijing)",
+      "notes": "Container registry for Staging / Production Beijing."
+    },
+    {
+      "id": "10",
+      "service": "CloudFormation",
+      "name": "CloudFormation (Beijing)",
+      "notes": "Automates resource deployment in Staging / Production Beijing with modified partitions and suffixes."
+    },
+    {
+      "id": "11",
+      "service": "EC2",
+      "name": "APP Servers (Beijing)",
+      "notes": "Application servers serving China region customers for reduced latency."
+    },
+    {
+      "id": "12",
+      "service": "RDS",
+      "name": "RDS (Beijing)",
+      "notes": "Production database hosting China customer data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CodeBuild accesses KMS to get encryption keys for multi-environment package distribution."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "CodeBuild triggers CloudFormation in Singapore to deploy/update environments."
+    },
+    {
+      "source": "1",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "CodeBuild triggers CloudFormation in Beijing to deploy/update environments in China."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "AWS Glue extracts data from Singapore RDS into the central datalake in Tokyo."
+    },
+    {
+      "source": "12",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "AWS Glue extracts data from Beijing RDS over the internet into the central datalake in Tokyo."
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates high availability for an SAP Extended Warehouse Management deployment across two Availability Zones (AZs) using AWS. Users connect via an Alias pointing to a Network Load Balancer (NLB). The architecture uses Overlay IPs configured in a VPC Route Table to maintain single static IP addresses that dynamically map to active nodes across AZs. The application tier consists of SAP ASCS and PAS in AZ1, with ERS and AAS in AZ2. The database tier consists of SAP HANA Primary in AZ1 replicating asynchronously/synchronously via HANA System Replication to SAP HANA Secondary in AZ2. In failover scenarios, cluster software uses AWS APIs to update VPC Route Table overlay IP entries to direct traffic to the active surviving nodes.",
+  "graph": {
+    "name": "Whirlpool SAP High Availability Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=1tGmQd0yOzE",
+    "categories": "Enterprise Application HA",
+    "graph_usable": true,
+    "notes": "SAP deployment across two Availability Zones using VPC Route Table overlay IPs and Network Load Balancing to achieve seamless high availability and automatic failover."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "NLB",
+      "name": "NLB",
+      "notes": "Network Load Balancer acting as the single entry point mapped from the user alias."
+    },
+    {
+      "id": "1",
+      "service": "VPC",
+      "name": "Route Table",
+      "notes": "VPC Route Table containing 3 sets of overlay IPs pointing to active EC2 service instances."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "ASCS",
+      "notes": "SAP ABAP Central Services running on EC2 in AZ1."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "ERS",
+      "notes": "SAP Enqueue Replication Server running on EC2 in AZ2 for lock table replication."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "PAS",
+      "notes": "SAP Primary Application Server running on EC2 in AZ1."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "AAS",
+      "notes": "SAP Additional Application Server running on EC2 in AZ2."
+    },
+    {
+      "id": "6",
+      "service": "SAP",
+      "name": "HANA Primary",
+      "notes": "Primary SAP HANA database node in AZ1."
+    },
+    {
+      "id": "7",
+      "service": "SAP",
+      "name": "HANA Secondary",
+      "notes": "Secondary SAP HANA database node in AZ2 receiving system replication."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "NLB routes user traffic using overlay IP entries in the VPC Route Table."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Overlay IP entry routes ASCS connection traffic to active ASCS EC2 instance in AZ1."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Overlay IP entry maps to Enqueue Replication Server node in AZ2."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Overlay IP entry routes database connections directly to the active SAP HANA Primary node."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "HANA System Replication transfers database updates from Primary in AZ1 to Secondary in AZ2."
+    }
+  ]
+}

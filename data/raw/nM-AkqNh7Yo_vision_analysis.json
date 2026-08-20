@@ -1,0 +1,200 @@
+{
+  "step_by_step_reasoning": "1. Identify raw data landing in the S3 Input bucket, triggering events into High and Low priority SQS queues depending on application type and required latency.\n2. EC2 Worker Nodes retrieve task messages from SQS queues and query the Resource Manager (running on EC2) to obtain available EMR cluster endpoints.\n3. The Resource Manager queries and stores mapping data in RDS, while using CloudWatch to monitor state and handle recovery of spot instance EMR clusters.\n4. EC2 Worker Nodes submit processing jobs directly to the dynamically assigned spot EMR clusters.\n5. EMR clusters execute the big data processing tasks and persist output results back to the S3 (EMRFS) destination bucket.",
+  "graph": {
+    "name": "From Scratch b-dash Big Data Resource Manager Architecture",
+    "link": "https://www.youtube.com/watch?v=nM-AkqNh7Yo",
+    "categories": "Analytics, Big Data, Dynamic Compute Management",
+    "graph_usable": true,
+    "notes": "From Scratch's b-dash SaaS marketing platform leverages a custom Resource Manager running on EC2 to dynamically manage and allocate spot EMR clusters, reducing compute costs by over 50% while processing terabytes of data daily."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Input",
+      "notes": "Receives incoming web, customer, and purchase data files."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "SQS High Priority",
+      "notes": "Holds high-priority task messages requiring low-latency responses (e.g., user screen operations)."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS Low Priority",
+      "notes": "Holds lower-priority batch processing task messages."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Worker Nodes",
+      "notes": "Worker instances polling SQS queues and dispatching work to EMR endpoints."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Monitors EMR cluster status and resource metrics."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Resource Manager EC2",
+      "notes": "Core controller managing dynamic EMR cluster allocation, spot recovery, and API endpoints."
+    },
+    {
+      "id": "6",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores task-to-cluster mapping and cluster state metadata."
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "EMR Cluster 1",
+      "notes": "Spot instance based EMR cluster executing distributed big data analytics jobs."
+    },
+    {
+      "id": "8",
+      "service": "EMR",
+      "name": "EMR Cluster 2",
+      "notes": "Spot instance based EMR cluster executing distributed big data analytics jobs."
+    },
+    {
+      "id": "9",
+      "service": "EMR",
+      "name": "EMR Cluster 3",
+      "notes": "Spot instance based EMR cluster executing distributed big data analytics jobs."
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 (EMRFS)",
+      "notes": "Output S3 bucket storing processed analytics results via EMRFS."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 object creation events publish high-priority job notifications to SQS."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "control",
+      "notes": "S3 object creation events publish low-priority batch job notifications to SQS."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 workers consume high-priority task messages."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "EC2 workers consume low-priority task messages."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Workers call Resource Manager API to request available EMR cluster endpoints."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Resource Manager queries RDS for cluster mapping and availability."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Resource Manager returns target EMR cluster endpoint to the worker."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Worker submits processing job to assigned EMR Cluster 1."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "Worker submits processing job to assigned EMR Cluster 2."
+    },
+    {
+      "source": "3",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "0''",
+      "type": "control",
+      "notes": "Worker submits processing job to assigned EMR Cluster 3."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR Cluster 1 writes output data to destination S3 bucket via EMRFS."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "EMR Cluster 2 writes output data to destination S3 bucket via EMRFS."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "1''",
+      "type": "data",
+      "notes": "EMR Cluster 3 writes output data to destination S3 bucket via EMRFS."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Resource Manager integrates with CloudWatch for state monitoring."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "Resource Manager monitors EMR health and automatically recovers terminated spot clusters."
+    }
+  ]
+}

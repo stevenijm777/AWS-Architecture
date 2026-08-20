@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The Carano Cloud microservices architecture is designed for fleet management applications. The end user interacts with a web front-end hosted on S3. User requests go to API Gateway, which decouples the client from backend microservices running on ECS (Kotlin/Vert.x) and Lambda (TypeScript). Async messaging is managed by publishing events from ECS to SNS topics (fanout), which subscribe to SQS queues for specific service types (fan-in), ensuring single-message execution by either ECS instances or Lambda functions.",
+  "graph": {
+    "name": "Carano Cloud Microservices Architecture",
+    "link": "https://www.youtube.com/watch?v=k7h0jpLcWdE",
+    "categories": "Serverless, Containers, Event-Driven",
+    "graph_usable": true,
+    "notes": "Carano transitioned from an on-premise JMS architecture to a cloud-native architecture using S3, API Gateway, ECS, Lambda, SNS, and SQS to achieve decoupling, technology flexibility, and reliable message handling."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End user accessing the web application."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Hosts the web application static content."
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Handles incoming API requests and decouples clients from backend microservices."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless compute running TypeScript microservices developed with Serverless Framework."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Containerized microservices running Kotlin and Vert.x toolkit on Docker."
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Receives fanout messages from backend services."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues messages for specific service types to ensure idempotent single-instance processing."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "DynamoDB database component present on the architecture diagram."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "S3 delivers the web application to the user browser."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "User sends API requests to API Gateway."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Gateway routes relevant API calls directly to Lambda functions."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "control",
+      "notes": "API Gateway routes requests to microservices hosted on ECS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "ECS services send messages to SNS topics for fanout distribution."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS fans out published messages to target SQS queues."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "SQS queues trigger Lambda functions for async message processing."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "control",
+      "notes": "ECS service instances pull messages from SQS queues for single-processing fan-in."
+    }
+  ]
+}

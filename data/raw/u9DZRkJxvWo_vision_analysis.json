@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1. Identify entities on the whiteboard and transcript: Source/ETL (ThirdParty), Refined Store (S3), AWS Step Functions container (StepFunctions), Lambda Functions inside Step Functions (Lambda), Machine Learning (SageMaker), Translate (Translate), Comprehend / Comprehend Medical (Comprehend), and RDS (RDS).\n2. Establish node IDs and service classifications using the strict valid vocabulary list.\n3. Trace data and control flows: Raw case data is collected and pre-processed in Source/ETL and deposited into the Refined Store (S3). Landing in S3 triggers the AWS Step Functions pipeline. Step Functions orchestrates Lambda functions that interact with SageMaker (ML models for NLP extraction and event seriousness), AWS Translate (language translation), and AWS Comprehend Medical (dosage/entity extraction). Final structured data is saved to RDS database.\n4. Group flows logically using flow_id and chronological sequencing.",
+  "graph": {
+    "name": "PwC Pharmacovigilance Serverless Data Pipeline",
+    "link": "https://www.youtube.com/watch?v=u9DZRkJxvWo",
+    "categories": "Serverless, Data Pipeline, Healthcare / Life Sciences, Machine Learning",
+    "graph_usable": true,
+    "notes": "Serverless pipeline built by PwC to process pharmacovigilance adverse event data for pharmaceutical companies, achieving a 50-70% reduction in case processing time."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Source / ETL",
+      "notes": "Extracts and pre-processes adverse event reporting data from multiple clinical trial systems and call centers."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Refined Store",
+      "notes": "S3 bucket storing standardized, schema-transformed case data that triggers downstream pipeline execution."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions",
+      "notes": "Orchestrates complex multi-stage serverless pipeline logic in parallel across scaling Lambda executions."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda Functions",
+      "notes": "Multiple serverless functions (written in Node.js and Python) executing transformation and ML enrichment steps within Step Functions."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "Machine Learning",
+      "notes": "Custom ML models built from historical labeled datasets for NLP text extraction and assessing case event seriousness."
+    },
+    {
+      "id": "5",
+      "service": "Translate",
+      "name": "Translate",
+      "notes": "Translates non-English medical narrative descriptions (e.g. from Japan or China) into English for NLP analysis."
+    },
+    {
+      "id": "6",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "AWS Comprehend Medical used for medical NLP entity extraction and linkage (e.g., dosage associated with drugs)."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database storing final curated pharmacovigilance cases for human case manager verification via internal web apps."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Source ETL functions standardize raw adverse event data and write files to the Refined Store S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 object creation triggers the AWS Step Functions workflow to start case processing."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Step Functions coordinates and executes up to 20 Lambda functions during workflow execution."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pipeline passes case text to custom Machine Learning models for seriousness assessment and extraction."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Pipeline routes non-English case text to AWS Translate."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1''",
+      "type": "data",
+      "notes": "Pipeline routes unstructured narrative text to Comprehend Medical for entity and linkage extraction."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Completed and augmented case records are persisted into the RDS database."
+    }
+  ]
+}

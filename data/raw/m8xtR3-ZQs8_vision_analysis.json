@@ -1,0 +1,138 @@
+{
+  "step_by_step_reasoning": "The architecture shows a multi-account centralized logging solution. In individual accounts, logs originate from EC2 instances (via CloudWatch Agent to CloudWatch), AWS CloudTrail, and VPC Flow Logs. These log sources aggregate into Amazon Kinesis Data Firehose, which invokes a local Lambda function to filter, transform, and normalize the log formats. The transformed logs are written to a centralized Amazon S3 bucket in a central account. When new log objects land in S3, an S3 event triggers a secondary Lambda function in the central account that indexes the logs into Amazon OpenSearch (Elasticsearch), which is visualized and queried via Kibana.",
+  "graph": {
+    "name": "Biogen Centralized Logging Architecture",
+    "link": "https://www.youtube.com/watch?v=m8xtR3-ZQs8",
+    "categories": "Logging, Analytics, Serverless, Multi-Account",
+    "graph_usable": true,
+    "notes": "Demonstrates serverless cross-account log collection across hundreds of AWS accounts using Firehose, S3, Lambda, and Elasticsearch/Kibana."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "EC2 Application Host",
+      "notes": "Runs web/application workloads and pushes application and OS logs via the CloudWatch agent."
+    },
+    {
+      "id": "1",
+      "service": "CloudWatch",
+      "name": "CloudWatch Logs",
+      "notes": "Collects application and system logs from EC2 instances."
+    },
+    {
+      "id": "2",
+      "service": "CloudTrail",
+      "name": "AWS CloudTrail",
+      "notes": "Captures management and API activity logs across the individual account."
+    },
+    {
+      "id": "3",
+      "service": "VPC",
+      "name": "VPC Flow Logs",
+      "notes": "Captures network traffic flow logs for network visibility."
+    },
+    {
+      "id": "4",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Streams and batches log data from CloudWatch, CloudTrail, and VPC Flow Logs."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (Log Transformer)",
+      "notes": "Converts legacy log formats into a single unified format and filters out unnecessary non-critical data."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Centralized S3 Bucket",
+      "notes": "Stores cross-account unified logs with encryption, lifecycle policies, and scalable storage."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Log Ingester)",
+      "notes": "Triggered by S3 upload events to ingest and format data for Elasticsearch."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Indexes and stores unified log data for rapid keyword searching and troubleshooting."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Kibana",
+      "notes": "Visualization platform used to generate dashboards and perform log analytics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 instance sends logs to CloudWatch using CloudWatch Agent."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudWatch streams log events into Kinesis Firehose."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "CloudTrail streams API audit logs to Kinesis Firehose."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1''",
+      "type": "data",
+      "notes": "VPC Flow Logs stream network data to Kinesis Firehose."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis Firehose sends log batches to Lambda for transformation and filtering."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda writes normalized logs to the centralized S3 bucket."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "S3 object creation triggers the central ingestion Lambda function."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda ingests log records into Elasticsearch."
+    }
+  ]
+}

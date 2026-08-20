@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture diagram displays TXCraft's high-concurrency ticket sales system. Traffic enters through an Elastic Load Balancer (ELB) which distributes requests across UI layer EC2 instances (On-Demand and Spot instances managed via Auto Scaling). These UI instances push ticket purchase requests to Amazon DynamoDB. On the backend, a second layer of API EC2 instances (On-Demand and Spot instances, managed by Auto Scaling) handles backend processing, fetching tasks from and writing results back to DynamoDB.",
+  "graph": {
+    "name": "TXCraft Ticketing Architecture",
+    "link": "https://www.youtube.com/watch?v=Bi-1xjXvKgs",
+    "categories": "E-commerce, Serverless, Compute, High Concurrency",
+    "graph_usable": true,
+    "notes": "System designed for extreme traffic spikes during online concert ticket sales in Taiwan."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Pre-provisioned Elastic Load Balancer distributing initial web traffic to the UI server instances."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 (ON DEMAND) - UI",
+      "notes": "Baseline UI web server layer running on On-Demand instances."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2 (SPOT) - UI",
+      "notes": "Scalable UI web server layer running on Spot instances (protected via Spot Blocks for 1 hour)."
+    },
+    {
+      "id": "3",
+      "service": "AutoScaling",
+      "name": "AutoScaling - UI",
+      "notes": "Auto Scaling managing UI layer EC2 instances."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Central database pre-provisioned for high read/write capacity during ticket sales events."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 (ON DEMAND) - API",
+      "notes": "Backend API processing tier using On-Demand instances."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 (SPOT) - API",
+      "notes": "Backend API processing tier using Spot instances."
+    },
+    {
+      "id": "7",
+      "service": "AutoScaling",
+      "name": "AutoScaling - API",
+      "notes": "Auto Scaling managing API layer EC2 instances."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "ELB routes incoming web traffic to UI On-Demand EC2 instances."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "ELB routes incoming web traffic to UI Spot EC2 instances."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "UI On-Demand instances forward user transaction requests to DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "UI Spot instances forward user transaction requests to DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "API On-Demand instances fetch pending transaction requests from DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "API On-Demand instances write processed transaction results back to DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "API Spot instances write processed transaction results back to DynamoDB."
+    }
+  ]
+}

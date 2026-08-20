@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "The architecture diagram displays a real-time user monitoring system (Site247) running on AWS and external infrastructure. First, end users (USERS) download the beacon monitoring script via CloudFront CDN. Collected telemetry data from the end-user browser is sent via Route 53 DNS routing to an Application Load Balancer (ALB Collectors), which forwards traffic to auto-scaled EC2 instances acting as COLLECTORS. The COLLECTORS push raw metrics into an SQS queue. A second auto-scaled pool of EC2 instances (PROCESSORS) fetches data from SQS, interacts with Redis (ElastiCache) for caching during computations, and stores persistent data in a Cassandra database cluster across multiple availability zones. For dashboard viewing, requests from the DASHBOARD route through an ALB (Processors) to the PROCESSORS, which query Cassandra and surface monitoring results to users.",
+  "graph": {
+    "name": "Zoho Site247 Real User Monitoring Architecture",
+    "link": "https://www.youtube.com/watch?v=TTlyNWh0gjM",
+    "categories": "Monitoring, Real User Monitoring, Auto Scaling, Web Analytics",
+    "graph_usable": true,
+    "notes": "Site247 processes 25M to 50M requests per day (up to 50k requests/min at peak) using auto-scaled EC2 collectors and processors with SQS, Redis caching, and multi-AZ Cassandra storage."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "USERS",
+      "notes": "End-user browsers running web applications where the beacon script is executed."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CDN",
+      "notes": "Content Delivery Network serving the beacon data collection script to user browsers."
+    },
+    {
+      "id": "2",
+      "service": "Route53",
+      "name": "R53",
+      "notes": "DNS service routing traffic to CDN and regional ALBs."
+    },
+    {
+      "id": "3",
+      "service": "ALB",
+      "name": "ALB (Collectors)",
+      "notes": "Application Load Balancer distributing incoming telemetry metric requests to collector instances."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "COLLECTORS",
+      "notes": "Auto-scaled EC2 instances that receive incoming metrics from users and push them to SQS."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Message queue decoupling data collection from asynchronous processing."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "DASHBOARD",
+      "notes": "Monitoring UI/dashboard used by operators to view real-time performance and application health."
+    },
+    {
+      "id": "7",
+      "service": "ALB",
+      "name": "ALB (Processors)",
+      "notes": "Application Load Balancer receiving dashboard API requests and routing them to processors."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "PROCESSORS",
+      "notes": "Auto-scaled EC2 instances responsible for metric calculations, caching with Redis, and writing/reading from Cassandra."
+    },
+    {
+      "id": "9",
+      "service": "ElastiCache",
+      "name": "REDIS",
+      "notes": "In-memory cache layer used by processors during real-time metric computations."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "CASSANDRA",
+      "notes": "Multi-AZ Cassandra database cluster storing processed telemetry and user monitoring metrics."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User browser requests and downloads the Beacon monitoring script via CDN."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Beacon script sends collected browser/device performance data to collector ALB."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB forwards telemetry requests to collector EC2 instances."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Collectors buffer and enqueue collected metrics into SQS queue."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Processor EC2 instances pull raw metrics from SQS queue."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Processors read/write intermediate state in Redis cache."
+    },
+    {
+      "source": "8",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Processors persist computed metrics to Cassandra database."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Dashboard queries real-time analytics data via processor ALB."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB routes dashboard queries to processor nodes to query Cassandra."
+    }
+  ]
+}

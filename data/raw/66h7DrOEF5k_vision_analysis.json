@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1. **Node Identification & Mapping**: Identified nodes from the visual diagram and audio transcript. Non-AWS services like Kubernetes and Spotinst map to `ThirdParty`. AWS services (S3, EC2, ALB, ECS, DynamoDB, Lambda, CloudWatch) map directly to their exact valid vocabulary names.\n2. **Training Workflow (Flow 0)**: Input training data and code reside in S3 ('S3 Input Data') and flow to the GPU Instance cluster running Kubernetes. Trained models are output to S3 ('S3 Model Storage'), which are then deployed to host ECS inference services.\n3. **Service Discovery / Dynamic Lifecycle (Flow 1)**: As new ECS Services scale or deploy, lifecycle events trigger CloudWatch Events, invoking a Lambda function that registers the active service name and container IP mapping into DynamoDB.\n4. **Inference Request Routing (Flow 2)**: External client traffic enters via the Load Balancer (ALB) to a Proxy Service (ECS). The Proxy queries DynamoDB for the latest target endpoint IP and routes traffic to the appropriate active ECS Service for blue-green deployment.",
+  "graph": {
+    "name": "ABEJA Platform ML Training and Inference Architecture",
+    "link": "https://www.youtube.com/watch?v=66h7DrOEF5k",
+    "categories": "ML/AI, Containers, Compute",
+    "graph_usable": true,
+    "notes": "This architecture describes the ABEJA Platform for end-to-end machine learning workflows on AWS. It features a Kubernetes GPU training cluster, S3 model artifacts storage, blue-green deployment using ECS, and custom dynamic service discovery driven by CloudWatch Events, Lambda, and DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Input Data",
+      "notes": "Stores raw training datasets and training scripts."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Kubernetes",
+      "notes": "Container orchestrator managing GPU instance training jobs."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "GPU Instance",
+      "notes": "EC2 instances equipped with GPUs for deep learning training workloads."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Model Storage",
+      "notes": "Stores trained ML models ready for deployment to inference environments."
+    },
+    {
+      "id": "4",
+      "service": "ALB",
+      "name": "LOAD BALANCER",
+      "notes": "Receives external incoming HTTP/HTTPS inference requests."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "Proxy Service",
+      "notes": "Reverse proxy container running on ECS that dynamically routes requests using DynamoDB IP lookups."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "ECS Services",
+      "notes": "Target inference services hosting ML models for blue-green deployments."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Lookup table storing mapping of active service names to endpoint IP addresses."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless function that processes lifecycle events and updates service IPs in DynamoDB."
+    },
+    {
+      "id": "9",
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH EVENTS",
+      "notes": "Captures ECS task state change events."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "EC2 SPOT",
+      "notes": "Spot instances used to minimize compute infrastructure costs."
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "spotinst",
+      "notes": "Third-party platform used to manage EC2 Spot instance autoscaling and cost optimization."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Training data and scripts are pulled from S3 into the GPU cluster."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Trained ML model artifacts are saved to S3 model storage."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Models stored in S3 are deployed to ECS inference services."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "ECS deployment state changes trigger CloudWatch Events."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudWatch Events invokes the Lambda function."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda registers updated service names and IP addresses into DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Inference traffic is forwarded from ALB to the Proxy Service."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Proxy Service queries DynamoDB for target service IP."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB returns the active service IP mapping to Proxy Service."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Proxy Service forwards traffic to the corresponding ECS inference service endpoint."
+    }
+  ]
+}

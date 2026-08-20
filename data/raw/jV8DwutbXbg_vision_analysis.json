@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "The visual architecture depicts a transaction data processing pipeline for Tandem Bank. 1. An account update event is received by an ingestion Kinesis stream. 2. The Kinesis stream triggers a lean Ingestion Lambda function. 3. The Ingestion Lambda queries raw transaction data from an RDS instance. 4. The Ingestion Lambda batches transaction description strings and sends messages to an SQS queue. 5. SQS buffers and fans out message batches to NLP Worker Lambda functions running ANTLR-based code. 6. The NLP Worker Lambda writes enriched transaction details and model metadata to an Enriched Data RDS instance. 7. The NLP Worker Lambda concurrently publishes a processing completion event to an output Kinesis event stream to trigger downstream application updates.",
+  "graph": {
+    "name": "Tandem Bank Real-Time Transaction NLP Pipeline",
+    "link": "https://www.youtube.com/watch?v=jV8DwutbXbg",
+    "categories": "Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "This architecture processes and enriches tens of millions of raw banking transaction strings using serverless fan-out NLP processing with Lambda and SQS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Kinesis (Ingestion)",
+      "notes": "Receives notification events indicating user bank account transaction data has been aggregated."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda (Ingestion)",
+      "notes": "Lean Lambda function triggered by Kinesis stream; queries RDS for raw transaction rows and batches message descriptions to SQS."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "RDS (Raw Data)",
+      "notes": "Database storing raw, scraped transaction records prior to enrichment."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue buffering batched transaction string descriptions to enable asynchronous fan-out processing to worker Lambdas."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda (NLP Worker)",
+      "notes": "Scalable worker Lambda executing ANTLR-generated Python NLP parser to extract merchant names, locations, dates, and currencies."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS (Enriched Data)",
+      "notes": "Database storing enriched transaction features along with the corresponding NLP model version."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Kinesis (Events)",
+      "notes": "Output event stream published upon completion of NLP processing to trigger downstream mobile app updates."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Kinesis triggers the lean ingestion Lambda function upon receiving an account update event."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Ingestion Lambda queries RDS to fetch raw transaction data for the target user."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ingestion Lambda batches transaction description strings (~100 items/batch) and publishes to SQS queue."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "SQS queue triggers multiple parallel instances of the NLP worker Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "NLP worker Lambda writes parsed transaction attributes and model version info to the enriched RDS database."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "control",
+      "notes": "NLP worker Lambda publishes processing complete event to the output Kinesis event stream."
+    }
+  ]
+}

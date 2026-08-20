@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The architecture represents a serverless application modernization effort for American Commercial Barge Line (ACBL) transitioning from a legacy VB6 and Oracle database system. Legacy data changes are captured via AWS DMS and published to Amazon SNS, which triggers an Ingestion Lambda function to reformat relational data into a single-table DynamoDB pattern using an adjacency list model. The web application features an Angular Frontend SPA authenticated via Amazon Cognito. AppSync acts as the GraphQL API layer, integrating permissions from Cognito and orchestrating data resolvers across multiple microservices: a primary Lambda microservice interfacing with DynamoDB and a secondary Lambda microservice fetching river flow and flooding data from the USGS.",
+  "graph": {
+    "name": "American Commercial Barge Line Serverless Modernization Architecture",
+    "link": "https://www.youtube.com/watch?v=iwDNnyiD26M",
+    "categories": "Serverless, Migration, GraphQL API",
+    "graph_usable": true,
+    "notes": "Serverless modernization pattern using AppSync, Cognito, Lambda, and DynamoDB single-table design."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Angular Frontend",
+      "notes": "Single Page Application (SPA) frontend interface for web users."
+    },
+    {
+      "id": "1",
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "Handles user authentication, issues JWT tokens, and enforces authorization rules in AppSync."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Static asset storage for the web application."
+    },
+    {
+      "id": "3",
+      "service": "AppSync",
+      "name": "AppSync",
+      "notes": "Managed GraphQL API layer consolidating microservice resolvers and managing client subscriptions/queries."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda (Microservice)",
+      "notes": "Core business logic microservice serving AppSync GraphQL resolvers."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (USGS Weather)",
+      "notes": "External microservice fetching river flow rate and flooding data from USGS."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Single-table NoSQL database using adjacency list pattern for optimized relational modeling."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Ingestion)",
+      "notes": "Ingestion Lambda processing change data capture messages into DynamoDB format."
+    },
+    {
+      "id": "8",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Pub/sub messaging service receiving sync events from DMS."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Legacy Oracle DB",
+      "notes": "On-premises legacy Oracle database synchronized to AWS via DMS."
+    }
+  ],
+  "edges": [
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "DMS pushes database change updates to SNS."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS triggers the ingestion Lambda function."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Ingestion Lambda formats and writes synchronized relational data into DynamoDB using adjacency list patterns."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Angular frontend sends user login request to Cognito."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Cognito issues authentication token to the frontend."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Cognito token context evaluates user permissions and directive access in AppSync."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Frontend sends GraphQL queries and mutations to AppSync."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "AppSync invokes core microservice Lambda function as a GraphQL resolver."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Microservice Lambda queries single-table DynamoDB for application data."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "control",
+      "notes": "AppSync invokes USGS weather Lambda microservice."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "USGS weather Lambda returns river flow and flood data to AppSync."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "AppSync consolidates and returns unified GraphQL payload to Angular application."
+    }
+  ]
+}

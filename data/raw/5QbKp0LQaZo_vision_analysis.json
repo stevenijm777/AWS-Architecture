@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture depicts GumGum's Verity contextual intelligence platform operating across an AWS Main Region and AWS Outposts for low-latency ad contextual classification.\n\n1. Main Region Standard Flow:\n- Web/API clients send web page classification requests (e.g., gumgum.com) to API Gateway.\n- API Gateway passes requests to the RESTful API running on Main Region EKS.\n- Main Region EKS checks DynamoDB (holding 15TB of classification data) for existing entries.\n\n2. AI Contextual Classification Loop:\n- On cache miss in DynamoDB, an orchestrator component on EKS triggers the GumGum AI stack on ECS (composed of NLP and Computer Vision microservices).\n- ECS microservices process content and update classification results into DynamoDB until complete.\n\n3. Data Replication:\n- Data is continuously synchronized in real-time from DynamoDB in the Main Region to ElastiCache Redis (1TB) located on AWS Outposts.\n\n4. Low-Latency Edge API Flow (AWS Outposts):\n- Low-latency clients requiring sub-10ms SLA at 100k req/sec connect to the ALB on AWS Outposts.\n- ALB routes requests to the Edge API (built in Go) on Outpost EKS.\n- Edge API performs sub-10ms cache lookups against ElastiCache Redis.\n- On cache miss at the edge, Edge API sends an orchestration request back to Main Region EKS to kick off the full AI classification loop.",
+  "graph": {
+    "name": "GumGum Verity Contextual Intelligence Architecture",
+    "link": "https://www.youtube.com/watch?v=5QbKp0LQaZo",
+    "categories": "AI/ML, Low Latency, Hybrid Infrastructure",
+    "graph_usable": true,
+    "notes": "Hybrid architecture leveraging AWS Region and AWS Outposts to achieve sub-10ms SLA at 100k requests per second using Go-based Edge API and ElastiCache Redis."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Clients",
+      "notes": "Standard clients submitting web page classification requests."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for standard web page classification requests."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Main Region EKS",
+      "notes": "Runs main RESTful API and orchestration engine for AI classification."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Main classification database holding ~15TB of contextual data."
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "GumGum AI ECS",
+      "notes": "Runs microservices for NLP and Computer Vision AI model inference."
+    },
+    {
+      "id": "5",
+      "service": "Outpost",
+      "name": "AWS Outposts",
+      "notes": "On-premises infrastructure container housing sub-10ms low-latency stack."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "1TB Redis cluster on Outposts operating with Least Recently Used (LRU) eviction policy."
+    },
+    {
+      "id": "7",
+      "service": "EKS",
+      "name": "Edge API EKS",
+      "notes": "High-performance API written in Go running on Outpost EKS."
+    },
+    {
+      "id": "8",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer on Outposts for routing low-latency client traffic."
+    },
+    {
+      "id": "9",
+      "service": "UserConsumerAPI",
+      "name": "Low-Latency Clients",
+      "notes": "Clients with sub-10ms SLA sending up to 100k requests per second."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Clients send web page classification requests to API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway forwards request to Main Region RESTful API on EKS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Main Region EKS performs database lookup on DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Orchestrator initiates AI classification request to ECS NLP and Computer Vision microservices."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "AI microservices store updated classification results into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Real-time replication syncs classification data from DynamoDB (15TB) to ElastiCache Redis (1TB)."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Low-latency clients send 100k req/s requests requiring sub-10ms SLA to Outpost ALB."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "ALB routes low-latency requests to Go Edge API running on EKS."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Edge API performs fast cache lookup in ElastiCache Redis."
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "control",
+      "notes": "On cache miss, Edge API triggers Main Region EKS to initiate AI classification."
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "step_by_step_reasoning": "The architecture represents HDFC Life's real-time, event-driven data lake platform on AWS. On-premises legacy sources (AS400, flat files, and databases) stream data over AWS Direct Connect (DX) into AWS Database Migration Service (DMS). DMS feeds raw data simultaneously into Amazon DynamoDB (DDB) for real-time staging and into Amazon S3 for long-term storage. DynamoDB Streams trigger approximately 550 AWS Lambda functions to transform data sequentially across Raw, L1 (user persona), and L2 ( enriched behaviors/attributes) layers, writing processed results back to DynamoDB. In case of errors or layer updates, an asynchronous serverless recovery mechanism uses Amazon Athena to rebuild layer data within S3, which is then reloaded back into DynamoDB without impacting source systems.",
+  "graph": {
+    "name": "HDFC Life Real-Time Event-Driven Data Lake Architecture",
+    "link": "https://www.youtube.com/watch?v=h0HE3bOEiMk",
+    "categories": "Data Lake, Event-Driven, Real-Time Ingestion",
+    "graph_usable": true,
+    "notes": "HDFC Life migrated from a delayed batch-based data lake to a real-time event-driven data lake leveraging DynamoDB streams, Lambda, S3, and Athena for lower cost and serverless error recovery."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "SOURCE",
+      "notes": "On-premises legacy data sources including AS400, flat files, and enterprise databases."
+    },
+    {
+      "id": "1",
+      "service": "DirectConnect",
+      "name": "DX",
+      "notes": "AWS Direct Connect provides a private, dedicated network link from on-premises to AWS."
+    },
+    {
+      "id": "2",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "AWS Database Migration Service ingests real-time data feeds from legacy systems into AWS."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DDB",
+      "notes": "Primary real-time staging store organized into Raw, L1 (user persona), and L2 (behavioral) data layers."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Around 550 Lambda functions process and transform data between Raw, L1, and L2 layers triggered by DynamoDB Streams."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Amazon S3 bucket storing raw layer data and serving as the data repository for recovery operations."
+    },
+    {
+      "id": "6",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Amazon Athena executes serverless queries to rebuild data layers in S3 during error recovery."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "On-premises source data sent across Direct Connect to AWS."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Direct Connect delivers data feeds into AWS DMS."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "DMS streams incoming data into DynamoDB Raw layer."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "DMS streams raw feed concurrently into Amazon S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "DynamoDB Streams triggers Lambda functions on new record inserts/updates."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda functions write enriched L1 and L2 layer data back into DynamoDB."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Error recovery request initiated to rebuild corrupted or changed layers via Athena."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries raw data and rebuilds layer data inside S3."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Rebuilt layer data from S3 is re-ingested back into DynamoDB."
+    }
+  ]
+}

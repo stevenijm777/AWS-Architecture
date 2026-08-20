@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. Identified core system entities from the visual diagram and audio transcript: AWS DeepLens, Identity Lambda function, Amazon Rekognition, Amazon S3, Amazon DynamoDB, Alexa for Business, Workspaces Helper Lambda function, AWS Step Functions, Amazon WorkSpaces, and AWS Sumerian.\n2. Mapped Sumerian to ThirdParty as it is not present in the valid service vocabulary list.\n3. Segmented interactions into two logical flows:\n   - Flow 0: Employee identification and caching (DeepLens captures image -> Identity Lambda -> Rekognition -> photo stored in S3 & presence cached in DynamoDB).\n   - Flow 1: Self-service request & provisioning (User talks to Alexa -> WKSP Helper Lambda queries DynamoDB -> returns response to Alexa -> triggers Step Functions approval workflow -> provisions WorkSpaces).\n4. Verified edge directions and types based on visual arrows and transcript descriptions.",
+  "graph": {
+    "name": "Olikka WorkSpaces Automated Self-Service Provisioning Hub",
+    "link": "https://www.youtube.com/watch?v=_pXybA6832o",
+    "categories": "Serverless, Automation, Workspace Provisioning, Computer Vision",
+    "graph_usable": true,
+    "notes": "An automated serverless kiosk system combining facial recognition (DeepLens, Rekognition) and voice control (Alexa) to verify user identity and orchestrate Amazon WorkSpaces provisioning within two seconds."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "DeepLens",
+      "name": "DEEPLENS",
+      "notes": "Captures photo when an employee approaches the self-service hub."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "IDENTITY",
+      "notes": "Receives photo from DeepLens, coordinates with Rekognition, stores image in S3, and caches presence in DynamoDB."
+    },
+    {
+      "id": "2",
+      "service": "Rekognition",
+      "name": "REKOGNITION",
+      "notes": "Performs facial recognition logic to identify pre-registered employees within target 2-second SLA."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores employee face images."
+    },
+    {
+      "id": "4",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Provides low-latency key-value cache of who is currently at a specific location."
+    },
+    {
+      "id": "5",
+      "service": "AlexaForBusiness",
+      "name": "ALEXA",
+      "notes": "Voice interface for users interacting with the self-service hub."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "WKSP HELPER",
+      "notes": "Executes WorkSpaces Helper skill logic, looks up nearby identity in DynamoDB, and personalized voice prompt."
+    },
+    {
+      "id": "7",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "Orchestrates approval workflow (user/manager confirmation) and provisioning steps."
+    },
+    {
+      "id": "8",
+      "service": "WorkSpaces",
+      "name": "WORKSPACES",
+      "notes": "Amazon WorkSpaces desktop provisioned automatically upon workflow approval."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "SUMERIAN",
+      "notes": "Planned future replacement/enhancement for the Alexa voice interaction interface."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "DeepLens triggers Identity Lambda with captured photo."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Identity Lambda sends photo to Rekognition for identity match."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Rekognition returns identity match result to Identity Lambda."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Identity Lambda stores original image in S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Identity Lambda caches user identity and location timestamp in DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "User invokes Alexa skill, passing request to WKSP Helper Lambda."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "WKSP Helper Lambda queries DynamoDB to find who is at the location."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "DynamoDB returns recent identity record."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "WKSP Helper sends personalized prompt response back to Alexa."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "WKSP Helper invokes Step Functions to start approval and provisioning workflow."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "control",
+      "notes": "Step Functions triggers automated provisioning of Amazon WorkSpace."
+    }
+  ]
+}

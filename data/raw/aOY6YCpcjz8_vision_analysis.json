@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture diagram and transcript depict HubSpot's asynchronous task queuing system built on top of AWS SQS, EC2 microservices, and external storage engines (Kafka, HBase, MySQL).\n\n1. Node Identification:\n- Microservices running on EC2: ENQUEUE (id: 0), UNIQUE (id: 2), SCHEDULER (id: 6), and SCHEDULE WATCHER (id: 9).\n- SQS Queues: SQS UNIQUE (id: 1), SQS SCHEDULER (id: 5), and SQS SCHEDULE WATCHER (id: 8).\n- External/Third-Party Engines (ThirdParty): KAFKA (id: 3), HBASE (id: 4), and MYSQL (id: 7).\n\n2. Flow Segmentation:\n- Flow 0: Task Enqueue & Fallback strategy (ENQUEUE -> SQS UNIQUE / KAFKA fallback cycle).\n- Flow 1: Task Uniqueness Check (SQS UNIQUE -> UNIQUE EC2 microservice -> HBase lookup/store -> SQS SCHEDULER).\n- Flow 2: Task Scheduling (SQS SCHEDULER -> SCHEDULER EC2 -> MySQL persistence / direct bypass to SQS SCHEDULE WATCHER if within execution window).\n- Flow 3: Task Execution Polling (MySQL -> SCHEDULE WATCHER & SQS SCHEDULE WATCHER -> SCHEDULE WATCHER).",
+  "graph": {
+    "name": "HubSpot Asynchronous Task Queuing Architecture",
+    "link": "https://www.youtube.com/watch?v=aOY6YCpcjz8",
+    "categories": "Application Integration, Compute, Database, Storage",
+    "graph_usable": true,
+    "notes": "HubSpot handles over 6,500 task enqueues per second across a microservice architecture built on AWS SQS, EC2, Kafka, HBase, and MySQL."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "ENQUEUE",
+      "notes": "Microservice handling incoming task requests (e.g., email dispatch) at around 6,500 tasks/second."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "SQS UNIQUE",
+      "notes": "Dedicated queue for buffering incoming tasks undergoing uniqueness checking."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "UNIQUE",
+      "notes": "Microservice that checks task uniqueness against HBase before proceeding."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "KAFKA",
+      "notes": "Self-managed internal Kafka cluster used as a secondary fallback buffer during SQS timeouts/outages."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "HBASE",
+      "notes": "NoSQL data store used to hold and check namespace-isolated task uniqueness IDs."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS SCHEDULER",
+      "notes": "Queue holding validated unique tasks awaiting scheduling."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "SCHEDULER",
+      "notes": "Microservice responsible for saving scheduled tasks into MySQL or forwarding ready tasks directly."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "MYSQL",
+      "notes": "Relational database used to store future-scheduled tasks beyond SQS's native 15-minute delay limit."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS SCHEDULE WATCHER",
+      "notes": "Queue storing ready-to-execute tasks for consumption."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "SCHEDULE WATCHER",
+      "notes": "Worker microservice reading ready tasks from SQS SCHEDULE WATCHER or polling due tasks from MySQL."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "ENQUEUE sends incoming tasks to SQS UNIQUE."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Fallback path: ENQUEUE produces messages to Kafka if SQS is unavailable or times out."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Worker reads fallback messages from Kafka back into the enqueue process once SQS recovers."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "UNIQUE microservice consumes task messages from SQS UNIQUE queue."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "UNIQUE microservice checks HBase for task ID existence to filter out duplicates."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Verified unique tasks are forwarded to SQS SCHEDULER queue."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "SCHEDULER microservice pulls tasks from SQS SCHEDULER queue."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "SCHEDULER writes long-term scheduled tasks to MySQL database."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Fast-path: SCHEDULER bypasses MySQL write and sends task directly to SQS SCHEDULE WATCHER if execution time is within 15 minutes."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "SCHEDULE WATCHER polls due tasks from MySQL when their execution time window is reached."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "data",
+      "notes": "SCHEDULE WATCHER pulls ready-to-execute task messages from SQS SCHEDULE WATCHER."
+    }
+  ]
+}

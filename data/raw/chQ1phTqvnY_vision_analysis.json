@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows HighResCam's serverless image processing pipeline using AWS Step Functions. High-resolution webcam images uploaded to S3 trigger a Step Functions workflow. Step Functions conditionally invokes parallel Lambda functions: an 'ANALYZE' stage using Amazon Rekognition and a custom ML framework for scene and object detection, and a 'PROCESS' stage for image transformation (rotation, blurring, and deep-zoom slicing into tiles) which saves updated image tiles back to S3. Extracted metadata is passed to a 'PERSIST' Lambda stage, which writes metadata into both RDS and DynamoDB databases and emits a completion event via Amazon SNS.",
+  "graph": {
+    "name": "HighResCam Image Processing Architecture",
+    "link": "https://www.youtube.com/watch?v=chQ1phTqvnY",
+    "categories": "AI & Machine Learning, Media & Entertainment, Serverless",
+    "graph_usable": true,
+    "notes": "Handles processing high-resolution webcam images (20-40 Megapixels) uploaded to S3. Processed deep-zoom image tiles (up to 200 tiles per image) are stored back in S3 while metadata is saved in RDS and DynamoDB, followed by an SNS notification."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores uploaded high-resolution webcam images and resulting deep-zoom image tiles."
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates the entire serverless processing workflow based on incoming camera configuration."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "ANALYZE",
+      "notes": "Parallel Lambda functions that run machine learning analysis on image data."
+    },
+    {
+      "id": "3",
+      "service": "Rekognition",
+      "name": "REKOGNITION",
+      "notes": "AWS Rekognition used for scene recognition, weather detection, and mood/labeling."
+    },
+    {
+      "id": "4",
+      "service": "AmazonML",
+      "name": "ML",
+      "notes": "Custom deep learning framework used for object detection on image data."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "PROCESS",
+      "notes": "Parallel Lambda functions for image transformation (rotation, blurring/pixelation) and deep-zoom tiling."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "PERSIST",
+      "notes": "Parallel Lambda functions responsible for persisting image metadata."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational database used to store image metadata."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "NoSQL database used to store image metadata."
+    },
+    {
+      "id": "9",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Publishes notifications upon completion of processing for a given image."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "New S3 image upload triggers Step Functions workflow execution."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions invokes the ANALYZE Lambda stage if analysis is enabled in config."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Step Functions invokes the PROCESS Lambda stage directly or following the analysis step."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "ANALYZE Lambda invokes AWS Rekognition for scene detection."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "ANALYZE Lambda invokes deep learning ML framework for object detection."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "PROCESS Lambda stores generated image tiles and modified images back into S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "PROCESS Lambda passes metadata down to the PERSIST Lambda stage."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "PERSIST Lambda writes extracted metadata into RDS."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "data",
+      "notes": "PERSIST Lambda writes extracted metadata into DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "PERSIST Lambda publishes notification to SNS signaling completion."
+    }
+  ]
+}
