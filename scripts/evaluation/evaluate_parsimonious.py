@@ -182,10 +182,19 @@ def evaluate_parsimonious(
         "generated_on": today_str,
         "mode": "parsimonious",
         "label": "v9",
-        "graphs_directory": str(graphs_dir),
-        "model": "gemini-3.6-flash",
+        "pipeline": "1-stage parsimonious v9",
+        "gemini_model": "gemini-3.6-flash",
         "git_commit": git_commit(),
-        "n_evaluated": len(results),
+        "inputs": {
+            "graphs_dir": "data/graphs_parsimonious",
+            "gt_dir": "data/cloudscape_gt"
+        },
+        "counts": {
+            "evaluated": len(results),
+            "scored_for_edges": len(results) - len(zero_edge_gt_list),
+            "excluded_from_edges": len(zero_edge_gt_list),
+            "unreadable": len(failed_list)
+        },
         "exclusions": {
             "gt_has_zero_edges": zero_edge_gt_list,
             "skipped_no_gt": skipped_no_gt,
@@ -193,6 +202,16 @@ def evaluate_parsimonious(
         },
         "prompt_v9_sha256": get_prompt_v9_sha256(),
         "metrics": {
+            "service_f1": {
+                "mean": round(100 * mean_svc_f1, 2)
+            },
+            "edge_f1": {
+                "mean": round(100 * mean_edge_f1_scored, 2)
+            },
+            "edge_f1_legacy_including_zero_edge_gt": {
+                "mean": round(100 * mean_edge_f1_all, 2)
+            },
+            # Parsimonious legacy compatibility
             "service_f1_mean": round(100 * mean_svc_f1, 2),
             "edge_f1_mean_all": round(100 * mean_edge_f1_all, 2),
             "edge_f1_mean_excluding_zero_edge_gt": round(100 * mean_edge_f1_scored, 2)
