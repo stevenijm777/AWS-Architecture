@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture shows the UK Met Office Severe Weather Warning System's serverless dissemination flow. A CloudWatch scheduled event periodically triggers an AWS Step Functions state machine workflow. The state machine queries an AWS API Gateway instance to check if there are active severe weather warnings in the active region. If a warning exists, the warning state is saved as a JSON object into an Amazon S3 bucket (Warnings). Step Functions then orchestrates a set of AWS Lambda functions that generate content artifacts (PDFs, SMS text, email body). Next, Step Functions reads responder notification preferences from a second S3 bucket (Preferences), which is updated in sync with an On-Premise system. Finally, Step Functions merges the warning data and preferences to trigger an external Messaging API to deliver SMS, email, and text alerts.",
+  "graph": {
+    "name": "Met Office Severe Weather Warning Dissemination Architecture",
+    "link": "https://www.youtube.com/watch?v=D_4dsXVqzMs",
+    "categories": "Serverless Weather Alerts Dissemination",
+    "graph_usable": true,
+    "notes": "Serverless architecture using Step Functions, Lambda, and S3 to disseminate severe weather warnings under 1-2 minutes at 5% of previous on-premise operating costs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH",
+      "notes": "Scheduled event starter triggering the warning check process."
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "Orchestrates the serverless workflow state machine."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Executes content creation tasks like PDF generation, email formatting, and SMS composition."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API",
+      "notes": "Exposes current severe weather warning status."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (Warnings)",
+      "notes": "Stores active warning state as JSON objects."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Preferences)",
+      "notes": "Stores responder community notification channel preferences."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "MESSAGING API",
+      "notes": "External third-party API for delivering emails, SMS, and text messages."
+    },
+    {
+      "id": "7",
+      "service": "OnPremDC",
+      "name": "ON PREMISE",
+      "notes": "On-premise source system synchronizing responder contact preferences to S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch event triggers Step Functions execution."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Step Functions queries API Gateway for active warning state."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Step Functions writes warning state JSON object to S3."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Step Functions orchestrates Lambdas to build message artifacts."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Step Functions retrieves customer preferences from S3."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Step Functions dispatches synthesized warning notifications to third-party Messaging API."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "On-premise system syncs user contact preferences to S3 bucket."
+    }
+  ]
+}

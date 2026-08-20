@@ -1,0 +1,138 @@
+{
+  "step_by_step_reasoning": "The architecture diagram from Ashok Leyland's iAnalytics platform illustrates a real-time and batch data processing pipeline on AWS. Streaming data from 150,000 connected vehicles enters the platform through a secure VPC endpoint via Kafka. The real-time stream is processed by a LIVE EMR cluster running Spark and HBase to calculate 18 real-time KPIs, saving raw payloads into an S3 raw data bucket. At hourly intervals, a BATCH EMR cluster reads from the raw S3 bucket, calculating 99 additional KPIs saved to a KPI S3 bucket, and compressing raw logs into Parquet format written to a PARQUET S3 bucket. Data from the KPI bucket is aggregated into Amazon Redshift for structured enterprise reporting. Data analysts run ad-hoc queries over the PARQUET S3 bucket using Amazon Athena. Machine learning engineers pull Parquet data into SageMaker to train models for real-time use cases like fuel pilferage detection. An RDS instance stores vehicle metadata, customer profiles, and geospatial mapping references.",
+  "graph": {
+    "name": "Ashok Leyland iAnalytics Connected Vehicle Architecture",
+    "link": "https://www.youtube.com/watch?v=a59halVklMI",
+    "categories": "Data Analytics and Machine Learning",
+    "graph_usable": true,
+    "notes": "iAnalytics platform processing 350 GB/day (~1 billion records/day) from 150,000 vehicles reporting at 6-second frequency."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "VPC",
+      "name": "VPC",
+      "notes": "Secure channel through which data from third-party Kafka stream enters AWS."
+    },
+    {
+      "id": "1",
+      "service": "EMR",
+      "name": "LIVE",
+      "notes": "Live EMR cluster running Spark and HBase calculating 18 KPIs in real time."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 bucket storing raw real-time streaming data (~350 GB/day, retained for 120 days)."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "BATCH",
+      "notes": "Batch EMR cluster running hourly Spark streams to calculate 99 KPIs and compress data."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "PARQUET",
+      "notes": "S3 bucket storing compressed historical data in Parquet format."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "KPI",
+      "notes": "S3 bucket storing calculated aggregated KPI metrics."
+    },
+    {
+      "id": "6",
+      "service": "SageMaker",
+      "name": "SAGEMAKER",
+      "notes": "Amazon SageMaker used by data science team to train models for real-time fuel pilferage detection."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Relational Database storing customer, vehicle metadata, and geospatial data."
+    },
+    {
+      "id": "8",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Amazon Athena used by data analysts to perform ad-hoc SQL queries over Parquet data."
+    },
+    {
+      "id": "9",
+      "service": "RedShift",
+      "name": "REDSHIFT",
+      "notes": "Amazon Redshift data warehouse storing structured aggregated analytics for enterprise reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Incoming stream from VPC is ingested into the LIVE EMR cluster."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "LIVE EMR cluster writes real-time processed stream data into raw S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "BATCH EMR cluster pulls raw data from S3 every 1 hour."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "BATCH EMR converts raw data into compressed Parquet format and writes to PARQUET S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "BATCH EMR calculates 99 KPIs and writes to KPI S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Aggregated KPI data is loaded from KPI bucket into Redshift data warehouse."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "SageMaker pulls compressed Parquet data to train machine learning models."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries Parquet data stored in S3 directly for ad-hoc analytical reporting."
+    }
+  ]
+}

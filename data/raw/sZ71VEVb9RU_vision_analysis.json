@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "1. Identified core components from the visual diagram and audio transcript:\n   - External meeting applications (Meeting application A, B, C) represented as a ThirdParty entry point.\n   - Amazon API Gateway as the entry point for requests.\n   - AWS Lambda Post Transcript processing inbound meeting requests.\n   - Amazon DynamoDB storing meeting and customer metadata.\n   - Amazon S3 storing raw transcripts.\n   - AWS Step Functions Workflow orchestrating the processing pipeline.\n   - Map Parallelization (AWS Lambda) splitting transcripts by agendas and invoking Bedrock in parallel.\n   - Amazon Bedrock (ThirdParty, as it's not present in AWS valid list) executing generative AI model summarization.\n   - AWS Lambda (Aggregator) aggregating agenda-level summaries into a final summary document.\n   - Amazon S3 storing final aggregated summaries.\n   - AWS Lambda Get Status & Summary providing status updates and final summary responses back via API Gateway.\n\n2. Grouped interactions into logical flows:\n   - Flow 0: Meeting transcript submission and storage (Meeting App -> API Gateway -> Post Transcript Lambda -> S3 Transcripts & DynamoDB).\n   - Flow 1: Processing and summarization workflow (S3 -> Step Functions -> Map Parallelization -> Bedrock & Aggregator Lambda -> S3 Summaries).\n   - Flow 2: Status check and summary retrieval (API Gateway <-> Get Status & Summary Lambda <-> DynamoDB).\n\n3. Mapped all names and service types to exact vocabulary requirements.",
+  "graph": {
+    "name": "Granicus GovMeetings Automated Meeting Summarization Architecture",
+    "link": "https://www.youtube.com/watch?v=sZ71VEVb9RU",
+    "categories": "AI/ML, Serverless, Workflow Orchestration",
+    "graph_usable": true,
+    "notes": "Granicus GovMeetings platform uses AWS Step Functions, Lambda, Bedrock, S3, and DynamoDB to automatically divide 500+ page transcriptions into agenda items, summarize them in parallel using generative AI models, and aggregate the summary for civic clerks."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Meeting application A",
+      "notes": "Application agnostic meeting platform input source."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "Amazon API Gateway",
+      "notes": "Entry point for summarization requests and status queries."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "AWS Lambda Post Transcript",
+      "notes": "Processes request, saves metadata to DynamoDB and uploads transcripts to S3."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores meeting metadata and customer configuration for 600+ customers; updated with status upon completion."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Amazon S3 (Transcripts)",
+      "notes": "Stores full meeting transcriptions (often 500+ pages)."
+    },
+    {
+      "id": "5",
+      "service": "StepFunctions",
+      "name": "AWS Step Functions Workflow",
+      "notes": "Orchestrates parallel map state workflow upon S3 transcript upload."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Map Parallelization",
+      "notes": "Splits transcripts into agenda items and runs parallel summarization requests to Bedrock."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Amazon Bedrock",
+      "notes": "Uses foundational models (e.g. Claude V3) to generate agenda-level summaries."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "AWS Lambda (Aggregator)",
+      "notes": "Aggregates individual agenda summaries into a final document."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Amazon S3 (Summaries)",
+      "notes": "Stores completed, aggregated meeting summary documents."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "AWS Lambda Get Status & Summary",
+      "notes": "Retrieves process status and final summary for clients; preserves status in DynamoDB."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Meeting application sends summarization request and transcript."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Post Transcript Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Post Transcript Lambda writes meeting and customer metadata to DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2''",
+      "type": "data",
+      "notes": "Post Transcript Lambda uploads transcript files to S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 transcript upload triggers Step Functions workflow."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions executes Map Parallelization Lambda state."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Map Parallelization Lambda invokes Amazon Bedrock models in parallel per agenda item."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2''",
+      "type": "control",
+      "notes": "Parallel map outputs are passed to Aggregator Lambda."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Aggregator Lambda stores final aggregated summary document in S3."
+    },
+    {
+      "source": "1",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "API Gateway routes client status and summary requests to Get Status & Summary Lambda."
+    },
+    {
+      "source": "10",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Get Status & Summary Lambda returns processing result/summary back through API Gateway."
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1''",
+      "type": "data",
+      "notes": "Get Status & Summary Lambda checks and preserves status in DynamoDB."
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1. Identifies entities from the visual diagram and transcript: Smart light device, Gateway, App, AWS IoT Core, Amazon Cognito, Lambda, DynamoDB, CloudWatch, SNS, S3, IAM, and the IoT Portal running on EC2.\n2. Normalizes services against the allowed vocabulary: Device and Gateway to ThirdParty, App to UserConsumerMobile, IoT to IoTCore, Cognito to Cognito, Lambda to Lambda, DynamoDB to DynamoDB, CloudWatch to CloudWatch, SNS to SNS, S3 to S3, IAM to IAM, and IoT Portal to EC2.\n3. Maps edge connections into logical flow groups: Flow 0 for user authentication, Flow 1 for IoT device telemetry and serverless processing, and Flow 2 for cross-account management and deployment via IAM.",
+  "graph": {
+    "name": "Eclorvalle AWS IoT SaaS Architecture",
+    "link": "https://www.youtube.com/watch?v=l0hlxVNmJPI",
+    "categories": "IoT, Serverless",
+    "graph_usable": true,
+    "notes": "Eclorvalle provides a SaaS IoT platform that operates directly within the client's AWS account. User authentication is handled via Amazon Cognito SDK. Devices connect via MQTT through gateways to AWS IoT Core. IoT Rules Engine routes data to DynamoDB for storage and triggers Lambda functions for notifications (SNS), monitoring (CloudWatch), and storage (S3). All customer data remains within the customer's own AWS account, with deployment orchestrated via IAM."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Device",
+      "notes": "Smart device (e.g., smart desk lamp) deployed at client site"
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Gateway",
+      "notes": "Local network gateway forwarding device traffic"
+    },
+    {
+      "id": "2",
+      "service": "UserConsumerMobile",
+      "name": "App",
+      "notes": "Mobile client application embedded with Amazon Cognito SDK"
+    },
+    {
+      "id": "3",
+      "service": "IoTCore",
+      "name": "AWS IoT Core",
+      "notes": "Primary ingestion point supporting MQTT protocol and rules engine"
+    },
+    {
+      "id": "4",
+      "service": "Cognito",
+      "name": "Amazon Cognito",
+      "notes": "Handles user registration, authentication, and authorization"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Serverless compute triggered by IoT rules engine for downstream processing"
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "NoSQL database storing device telemetry inside customer account"
+    },
+    {
+      "id": "7",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Monitoring and logging service"
+    },
+    {
+      "id": "8",
+      "service": "SNS",
+      "name": "Amazon SNS",
+      "notes": "Notification service for alerts"
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Object storage located within customer account"
+    },
+    {
+      "id": "10",
+      "service": "IAM",
+      "name": "AWS IAM",
+      "notes": "Cross-account access and deployment permissions manager"
+    },
+    {
+      "id": "11",
+      "service": "EC2",
+      "name": "IoT Portal EC2",
+      "notes": "Eclorvalle management platform portal running in vendor VPC"
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "App authenticates user via Cognito SDK"
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Device sends data to local gateway"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Gateway forwards messages to AWS IoT Core using MQTT"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "IoT Rules Engine writes incoming telemetry data directly to DynamoDB"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "control",
+      "notes": "IoT Rules Engine triggers Lambda function for event handling"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda triggers notification via SNS"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3'",
+      "type": "meta",
+      "notes": "Lambda sends metrics/logs to CloudWatch"
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3''",
+      "type": "data",
+      "notes": "Lambda stores processed outputs in S3"
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "IoT Portal accesses IAM role granted by customer"
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "IAM permissions allow IoT Portal to provision resources in customer account"
+    }
+  ]
+}

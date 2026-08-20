@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "1. Identified the architecture layers from the whiteboard visual inventory and spoken transcript: Collection (Route 53, CloudTrail, VPC Flow Logs), Detection (GuardDuty, CloudWatch Events, Lambda), Investigation (CloudWatch Logs, Lambda, Elasticsearch/OpenSearch), and external notification (Slack).\n2. Pruned the human actor 'Engineers' per pruning rules since Slack is the terminal messaging endpoint.\n3. Normalized service names to exact vocabulary matches: Route 53 -> Route53, CloudTrail -> CloudTrail, VPC -> VPC, GuardDuty -> GuardDuty, CloudWatch -> CloudWatch, Lambda -> Lambda, Elasticsearch -> OpenSearch, Slack -> ThirdParty.\n4. Segmented workflows into two distinct flows:\n   - Flow 0 (Threat Detection & Alerting): Route 53/CloudTrail/VPC send logs to GuardDuty -> GuardDuty triggers CloudWatch Events -> Lambda enriches events -> sends alert to Slack.\n   - Flow 1 (Log Investigation Pipeline): CloudTrail logs -> CloudWatch Logs -> Lambda filters/decorates logs -> Elasticsearch stores logs for Kibana querying.",
+  "graph": {
+    "name": "Bowtie Automated Security Detection and Investigation Architecture",
+    "link": "https://www.youtube.com/watch?v=o5TM9P8U6EY",
+    "categories": "Security Automation, Threat Detection, Log Analytics",
+    "graph_usable": true,
+    "notes": "Automated security alerting and investigation system used by Bowtie on AWS. Collects logs across Route 53, CloudTrail, and VPC, evaluates them via GuardDuty, sends enriched alerts to Slack, and feeds investigation logs into Elasticsearch."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "Collection section: Captures domain query logs."
+    },
+    {
+      "id": "1",
+      "service": "CloudTrail",
+      "name": "CloudTrail",
+      "notes": "Collection section: Captures AWS API call logs."
+    },
+    {
+      "id": "2",
+      "service": "VPC",
+      "name": "VPC Flow Logs",
+      "notes": "Collection section: Captures network traffic logs."
+    },
+    {
+      "id": "3",
+      "service": "GuardDuty",
+      "name": "GuardDuty",
+      "notes": "Detection section: Analyzes logs from Route 53, CloudTrail, and VPC for security anomalies."
+    },
+    {
+      "id": "4",
+      "service": "CloudWatch",
+      "name": "CloudWatch (Detection)",
+      "notes": "Detection section: Receives threat detection findings from GuardDuty."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (Detection)",
+      "notes": "Detection section: Enriches security events using third-party IP lookups and formats alerts."
+    },
+    {
+      "id": "6",
+      "service": "CloudWatch",
+      "name": "CloudWatch (Investigation)",
+      "notes": "Investigation section: Collects CloudTrail logs for detailed post-event analysis."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Investigation)",
+      "notes": "Investigation section: Filters and decorates logs prior to indexing."
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Investigation section: Stores logs for querying and visualization via Kibana."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": "Third-party chat platform used to send alerts directly to security engineers."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Route 53 domain query logs are streamed into GuardDuty."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "CloudTrail API logs are streamed into GuardDuty."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0''",
+      "type": "data",
+      "notes": "VPC flow logs are streamed into GuardDuty."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "GuardDuty generates findings and sends events to CloudWatch."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "CloudWatch triggers Lambda to process and enrich finding events."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda formats actionable alerts and posts them into Slack."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudTrail logs are forwarded to CloudWatch Logs for investigation."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudWatch Logs triggers Lambda to filter and decorate logs."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda streams decorated logs into Elasticsearch for analysis."
+    }
+  ]
+}

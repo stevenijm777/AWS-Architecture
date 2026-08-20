@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "The architecture illustrates Cloud Adhesive's Connect Path solution, which enhances Amazon Connect with email omnichannel capabilities and AI features. 1. A customer sends an email to SES. 2. SES stores the email body and attachments in S3, records state in DynamoDB, and creates a task in Amazon Connect. 3. The agent accesses Connect, retrieving email content from S3 and metadata from DynamoDB. 4. If translation is needed, the agent interacts with Amazon Translate. 5. The agent can request generative AI recommendations from Amazon Bedrock, which retrieves configurations from DynamoDB and content from S3 to provide tailored responses.",
+  "graph": {
+    "name": "Cloud Adhesive Connect Path Email & AI Orchestration Architecture",
+    "link": "https://www.youtube.com/watch?v=weT3nKnOFDg",
+    "categories": "AI/ML, Contact Center, Serverless Integration",
+    "graph_usable": true,
+    "notes": "This architecture extends Amazon Connect with email handling, automated state tracking, translation via Amazon Translate, and LLM-assisted agent recommendations via Amazon Bedrock."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Customer",
+      "notes": "Initiates email support request for customer service or technical support."
+    },
+    {
+      "id": "1",
+      "service": "SES",
+      "name": "Amazon Simple Email Service (SES)",
+      "notes": "Receives inbound customer emails and triggers storage and workflow events."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon Simple Storage Service (S3)",
+      "notes": "Stores original email contents, subject, text, and attachments."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Maintains contact state across back-and-forth email turns and stores Bedrock model configurations."
+    },
+    {
+      "id": "4",
+      "service": "Connect",
+      "name": "Amazon Connect",
+      "notes": "Omnichannel contact center platform routing tasks/emails to available agents."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Amazon Bedrock",
+      "notes": "Generative AI service generating response recommendations for agents based on prompts and fine-tuning configs."
+    },
+    {
+      "id": "6",
+      "service": "Translate",
+      "name": "Amazon Translate",
+      "notes": "Translates incoming emails between customer and agent natural languages."
+    },
+    {
+      "id": "7",
+      "service": "UserCompanyAgent",
+      "name": "Agent",
+      "notes": "Customer support representative reviewing emails and choosing generated responses."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer sends email to customer service email address."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "SES stores raw email content and attachments into S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "SES creates/updates email turn state and metadata record in DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "SES triggers contact task creation in Amazon Connect to route email."
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Agent signals availability in Connect interface to accept incoming tasks."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Agent views email content and attachments loaded from S3."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Agent views email metadata and historical turn state loaded from DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Agent requests translation of email into agent's natural language."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Translate returns translated email text back to agent interface."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Agent requests response recommendations from Amazon Bedrock."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Bedrock references model configuration and prompt settings stored in DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Bedrock accesses context content stored in S3."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Bedrock returns suggested email response options to agent."
+    }
+  ]
+}
