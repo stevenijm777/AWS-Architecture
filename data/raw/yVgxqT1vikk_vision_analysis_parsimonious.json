@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The whiteboard architecture depicts a serverless data ingestion and analytics pipeline for high-volume travel event tracking at Intent. 1. External web/mobile users send events via JavaScript through API Gateway, while backend ad services in ECS send events using KPL to a primary Kinesis Data Stream. 2. A event processor Lambda consumes events from Kinesis, referencing schema definitions stored in a top S3 bucket. 3. Processed events are published to a secondary Kinesis stream (processed streams) serving as integration points. 4. Kinesis Data Firehose delivers these events into an S3 bucket (data lake). 5. A batch deduplication and conversion process reorganizes data on S3 into Parquet format. 6. Data scientists and analysts query the transformed data in S3 directly using Amazon Athena.",
+  "graph": {
+    "name": "Intent - Serverless Data Ingestion and Analytics Platform",
+    "link": "",
+    "categories": "Analytics & Data Pipelines",
+    "graph_usable": true,
+    "notes": "Architecture uses API Gateway, ECS, Kinesis Data Streams, Lambda, Kinesis Firehose, S3, and Athena for serverless high-throughput event processing and analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Web / Mobile Clients",
+      "notes": "Users generating event traffic via JavaScript on web pages"
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives event payloads from web frontend JavaScript"
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Runs ad servers and microservices sending event streams"
+    },
+    {
+      "id": "3",
+      "service": "Kinesis",
+      "name": "Kinesis Stream (Ingestion)",
+      "notes": "Ingests raw event streams in Avro format using KPL"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (Schema & Reference Data)",
+      "notes": "Stores Avro schema registry and reference data"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (Processor)",
+      "notes": "Processes events by schema fingerprinting and schema validation from S3"
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Kinesis Stream (Processed)",
+      "notes": "Processed event streams used as downstream integration points"
+    },
+    {
+      "id": "7",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Streams processed events into S3 data lake storage"
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 (Data Lake)",
+      "notes": "Stores raw Avro files and converted Parquet partitions"
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Interactive query engine for analytics on Parquet data"
+    },
+    {
+      "id": "10",
+      "service": "UserCompanyAnalyst",
+      "name": "Data Scientists & Analysts",
+      "notes": "Queries data using Athena for experiments and ad-hoc analytics"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Web JavaScript sends user activity events to API Gateway"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "API Gateway forwards event data into Kinesis Stream"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "ECS services write event streams using KPL to Kinesis Stream"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Processor Lambdas trigger on incoming Kinesis events"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda reads schema and reference data from S3"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda publishes decoded and processed events to secondary Kinesis stream"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Processed Kinesis stream feeds into Kinesis Firehose"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Firehose writes raw event files into S3"
+    },
+    {
+      "source": "8",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "data",
+      "notes": "Batch process deduplicates and converts Avro files to Parquet back in S3"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "data",
+      "notes": "Athena queries formatted Parquet data stored in S3"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "11",
+      "type": "data",
+      "notes": "Data scientists and analysts consume query results from Athena"
+    }
+  ]
+}

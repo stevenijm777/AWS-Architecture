@@ -1,0 +1,282 @@
+[
+  {
+    "start": 0.0,
+    "end": 17.0,
+    "text": "Welcome to This is My Architecture. I'm Christopher from AWS and today I'm joined by Will from Intent. Welcome Will."
+  },
+  {
+    "start": 17.0,
+    "end": 20.0,
+    "text": "Thanks for having me. Excellent. So what does Intent do?"
+  },
+  {
+    "start": 20.0,
+    "end": 27.0,
+    "text": "Intent's a data science company for travel and commerce sites. We allow our partners to maximize the value per user that visits their site."
+  },
+  {
+    "start": 27.0,
+    "end": 32.0,
+    "text": "So our primary platform is an ad network for travel sites, which we see here."
+  },
+  {
+    "start": 32.0,
+    "end": 36.0,
+    "text": "Excellent. Wonderful. And first thing I notice, this is a completely serverless ecosystem."
+  },
+  {
+    "start": 36.0,
+    "end": 44.0,
+    "text": "Yeah. So being serverless, it allows us to not worry about operating servers and focus on building our applications."
+  },
+  {
+    "start": 44.0,
+    "end": 48.0,
+    "text": "So it relieves a huge burden. We're not trying to keep a zookeeper cluster happy."
+  },
+  {
+    "start": 48.0,
+    "end": 53.0,
+    "text": "Excellent. I notice right down here we've got Athena. So you're obviously doing some analytics at the output."
+  },
+  {
+    "start": 53.0,
+    "end": 56.0,
+    "text": "Yeah. Excellent. All right. So let's go back to the beginning."
+  },
+  {
+    "start": 56.0,
+    "end": 59.0,
+    "text": "First thing I want to ask you is kind of the volumes you're dealing with here."
+  },
+  {
+    "start": 59.0,
+    "end": 67.0,
+    "text": "Right. So yeah. So we have major OTAs, all the travel sites. And so we're dealing with billions of events per day."
+  },
+  {
+    "start": 67.0,
+    "end": 72.0,
+    "text": "They're flowing through. And eventually we'd like to be able to ask questions about those."
+  },
+  {
+    "start": 72.0,
+    "end": 75.0,
+    "text": "Fantastic. Wonderful. So let's get started. What happens on the left hand side?"
+  },
+  {
+    "start": 75.0,
+    "end": 82.0,
+    "text": "Sure. So this is how we're gathering our data. API Gateway is mostly JavaScript on page talking here."
+  },
+  {
+    "start": 82.0,
+    "end": 88.0,
+    "text": "And then in ECS we have our various services with ad servers and various other services."
+  },
+  {
+    "start": 88.0,
+    "end": 95.0,
+    "text": "They all speak to Kinesis, right, using the KPL and publish events in Avro format."
+  },
+  {
+    "start": 95.0,
+    "end": 97.0,
+    "text": "Excellent. And what is the Avro format?"
+  },
+  {
+    "start": 97.0,
+    "end": 107.0,
+    "text": "So Avro is a binary data format. It just allows us to make sure that everything's speaking the same language with the same schemas and keeps things sane for downstream consumers."
+  },
+  {
+    "start": 107.0,
+    "end": 112.0,
+    "text": "Excellent. So once it gets into the Kinesis stream here, what actually happens then?"
+  },
+  {
+    "start": 112.0,
+    "end": 120.0,
+    "text": "So from Kinesis, we have our processor lambdas. And so we have basically a processor per event type."
+  },
+  {
+    "start": 120.0,
+    "end": 127.0,
+    "text": "Mm-hm. And then the first thing it does is reads the schema from the schema registry."
+  },
+  {
+    "start": 127.0,
+    "end": 134.0,
+    "text": "So one of the optimizations that we made was these events get published with just a schema fingerprint instead of the whole schema,"
+  },
+  {
+    "start": 134.0,
+    "end": 142.0,
+    "text": "which allows us to basically have a lot more efficiency when writing and publishing from the service."
+  },
+  {
+    "start": 142.0,
+    "end": 147.0,
+    "text": "And I noticed your schema's up in S3. Is there a reason why you're putting the schema in an S3 bucket?"
+  },
+  {
+    "start": 147.0,
+    "end": 154.0,
+    "text": "Yeah. So this was a pattern we had that allowed us to run all of our lambdas within just the public cloud and not within a VPC."
+  },
+  {
+    "start": 154.0,
+    "end": 155.0,
+    "text": "Okay."
+  },
+  {
+    "start": 155.0,
+    "end": 159.0,
+    "text": "So we also have a pattern of publishing reference data to these buckets, or to a bucket."
+  },
+  {
+    "start": 159.0,
+    "end": 160.0,
+    "text": "Okay."
+  },
+  {
+    "start": 160.0,
+    "end": 163.0,
+    "text": "And then the lambdas can access the reference data from S3."
+  },
+  {
+    "start": 163.0,
+    "end": 171.0,
+    "text": "This kind of came from a pain point of initially trying to run within VPC for things that need a reference data access and dealing with ENIs and that type of stuff."
+  },
+  {
+    "start": 171.0,
+    "end": 175.0,
+    "text": "And given the volume you mentioned at the beginning, obviously that's going to be a critical factor in this kind of ecosystem."
+  },
+  {
+    "start": 175.0,
+    "end": 181.0,
+    "text": "Yeah, exactly. It also allows us to decouple from databases. So we're not worried about thousands of lambdas trying to access a database."
+  },
+  {
+    "start": 181.0,
+    "end": 187.0,
+    "text": "Okay. So once you've got your schema, you've rationalized your input data's here. What then happens now?"
+  },
+  {
+    "start": 187.0,
+    "end": 195.0,
+    "text": "Yeah. So after we've done all of our stuff in the processor, we write our events up to these process streams and that becomes our integration point for other services."
+  },
+  {
+    "start": 195.0,
+    "end": 207.0,
+    "text": "So we have things that update budgets for advertisers. We have data science experiments that are doing online training. We have real time metrics and dashboards and alerting and things like that to get generated off of that."
+  },
+  {
+    "start": 207.0,
+    "end": 209.0,
+    "text": "Excellent. So this is highly extensible in that case."
+  },
+  {
+    "start": 209.0,
+    "end": 212.0,
+    "text": "Yeah, exactly. That's our integration point for our data platform."
+  },
+  {
+    "start": 212.0,
+    "end": 215.0,
+    "text": "Okay. And then once it hits these Kinesis streams, I see we've got a Kinesis firehose."
+  },
+  {
+    "start": 215.0,
+    "end": 222.0,
+    "text": "Yeah. So we have a lambda per stream that writes out to a firehose per event type that then drops those Avro files on the S3."
+  },
+  {
+    "start": 222.0,
+    "end": 231.0,
+    "text": "Excellent. And so coming out of the firehose, they're pretty fragmented. And so from here, we have a batch process that consumes these and then writes back to S3."
+  },
+  {
+    "start": 231.0,
+    "end": 242.0,
+    "text": "And this is going through and deduplicating and concatenating those files to make them get rid of dupes that come through from having this be in at least one system."
+  },
+  {
+    "start": 242.0,
+    "end": 252.0,
+    "text": "And then also makes the files so that they're more easily consumable by EMR jobs and other consumers. Instead of having thousands of files, we can kind of shrink it down to a file per partition."
+  },
+  {
+    "start": 252.0,
+    "end": 255.0,
+    "text": "Excellent. And this is still in the Avro format at this stage, correct?"
+  },
+  {
+    "start": 255.0,
+    "end": 269.0,
+    "text": "Exactly. We have another job that comes along and converts Avro to Parquet that gets used by Athena and allows our analysts and data scientists or whoever to do analysis on the data that flows through."
+  },
+  {
+    "start": 269.0,
+    "end": 280.0,
+    "text": "Okay. And so that's been a pretty big boon for us that allows us to collect data on front end and run experiments, be able to write those things through API Gateway, and then have it flow directly through to Athena."
+  },
+  {
+    "start": 280.0,
+    "end": 289.0,
+    "text": "And we don't have to worry about adding new tables and event types to our other data warehouses. It's just a one shot deal."
+  },
+  {
+    "start": 289.0,
+    "end": 293.0,
+    "text": "Wonderful. And I see a bit of a dot, dot, dot here. So there's lots of processing here. What's actually happening at this stage?"
+  },
+  {
+    "start": 293.0,
+    "end": 303.0,
+    "text": "Yeah. So we also have EMR jobs that run every night as part of a batch process that writes data to Redshift that powers a lot of our reports and dashboards and Tableau and things like that."
+  },
+  {
+    "start": 303.0,
+    "end": 308.0,
+    "text": "We also load data into Snowflake for event level querying of events."
+  },
+  {
+    "start": 308.0,
+    "end": 314.0,
+    "text": "Okay. And this all ends up so that Athena can then query it. So at what stage here or who is using this piece of Athena?"
+  },
+  {
+    "start": 314.0,
+    "end": 324.0,
+    "text": "So that would be our data scientists and our analysts primarily as well as developers if you roll out a new feature and want to make sure it's working correctly, then that's a possibility as well."
+  },
+  {
+    "start": 324.0,
+    "end": 328.0,
+    "text": "Okay. So this is an entirely iterative process in that respect."
+  },
+  {
+    "start": 328.0,
+    "end": 329.0,
+    "text": "Yeah, exactly."
+  },
+  {
+    "start": 329.0,
+    "end": 334.0,
+    "text": "Excellent. Well, this is a fantastic ecosystem, so I really appreciate you bringing it to us today. Thank you."
+  },
+  {
+    "start": 334.0,
+    "end": 335.0,
+    "text": "Yeah. Thanks for having me."
+  },
+  {
+    "start": 335.0,
+    "end": 339.0,
+    "text": "Wonderful. Thank you for watching. This is my architecture."
+  }
+]

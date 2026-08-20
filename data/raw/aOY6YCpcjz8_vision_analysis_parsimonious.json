@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The whiteboard architecture represents HubSpot's asynchronous task-queuing system built on AWS SQS, EC2, Kafka, HBase, and MySQL.\n\n1. Incoming requests from developers/client microservices enter the Enqueue EC2 service.\n2. In the standard path, tasks are pushed to the SQS Unique queue. If SQS is unavailable, tasks fall back to a self-managed Kafka cluster which subsequently drains back into the SQS Unique queue.\n3. Tasks from SQS Unique are processed by Unique EC2, which verifies task uniqueness against an HBase data store.\n4. Unique tasks proceed to SQS Scheduler and are pulled by Scheduler EC2, which stores deferred/scheduled tasks into MySQL.\n5. Schedule Watcher EC2 polls MySQL when tasks are due to be executed and publishes them to the final consumer queue (SQS Schedule Watcher).",
+  "graph": {
+    "name": "HubSpot Task-Queuing Architecture",
+    "link": "",
+    "categories": "Compute, Messaging, Databases",
+    "graph_usable": true,
+    "notes": "Whiteboard diagram from This is My Architecture video detailing HubSpot's custom task execution and scheduling platform built on AWS SQS and EC2."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Client Applications / Developers",
+      "notes": "HubSpot internal microservices submitting tasks"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Enqueue EC2",
+      "notes": "Ingests incoming tasks"
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS Unique",
+      "notes": "Queue for uniqueness processing"
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "Kafka",
+      "notes": "Self-managed Kafka fallback buffer"
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Unique EC2",
+      "notes": "Performs task uniqueness verification"
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "HBase",
+      "notes": "Data store for task uniqueness IDs"
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS Scheduler",
+      "notes": "Queue for scheduled tasks"
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Scheduler EC2",
+      "notes": "Saves scheduled tasks into storage"
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "MySQL",
+      "notes": "Relational database for scheduled tasks"
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "Schedule Watcher EC2",
+      "notes": "Polls MySQL for due tasks"
+    },
+    {
+      "id": "10",
+      "service": "SQS",
+      "name": "SQS Schedule Watcher",
+      "notes": "Final queue for consumer execution"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer enqueues task request"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends message to SQS Unique queue"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Fallback path to Kafka if SQS times out"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Worker drains Kafka messages back into SQS"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Unique worker receives message from SQS"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Checks uniqueness against HBase"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Passes unique tasks to SQS Scheduler"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Scheduler service receives task"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Stores task schedule in MySQL"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Schedule Watcher polls MySQL for ready tasks"
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "Produces ready task to final SQS queue for consumers"
+    }
+  ]
+}

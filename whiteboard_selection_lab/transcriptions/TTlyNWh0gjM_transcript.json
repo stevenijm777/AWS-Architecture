@@ -1,0 +1,277 @@
+[
+  {
+    "start": 0.0,
+    "end": 20.52,
+    "text": "Hi and welcome to another episode of This is My Architecture. I'm Arathi from AWS and joining me in Mumbai today is Raji from Zoho. Raji, thank you for joining us today."
+  },
+  {
+    "start": 20.8,
+    "end": 21.36,
+    "text": "Thank you, Arathi."
+  },
+  {
+    "start": 21.76,
+    "end": 25.34,
+    "text": "So Raji, tell us what Zoho does and what is your specific role?"
+  },
+  {
+    "start": 25.34,
+    "end": 36.76,
+    "text": "So Zoho has a suite of online applications that are needed for end-to-end operation of any business and I'm a product manager in Zoho for the product called Sci247."
+  },
+  {
+    "start": 37.6,
+    "end": 49.74,
+    "text": "Sci247 is the monitoring solution that does monitoring for the full stack of your application starting from your end-user layer to your application layer to platform layer to your infrastructure layer."
+  },
+  {
+    "start": 49.74,
+    "end": 53.0,
+    "text": "It gives the full all-in-one monitoring solution."
+  },
+  {
+    "start": 53.0,
+    "end": 59.36,
+    "text": "And what are we going to talk about today? You mentioned the monitoring solutions. Is that what we're going to like dive into today?"
+  },
+  {
+    "start": 59.5,
+    "end": 76.92,
+    "text": "Monitoring solution, the Sci247, we run it on our servers and we wanted to do the real user monitoring as a feature which we faced some problems when we had to run it on our own servers and that's when we wanted to use AWS and that's what we are going to talk about today."
+  },
+  {
+    "start": 76.92,
+    "end": 84.0,
+    "text": "Great. Can you elaborate on some of the challenges of running this real user monitoring on-prem before we dive into the architecture?"
+  },
+  {
+    "start": 84.16,
+    "end": 101.96000000000001,
+    "text": "Yeah. As I said, the real user monitoring, it's a real-time monitoring of end-users experience as to how the application is behaving across geographies, how the application is behaving, how is it differing with respect to ISPs, how is it differing with respect to browsers, with respect to devices."
+  },
+  {
+    "start": 101.96,
+    "end": 111.96,
+    "text": "There are so many things that we collect from real-time users. Having said that, this is a real-time environment. We don't know the number of requests that we are going to get in."
+  },
+  {
+    "start": 111.96,
+    "end": 118.96,
+    "text": "So the volume, the elasticity, the scaling part, we can't handle it on our own servers and that's when we wanted to move to AWS."
+  },
+  {
+    "start": 118.96,
+    "end": 122.96,
+    "text": "Great. Why don't we dive into the architecture of how you do this real user monitoring?"
+  },
+  {
+    "start": 122.96,
+    "end": 135.95999999999998,
+    "text": "Yeah. So as I said, it starts with the user's browser. So the user has to download the script into that browser. So for which the request is actually routed through Route 53 and it reaches the CDN."
+  },
+  {
+    "start": 135.96,
+    "end": 147.96,
+    "text": "So the request comes to CDN and then the actual script, the Beacon script we call it is downloaded in the browser and then that actually does the data collection part."
+  },
+  {
+    "start": 147.96,
+    "end": 157.96,
+    "text": "The various data that I talked about. So the beacon collects all the data and as and when it collects, it again routes through Route 53 to the ALBs."
+  },
+  {
+    "start": 157.96,
+    "end": 178.96,
+    "text": "So the data is the ALBs and from ALBs we just move it to the collectors. The collectors are nothing but group of EC2 instances which are auto scaled and from here we actually push the data to SQS."
+  },
+  {
+    "start": 178.96,
+    "end": 185.96,
+    "text": "Okay. So once you collect all this data on the EC2 instances and then push it to the NSQS queue, what happens after that?"
+  },
+  {
+    "start": 185.96,
+    "end": 192.96,
+    "text": "And maybe before even I go to that, I want to say why we are using this auto scaling environment for the EC2 instances."
+  },
+  {
+    "start": 192.96,
+    "end": 203.96,
+    "text": "I said we will get huge amount of request. It is something like we get up to 25 million request a day on normal days and on peak days, peak load days, it actually doubles."
+  },
+  {
+    "start": 203.96,
+    "end": 211.96,
+    "text": "We get 50 million request a day and 50,000 request per minute. So such scales is possible only using the auto scaled collectors."
+  },
+  {
+    "start": 211.96,
+    "end": 229.96,
+    "text": "Now after this collects the information and puts into SQS, we have another set of EC2 instances which are auto scaled and that we call it as processes which again fetches the information from SQS and does all the calculations that we want to do, does all the processing."
+  },
+  {
+    "start": 229.96,
+    "end": 241.96,
+    "text": "And we use two components here. One is for caching, other is for database storage. And for caching, we use Reddus, do the, have it in the cache and do the processing."
+  },
+  {
+    "start": 241.96,
+    "end": 253.96,
+    "text": "And finally, store the data into Cassandra. And this Cassandra is actually across multiple availability zones so that we take care of high availability."
+  },
+  {
+    "start": 253.96,
+    "end": 257.96000000000004,
+    "text": "It is a cluster so that we can take care of high availability of the data."
+  },
+  {
+    "start": 257.96,
+    "end": 264.96,
+    "text": "I think you bring a good point about the high availability architecture here, especially you talked about the scalability with auto scaling instances."
+  },
+  {
+    "start": 264.96,
+    "end": 274.96,
+    "text": "So is this entire architecture that we are seeing here, is this running in a single region across availability zones or how are your users directed to like different from different regions directed?"
+  },
+  {
+    "start": 274.96,
+    "end": 286.96,
+    "text": "Yeah. So this is one architecture. We have customers across the globe, but then we don't use the same in multi region. We have the similar architecture in different regions."
+  },
+  {
+    "start": 286.96,
+    "end": 297.96,
+    "text": "That's mainly because the data, we have the data residing in these servers. Those are again EC2 instances. And there are a lot of regulations that comes with each of the countries."
+  },
+  {
+    "start": 297.96,
+    "end": 306.96,
+    "text": "Say for example, if you take the .eu, GDPR has to be compliant and you can't have your customers data taken out of the EU borders."
+  },
+  {
+    "start": 306.96,
+    "end": 312.96,
+    "text": "So each and every country is coming up with their own regulations and customers don't want their data to go out."
+  },
+  {
+    "start": 312.96,
+    "end": 318.96,
+    "text": "So that's the main reason we have the similar set of architectures in different regions."
+  },
+  {
+    "start": 318.96,
+    "end": 325.96,
+    "text": "So when a user request comes in based on the domain name like .com.eu or .in, it gets routed to the individual regions accordingly."
+  },
+  {
+    "start": 325.96,
+    "end": 326.96,
+    "text": "Perfect. That's how it is."
+  },
+  {
+    "start": 326.96,
+    "end": 334.96,
+    "text": "Okay. So once the processor like completes all its function here, you then send data based on whether you're doing caching or to the Redis or to Cassandra."
+  },
+  {
+    "start": 334.96,
+    "end": 337.96,
+    "text": "What happens in this side of the world? Like I see a dashboard here."
+  },
+  {
+    "start": 337.96,
+    "end": 343.96,
+    "text": "Yeah. So the all these data collected is being stored. Then the user has to view it in the dashboard."
+  },
+  {
+    "start": 343.96,
+    "end": 349.96,
+    "text": "As I said, Site 24 seven runs it on our own servers. Now the dashboard is also on the server."
+  },
+  {
+    "start": 349.96,
+    "end": 360.96,
+    "text": "We need to get the information. So those are API requests that again comes through Route 53 to the ALBs and from here to the processors."
+  },
+  {
+    "start": 360.96,
+    "end": 369.96,
+    "text": "And the processors fetches it from the Cassandra database and gives the data to the user for them to view the real time experience of their applications."
+  },
+  {
+    "start": 369.96,
+    "end": 376.96,
+    "text": "Where exactly the problem? If there is any JavaScript errors? Are there? How the snapshot is? How the resources are loaded?"
+  },
+  {
+    "start": 376.96,
+    "end": 384.96,
+    "text": "So all the information that we have collected and stored it in the Cassandra is viewed in the dashboard using another that's the component there."
+  },
+  {
+    "start": 384.96,
+    "end": 393.96,
+    "text": "This is a neat architecture, especially like having operations person view like real time metrics is super important to having like a very reliable architecture."
+  },
+  {
+    "start": 393.96,
+    "end": 396.96,
+    "text": "What are some of the future enhancements that you're thinking with this architecture?"
+  },
+  {
+    "start": 396.96,
+    "end": 405.96,
+    "text": "So we have three things in mind. One is this Route 53 component. We can actually make use of the geo based Route 53,"
+  },
+  {
+    "start": 405.96,
+    "end": 413.96,
+    "text": "even though we have this architecture and deployment in multiple regions. We can make use of geo based Route 53 to route it to that regions."
+  },
+  {
+    "start": 413.96,
+    "end": 423.96,
+    "text": "That's one thing we have in plan. The second thing is this is again a simple collector which just collects the information and pushes the data to the SQS."
+  },
+  {
+    "start": 423.96,
+    "end": 429.96,
+    "text": "So I need not have these as an EC2 instance or an application running in EC2 instance."
+  },
+  {
+    "start": 429.96,
+    "end": 433.96,
+    "text": "I can replace this with Lambda functions that takes care of again pushing the data to SQS."
+  },
+  {
+    "start": 433.96,
+    "end": 441.96,
+    "text": "Again Lambda function is elastically scalable as well. And the third important thing is maintaining this deployment."
+  },
+  {
+    "start": 441.96,
+    "end": 449.96,
+    "text": "So we have to take care of updating the builds in each of these places and maintaining in multiple regions is again a headache for us."
+  },
+  {
+    "start": 449.96,
+    "end": 455.96,
+    "text": "So I'm thinking if we can use the code deploy to do all those automations for us so it is easy for us."
+  },
+  {
+    "start": 455.96,
+    "end": 457.96,
+    "text": "Automate and make it easy. Yeah."
+  },
+  {
+    "start": 457.96,
+    "end": 463.96,
+    "text": "Raji, thank you for sharing how Site247 uses AWS to do real user monitoring."
+  },
+  {
+    "start": 463.96,
+    "end": 470.96,
+    "text": "Great architecture and thank you for joining us today. And thank you for watching. This is my architecture. See you soon."
+  }
+]

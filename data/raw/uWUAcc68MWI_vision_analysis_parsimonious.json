@@ -1,0 +1,172 @@
+{
+  "step_by_step_reasoning": "The visual architecture shows an IoT data ingestion, analysis, storage, and visualization pipeline. IoT devices send temperature data via MQTT to IoT Core, which triggers an IoT Rule. The rule forwards data to a Firehose delivery stream. Firehose stores raw messages directly into an S3 bucket ('RAW') and passes data into Kinesis Data Analytics. Kinesis Data Analytics processes the streaming data using SQL/Flink and sends the output to both a second Firehose stream (which saves 'PROCESSED' data to another S3 bucket) and an AWS Lambda function. Lambda updates Amazon DynamoDB with processed metrics. On the visualization side, Amazon CloudFront hosts a static web application that reads data from DynamoDB, with Amazon Cognito handling user authentication.",
+  "graph": {
+    "name": "IoT Monitoring and Visualization Architecture",
+    "link": "",
+    "categories": "IoT, Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "Whiteboard diagram illustrating an end-to-end IoT data ingestion, processing, storage, and visualization solution using AWS serverless services."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerIOT",
+      "name": "IoT Devices",
+      "notes": "Temperature sensors generating MQTT data"
+    },
+    {
+      "id": "1",
+      "service": "IoTCore",
+      "name": "AWS IoT Core",
+      "notes": "Ingests MQTT messages"
+    },
+    {
+      "id": "2",
+      "service": "IoTCore",
+      "name": "AWS IoT Rule",
+      "notes": "Filters and routes incoming IoT messages"
+    },
+    {
+      "id": "3",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose (Raw)",
+      "notes": "Streams raw messages to storage and analytics"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Amazon S3 (Raw Bucket)",
+      "notes": "Long-term storage for raw IoT data"
+    },
+    {
+      "id": "5",
+      "service": "KinesisAnalytics",
+      "name": "Amazon Kinesis Data Analytics",
+      "notes": "Runs SQL queries / transforms on streaming data"
+    },
+    {
+      "id": "6",
+      "service": "Firehose",
+      "name": "Amazon Kinesis Data Firehose (Processed)",
+      "notes": "Delivers processed events to S3"
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Amazon S3 (Processed Bucket)",
+      "notes": "Storage for analyzed and transformed IoT data"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "AWS Lambda",
+      "notes": "Publishes processed events to DynamoDB"
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Stores analytics data for low-latency retrieval by web app"
+    },
+    {
+      "id": "10",
+      "service": "Cognito",
+      "name": "Amazon Cognito",
+      "notes": "User authentication and access control"
+    },
+    {
+      "id": "11",
+      "service": "CloudFront",
+      "name": "Amazon CloudFront",
+      "notes": "Content delivery network hosting static web app"
+    },
+    {
+      "id": "12",
+      "service": "UserConsumerWeb",
+      "name": "End User",
+      "notes": "Web user accessing dashboard"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Sends MQTT temperature data to IoT Core"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Triggers IoT Rule"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Routes action to Kinesis Data Firehose"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4a",
+      "type": "data",
+      "notes": "Stores raw messages in S3"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4b",
+      "type": "data",
+      "notes": "Streams data to Kinesis Data Analytics"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5a",
+      "type": "data",
+      "notes": "Sends processed stream to Firehose"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Saves processed JSON to S3"
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5b",
+      "type": "data",
+      "notes": "Triggers Lambda for database insertion"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Writes processed data to DynamoDB"
+    },
+    {
+      "source": "11",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Web application queries DynamoDB every 10 seconds"
+    }
+  ]
+}

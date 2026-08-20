@@ -1,0 +1,154 @@
+{
+  "step_by_step_reasoning": "The visual diagram illustrates two architecture paths: a main region workflow and an AWS Outposts low-latency workflow. In the main region, user requests flow through API Gateway to an EKS cluster, which queries DynamoDB and orchestrates AI models on ECS. In the edge path running on Outposts, low-latency client requests pass through an ALB to an Edge EKS API that queries ElastiCache. Data replicates from DynamoDB to ElastiCache, and cache misses trigger a re-classification request back to the main EKS cluster.",
+  "graph": {
+    "name": "GumGum Low Latency Contextual Intelligence Platform on AWS Outposts",
+    "link": "",
+    "categories": "AdTech AI ML Edge",
+    "graph_usable": true,
+    "notes": "Architecture showing contextual intelligence classification with AWS Outposts for sub-10ms SLA."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "API Clients",
+      "notes": "Standard region web clients"
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Regional entry point"
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS Main Cluster",
+      "notes": "Main orchestration API"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "15TB classification datastore"
+    },
+    {
+      "id": "4",
+      "service": "ECS",
+      "name": "ECS AI Stack",
+      "notes": "NLP and CV microservices"
+    },
+    {
+      "id": "5",
+      "service": "Outpost",
+      "name": "AWS Outposts",
+      "notes": "On-premises Outposts deployment"
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElastiCache Redis",
+      "notes": "1TB low latency cache"
+    },
+    {
+      "id": "7",
+      "service": "EKS",
+      "name": "Edge EKS",
+      "notes": "Edge API rewritten in Go"
+    },
+    {
+      "id": "8",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Load balancer on Outposts"
+    },
+    {
+      "id": "9",
+      "service": "UserConsumerWebMobile",
+      "name": "Low Latency Clients",
+      "notes": "Clients requiring sub-10ms SLA"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Web requests sent to API Gateway"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes request to main EKS cluster"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Database lookup in DynamoDB"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Initiates classification with ECS AI stack"
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns classification result to EKS"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Replication process syncs data to Redis cache"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "High throughput low-latency requests"
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Forwards to Edge API on EKS"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lookup in ElastiCache Redis"
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Triggers re-classification flow on cache miss"
+    }
+  ]
+}

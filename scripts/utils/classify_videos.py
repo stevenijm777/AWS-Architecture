@@ -9,7 +9,7 @@ from pathlib import Path
 import networkx as nx
 
 def main():
-    workspace = Path(__file__).resolve().parent.parent
+    workspace = Path(__file__).resolve().parent.parent.parent
     data_dir = workspace / "data"
     
     # Load all video IDs from cache

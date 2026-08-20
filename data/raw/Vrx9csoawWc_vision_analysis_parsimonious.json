@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "The architecture diagram represents FINRA's user analytics platform on AWS. 1. Internal platform processes (Data Mgmt ETL) copy prepped data into an S3 Analytics Data Lake. 2. A Market Regulation Analyst submits a query request via ECS. 3. ECS kicks off a Hive EMR job to read from the main S3 Data Lake and output a targeted Data Mart into another S3 bucket. 4. ECS performs introspection on the Data Mart in S3 to assess query complexity (columns, row count, size). 5. ECS routes the execution request to either a Presto EMR cluster (for simpler queries) or a Redshift cluster (for complex queries with extensive joins). 6. Presto EMR or Redshift then queries/pulls the data from the Data Mart S3 bucket to deliver interactive analytics to the user.",
+  "graph": {
+    "name": "FINRA Multi-Engine User Analytics Architecture",
+    "link": "",
+    "categories": "Analytics, Serverless, Containers",
+    "graph_usable": true,
+    "notes": "Whiteboard diagram depicting FINRA's user analytics querying architecture utilizing S3, Hive/Presto EMR, ECS, and Redshift."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAnalyst",
+      "name": "Market Regulation User",
+      "notes": "Analyst asking questions/submitting requests for analytics"
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Data Mgmt ETL",
+      "notes": "Internal ETL process preparing gold source data"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Analytics Data Lake",
+      "notes": "Multi-petabyte data lake in S3"
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "Hive EMR",
+      "notes": "Spools up EMR cluster to create Data Mart subset"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "Data Mart S3",
+      "notes": "Subset of the data lake materialized for specific queries"
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS Cluster",
+      "notes": "Orchestrates job execution, inspects query complexity, and signals appropriate query engine"
+    },
+    {
+      "id": "6",
+      "service": "EMR",
+      "name": "Presto EMR",
+      "notes": "Presto cluster on EMR for interactive analytics on simple queries"
+    },
+    {
+      "id": "7",
+      "service": "RedShift",
+      "name": "Redshift Cluster",
+      "notes": "Redshift cluster for complex queries joining multi-source data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Data management ETL copies data into S3 analytics data lake"
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "User submits query request to ECS"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS kicks off Hive job in EMR"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Hive EMR accesses analytics data lake in S3"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Hive EMR creates materialized Data Mart in S3"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "meta",
+      "notes": "ECS does introspection on Data Mart to evaluate query size and complexity"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "6a",
+      "type": "meta",
+      "notes": "ECS signals Presto EMR for simple queries"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "6b",
+      "type": "meta",
+      "notes": "ECS signals Redshift for complex join queries"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "7a",
+      "type": "data",
+      "notes": "Presto EMR pulls data from Data Mart S3 location"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "7b",
+      "type": "data",
+      "notes": "Redshift pulls data from Data Mart S3 location"
+    }
+  ]
+}

@@ -237,6 +237,13 @@ def main():
         test_g = create_graph_from_cloudscape_json(res_data)
         nx.write_graphml(test_g, str(cache_graphml))
 
+        # Ensure all target directories exist
+        (PROJECT_ROOT / "data" / "graphs_parsimonious").mkdir(parents=True, exist_ok=True)
+        (PROJECT_ROOT / "data" / "raw").mkdir(parents=True, exist_ok=True)
+        (PROJECT_ROOT / "graph_renderer" / "graphs_input").mkdir(parents=True, exist_ok=True)
+        (PROJECT_ROOT / "graph_renderer" / "graphs_output").mkdir(parents=True, exist_ok=True)
+        (PROJECT_ROOT / "Graphs").mkdir(parents=True, exist_ok=True)
+
         shutil.copy2(cache_graphml, PROJECT_ROOT / "data" / "graphs_parsimonious" / f"{video_id}.graphml")
         shutil.copy2(cache_json, PROJECT_ROOT / "data" / "raw" / f"{video_id}_vision_analysis_parsimonious.json")
 

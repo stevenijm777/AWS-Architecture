@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The whiteboard diagram illustrates a machine learning pipeline at econda divided into three visual phases: Training, Storage, and Inference. In the Training phase, a Lambda function triggers a SageMaker pre-processing job which fetches data from the econda API (UserCompanyAPI) bi-directionally. After pre-processing, it triggers a second SageMaker training job on GPU instances. Secrets Manager is present in the training section. The trained model is uploaded to S3 in the Storage section (which also contains ECR for container images). In the Inference phase, an S3 event triggers a second Lambda function to create/update an ECS service. The Personalization Service ARP (UserCompanyInternalPlatform) communicates bi-directionally with the ECS service for real-time inference requests and responses.",
+  "graph": {
+    "name": "econda Machine Learning and Personalization Architecture",
+    "link": "",
+    "categories": "AI/ML, Real-time Personalization",
+    "graph_usable": true,
+    "notes": "Daily automated training workflow using AWS SageMaker and ECS for real-time personalization inference."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Lambda",
+      "name": "Lambda (Training Trigger)",
+      "notes": "Triggered by CloudWatch to start training job"
+    },
+    {
+      "id": "1",
+      "service": "SecretsManager",
+      "name": "Secrets Manager",
+      "notes": "Stores client credentials and profiles"
+    },
+    {
+      "id": "2",
+      "service": "UserCompanyAPI",
+      "name": "econda API",
+      "notes": "External API providing raw client data"
+    },
+    {
+      "id": "3",
+      "service": "SageMaker",
+      "name": "SageMaker (Pre-processing)",
+      "notes": "Executes pre-processing job"
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker (Training)",
+      "notes": "Executes GPU training job"
+    },
+    {
+      "id": "5",
+      "service": "ECR",
+      "name": "ECR",
+      "notes": "Stores container images for algorithms"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores trained ML models"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Deployment Trigger)",
+      "notes": "Triggered by S3 model upload to manage ECS service"
+    },
+    {
+      "id": "8",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Hosts real-time inference endpoint service"
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Personalization Service (ARP)",
+      "notes": "econda Audience Relationship Platform requesting real-time predictions"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda triggers SageMaker pre-processing job"
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "SageMaker requests data from econda API"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "econda API returns data to SageMaker"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Pre-processing job initiates SageMaker training job"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "SageMaker uploads trained model to S3"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "S3 bucket event triggers deployment Lambda"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Lambda builds or updates ECS service"
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Personalization service sends inference request to ECS"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS returns real-time recommendation/personalization data"
+    }
+  ]
+}

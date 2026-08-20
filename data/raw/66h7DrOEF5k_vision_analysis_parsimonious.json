@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "The architecture shows a machine learning pipeline split into Training and Inference sections. Training uses an S3 bucket feeding training data into a GPU Kubernetes cluster on EC2, which outputs trained models to another S3 bucket. Inference uses ALB as an entry point directing requests to a proxy ECS container. The proxy queries DynamoDB for dynamic routing IPs/services before proxying requests to target ECS Services (Blue/Green). New ECS deployments trigger CloudWatch Events, invoking a Lambda function to update DynamoDB with service IP mappings. EC2 Spot instances managed via Spotinst support the ECS cluster.",
+  "graph": {
+    "name": "ABEJA Machine Learning Platform Architecture",
+    "link": "",
+    "categories": "Machine Learning & Container Orchestration",
+    "graph_usable": true,
+    "notes": "Visualizes end-to-end ML workflow on AWS covering Kubernetes training, S3 model storage, and ECS blue/green inference with dynamic service discovery."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "External Clients",
+      "notes": "Incoming traffic to the inference endpoint"
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "Training Data S3 Bucket",
+      "notes": "Stores input dataset and training scripts"
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "GPU Instances (Kubernetes)",
+      "notes": "Runs training jobs on GPU clusters using Kubernetes"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Model Artifacts S3 Bucket",
+      "notes": "Stores output trained model artifacts"
+    },
+    {
+      "id": "4",
+      "service": "ALB",
+      "name": "Application Load Balancer",
+      "notes": "Entry point for inference calls"
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "Proxy ECS Service",
+      "notes": "Proxies requests based on routing lookup"
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "Inference ECS Services",
+      "notes": "Blue/Green target deployment containers"
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "Service Registry DynamoDB",
+      "notes": "Stores service names and active container IP mappings"
+    },
+    {
+      "id": "8",
+      "service": "CloudWatch",
+      "name": "CloudWatch Events",
+      "notes": "Captures ECS deployment state changes"
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Service Registration Function",
+      "notes": "Updates DynamoDB with container name and IP"
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "EC2 Spot Instances",
+      "notes": "Cost-optimized compute capacity"
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "Spotinst",
+      "notes": "Manages Spot instance integration"
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Training data and scripts ingested into GPU cluster"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Trained model exported to S3"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Model loaded into ECS container tasks"
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Inference request from client"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Routes request to proxy container"
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "3a",
+      "type": "data",
+      "notes": "Queries IP address for requested service"
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3b",
+      "type": "data",
+      "notes": "Returns resolved IP address"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Proxies traffic to target ECS inference container"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Lifecycle events sent on task creation"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Triggers service discovery function"
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Registers service name and container IP"
+    }
+  ]
+}

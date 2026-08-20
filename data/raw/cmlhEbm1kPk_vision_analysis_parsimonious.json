@@ -1,0 +1,168 @@
+{
+  "step_by_step_reasoning": "The architecture centers on Amazon Connect as the core contact center service. The visual whiteboard shows multi-path integrations: 1) Connect integrates with a Lambda function that queries a DynamoDB table to retrieve country-specific greetings and configurations. 2) Connect connects to Amazon Lex for natural language understanding. 3) Connect integrates with Amazon Translate, which feeds into Amazon Polly for multi-language text-to-speech response generation. 4) Connect records call audio and stores encrypted audio files directly into Amazon S3. 5) S3 triggers a separate Lambda function that sends the voice files to Amazon Transcribe, which then writes the transcribed text files back to the S3 data lake. 6) Agents/Analysts access and search through the transcribed data in S3. 7) End-user callers interact directly with Amazon Connect.",
+  "graph": {
+    "name": "Munich Re Global Serverless Contact Center Architecture",
+    "link": "https://www.youtube.com/watch?v=132X75a-y3c",
+    "categories": "Contact Center & AI/ML Data Lake",
+    "graph_usable": true,
+    "notes": "Serverless contact center architecture using Amazon Connect, Lex, Translate, Polly, Transcribe, Lambda, DynamoDB, and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Callers / Customers",
+      "notes": "External callers dialing into the contact center"
+    },
+    {
+      "id": "1",
+      "service": "Connect",
+      "name": "Amazon Connect",
+      "notes": "Central software-defined contact center routing call interactions"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Greetings Lambda",
+      "notes": "Executes logic to fetch personalized greetings per country"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Greetings Store",
+      "notes": "Stores country-specific greetings and operational hours"
+    },
+    {
+      "id": "4",
+      "service": "Lex",
+      "name": "Amazon Lex",
+      "notes": "Provides natural language understanding for conversational interaction"
+    },
+    {
+      "id": "5",
+      "service": "Translate",
+      "name": "Amazon Translate",
+      "notes": "Translates greetings and disclaimers dynamically into multiple languages"
+    },
+    {
+      "id": "6",
+      "service": "Polly",
+      "name": "Amazon Polly",
+      "notes": "Converts translated text into localized voice audio output"
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "Voice & Text Data Lake",
+      "notes": "Stores encrypted call audio recordings and transcribed text documents"
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Transcription Trigger Lambda",
+      "notes": "Triggered by S3 object creation to initiate transcription process"
+    },
+    {
+      "id": "9",
+      "service": "Transcribe",
+      "name": "Amazon Transcribe",
+      "notes": "Converts voice recording audio files into searchable text documents"
+    },
+    {
+      "id": "10",
+      "service": "UserCompanyAgent",
+      "name": "Call Center Agents / Auditors",
+      "notes": "Searches inside transcribed text documents in S3 for compliance and auditing"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Callers initiate phone calls to Amazon Connect"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Connect invokes Lambda to retrieve country-specific settings"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda reads greetings data from DynamoDB"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Connect sends audio input to Lex for intent recognition"
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Connect passes text strings to Translate"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Translate sends localized text to Polly to generate speech"
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Connect saves call voice recording files to S3 bucket"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 object creation triggers transcription Lambda function"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda triggers Transcribe job on the audio recording"
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Transcribe writes generated text file back to S3 data lake"
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Agents and auditors search transcribed call text in S3"
+    }
+  ]
+}
