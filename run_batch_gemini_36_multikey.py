@@ -41,41 +41,9 @@ df_aws = df_services[df_services['is_aws'] == True]
 lista_actores = ", ".join(df_actores['name'].dropna().astype(str).unique())
 lista_aws = ", ".join(df_aws['name'].dropna().astype(str).unique())
 
-PROMPT_BASE = """You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+from scripts.core.vision_analyzer_parsimonious import CLOUDSCAPE_PROMPT_TEMPLATE
 
-Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
-
-## RULES (STRICT PARSIMONIOUS MODEL - PROMPT V9):
-1. AWS SERVICES: You MUST strictly use the exact string from the <AWS_SERVICES_PLACEHOLDER> list for the `service` field. Shortening or truncating service names is strictly forbidden (e.g. use 'KinesisDataStream' instead of 'Kinesis').
-
-2. ACTORS / USERS: Use 'UserConsumerWeb', 'UserConsumerMobile', 'UserCompanyDeveloper', 'UserCompanyAgent', or 'ThirdParty' from <ACTORS_PLACEHOLDER>.
-
-3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes primarily on physical boxes or distinct icons drawn with a clear contour on the whiteboard. Ignore standalone floating text or handwritten explanatory words without a bounding box or icon.
-
-4. DECOMPOSITION OF GROUPED BOXES:
-   - If a box on the whiteboard represents a collection of AWS services (e.g. labeled 'AWS', 'Security Sources', or 'AWS Cloud Logs') AND the transcript explicitly names specific AWS services contained within it (such as CloudTrail, GuardDuty, SQS, SNS, S3):
-   - You ARE REQUIRED to break down that single box into individual nodes for EACH explicitly named AWS service.
-
-5. ARROW-DRIVEN EDGES & NO SPECULATIVE RETURNS:
-   - Extract edges ONLY when there is a visible line or arrow physically drawn on the whiteboard canvas.
-   - Do NOT generate speculative return paths or implicit responses unless a double-headed arrow (<->) or a second return line is explicitly drawn on screen.
-
-6. LOGICAL SEQUENCING: Assign `flow_id` (integer) and `seq` (string) starting from external actors moving progressively towards backend data stores.
-
-7. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
-
-## OUTPUT FORMAT:
-Return ONLY valid JSON (no markdown fences):
-{
-  "step_by_step_reasoning": "Analyze visual components and physical lines...",
-  "graph": {
-    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
-  },
-  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
-  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
-}"""
-
-prompt = PROMPT_BASE.replace("<ACTORS_PLACEHOLDER>", lista_actores).replace("<AWS_SERVICES_PLACEHOLDER>", lista_aws)
+prompt = CLOUDSCAPE_PROMPT_TEMPLATE.replace("<USER_ACTORS_PLACEHOLDER>", lista_actores).replace("<AWS_SERVICES_PLACEHOLDER>", lista_aws)
 
 class GraphMetadata(BaseModel):
     name: str

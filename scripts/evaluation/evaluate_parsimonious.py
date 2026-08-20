@@ -5,10 +5,8 @@ evaluate_parsimonious.py — Dedicated evaluator for Parsimonious mode graphs.
 Evaluates parsimonious graphs against Cloudscape Ground Truth and produces:
   - whiteboard_selection_lab/results_parsimonious.csv (one row per video)
   - whiteboard_selection_lab/info_parsimonious.json (aggregated metrics summary)
-
-Usage:
-    python scripts/evaluation/evaluate_parsimonious.py
-    python scripts/evaluation/evaluate_parsimonious.py --graphs-dir data/graphs_parsimonious_v9
+  - reports/runs/<fecha>_parsimonious_v9/results.csv (run result copy)
+  - reports/runs/<fecha>_parsimonious_v9/run.json (provenance, sha256 and metrics)
 """
 from __future__ import annotations
 
@@ -16,13 +14,43 @@ import argparse
 import csv
 import json
 import sys
+import hashlib
+import subprocess
+from datetime import date
 from pathlib import Path
 import networkx as nx
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
+# Fix Windows console encoding issues for Unicode characters
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except AttributeError:
+        pass
+
 from scripts.utils.evaluate_graphs import evaluate_pair, load_services_catalog
+
+
+def git_commit() -> str:
+    try:
+        out = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=PROJECT_ROOT, capture_output=True, text=True, timeout=10,
+        )
+        return out.stdout.strip() or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def get_prompt_v9_sha256() -> str:
+    try:
+        from scripts.core.vision_analyzer_parsimonious import CLOUDSCAPE_PROMPT_TEMPLATE
+        return hashlib.sha256(CLOUDSCAPE_PROMPT_TEMPLATE.encode("utf-8")).hexdigest()
+    except Exception:
+        return "unknown"
 
 
 def evaluate_parsimonious(
@@ -34,12 +62,13 @@ def evaluate_parsimonious(
     catalog = load_services_catalog(catalog_path)
     
     if not graphs_dir.exists():
-        print(f"❌ Directoy not found: {graphs_dir}")
+        print(f"❌ Directory not found: {graphs_dir}")
         return {}
         
     all_gen_files = sorted(graphs_dir.glob("*.graphml"))
     
     results = []
+    skipped_no_gt = []
     svc_f1_list = []
     edge_f1_all_list = []
     edge_f1_scored_list = []
@@ -51,6 +80,7 @@ def evaluate_parsimonious(
         gt_file = gt_dir / f"{vid}.graphml"
         
         if not gt_file.exists():
+            skipped_no_gt.append(vid)
             continue
             
         try:
@@ -71,20 +101,21 @@ def evaluate_parsimonious(
         svc_f1_list.append(pair_res["svc_f1"])
         edge_f1_all_list.append(pair_res["edge_f1"])
         
+        # Format metrics as percentages (0.0 to 100.0)
         results.append({
             "video_id": vid,
-            "title": pair_res.get("title", f"Video {vid}"),
-            "category": pair_res.get("category", "Uncategorized"),
+            "title": g_gt.graph.get("name") or f"Video {vid}",
+            "category": g_gt.graph.get("categories") or "Uncategorized",
             "gen_nodes": g_gen.number_of_nodes(),
             "gt_nodes": g_gt.number_of_nodes(),
-            "svc_precision": pair_res.get("svc_precision", 0.0),
-            "svc_recall": pair_res.get("svc_recall", 0.0),
-            "svc_f1": pair_res.get("svc_f1", 0.0),
+            "svc_precision": round(100 * pair_res.get("svc_precision", 0.0), 2),
+            "svc_recall": round(100 * pair_res.get("svc_recall", 0.0), 2),
+            "svc_f1": round(100 * pair_res.get("svc_f1", 0.0), 2),
             "gen_edges": g_gen.number_of_edges(),
             "gt_edges": g_gt.number_of_edges(),
-            "edge_precision": pair_res.get("edge_precision", 0.0),
-            "edge_recall": pair_res.get("edge_recall", 0.0),
-            "edge_f1": pair_res.get("edge_f1", 0.0),
+            "edge_precision": round(100 * pair_res.get("edge_precision", 0.0), 2),
+            "edge_recall": round(100 * pair_res.get("edge_recall", 0.0), 2),
+            "edge_f1": round(100 * pair_res.get("edge_f1", 0.0), 2),
             "is_zero_edge_gt": is_zero_edge_gt
         })
         
@@ -100,43 +131,90 @@ def evaluate_parsimonious(
         "graphs_directory": str(graphs_dir),
         "total_evaluated": len(results),
         "failed_reads": len(failed_list),
-        "mean_service_f1": mean_svc_f1,
-        "mean_edge_f1_all": mean_edge_f1_all,
-        "mean_edge_f1_excluding_zero_edge_gt": mean_edge_f1_scored,
+        "skipped_no_gt_count": len(skipped_no_gt),
+        "mean_service_f1": round(100 * mean_svc_f1, 2),
+        "mean_edge_f1_all": round(100 * mean_edge_f1_all, 2),
+        "mean_edge_f1_excluding_zero_edge_gt": round(100 * mean_edge_f1_scored, 2),
         "zero_edge_gt_count": len(zero_edge_gt_list),
-        "zero_edge_gt_videos": zero_edge_gt_list
+        "zero_edge_gt_videos": zero_edge_gt_list,
+        "skipped_no_gt_videos": skipped_no_gt
     }
     
-    # Save CSV
+    # Save CSV to legacy directory
     output_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = output_dir / "results_parsimonious.csv"
+    legacy_csv_path = output_dir / "results_parsimonious.csv"
     fieldnames = [
         "video_id", "title", "category",
         "gen_nodes", "gt_nodes", "svc_precision", "svc_recall", "svc_f1",
         "gen_edges", "gt_edges", "edge_precision", "edge_recall", "edge_f1",
         "is_zero_edge_gt"
     ]
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+    with open(legacy_csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(results)
         
-    # Save JSON
-    json_path = output_dir / "info_parsimonious.json"
-    with open(json_path, "w", encoding="utf-8") as f:
+    # Save JSON to legacy directory
+    legacy_json_path = output_dir / "info_parsimonious.json"
+    with open(legacy_json_path, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2)
         
+    # Save run to reports directory
+    today_str = date.today().isoformat()
+    run_dir = PROJECT_ROOT / "reports" / "runs" / f"{today_str}_parsimonious_v9"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Write results.csv run copy
+    write_csv_path = run_dir / "results.csv"
+    shutil_copy = True
+    try:
+        import shutil
+        shutil.copy2(legacy_csv_path, write_csv_path)
+    except Exception:
+        with open(write_csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(results)
+            
+    # Write run.json meta file
+    run_json_path = run_dir / "run.json"
+    run_meta = {
+        "generated_on": today_str,
+        "mode": "parsimonious",
+        "label": "v9",
+        "graphs_directory": str(graphs_dir),
+        "model": "gemini-3.6-flash",
+        "git_commit": git_commit(),
+        "n_evaluated": len(results),
+        "exclusions": {
+            "gt_has_zero_edges": zero_edge_gt_list,
+            "skipped_no_gt": skipped_no_gt,
+            "unreadable": failed_list
+        },
+        "prompt_v9_sha256": get_prompt_v9_sha256(),
+        "metrics": {
+            "service_f1_mean": round(100 * mean_svc_f1, 2),
+            "edge_f1_mean_all": round(100 * mean_edge_f1_all, 2),
+            "edge_f1_mean_excluding_zero_edge_gt": round(100 * mean_edge_f1_scored, 2)
+        }
+    }
+    with open(run_json_path, "w", encoding="utf-8") as f:
+        json.dump(run_meta, f, indent=2, ensure_ascii=False)
+        
     print("======================================================================")
-    print(" EVALUACIÓN DE MODO PARSIMONIOSO COMPLETADA EX ITOSAMENTE")
+    print(" EVALUACIÓN DE MODO PARSIMONIOSO COMPLETADA EXITOSAMENTE")
     print("======================================================================")
-    print(f"Directorio de Grafos: {graphs_dir}")
-    print(f"Total Evaluados: {len(results)}")
-    print(f"Service F1 Medio: {mean_svc_f1 * 100:.2f}%")
-    print(f"Edge F1 Medio (General): {mean_edge_f1_all * 100:.2f}%")
-    print(f"Edge F1 Medio (Sin GT 0-Aristas): {mean_edge_f1_scored * 100:.2f}%")
+    print(f"Directorio de Grafos:                  {graphs_dir}")
+    print(f"Total Evaluados:                       {len(results)}")
+    print(f"Saltados por falta de Ground Truth:    {len(skipped_no_gt)}")
+    print(f"Service F1 Medio:                      {mean_svc_f1 * 100:.2f}%")
+    print(f"Edge F1 Medio (General):               {mean_edge_f1_all * 100:.2f}%")
+    print(f"Edge F1 Medio (Sin GT 0-Aristas):      {mean_edge_f1_scored * 100:.2f}%")
     print(f"Archivos Generados:")
-    print(f"  • CSV:  {csv_path}")
-    print(f"  • JSON: {json_path}")
+    print(f"  • Legacy CSV:   {legacy_csv_path}")
+    print(f"  • Legacy JSON:  {legacy_json_path}")
+    print(f"  • Run CSV:      {write_csv_path}")
+    print(f"  • Run JSON:     {run_json_path}")
     print("======================================================================")
     
     return summary

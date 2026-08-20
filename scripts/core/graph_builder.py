@@ -24,8 +24,19 @@ console = Console()
 
 
 def load_valid_services() -> dict[str, str]:
-    csv_path = Path(__file__).resolve().parent.parent.parent / "graph_renderer" / "services.csv"
-    if not csv_path.exists():
+    root = Path(__file__).resolve().parent.parent.parent
+    paths = [
+        root / "graph_renderer" / "services.csv",
+        root / "data" / "services.csv",
+        root / "data" / "cloudscape_gt" / "services.csv"
+    ]
+    csv_path = None
+    for p in paths:
+        if p.exists():
+            csv_path = p
+            break
+
+    if not csv_path:
         return {}
 
     valid_services = {}
@@ -47,7 +58,7 @@ def create_graph_from_cloudscape_json(
     Create a MultiDiGraph from Cloudscape-schema JSON output.
 
     The JSON should have ``graph``, ``nodes``, and ``edges`` keys
-    matching the Cloudscape dataset schema.
+    matching the Cloudscape dataset schema. Supports both Schema A and Schema B.
 
     Parameters
     ----------
@@ -76,41 +87,69 @@ def create_graph_from_cloudscape_json(
                 elif any(k in item for k in ("id", "service", "name")):
                     nodes_data.append(item)
     elif isinstance(analysis_result, dict):
-        graph_meta = analysis_result.get("graph", {})
-        if not isinstance(graph_meta, dict):
-            graph_meta = {}
+        if "extracted_graph" in analysis_result and isinstance(analysis_result["extracted_graph"], dict):
+            # Schema B parsing
+            extracted = analysis_result["extracted_graph"]
+            graph_meta = extracted.get("graph", {})
+            if not isinstance(graph_meta, dict):
+                graph_meta = {}
 
-        # Extract nodes (try 'nodes', 'entities', 'components')
-        nodes_data = (
-            analysis_result.get("nodes")
-            or analysis_result.get("entities")
-            or analysis_result.get("components")
-            or []
-        )
-        if not isinstance(nodes_data, list):
-            nodes_data = []
+            nodes_data = (
+                extracted.get("nodes")
+                or extracted.get("entities")
+                or extracted.get("components")
+                or []
+            )
+            if not isinstance(nodes_data, list):
+                nodes_data = []
 
-        # Extract edges (try 'edges' or nested inside 'flows')
-        edges_raw = analysis_result.get("edges")
-        if isinstance(edges_raw, list) and len(edges_raw) > 0:
-            edges_data = edges_raw
-        elif "flows" in analysis_result and isinstance(analysis_result["flows"], list):
-            for flow in analysis_result["flows"]:
-                if isinstance(flow, dict) and "edges" in flow and isinstance(flow["edges"], list):
-                    flow_id = flow.get("flow_id", 0)
-                    for e in flow["edges"]:
-                        if isinstance(e, dict):
-                            e_copy = dict(e)
-                            e_copy.setdefault("flow_id", flow_id)
-                            edges_data.append(e_copy)
+            edges_raw = extracted.get("edges")
+            if isinstance(edges_raw, list):
+                edges_data = edges_raw
+        else:
+            # Schema A parsing
+            graph_meta = analysis_result.get("graph", {})
+            if not isinstance(graph_meta, dict):
+                graph_meta = {}
+
+            nodes_data = (
+                analysis_result.get("nodes")
+                or analysis_result.get("entities")
+                or analysis_result.get("components")
+                or []
+            )
+            if not isinstance(nodes_data, list):
+                nodes_data = []
+
+            edges_raw = analysis_result.get("edges")
+            if isinstance(edges_raw, list) and len(edges_raw) > 0:
+                edges_data = edges_raw
+            elif "flows" in analysis_result and isinstance(analysis_result["flows"], list):
+                for flow in analysis_result["flows"]:
+                    if isinstance(flow, dict) and "edges" in flow and isinstance(flow["edges"], list):
+                        flow_id = flow.get("flow_id", 0)
+                        for e in flow["edges"]:
+                            if isinstance(e, dict):
+                                e_copy = dict(e)
+                                e_copy.setdefault("flow_id", flow_id)
+                                edges_data.append(e_copy)
 
     # Create graph with Cloudscape-standard attributes
     G = nx.MultiDiGraph()
     G.graph["name"] = graph_meta.get("name", "")
-    G.graph["link"] = graph_meta.get("link", video_url or "")
+    G.graph["link"] = video_url if video_url else graph_meta.get("link", "")
     G.graph["notes"] = graph_meta.get("notes", "")
     G.graph["categories"] = graph_meta.get("categories", "")
     G.graph["graph_usable"] = graph_meta.get("graph_usable", True)
+
+    # Preserve Scheme B specific attributes if present
+    if isinstance(analysis_result, dict):
+        if "video_id" in analysis_result:
+            G.graph["video_id"] = str(analysis_result["video_id"])
+        if "prompt_version" in analysis_result:
+            G.graph["prompt_version"] = str(analysis_result["prompt_version"])
+        if "model" in analysis_result:
+            G.graph["model"] = str(analysis_result["model"])
 
     valid_services = load_valid_services()
 
@@ -144,6 +183,8 @@ def create_graph_from_cloudscape_json(
             service = "StepFunctions"
         elif "apigateway" in service_clean_stripped:
             service = "ApiGateway"
+        elif "greengrass" in service_clean_stripped:
+            service = "Greengrass"
         elif "renderingengine" in service_clean_stripped or "spotinstance" in service_clean_stripped:
             service = "EC2"
         elif service_clean_stripped == "user":
@@ -205,6 +246,21 @@ def create_graph_from_cloudscape_json(
             notes=str(notes_val).strip(),
             seq=str(edge.get("seq", "0")),
             type=str(edge.get("type", "data")),
+        )
+
+    # Check if input had content but G is empty, and fail loudly
+    has_content = False
+    if analysis_result:
+        if isinstance(analysis_result, list) and len(analysis_result) > 0:
+            has_content = True
+        elif isinstance(analysis_result, dict):
+            if any(analysis_result.values()):
+                has_content = True
+
+    if has_content and G.number_of_nodes() == 0:
+        raise ValueError(
+            f"Graph building failed: Input has content, but generated graph has 0 nodes. "
+            f"Parsed keys: {list(analysis_result.keys()) if isinstance(analysis_result, dict) else 'list'}"
         )
 
     console.print(

@@ -102,6 +102,12 @@ def run_pipeline(
         border_style="cyan",
     ))
 
+    if mode == "parsimonious":
+        raise ValueError(
+            "Parsimonious mode is deactivated in main.py to prevent data contamination. "
+            "Please use rebuild_parsimonious_v9.py to regenerate graphs from cached JSONs."
+        )
+
     video_id = extract_video_id(url)
     transcript_path = RAW_DIR / f"{video_id}_transcript.json"
     good_whiteboard_path = GOOD_WHITEBOARD_DIR / f"{video_id}.jpg"

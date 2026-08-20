@@ -161,7 +161,6 @@ def process_batch(video_ids: list[str], force: bool = False) -> None:
             )
 
             out_graph_path_v10 = export_graphml(G, vid, output_dir=PARSIMONIOUS_V10_DIR)
-            out_graph_path_active = export_graphml(G, vid, output_dir=PARSIMONIOUS_ACTIVE_DIR)
 
             add_to_tracker(vid, "version_10_parsimonious")
 

@@ -86,36 +86,40 @@ CLOUDSCAPE_PROMPT_TEMPLATE = """You are an expert AWS Solutions Architect. You a
 Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
 
 ## RULES:
-1. EXACT AWS SERVICES: You MUST strictly use the exact string from the ACM, ALB, AMI, AWSConfig, AccessAnalyzer, AlexaForBusiness, AmazonML, AmazonMQ, Amplify, ApiGateway, AppDiscovery, AppStream, AppSync, Athena, Aurora, AutoScaling, Batch, BeanStalk, Chime, CloudFormation, CloudFront, CloudHSM, CloudTrail, CloudWatch, CodeBuild, CodeCommit, CodeDeploy, CodePipeline, Cognito, Comprehend, Connect, ControlTower, CouchBase, DMS, DataExchange, DataPipeline, DeepLens, Detective, DevTools, DirectConnect, DirectoryService, DocumentDB, DynamoDB, DynamoDBStream, EBS, EC2, ECR, ECS, EFS, EKS, ELB, EMR, ElastiCache, ElasticTranscoder, ElementalLive, EventBridge, FSX, Fargate, Firehose, GlobalAccelerator, Glue, Grafana, Greengrass, GuardDuty, IAM, Inspector, IoT1Click, IoTAnalytics, IoTCore, KMS, Kendra, Kinesis, KinesisAnalytics, KinesisDataStream, KinesisVideo, LakeFormation, Lambda, LambdaAtEdge, Lex, LookoutForVision, MAM, MSK, Macie, MediaConnect, MediaConvert, MediaLive, MediaPackage, MediaStore, MemoryDB, ModelRegistry, MongoDBAtlas, NAT, NLB, Neptune, OnPremDC, OpenSearch, Organizations, Outpost, Pinpoint, Polly, PrivateLink, QLDB, QuickSight, RAM, RDS, RedShift, Rekognition, RoboMaker, Route53, S2SVPN, S3, SAP, SES, SNS, SQS, STS, SageMaker, SageMakerGroundTruth, SecretsManager, SecurityHub, ServerlessApplicationRepository, ServiceCatalog, ServiceNow, Shield, ShieldAdvanced, StepFunctions, StorageGateway, SystemsManager, Textract, ThirdParty, Timestream, Transcribe, TransferFamily, TransitGateway, Translate, VPC, VPCPeering, VPN, WAF, WorkSpaces, XRay list for the `service` field. Do not truncate, split, or abbreviate names (e.g., use "KinesisDataStream", not "Kinesis") regardless of how the speaker pronounces it.
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the <AWS_SERVICES_PLACEHOLDER> list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
 
-2. EXTERNAL/INTERNAL ACTORS: Identify what comes from "outside" the core AWS architecture based on the visual drawing. Use ONLY these canonical labels:
-   - `UserConsumerWeb` / `UserConsumerMobile`: For external customers or end-users.
-   - `UserCompanyDeveloper`: Default label for ANY internal company staff (engineers, security, operations) interacting with the system. Do NOT use UserCompanyAnalyst or UserCompanyAgent.
-   - `ThirdParty`: For external SaaS, public APIs, or non-AWS open-source services.
-   - `OnPremDC`: For corporate physical datacenters.
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the <USER_ACTORS_PLACEHOLDER> list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
 
-3. VISUAL-FIRST SERVICES (NO AUDIO EXPANSION): Base your nodes strictly on physical boxes or distinct icons drawn. 
-   - If a single generic box is drawn (e.g., labeled "AWS" or "Log Sources") but the audio mentions multiple underlying services, DO NOT expand them. Create a single node for that visual block.
-   - Ignore floating text or standalone words that do not have a bounding box or clear icon.
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes primarily on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
 
-4. BOUNDARY & NESTED BOX ROUTING: If an arrow points to the edge of a large container box (like a VPC, Subnet, or AWS Account boundary), assume the connection routes directly to the primary service(s) drawn inside that boundary, rather than the boundary itself.
+4. MANDATORY DECOMPOSITION OF GROUPED BOXES: 
+   - If a box on the whiteboard represents a collection of AWS services (e.g. labeled 'AWS', 'Security Sources', or 'AWS Cloud Logs') AND the transcript or presenter explicitly names the specific AWS services contained within it (such as CloudTrail, GuardDuty, SQS, SNS, S3):
+   - You ARE REQUIRED to break down that single box into individual nodes for EACH explicitly named AWS service.
+   - DO NOT create a single generic 'ThirdParty' or 'AWS Cloud Logs' node when specific AWS services are explicitly named in the audio/transcript.
+   - If an arrow points to the boundary of the container, route connections directly to the decomposed internal service nodes.
 
-5. VISUAL-FIRST EDGES: 
-   - Base your connections primarily on the PHYSICAL arrows drawn on the whiteboard. 
-   - You MUST include "entry" edges: connections where data or triggers arrive from the outside into the AWS architecture.
-   - Do not hallucinate invisible API return paths (bidirectional loops) unless they are explicitly drawn.
+5. STRICT VISUAL & ESSENTIAL EDGES (BALANCED CONNECTIONS): 
+   - Base your connections primarily on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - Trace round-trip or return connections (<-) ONLY if they have a clear visual representation on the whiteboard (such as double arrowheads or explicit return line drawings) OR if they are indispensable to the primary synchronous execution flow drawn.
+   - DO NOT mass-connect external actors or services to all components. Only draw entry and return connections that have a clear visual origin or explicit primary flow path.
+   - Avoid generating speculative or decorative return paths that are not backed by visual line indicators.
 
-6. LOGICAL SEQUENCING: When assigning `flow_id` and `seq` to edges, attempt to trace the logical flow starting from the external actors (Users, ThirdParty, OnPremDC) moving inwards to the backend. Number them sequentially to match the chronological flow of data described in the audio.
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
 
 7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
-   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step (e.g., merge 3 drawn EC2 instances into 1).
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
 
 8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
 
 ## OUTPUT FORMAT:
 Return ONLY valid JSON (no markdown fences):
 {
-  "step_by_step_reasoning": "Briefly analyze the visual components and entry points...",
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
   "graph": {
     "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
   },
