@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "The architecture represents ShopFully's globally distributed real-time log ingestion and analytics pipeline. 1. Mobile users across different regions (fused into a single UserConsumerMobile node) generate ~30 million events per day (~50 GB/day) from 3M daily active users. 2. CloudFront acts as the globally distributed entry point for event ingestion. 3. Lambda@Edge runs at edge locations to forward incoming log events into a central Amazon Kinesis Data Firehose delivery stream. 4. Kinesis Data Firehose feeds the real-time stream to Kinesis Data Analytics, which uses AWS Lambda logic to categorize events into business-critical, low priority, or discarded events. 5. Concurrently, Kinesis Data Firehose backs up all raw data into an Amazon S3 bucket for replay capabilities and data retention. 6. AWS Glue runs ETL jobs and catalogs the data stored in S3. 7. Amazon Athena exposes this cataloged data layer for ad-hoc queries by internal teams and business units.",
+  "graph": {
+    "name": "ShopFully Global Real-Time Analytics and Log Ingestion Architecture",
+    "link": "https://www.youtube.com/watch?v=vdujJAab1LM",
+    "categories": "Analytics, Serverless",
+    "graph_usable": true,
+    "notes": "Handles ~3 million daily unique users producing ~30 million events (~50 GB) per day in a fully serverless, geo-distributed architecture."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Regional Mobile Apps",
+      "notes": "Generates ~30M log events per day across multiple regions worldwide."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Geo-distributed CDN ingestion point for incoming global application logs."
+    },
+    {
+      "id": "2",
+      "service": "LambdaAtEdge",
+      "name": "Lambda@Edge",
+      "notes": "Executes logic at edge locations to forward events to a single centralized Firehose collector."
+    },
+    {
+      "id": "3",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Central collector stream serving as a unified controlled ingest stream for real-time analytics and S3 backup."
+    },
+    {
+      "id": "4",
+      "service": "KinesisAnalytics",
+      "name": "Kinesis Data Analytics",
+      "notes": "Processes near real-time analytics; categorizes stream events into business critical, low priority, or discarded."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 Backup Bucket",
+      "notes": "Stores full backup of raw incoming log data for disaster recovery and stream replay."
+    },
+    {
+      "id": "6",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Runs ETL jobs on S3 backup data and maintains the data catalog."
+    },
+    {
+      "id": "7",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "Enables internal departments to run ad-hoc SQL queries on cataloged raw data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Regional mobile traffic routes log events to CloudFront endpoints."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "CloudFront invokes Lambda@Edge upon log event ingestion."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda@Edge forwards events into Kinesis Data Firehose."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Kinesis Data Firehose streams events into Kinesis Data Analytics for near real-time processing."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kinesis Data Firehose writes backup copies of raw data into an S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "AWS Glue reads S3 data for ETL processing and schema cataloging."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "AWS Glue exposes data catalog metadata to Amazon Athena for internal reporting."
+    }
+  ]
+}

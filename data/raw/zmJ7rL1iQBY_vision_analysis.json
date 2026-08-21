@@ -1,0 +1,96 @@
+{
+  "step_by_step_reasoning": "1. Identify entities from the visual world model and audio transcript: EKS (AWS EKS), EKS Manager (ThirdParty), Bootstrapper (ThirdParty), EKS Connect (ThirdParty), RBAC (ThirdParty), IAM (AWS IAM), AD (AWS DirectoryService / Active Directory).\n2. Normalize entity service names to exact matches in the valid vocabulary list: 'EKS' -> EKS, 'EKS Manager' -> ThirdParty, 'Bootstrapper' -> ThirdParty, 'EKS Connect' -> ThirdParty, 'RBAC' -> ThirdParty, 'IAM' -> IAM, 'AD' -> DirectoryService.\n3. Map visual connections: EKS Manager pointing to EKS (provisioning compute, network, storage), RBAC bi-directionally connected to IAM, and IAM bi-directionally connected to AD.\n4. Organize edges into logical workflows based on transcript descriptions: Flow 0 for cluster provisioning and deployment by EKS Manager, and Flow 1 for identity mapping between RBAC, IAM, and Active Directory.",
+  "graph": {
+    "name": "Fidelity Investments - Enterprise Kubernetes on AWS EKS",
+    "link": "https://www.youtube.com/watch?v=zmJ7rL1iQBY",
+    "categories": "Containers, Security & Compliance, DevOps",
+    "graph_usable": true,
+    "notes": "Fidelity Investments built custom abstractions around AWS EKS (Fed EKS) including EKS Manager, Namespace Bootstrapper, and EKS Connect to govern security, identity, and automated cluster provisioning at scale."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "EKS Manager",
+      "notes": "Custom tool wrapping CloudFormation and GitOps framework for EKS cluster provisioning, infrastructure management, and daemonset governance."
+    },
+    {
+      "id": "1",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Amazon EKS cluster hosting Fidelity containerized application workloads across isolated namespaces."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "Bootstrapper",
+      "notes": "Namespace Bootstrapper CRD extending namespace creation, security integration, secrets management (Vault), and ALB Ingress setup."
+    },
+    {
+      "id": "3",
+      "service": "ThirdParty",
+      "name": "EKS Connect",
+      "notes": "Go-based wrapper around kubectl ensuring authentication, user validation, and target namespace determination."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "RBAC",
+      "notes": "Kubernetes Role-Based Access Control enforcing fine-grained user and group permissions within namespaces."
+    },
+    {
+      "id": "5",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "AWS IAM service bridging Kubernetes RBAC permissions with AWS identity."
+    },
+    {
+      "id": "6",
+      "service": "DirectoryService",
+      "name": "AD",
+      "notes": "Enterprise Active Directory backend handling federated identity and user authentication."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "EKS Manager provisions EKS cluster and manages compute, network, storage, and daemonset resources."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Kubernetes RBAC connects to AWS IAM for role mapping."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "AWS IAM returns authorization details to Kubernetes RBAC."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "AWS IAM integrates with Active Directory for enterprise user authentication."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Active Directory authenticates identity to AWS IAM."
+    }
+  ]
+}
