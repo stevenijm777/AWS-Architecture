@@ -10,11 +10,19 @@ Each run directory holds `results.csv` (one row per video, unaggregated),
 
 | Date | Mode | Label | n | Service F1 | Edge F1 | Model | Commit |
 | :--- | :--- | :--- | ---: | ---: | ---: | :--- | :--- |
+| [2026-08-20](runs/2026-08-20_standard_v6corrected_370v/report.html) | standard | `v6corrected` | 370 | 86.78% | 59.65% (n=321) | `gemini-3.6-flash` | `a415d5d` |
 | [2026-08-20](runs/2026-08-20_parsimonious_v9/report.html) | parsimonious | `v9` | 370 | 85.12% | 55.31% (n=349) | `gemini-3.6-flash` | `edf995f` |
 | [2026-08-19](runs/2026-08-19_parsimonious_v9/report.html) | parsimonious | `v9` | 344 | 85.41% | 55.37% (n=327) | `gemini-3.6-flash` | `932e3f9` |
 | [2026-08-16](runs/2026-08-16_standard_v6corrected_299v/report.html) | standard | `v6corrected` | 299 | 86.03% | 58.2% (n=286) | `gemini-3.6-flash` | `c047767` |
 
 ## Notes per run
+
+### `2026-08-20_standard_v6corrected_370v`
+
+- Pipeline: 2-stage (Stage 1 Modeler → Stage 2 Planner), Pydantic response_schema, temperature 0.0
+- Input: `data/graphs` vs `data/cloudscape_gt`
+- Evaluated 370 · edges scored on 321 · excluded from edge averages 0 (ground truth has zero edges)
+- Edge F1 averaged the old way (zero-edge GT included): 59.65%
 
 ### `2026-08-20_parsimonious_v9`
 
