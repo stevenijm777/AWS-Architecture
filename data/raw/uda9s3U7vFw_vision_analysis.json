@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The architecture diagram describes Tuso AI's analytics data acquisition pipeline. Users interact with the system via a mobile app or web client. First, the application downloads the event tracking JavaScript snippet via CloudFront. When user actions occur, event calls are routed via Route 53 to the closest API Gateway endpoint. API Gateway invokes a Validation Lambda function that verifies privacy compliance and validates the schema. Validated event logs are forwarded to Kinesis Firehose, which buffers the data (up to 5 minutes or 100 MB gzip compressed) before writing raw files to an S3 Raw Bucket. Upon object creation, S3 sends an event notification to SNS. SNS notifies an ETL Lambda function that normalizes and enriches the data before persisting the result into an S3 Processed Bucket for downstream Spark/EMR analytics processing.",
+  "graph": {
+    "name": "Tuso AI Analytics Data Acquisition Pipeline",
+    "link": "https://www.youtube.com/watch?v=uda9s3U7vFw",
+    "categories": "Analytics Data Pipeline Serverless Event Processing",
+    "graph_usable": true,
+    "notes": "Serverless data acquisition architecture for e-commerce search analytics."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App",
+      "notes": "Client application sending analytics and user event tracking data."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Serves the JavaScript snippet to track events in the client application."
+    },
+    {
+      "id": "2",
+      "service": "Route53",
+      "name": "Route 53",
+      "notes": "Routes client requests to the nearest geographical API Gateway endpoint."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Entry endpoint for incoming event tracking calls."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda Validation",
+      "notes": "Validates incoming events and ensures privacy compliance."
+    },
+    {
+      "id": "5",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Buffers raw logs for up to 5 minutes or 100 MB in gzip format."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3 Raw Bucket",
+      "notes": "Stores compressed raw event log files."
+    },
+    {
+      "id": "7",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Message broker configured to receive S3 object creation event notifications."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda ETL",
+      "notes": "Normalizes logs to internal format and enriches them with product info."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3 Processed Bucket",
+      "notes": "Stores persistent enriched event data ready for downstream Spark/EMR processing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile app downloads JavaScript tracking snippet via CloudFront."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile app sends event tracking calls via Route 53."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route 53 routes requests to the geographically nearest API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Gateway forwards event data to Validation Lambda."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Validation Lambda sends event logs to Kinesis Firehose."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Kinesis Firehose dumps buffered gzip files into S3 Raw Bucket."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "control",
+      "notes": "S3 Raw Bucket triggers object creation event notification to SNS."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "control",
+      "notes": "SNS notifies ETL Lambda subscriber to process new raw files."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "ETL Lambda outputs transformed and enriched data to S3 Processed Bucket."
+    }
+  ]
+}
