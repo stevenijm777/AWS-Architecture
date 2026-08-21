@@ -52,7 +52,7 @@ CSV_COLUMNS = [
     "svc_precision", "svc_recall", "svc_f1",
     "edge_precision", "edge_recall", "edge_f1",
     "edge_type_accuracy",
-    "scored_for_edges", "exclusion_reason",
+    "graph_usable", "scored_for_edges", "exclusion_reason",
     "categories",
 ]
 
@@ -100,15 +100,28 @@ def evaluate_folder(graphs_dir: Path, gt_dir: Path) -> tuple[list[dict], list[di
         # Edge F1 is only meaningful when the ground truth actually has edges.
         has_gt_edges = g_gt.number_of_edges() > 0
         res["scored_for_edges"] = has_gt_edges
-        res["exclusion_reason"] = "" if has_gt_edges else "gt_has_zero_edges"
+
+        reasons = []
+        if not res["graph_usable"]:
+            reasons.append("gt_marked_unusable")
+        if not has_gt_edges:
+            reasons.append("gt_has_zero_edges")
+        res["exclusion_reason"] = ",".join(reasons)
         rows.append(res)
 
     return rows, unreadable
 
 
 def summarize(rows: list[dict]) -> dict:
-    """Aggregate service metrics over all rows, edge metrics over scored rows only."""
-    scored = [r for r in rows if r["scored_for_edges"]]
+    """Aggregate metrics over GT-usable rows; edge metrics further limited to rows with GT edges.
+
+    Cloudscape marks 56/396 of its own ground-truth graphs graph_usable=False.
+    Those rows stay in results.csv (raw, unfiltered) but are dropped from every
+    published mean/median here — same treatment as the zero-edge-GT exclusion
+    already applied to edge metrics.
+    """
+    usable = [r for r in rows if r["graph_usable"]]
+    scored = [r for r in usable if r["scored_for_edges"]]
 
     def stats(values: list[float]) -> dict | None:
         if not values:
@@ -122,16 +135,18 @@ def summarize(rows: list[dict]) -> dict:
 
     return {
         "n_evaluated": len(rows),
+        "n_excluded_unusable": len(rows) - len(usable),
         "n_scored_for_edges": len(scored),
-        "n_excluded_from_edges": len(rows) - len(scored),
-        "service_precision": stats([r["svc_precision"] for r in rows]),
-        "service_recall": stats([r["svc_recall"] for r in rows]),
-        "service_f1": stats([r["svc_f1"] for r in rows]),
+        "n_excluded_from_edges": len(usable) - len(scored),
+        "service_precision": stats([r["svc_precision"] for r in usable]),
+        "service_recall": stats([r["svc_recall"] for r in usable]),
+        "service_f1": stats([r["svc_f1"] for r in usable]),
         "edge_precision": stats([r["edge_precision"] for r in scored]),
         "edge_recall": stats([r["edge_recall"] for r in scored]),
         "edge_f1": stats([r["edge_f1"] for r in scored]),
         # Kept for continuity with older reports, which averaged over everything.
-        "edge_f1_legacy_including_zero_edge_gt": stats([r["edge_f1"] for r in rows]),
+        "edge_f1_legacy_including_zero_edge_gt": stats([r["edge_f1"] for r in usable]),
+        "service_f1_legacy_including_unusable": stats([r["svc_f1"] for r in rows]),
     }
 
 
@@ -148,7 +163,8 @@ def write_csv(rows: list[dict], path: Path) -> None:
             writer.writerow(row)
 
 
-def print_summary(agg: dict, excluded: list[str]) -> None:
+def print_summary(agg: dict, excluded_edges: list[str], excluded_unusable: list[str]) -> None:
+    n_usable = agg["n_evaluated"] - agg["n_excluded_unusable"]
     t = Table(title="Standard vs Cloudscape GT — strict", border_style="cyan")
     t.add_column("Metric", style="bold")
     t.add_column("Mean", justify="right", style="green")
@@ -156,9 +172,9 @@ def print_summary(agg: dict, excluded: list[str]) -> None:
     t.add_column("n", justify="right")
 
     for label, key, n in [
-        ("Service Precision", "service_precision", agg["n_evaluated"]),
-        ("Service Recall", "service_recall", agg["n_evaluated"]),
-        ("Service F1", "service_f1", agg["n_evaluated"]),
+        ("Service Precision", "service_precision", n_usable),
+        ("Service Recall", "service_recall", n_usable),
+        ("Service F1", "service_f1", n_usable),
         ("Edge Precision", "edge_precision", agg["n_scored_for_edges"]),
         ("Edge Recall", "edge_recall", agg["n_scored_for_edges"]),
         ("Edge F1", "edge_f1", agg["n_scored_for_edges"]),
@@ -168,14 +184,21 @@ def print_summary(agg: dict, excluded: list[str]) -> None:
             t.add_row(label, f"{s['mean']}%", f"{s['median']}%", str(n))
     console.print(t)
 
+    if agg["n_excluded_unusable"]:
+        console.print(
+            f"[dim]{agg['n_excluded_unusable']} graph(s) marked graph_usable=False by "
+            f"Cloudscape excluded from all published means (kept raw in results.csv): "
+            f"{', '.join(excluded_unusable)}[/]"
+        )
+
     legacy = agg["edge_f1_legacy_including_zero_edge_gt"]
     if legacy and agg["n_excluded_from_edges"]:
         console.print(
             f"[dim]Edge F1 as older reports computed it (zero-edge GT included): "
-            f"{legacy['mean']}% over {agg['n_evaluated']} videos — "
+            f"{legacy['mean']}% over {n_usable} usable videos — "
             f"{agg['n_excluded_from_edges']} of them can never score above 0.[/]"
         )
-        console.print(f"[dim]Excluded from edge averages: {', '.join(excluded)}[/]")
+        console.print(f"[dim]Excluded from edge averages: {', '.join(excluded_edges)}[/]")
 
 
 def main() -> None:
@@ -198,7 +221,10 @@ def main() -> None:
         sys.exit(1)
 
     agg = summarize(rows)
-    excluded = sorted(r["video_id"] for r in rows if not r["scored_for_edges"])
+    excluded_unusable = sorted(r["video_id"] for r in rows if not r["graph_usable"])
+    excluded_edges = sorted(
+        r["video_id"] for r in rows if r["graph_usable"] and not r["scored_for_edges"]
+    )
 
     out_dir = Path(args.out).resolve() if args.out else (
         REPORTS_DIR / "runs" / f"{date.today().isoformat()}_standard_{args.label}_{len(rows)}v"
@@ -220,12 +246,14 @@ def main() -> None:
         },
         "counts": {
             "evaluated": agg["n_evaluated"],
+            "excluded_unusable": agg["n_excluded_unusable"],
             "scored_for_edges": agg["n_scored_for_edges"],
             "excluded_from_edges": agg["n_excluded_from_edges"],
             "unreadable": len(unreadable),
         },
         "exclusions": {
-            "gt_has_zero_edges": excluded,
+            "gt_marked_unusable": excluded_unusable,
+            "gt_has_zero_edges": excluded_edges,
             "unreadable": unreadable,
         },
         "metrics": agg,
@@ -234,7 +262,7 @@ def main() -> None:
         json.dumps(run_meta, indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
-    print_summary(agg, excluded)
+    print_summary(agg, excluded_edges, excluded_unusable)
     if unreadable:
         console.print(f"[yellow]⚠ {len(unreadable)} unreadable graph(s) skipped — see run.json[/]")
     console.print(f"\n[green]✓[/] Run written → [bold]{_display_path(out_dir)}[/]\n")

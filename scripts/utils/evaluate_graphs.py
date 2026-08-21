@@ -225,11 +225,16 @@ def evaluate_pair(
     # --- Categories ---
     categories = get_categories(gt_graph)
 
+    # --- Usability flag (Cloudscape's own annotation on the GT graph) ---
+    gt_usable = gt_graph.graph.get("graph_usable", True)
+    graph_usable = not (gt_usable is False or str(gt_usable).lower() == "false")
+
     return {
         "video_id": video_id,
         "gen_name": gen_graph.graph.get("name", ""),
         "gt_name": gt_graph.graph.get("name", ""),
         "categories": categories,
+        "graph_usable": graph_usable,
         # Node counts
         "gen_nodes": gen_graph.number_of_nodes(),
         "gt_nodes": gt_graph.number_of_nodes(),
@@ -615,14 +620,6 @@ def evaluate_dir_helper(gen_dir: Path, gt_dir: Path, catalog: dict) -> list[dict
             gen_g = nx.read_graphml(str(gen_files[vid]))
             gt_g = nx.read_graphml(str(gt_files[vid]))
             result = evaluate_pair(gen_g, gt_g, vid, catalog)
-            
-            # Extract and inject usability status from GT
-            usable = gt_g.graph.get("graph_usable", True)
-            if usable is False or str(usable).lower() == "false":
-                result["graph_usable"] = False
-            else:
-                result["graph_usable"] = True
-                
             results.append(result)
         except Exception as e:
             console.print(f"  [red]✗[/] Error evaluating {vid} in {gen_dir.name}: {e}")
