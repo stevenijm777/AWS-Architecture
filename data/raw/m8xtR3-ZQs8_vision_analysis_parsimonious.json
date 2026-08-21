@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows a multi-account centralized logging solution across an 'Individual Acct' and a 'Centralized Acct'. In the Individual Account, logs are generated from EC2 (sending logs to CloudWatch), CloudTrail, and VPC Flow Logs. These three sources feed into Kinesis Firehose, which forwards data to a Lambda function for log transformation and filtering. This Lambda writes the processed logs to a centralized S3 bucket in the Centralized Account. When new log objects land in S3, they trigger a second Lambda function in the Centralized Account, which ingests and indexes the data into Elasticsearch (mapped to OpenSearch). Kibana (mapped to ThirdParty) is positioned alongside Elasticsearch for visualization and log analysis.",
+  "graph": {
+    "name": "Biogen Centralized Logging Architecture",
+    "link": "",
+    "categories": "Logging & Analytics",
+    "graph_usable": true,
+    "notes": "Centralized logging architecture across individual AWS accounts and a central account using S3, Lambda, Kinesis Firehose, and Elasticsearch/Kibana."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EC2",
+      "name": "Web Application EC2",
+      "notes": "Individual account web application running on EC2"
+    },
+    {
+      "id": "1",
+      "service": "CloudWatch",
+      "name": "CloudWatch Logs",
+      "notes": "Collects OS and application logs via CloudWatch Agent"
+    },
+    {
+      "id": "2",
+      "service": "CloudTrail",
+      "name": "CloudTrail",
+      "notes": "Captures account API call logs"
+    },
+    {
+      "id": "3",
+      "service": "VPC",
+      "name": "Flow Logs",
+      "notes": "Captures network IP traffic logs"
+    },
+    {
+      "id": "4",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Streams incoming logs from CloudWatch, CloudTrail, and Flow Logs"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Log Transformer Lambda",
+      "notes": "Normalizes, converts format, and filters actionable data"
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "Centralized Log S3 Bucket",
+      "notes": "Central storage bucket in centralized account"
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Log Ingestion Lambda",
+      "notes": "Triggered by S3 events to push data into Elasticsearch"
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Search and analytics engine for log indexing and root cause troubleshooting"
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Kibana",
+      "notes": "Visualization platform for Elasticsearch data"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 application sends logs to CloudWatch agent"
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudWatch streams logs to Kinesis Firehose"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudTrail pushes audit logs to Kinesis Firehose"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Flow Logs pushes network logs to Kinesis Firehose"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kinesis Firehose sends stream data to Lambda"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda writes converted logs cross-account into S3"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "S3 object creation triggers centralized Lambda"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda pushes ingested logs to Elasticsearch"
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Elasticsearch provides backend search capabilities for Kibana visualization"
+    }
+  ]
+}

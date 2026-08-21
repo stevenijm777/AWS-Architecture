@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "The architecture diagram split by a dashed line depicts a Write intensive architecture on the left and a Read intensive architecture on the right. On the Write side, API Gateway and Lambda process write requests and push events into a Kinesis Data Stream. Legacy applications drop files into an S3 bucket which feeds into an EMR cluster running Apache Spark. EMR processes data and pushes outputs to a Read Kinesis Data Stream across the boundary. On the Read side, Kinesis feeds DynamoDB, which streams data to Elasticsearch (OpenSearch). Athena queries historical data from a bottom S3 Data Lake bucket and structured data in DynamoDB. Read APIs are served via a dedicated API Gateway and Lambda pair.",
+  "graph": {
+    "name": "Health Direct Australia - Read and Write Segregated Telehealth Data Architecture",
+    "link": "",
+    "categories": "Data Analytics & Serverless Architecture",
+    "graph_usable": true,
+    "notes": "Divided into write-intensive (left) and read-intensive (right) pipelines separated by a central dashed line."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ApiGateway",
+      "name": "Write API Gateway",
+      "notes": "Handles incoming write API requests"
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Write Lambda",
+      "notes": "Microservices written in Node.js executing write logic"
+    },
+    {
+      "id": "2",
+      "service": "Kinesis",
+      "name": "Ingestion Kinesis Stream",
+      "notes": "Buffers incoming write event payloads"
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Input S3 Bucket",
+      "notes": "Stores legacy data files and drops like Medicare files"
+    },
+    {
+      "id": "4",
+      "service": "EMR",
+      "name": "EMR (Spark)",
+      "notes": "Runs Apache Spark state machine applications to validate and process data"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "Data Lake S3 Bucket",
+      "notes": "Long-term data lake holding full longitudinal data in Parquet format"
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Output Kinesis Stream",
+      "notes": "Buffers processed output streams for read-side persistence"
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores domain-driven published representations for read queries"
+    },
+    {
+      "id": "8",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Indexes data from DynamoDB Streams for semantic and condition search"
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Queries the S3 data lake and DynamoDB for reporting and analytics"
+    },
+    {
+      "id": "10",
+      "service": "ApiGateway",
+      "name": "Read API Gateway",
+      "notes": "Exposes read APIs for search and external consumption"
+    },
+    {
+      "id": "11",
+      "service": "Lambda",
+      "name": "Read Lambda",
+      "notes": "Executes read microservices"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Write API requests trigger write Lambdas"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Write Lambdas publish change events into Kinesis"
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "EMR ingests buffered streaming events from Kinesis"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Batch file drops from S3 are ingested into EMR"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "EMR publishes processed output events across to output Kinesis stream"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Output Kinesis stream buffers writes into DynamoDB"
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "DynamoDB Streams replicate data into Elasticsearch"
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena queries longitudinal Parquet data stored in the S3 data lake"
+    },
+    {
+      "source": "9",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Athena queries DynamoDB for quick structured reporting"
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 4,
+      "seq": "1",
+      "type": "data",
+      "notes": "Read API requests trigger read Lambdas"
+    },
+    {
+      "source": "11",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "2",
+      "type": "data",
+      "notes": "Read Lambdas fetch structured records from DynamoDB"
+    }
+  ]
+}

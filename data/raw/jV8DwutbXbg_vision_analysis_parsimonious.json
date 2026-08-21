@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "1. Visual Analysis: The diagram shows an architecture for transaction processing and NLP enrichment. On the top left, an incoming arrow enters a 'Kinesis' stream. From Kinesis, an arrow points to a top 'Lambda' function. The top Lambda function interacts bi-directionally with a top 'RDS' database (a curved arrow going to RDS and a return arrow from RDS). Downwards from top Lambda, an arrow points to an 'SQS' queue. Multiple fan-out arrows lead from SQS to a bottom 'Lambda' function. From the bottom Lambda, two arrows diverge: one to a bottom 'RDS' database and another to a bottom 'Kinesis' stream.\n2. Node Identification: All drawn services (Kinesis, Lambda, RDS, SQS, Lambda, RDS, Kinesis) are distinct physical boxes/icons drawn on the board. Each represents a distinct functional step in the ingestion and processing flow.\n3. Exact Service Names: Validated against the schema string list ('Kinesis', 'Lambda', 'RDS', 'SQS').\n4. Edge Tracing & Sequencing: Follows the visual flow starting from Kinesis (ingestion event) -> Lambda -> RDS query/response -> SQS queue -> Lambda fan-out -> RDS & Kinesis targets.",
+  "graph": {
+    "name": "Tandem Money Transaction Processing Architecture",
+    "link": "",
+    "categories": "Serverless, Data Pipeline, Machine Learning / NLP",
+    "graph_usable": true,
+    "notes": "Data pipeline for transaction ingestion, SQL database lookups, SQS fan-out processing with NLP Lambda, and enriched data persistence."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Account Ingestion Stream",
+      "notes": "Receives events indicating account updates."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Ingestion Lambda",
+      "notes": "Fetches raw transactions from RDS and batches them into SQS."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "Raw Transaction Store",
+      "notes": "Stores scraped bank transactions queried by the ingestion Lambda."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "Transaction Queue",
+      "notes": "Buffers transaction description batches to allow fanning out processing."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "NLP Processing Lambda",
+      "notes": "Runs natural language processing model to enrich transaction description strings."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "Enriched Transaction Store",
+      "notes": "Stores processed and categorized transactions along with model versions."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Enriched Event Stream",
+      "notes": "Publishes completed transaction events to downstream applications."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Triggers Lambda upon account update event"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Queries RDS for user transactions"
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns transaction records to Lambda"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Publishes batched transaction strings to SQS queue"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Fans out messages to NLP Lambda instances"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5a",
+      "type": "data",
+      "notes": "Writes enriched transaction data to RDS"
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5b",
+      "type": "data",
+      "notes": "Emits enriched transaction completion events to Kinesis"
+    }
+  ]
+}

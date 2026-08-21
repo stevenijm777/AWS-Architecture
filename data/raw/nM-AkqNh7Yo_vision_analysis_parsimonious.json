@@ -1,0 +1,170 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows an automated big data processing workflow managed by a custom Resource Manager. 1) Data lands in an input S3 bucket, triggering notifications to high and low priority SQS queues. 2) Worker EC2 instances poll these queues for tasks. 3) Before submitting tasks, workers query the Resource Manager (running on EC2 backed by RDS and monitored by CloudWatch) to obtain available EMR cluster endpoints. 4) Workers submit data processing jobs to dynamic EMR clusters (using Spot instances via Instance Fleets). 5) Processed output data is stored in the output S3 bucket (EMRFS).",
+  "graph": {
+    "name": "From Scratch Big Data Resource Management Architecture",
+    "link": "",
+    "categories": "Big Data & Analytics",
+    "graph_usable": true,
+    "notes": "Architecture for dynamically managing big data processing workloads on EMR using custom Resource Manager on AWS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "Input Data Bucket",
+      "notes": "Stores incoming raw marketing, customer, and transaction data."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "High Priority SQS Queue",
+      "notes": "Queue for high-priority/time-sensitive task notifications."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "Low Priority SQS Queue",
+      "notes": "Queue for low-priority batch processing task notifications."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Worker EC2 (High Priority)",
+      "notes": "Worker instance processing high priority task messages."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Worker EC2 (Low Priority)",
+      "notes": "Worker instance processing low priority task messages."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Monitors cluster metrics and health for status management."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Resource Manager EC2",
+      "notes": "Core controller API managing dynamic task-to-cluster mapping and auto-recovery."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS Database",
+      "notes": "Stores task-to-cluster mapping and configuration details."
+    },
+    {
+      "id": "8",
+      "service": "EMR",
+      "name": "EMR Clusters (Spot)",
+      "notes": "Dynamic EMR clusters running on Spot instances via Instance Fleets for cost reduction."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "Output Data Bucket (EMRFS)",
+      "notes": "Stores processed analytics output for downstream application usage."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1a",
+      "type": "data",
+      "notes": "Triggers high-priority event message to High SQS."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1b",
+      "type": "data",
+      "notes": "Triggers low-priority batch event message to Low SQS."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2a",
+      "type": "data",
+      "notes": "High priority worker reads message from queue."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2b",
+      "type": "data",
+      "notes": "Low priority worker reads message from queue."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3a",
+      "type": "meta",
+      "notes": "Worker queries Resource Manager API for optimal cluster endpoint."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3b",
+      "type": "meta",
+      "notes": "Worker queries Resource Manager API for optimal cluster endpoint."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Resource Manager reads/writes cluster mapping metadata."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "meta",
+      "notes": "CloudWatch feeds metrics to Resource Manager to monitor cluster health."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "meta",
+      "notes": "Resource Manager provisions, recovers, or manages EMR status."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "7a",
+      "type": "data",
+      "notes": "Worker submits high priority processing job to designated EMR cluster."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "7b",
+      "type": "data",
+      "notes": "Worker submits low priority processing job to designated EMR cluster."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "EMR processes data and writes output back to S3 bucket via EMRFS."
+    }
+  ]
+}

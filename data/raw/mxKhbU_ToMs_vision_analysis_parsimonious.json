@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "The architecture shows an EC2 monolith sending events to Lambda, which routes them through SNS to SQS microservice queues. Failed processing moves messages to an SQS Dead Letter Queue (DLQ). The Crypt Keeper system (ECS microservices) processes dead messages, stores them in a database, allows developer visibility via a web interface, and re-queues them back into SQS using Lazarus.",
+  "graph": {
+    "name": "MindTouch Modernizing Legacy .NET Application",
+    "link": "",
+    "categories": "Application Integration & Microservices",
+    "graph_usable": true,
+    "notes": "Decoupled microservice event architecture handling error retries and dead-letter message reprocessing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "End Users",
+      "notes": "External client traffic entering the monolith over HTTPS"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Monolith .NET Application",
+      "notes": "Legacy monolith running on EC2 generating event streams"
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Event Router Lambda",
+      "notes": "Processes raw application events"
+    },
+    {
+      "id": "3",
+      "service": "SNS",
+      "name": "SNS Topics",
+      "notes": "Publishes event notifications to subscribers"
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Microservice SQS Queues",
+      "notes": "Queues buffering work for downstream microservices"
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "Dead Letter Queue (DLQ)",
+      "notes": "Holds unprocessable/fatal error messages"
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "Crypt Keeper Microservices",
+      "notes": "Consists of dead message consumer, MorkDB, Morktician UI, and Lazarus re-queuer"
+    },
+    {
+      "id": "7",
+      "service": "UserCompanyDeveloper",
+      "name": "Engineering Team",
+      "notes": "Inspects and manages dead-lettered messages"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "HTTPS requests to monolith"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Monolith pushes generated events"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda forwards events to SNS topics"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "SNS fans out to microservice SQS queues"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Failed/fatal messages sent to DLQ"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Crypt Keeper consumes dead-lettered messages"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Lazarus re-injects revived messages to SQS queues"
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Team interacts with Morktician web UI"
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{
+  "step_by_step_reasoning": "The architecture shows data ingested from on-premises sources via AWS Direct Connect to Database Migration Service (DMS). DMS writes data to both DynamoDB (staging layer with RAW, L1, L2) and S3 (raw archive). DynamoDB Streams trigger Lambda functions to process and push enriched data across layers. In case of error recovery, Athena queries S3 data to rebuild layers and push back into DynamoDB.",
+  "graph": {
+    "name": "HDFC Life Real-Time Event-Driven Data Lake",
+    "link": "",
+    "categories": "Data Lake & Real-Time Analytics",
+    "graph_usable": true,
+    "notes": "Architecture uses DynamoDB and Lambda for real-time processing with S3 and Athena for error recovery."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "OnPremDC",
+      "name": "On-Premises Sources",
+      "notes": "AS400, flat files, legacy and modern databases"
+    },
+    {
+      "id": "1",
+      "service": "DirectConnect",
+      "name": "DX",
+      "notes": "Dedicated network connection"
+    },
+    {
+      "id": "2",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "Pulls data into AWS landscape"
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DDB",
+      "notes": "Staging data lake layers (RAW, L1, L2)"
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Event-driven processing between layers via streams"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Raw layer storage for serverless recovery"
+    },
+    {
+      "id": "6",
+      "service": "Athena",
+      "name": "ATHENA",
+      "notes": "Query engine for serverless recovery mechanism"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Data ingested from on-premises sources"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "DirectConnect pipe to DMS"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3a",
+      "type": "data",
+      "notes": "DMS feeds data into DynamoDB"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3b",
+      "type": "data",
+      "notes": "DMS replicates raw data to S3"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "DynamoDB streams trigger Lambda"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda pushes processed data back to L1/L2 layers"
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Trigger recovery flow"
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Rebuild layer within S3 using Athena"
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Push rebuilt data back to DynamoDB"
+    }
+  ]
+}
