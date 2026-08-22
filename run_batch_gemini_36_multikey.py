@@ -249,10 +249,9 @@ def main():
 
         shutil.copy2(cache_graphml, PROJECT_ROOT / "graph_renderer" / "graphs_input" / f"{video_id}_vision.graphml")
         subprocess.run(
-            ["node", "render_graph.mjs", f".\\{video_id}_vision.graphml"],
+            ["node", "render_graph.mjs", f"{video_id}_vision.graphml"],
             cwd=str(PROJECT_ROOT / "graph_renderer"),
             env=node_env,
-            shell=True,
             check=True
         )
         shutil.copy2(PROJECT_ROOT / "graph_renderer" / "graphs_output" / f"{video_id}_vision.png", PROJECT_ROOT / "Graphs" / f"{video_id}_vision.png")

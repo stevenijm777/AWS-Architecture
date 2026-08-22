@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture shows Qonto's PCI-DSS compliant card management system and egress proxy setup. Users send requests from the Mobile App to API Gateway, which triggers a Lambda function. Lambda retrieves encrypted secrets/certificates from AWS Systems Manager (Parameter Store) which uses KMS for decryption. Lambda then communicates with the Mastercard network. Additionally, for application logging and SaaS access (Sentry), traffic flows through a whitelisted internet proxy infrastructure (ELB, EC2, NAT Gateway) to Sentry.",
+  "graph": {
+    "name": "Qonto PCI DSS Compliant Architecture for Card Management",
+    "link": "https://www.youtube.com/watch?v=aN26J-7q9Hw",
+    "categories": "Fintech, Serverless, Security",
+    "graph_usable": true,
+    "notes": "Qonto handles card management functions within PCI-DSS certified AWS services (Lambda, API Gateway) and routes egress SaaS logging traffic through a whitelisted proxy cluster on EC2/NAT Gateway to Sentry."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile App",
+      "notes": "Qonto mobile application used by customers to manage physical and virtual credit cards."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives web service calls from the mobile application."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "PCI-DSS certified serverless compute executing business logic and card processing."
+    },
+    {
+      "id": "3",
+      "service": "SystemsManager",
+      "name": "Systems Manager",
+      "notes": "Stores secrets and electronic certificates required by Lambda at startup."
+    },
+    {
+      "id": "4",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Encrypts and decrypts secrets stored in Systems Manager."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Mastercard",
+      "notes": "External payment network for authorizing card actions."
+    },
+    {
+      "id": "6",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Load balancing tier for internal egress proxy services."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Runs proxy solution with whitelist capabilities to filter internet traffic."
+    },
+    {
+      "id": "8",
+      "service": "NAT",
+      "name": "NAT",
+      "notes": "NAT Gateway managing outbound network connections."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Sentry",
+      "notes": "External SaaS platform used for application logging and monitoring."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User triggers card management operation from Mobile App to API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway triggers Lambda execution."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda fetches secrets and electronic certificates from Systems Manager at startup."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Systems Manager uses KMS to decrypt stored parameters."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda sends authenticated card requests to Mastercard network."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Mastercard returns card processing response to Lambda."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda returns verified and signed response to API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "API Gateway returns final response to Mobile App."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda routes outbound logging traffic through EC2 proxy."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "API Gateway routes outbound proxy traffic via Load Balancer."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "NAT Gateway routes whitelisted egress log data to Sentry SaaS."
+    }
+  ]
+}

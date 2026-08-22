@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "1. Identify all architecture components across Region 1 (Edge), Region 2 (Edge), and Main Region based on the whiteboard and context.\n2. Assign string sequential integer IDs to nodes.\n3. Identify the visual green arrows drawn on the whiteboard:\n   - ELB (Region 1) -> ELB (Main Region): Verification request proxying.\n   - ELB (Main Region) -> EC2 (Main Region): Route request to Certificate Manager running on EC2.\n   - EC2 (Main Region) -> SNS (Main Region): Publish updated certificate data to SNS topic.\n   - SNS (Main Region) -> SQS (Region 1) & SQS (Region 2): Decoupled pub/sub fan-out distribution.\n   - SQS (Region 1) -> ECS (Region 1): Edge SQS queue passing certificate message to ECS consumer.\n4. Organize these flows logically with flow IDs and sequence numbers.",
+  "graph": {
+    "name": "Strikingly - Multi-Region Custom Domain SSL Certificate Management and Distribution",
+    "link": "https://www.youtube.com/watch?v=plce6pRdx6o",
+    "categories": "Compute, Networking, Security, Messaging",
+    "graph_usable": true,
+    "notes": "Strikingly's global multi-region architecture for managing and dynamically distributing SSL certificates for tens of thousands of custom user domains using AWS SNS, SQS, ECS, and EC2 Certificate Manager."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ELB",
+      "name": "ELB (Region 1)",
+      "notes": "Edge Load Balancer in Region 1 receiving initial user request."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "ECS (Region 1)",
+      "notes": "Edge container service running web application and certificate consumer worker."
+    },
+    {
+      "id": "2",
+      "service": "ElastiCache",
+      "name": "ElastiCache (Region 1)",
+      "notes": "In-memory cache storing downloaded SSL certificates for edge SSL handshakes."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS (Region 1)",
+      "notes": "Subscribed to central SNS topic to receive new certificate notifications."
+    },
+    {
+      "id": "4",
+      "service": "ELB",
+      "name": "ELB (Region 2)",
+      "notes": "Edge Load Balancer in Region 2."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS (Region 2)",
+      "notes": "Edge container service running in Region 2."
+    },
+    {
+      "id": "6",
+      "service": "ElastiCache",
+      "name": "ElastiCache (Region 2)",
+      "notes": "In-memory cache storing downloaded SSL certificates in Region 2."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS (Region 2)",
+      "notes": "Subscribed to central SNS topic in Region 2 for plug-and-play fanout."
+    },
+    {
+      "id": "8",
+      "service": "ELB",
+      "name": "ELB (Main Region)",
+      "notes": "Main Region Load Balancer routing cross-region verification requests."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "EC2 (Main Region)",
+      "notes": "Hosts Certificate Manager which orchestrates domain validation and issuance."
+    },
+    {
+      "id": "10",
+      "service": "SNS",
+      "name": "SNS (Main Region)",
+      "notes": "Central topic publishing certificate updates globally across edge regions."
+    },
+    {
+      "id": "11",
+      "service": "RDS",
+      "name": "RDS (Main Region)",
+      "notes": "Central database storing domain and certificate metadata."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Proxies domain verification request from Region 1 ELB to Main Region ELB."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Main Region ELB forwards verification proxy request to Certificate Manager on EC2."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Certificate Manager publishes new certificate data to central SNS topic."
+    },
+    {
+      "source": "10",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS fans out certificate message to SQS queue in Region 1."
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "SNS fans out certificate message to SQS queue in Region 2."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "Region 1 SQS passes consumed certificate message to ECS consumer instance."
+    }
+  ]
+}

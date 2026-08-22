@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-generate_comparison_plots.py — Generate comprehensive comparison plots between 
+generate_comparison_plots.py — Generate comprehensive comparison plots between
                                Standard Mode (v6corrected) and Parsimonious Mode
-                               evaluated against Cloudscape Ground Truth (61 GT videos).
+                               evaluated against Cloudscape Ground Truth.
+
+Videos Cloudscape marks graph_usable=False are excluded from every plot, same
+criterion as evaluate_standard.py / evaluate_parsimonious.py.
 """
 from __future__ import annotations
 
 import sys
 import json
+from collections import Counter
 from pathlib import Path
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -64,50 +68,91 @@ def eval_permissive(g_gen, g_gt):
     _, _, edge_f1 = compute_prf1(len(gen_edges & gt_edges), len(gen_edges), len(gt_edges))
     return node_f1, edge_f1
 
+def permissive_missing_hallucinated(g_gen, g_gt):
+    """Same set-diff methodology as evaluate_pair's services_missing/hallucinated,
+    but on actor-superclass-normalized labels (User*, ThirdParty* collapsed)."""
+    gen_set = {norm_permissive(g_gen.nodes[n].get("service", "")) for n in g_gen.nodes()}
+    gt_set = {norm_permissive(g_gt.nodes[n].get("service", "")) for n in g_gt.nodes()}
+    gen_set.discard("Unknown")
+    gt_set.discard("Unknown")
+    missing = sorted(gt_set - gen_set)
+    hallucinated = sorted(gen_set - gt_set)
+    return missing, hallucinated
+
+def is_actor_label(svc: str) -> bool:
+    """True for actor-superclass labels (User*/ThirdParty*), false for real AWS services."""
+    s = str(svc).strip()
+    cap = catalog.get(s, {}).get("capability", "")
+    return s.startswith("User") or s.startswith("ThirdParty") or cap in ("User", "ThirdParty")
+
 def collect_evaluation_data():
+    """Returns (df, full_results). df has one row per (video, model) with the flat
+    metrics used by most plots. full_results carries the complete evaluate_pair()
+    dicts per model (incl. capability_breakdown), which don't fit cleanly in a
+    DataFrame cell."""
     clean_files = sorted(list(STANDARD_DIR.glob("*.graphml")))
     eval_vids = [f.stem for f in clean_files if (GT_DIR / f"{f.stem}.graphml").exists()]
-    
+
     records = []
+    full_results = {"v6 Standard": [], "Parsimonious": []}
     for vid in eval_vids:
         gt_path = GT_DIR / f"{vid}.graphml"
         g_gt = nx.read_graphml(gt_path)
-        
+
         # Standard
         std_path = STANDARD_DIR / f"{vid}.graphml"
         g_std = nx.read_graphml(std_path)
         res_std_st = evaluate_pair(g_std, g_gt, vid, catalog)
+
+        # Cloudscape flags 56/396 of its own ground truths as unusable.
+        if not res_std_st["graph_usable"]:
+            continue
+
         pm_std_nf1, pm_std_ef1 = eval_permissive(g_std, g_gt)
-        
+        pm_std_missing, pm_std_halluc = permissive_missing_hallucinated(g_std, g_gt)
+
         records.append({
             "video_id": vid,
             "model": "v6 Standard",
             "strict_node_f1": res_std_st["svc_f1"] * 100,
+            "strict_ms_f1": res_std_st["ms_f1"] * 100,
             "strict_edge_f1": res_std_st["edge_f1"] * 100,
             "permissive_node_f1": pm_std_nf1 * 100,
             "permissive_edge_f1": pm_std_ef1 * 100,
+            "services_missing": res_std_st["services_missing"],
+            "services_hallucinated": res_std_st["services_hallucinated"],
+            "services_missing_permissive": pm_std_missing,
+            "services_hallucinated_permissive": pm_std_halluc,
         })
-        
+        full_results["v6 Standard"].append(res_std_st)
+
         # Parsimonious
         pars_path = PARSIMONIOUS_DIR / f"{vid}.graphml"
         if pars_path.exists():
             g_pars = nx.read_graphml(pars_path)
             res_pars_st = evaluate_pair(g_pars, g_gt, vid, catalog)
             pm_pars_nf1, pm_pars_ef1 = eval_permissive(g_pars, g_gt)
-            
+            pm_pars_missing, pm_pars_halluc = permissive_missing_hallucinated(g_pars, g_gt)
+
             records.append({
                 "video_id": vid,
                 "model": "Parsimonious",
                 "strict_node_f1": res_pars_st["svc_f1"] * 100,
+                "strict_ms_f1": res_pars_st["ms_f1"] * 100,
                 "strict_edge_f1": res_pars_st["edge_f1"] * 100,
                 "permissive_node_f1": pm_pars_nf1 * 100,
                 "permissive_edge_f1": pm_pars_ef1 * 100,
+                "services_missing": res_pars_st["services_missing"],
+                "services_hallucinated": res_pars_st["services_hallucinated"],
+                "services_missing_permissive": pm_pars_missing,
+                "services_hallucinated_permissive": pm_pars_halluc,
             })
-            
-    return pd.DataFrame(records)
+            full_results["Parsimonious"].append(res_pars_st)
+
+    return pd.DataFrame(records), full_results
 
 def plot_all():
-    df = collect_evaluation_data()
+    df, full_results = collect_evaluation_data()
     print(f"Collected data for {len(df['video_id'].unique())} GT videos ({len(df)} rows).")
     
     # Custom styling
@@ -274,6 +319,265 @@ def plot_all():
     plt.savefig(p5, dpi=140)
     plt.close()
     print(f"✓ Saved {p5.name}")
+
+    # ── PLOT 6 & 7: Top Hallucinated / Missing Services (Standard vs Parsimonious) ──
+    def top_service_counts(col: str, top_n: int = 10) -> pd.DataFrame:
+        counts = {}
+        for model_name in ["v6 Standard", "Parsimonious"]:
+            services = [s for row in df.loc[df["model"] == model_name, col] for s in row]
+            counts[model_name] = Counter(services)
+        all_services = set(counts["v6 Standard"]) | set(counts["Parsimonious"])
+        rows = [
+            {"service": s, "v6 Standard": counts["v6 Standard"].get(s, 0),
+             "Parsimonious": counts["Parsimonious"].get(s, 0)}
+            for s in all_services
+        ]
+        ranked = pd.DataFrame(rows)
+        ranked["total"] = ranked["v6 Standard"] + ranked["Parsimonious"]
+        return ranked.sort_values("total", ascending=False).head(top_n)
+
+    def plot_service_errors(col: str, title: str, filename: str) -> None:
+        top = top_service_counts(col)
+        if top.empty:
+            print(f"  (sin datos para {filename}, se omite)")
+            return
+        melted = top.melt(id_vars="service", value_vars=["v6 Standard", "Parsimonious"],
+                           var_name="model", value_name="Frecuencia")
+        fig, ax = plt.subplots(figsize=(11, max(4, 0.5 * len(top))))
+        sns.barplot(data=melted, y="service", x="Frecuencia", hue="model", palette=colors, ax=ax)
+        ax.set_title(title, fontsize=13, wrap=True)
+        ax.set_xlabel("Vídeos en los que ocurre")
+        ax.set_ylabel("")
+        ax.legend(title="Modelo")
+        plt.tight_layout()
+        p = OUTPUT_DIR / filename
+        plt.savefig(p, dpi=140)
+        plt.close()
+        print(f"✓ Saved {p.name}")
+
+    plot_service_errors(
+        "services_hallucinated",
+        "Top Servicios Alucinados por Modelo — Evaluación Estricta (inventados, no están en el GT)",
+        "06_hallucinated_services.png",
+    )
+    plot_service_errors(
+        "services_missing",
+        "Top Servicios Faltantes por Modelo — Evaluación Estricta (presentes en el GT, no detectados)",
+        "07_missing_services.png",
+    )
+    plot_service_errors(
+        "services_hallucinated_permissive",
+        "Top Servicios Alucinados por Modelo — Evaluación Permisiva (User*/ThirdParty* colapsados)",
+        "08_hallucinated_services_permissive.png",
+    )
+    plot_service_errors(
+        "services_missing_permissive",
+        "Top Servicios Faltantes por Modelo — Evaluación Permisiva (User*/ThirdParty* colapsados)",
+        "09_missing_services_permissive.png",
+    )
+
+    # ── PLOT 8: Total Error Volume — Strict vs Permissive ──
+    # Does collapsing User*/ThirdParty* actor variants into two buckets actually
+    # reduce the error count, and by how much, per model?
+    totals = []
+    for model_name in ["v6 Standard", "Parsimonious"]:
+        sub = df[df["model"] == model_name]
+        totals.append({"model": model_name, "modo": "Estricto", "tipo": "Alucinados",
+                        "total": sum(len(x) for x in sub["services_hallucinated"])})
+        totals.append({"model": model_name, "modo": "Permisivo", "tipo": "Alucinados",
+                        "total": sum(len(x) for x in sub["services_hallucinated_permissive"])})
+        totals.append({"model": model_name, "modo": "Estricto", "tipo": "Faltantes",
+                        "total": sum(len(x) for x in sub["services_missing"])})
+        totals.append({"model": model_name, "modo": "Permisivo", "tipo": "Faltantes",
+                        "total": sum(len(x) for x in sub["services_missing_permissive"])})
+    totals_df = pd.DataFrame(totals)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+    mode_colors = {"Estricto": "#c0392b", "Permisivo": "#27ae60"}
+    for ax, tipo in zip(axes, ["Alucinados", "Faltantes"]):
+        sub = totals_df[totals_df["tipo"] == tipo]
+        sns.barplot(data=sub, x="model", y="total", hue="modo", palette=mode_colors, ax=ax)
+        ax.set_title(f"Total de Servicios {tipo}\n(suma de ocurrencias sobre {df['video_id'].nunique()} vídeos)")
+        ax.set_xlabel("")
+        ax.set_ylabel("Cantidad total de ocurrencias" if tipo == "Alucinados" else "")
+        for p in ax.patches:
+            h = p.get_height()
+            if h > 0:
+                ax.annotate(f"{int(h)}", (p.get_x() + p.get_width() / 2, h),
+                            ha="center", va="bottom", fontsize=10, fontweight="bold",
+                            xytext=(0, 3), textcoords="offset points")
+        ax.legend(title="Evaluación")
+    plt.suptitle("Efecto de la Evaluación Permisiva en el Volumen de Errores", fontweight="bold")
+    plt.tight_layout()
+    p10 = OUTPUT_DIR / "10_strict_vs_permissive_error_volume.png"
+    plt.savefig(p10, dpi=140)
+    plt.close()
+    print(f"✓ Saved {p10.name}")
+
+    # ── PLOT 9: Share of strict errors that are actor-label disagreements ──
+    # Of everything counted as "hallucinated"/"missing" under strict evaluation,
+    # how much is really an AWS service miss vs. just a User*/ThirdParty* actor
+    # sub-type disagreement (which permissive evaluation absorbs)?
+    breakdown = []
+    for model_name in ["v6 Standard", "Parsimonious"]:
+        sub = df[df["model"] == model_name]
+        for tipo, col in [("Alucinados", "services_hallucinated"), ("Faltantes", "services_missing")]:
+            all_items = [s for row in sub[col] for s in row]
+            n_actor = sum(1 for s in all_items if is_actor_label(s))
+            n_service = len(all_items) - n_actor
+            breakdown.append({"model": model_name, "tipo": tipo, "categoria": "Etiqueta de actor (User*/ThirdParty*)", "total": n_actor})
+            breakdown.append({"model": model_name, "tipo": tipo, "categoria": "Servicio AWS real", "total": n_service})
+    breakdown_df = pd.DataFrame(breakdown)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+    cat_colors = {"Etiqueta de actor (User*/ThirdParty*)": "#8e44ad", "Servicio AWS real": "#2980b9"}
+    for ax, tipo in zip(axes, ["Alucinados", "Faltantes"]):
+        sub = breakdown_df[breakdown_df["tipo"] == tipo]
+        pivot = sub.pivot(index="model", columns="categoria", values="total").reindex(["v6 Standard", "Parsimonious"])
+        pivot = pivot[["Servicio AWS real", "Etiqueta de actor (User*/ThirdParty*)"]]
+        pivot.plot(kind="bar", stacked=True, ax=ax, color=[cat_colors[c] for c in pivot.columns], legend=(tipo == "Alucinados"))
+        ax.set_title(f"Composición de Errores Estrictos: {tipo}")
+        ax.set_xlabel("")
+        ax.set_ylabel("Cantidad total de ocurrencias" if tipo == "Alucinados" else "")
+        ax.tick_params(axis="x", rotation=0)
+        for i, model_name in enumerate(pivot.index):
+            total = pivot.loc[model_name].sum()
+            actor_pct = 100 * pivot.loc[model_name, "Etiqueta de actor (User*/ThirdParty*)"] / total if total else 0
+            ax.annotate(f"{actor_pct:.0f}% actor", (i, total), ha="center", va="bottom", fontsize=10, fontweight="bold")
+    plt.suptitle("¿De qué están hechos los errores estrictos? Actor vs. Servicio AWS real", fontweight="bold")
+    plt.tight_layout()
+    p11 = OUTPUT_DIR / "11_strict_error_composition.png"
+    plt.savefig(p11, dpi=140)
+    plt.close()
+    print(f"✓ Saved {p11.name}")
+
+    # ── PLOT 12 & 13: Recall + Error Distribution by Capability (per model) ──
+    # Design lifted from whiteboard_selection_lab/evaluacion_avanzada.ipynb.
+    def plot_capability_breakdown(results: list[dict], model_name: str, filename: str) -> None:
+        cap_data: dict[str, dict[str, int]] = {}
+        for r in results:
+            for cap, vals in r.get("capability_breakdown", {}).items():
+                a = cap_data.setdefault(cap, {"gt": 0, "correct": 0, "missed": 0, "hallucinated": 0})
+                a["gt"] += vals.get("gt", 0)
+                a["correct"] += vals.get("correct", 0)
+                a["missed"] += vals.get("missed", 0)
+                a["hallucinated"] += vals.get("hallucinated", 0)
+
+        rows = []
+        for cap, v in cap_data.items():
+            gt, correct, missed, halluc = v["gt"], v["correct"], v["missed"], v["hallucinated"]
+            recall = correct / gt if gt > 0 else 0.0
+            precision = correct / (correct + halluc) if (correct + halluc) > 0 else 0.0
+            f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+            rows.append({"capability": cap, "gt": gt, "correct": correct, "missed": missed,
+                         "hallucinated": halluc, "recall": recall, "f1": f1})
+        dfc = pd.DataFrame(rows).sort_values("f1")
+        if dfc.empty:
+            print(f"  (sin datos de capability para {filename}, se omite)")
+            return
+
+        fig, axes = plt.subplots(1, 2, figsize=(15, max(5, 0.55 * len(dfc))))
+
+        bar_colors = ["#e74c3c" if r < 0.5 else "#f39c12" if r < 0.8 else "#27ae60" for r in dfc["recall"]]
+        axes[0].barh(dfc["capability"], dfc["recall"], color=bar_colors)
+        axes[0].set_xlim(0, 1.08)
+        axes[0].set_xlabel("Recall")
+        axes[0].set_title(f"Recall por Capability — {model_name}\n(¿Qué tan bien encuentra cada tipo de servicio?)")
+        for i, r in enumerate(dfc["recall"]):
+            axes[0].text(r + 0.02, i, f"{r:.0%}", va="center", fontsize=10)
+
+        axes[1].barh(dfc["capability"], dfc["correct"], color="#27ae60", label="Correct")
+        axes[1].barh(dfc["capability"], dfc["missed"], left=dfc["correct"], color="#e74c3c", label="Missed")
+        axes[1].barh(dfc["capability"], dfc["hallucinated"],
+                      left=dfc["correct"] + dfc["missed"], color="#f39c12", label="Hallucinated")
+        axes[1].set_xlabel("Count")
+        axes[1].set_title(f"Distribución de Errores por Capability — {model_name}")
+        axes[1].legend()
+
+        plt.tight_layout()
+        p = OUTPUT_DIR / filename
+        plt.savefig(p, dpi=140)
+        plt.close()
+        print(f"✓ Saved {p.name}")
+
+    plot_capability_breakdown(full_results["v6 Standard"], "v6 Standard", "12_capability_breakdown_standard.png")
+    plot_capability_breakdown(full_results["Parsimonious"], "Parsimonious", "13_capability_breakdown_parsimonious.png")
+
+    # ── PLOT 14 & 15: "Salud General" Boxplot (per model) ──
+    # Same design/palette as graficas.ipynb's graficar_salud_general — Set2 palette
+    # + stripplot overlay, the style explicitly preferred over the default one above.
+    def plot_health_boxplot(sub_df: pd.DataFrame, model_name: str, filename: str) -> None:
+        cols = {"strict_node_f1": "F1 Servicios\n(Básico)",
+                "strict_ms_f1": "F1 Nodos\n(Multiset)",
+                "strict_edge_f1": "F1 Aristas\n(Conexiones)"}
+        order = list(cols.values())
+        melted = sub_df[list(cols.keys())].rename(columns=cols).melt(var_name="Métrica", value_name="F1 Score (%)")
+
+        fig, ax = plt.subplots(figsize=(9, 6.5))
+        sns.boxplot(x="Métrica", y="F1 Score (%)", hue="Métrica", data=melted, order=order,
+                    palette="Set2", width=0.5, legend=False, ax=ax)
+        sns.stripplot(x="Métrica", y="F1 Score (%)", data=melted, order=order,
+                      color=".25", size=5, alpha=0.5, ax=ax)
+        ax.set_title(f"Salud General del Pipeline — {model_name}\nDistribución de F1-Scores (n={len(sub_df)})",
+                     fontweight="bold")
+        ax.set_ylim(-5, 105)
+        ax.set_ylabel("Score (100 = Perfecto)")
+        ax.set_xlabel("")
+
+        plt.tight_layout()
+        p = OUTPUT_DIR / filename
+        plt.savefig(p, dpi=140)
+        plt.close()
+        print(f"✓ Saved {p.name}")
+
+    plot_health_boxplot(df[df["model"] == "v6 Standard"], "v6 Standard", "14_health_boxplot_standard.png")
+    plot_health_boxplot(df[df["model"] == "Parsimonious"], "Parsimonious", "15_health_boxplot_parsimonious.png")
+
+    # ── PLOT 16 & 17: F1 Range Distribution Pie (per model) ──
+    # Same buckets/colors as graficas.ipynb's graficar_distribucion_parsimonioso,
+    # redesigned so labels don't overlap: no inline text on thin wedges, all
+    # counts/percentages moved to an external legend instead.
+    def plot_f1_distribution_pie(sub_df: pd.DataFrame, model_name: str, filename: str) -> None:
+        def clasificar(score: float) -> str:
+            if score >= 90: return "Excelente (≥90%)"
+            elif score >= 70: return "Bueno (70-89%)"
+            elif score >= 50: return "Aceptable (50-69%)"
+            else: return "Bajo (<50%)"
+
+        orden = ["Excelente (≥90%)", "Bueno (70-89%)", "Aceptable (50-69%)", "Bajo (<50%)"]
+        colores = {"Excelente (≥90%)": "#2ecc71", "Bueno (70-89%)": "#f1c40f",
+                   "Aceptable (50-69%)": "#e67e22", "Bajo (<50%)": "#e74c3c"}
+
+        fig, axes = plt.subplots(1, 2, figsize=(15, 7))
+        for ax, col, label in zip(axes, ["strict_node_f1", "strict_edge_f1"], ["Servicios", "Conexiones"]):
+            counts = sub_df[col].apply(clasificar).value_counts().reindex(orden).fillna(0).astype(int)
+            counts = counts[counts > 0]
+            n = int(counts.sum())
+
+            wedges, _, autotexts = ax.pie(
+                counts, colors=[colores[c] for c in counts.index],
+                autopct=lambda pct: f"{pct:.1f}%" if pct >= 3 else "",
+                pctdistance=0.75, startangle=90, counterclock=False,
+                wedgeprops=dict(edgecolor="white", linewidth=2),
+            )
+            for t in autotexts:
+                t.set_fontweight("bold")
+                t.set_fontsize(11)
+                t.set_color("white")
+
+            legend_labels = [f"{c} — {counts[c]} vídeos" for c in counts.index]
+            ax.legend(wedges, legend_labels, loc="center left", bbox_to_anchor=(1, 0.5),
+                       fontsize=10, frameon=False)
+            ax.set_title(f"F1 {label} — {model_name} (N={n})", fontweight="bold")
+
+        plt.tight_layout()
+        p = OUTPUT_DIR / filename
+        plt.savefig(p, dpi=140, bbox_inches="tight")
+        plt.close()
+        print(f"✓ Saved {p.name}")
+
+    plot_f1_distribution_pie(df[df["model"] == "v6 Standard"], "v6 Standard", "16_f1_distribution_pie_standard.png")
+    plot_f1_distribution_pie(df[df["model"] == "Parsimonious"], "Parsimonious", "17_f1_distribution_pie_parsimonious.png")
 
 
 if __name__ == "__main__":

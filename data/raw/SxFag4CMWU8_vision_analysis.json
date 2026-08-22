@@ -1,0 +1,178 @@
+{
+  "step_by_step_reasoning": "The architecture shows Sisense's analytics solution deployed on AWS. User traffic originates from mobile devices or a dashboard interface and flows through an Elastic Load Balancer (ELB) into an Amazon EKS cluster running compute pods on EC2 instances. Data is ingested from multiple sources, including on-premises databases, source Redshift clusters, RDS, and S3 buckets (accessed via Athena and cataloged by Glue). Processed 'hot' data is written to an FSx for Lustre shared file system for fast in-memory access and backed up to an S3 bucket for disaster recovery. 'Warm' terabyte-scale data is stored and queried directly in an Amazon Redshift data warehouse.",
+  "graph": {
+    "name": "Sisense Analytics Architecture on AWS",
+    "link": "https://www.youtube.com/watch?v=SxFag4CMWU8",
+    "categories": "analytics",
+    "graph_usable": true,
+    "notes": "Sisense's hybrid big data analytics architecture ingests data from disparate sources into EKS containerized workloads, utilizing FSx for Lustre for fast hot-data processing backed by S3, and Redshift for large-scale warm data querying."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Device",
+      "notes": "Mobile client accessing Sisense analytics dashboard"
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyWebsite",
+      "name": "Dashboard",
+      "notes": "Sisense BI dashboard UI displaying graphs and filters"
+    },
+    {
+      "id": "2",
+      "service": "ELB",
+      "name": "ELB",
+      "notes": "Elastic Load Balancer routing client query traffic to EKS cluster"
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS Cluster",
+      "notes": "Amazon EKS managing containerized query and ingestion microservices"
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Worker Instances",
+      "notes": "Worker nodes running container workloads with pod and node auto-scaling"
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "On-Prem Database",
+      "notes": "Customer on-premises source database"
+    },
+    {
+      "id": "6",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "Amazon Athena querying raw data stored in S3 source buckets"
+    },
+    {
+      "id": "7",
+      "service": "RedShift",
+      "name": "Redshift (Source)",
+      "notes": "Source Redshift database inside customer VPC"
+    },
+    {
+      "id": "8",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "AWS Glue cataloging and preparing data sources"
+    },
+    {
+      "id": "9",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Amazon RDS database source"
+    },
+    {
+      "id": "10",
+      "service": "S3",
+      "name": "S3 Bucket (Source)",
+      "notes": "Source data S3 bucket queried via Athena"
+    },
+    {
+      "id": "11",
+      "service": "FSX",
+      "name": "FSx for Lustre",
+      "notes": "High-throughput shared storage for hot data and ElastiCube in-memory database files"
+    },
+    {
+      "id": "12",
+      "service": "S3",
+      "name": "S3 Bucket (Backup)",
+      "notes": "S3 bucket for FSx for Lustre persistence, replication, and disaster recovery"
+    },
+    {
+      "id": "13",
+      "service": "RedShift",
+      "name": "Redshift (Data Warehouse)",
+      "notes": "Target Redshift cluster storing massive warm data (terabytes) for direct query"
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Dashboard sends query requests to ELB"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "ELB routes query requests into EKS cluster"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "EKS schedules containerized pod workloads onto EC2 instances"
+    },
+    {
+      "source": "10",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries raw source data from S3 bucket"
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Athena query results ingested by EC2 worker pods"
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Data ingested directly from customer on-premises database to EC2 compute"
+    },
+    {
+      "source": "7",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1''",
+      "type": "data",
+      "notes": "Data ingested from source Redshift DB to EC2 compute"
+    },
+    {
+      "source": "4",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EC2 workers quickly write and mount hot data on FSx for Lustre"
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "FSx for Lustre automatically backs up and syncs data to backup S3 bucket"
+    },
+    {
+      "source": "4",
+      "target": "13",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "EC2 workers directly query massive warm data stored in target Redshift DW"
+    }
+  ]
+}

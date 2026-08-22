@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">DEVICE</data>
+      <data key="d6">UserConsumerEdge</data>
+      <data key="d7">Electronic smart meters and field concentrators deployed on Enel's distribution network.</data>
+    </node>
+    <node id="1">
+      <data key="d5">IOT CORE</data>
+      <data key="d6">IoTCore</data>
+      <data key="d7">Receives pushed events and meter data forwarded from IoT Greengrass on edge devices.</data>
+    </node>
+    <node id="2">
+      <data key="d5">EC2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Acquisition tier running custom code to connect to devices via pull pattern.</data>
+    </node>
+    <node id="3">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Decouples the acquisition tier from the processing tier.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Serverless processing function replacing Elastic Beanstalk via Lambda SQS polling capability.</data>
+    </node>
+    <node id="5">
+      <data key="d5">ELASTIC BEANSTALK</data>
+      <data key="d6">BeanStalk</data>
+      <data key="d7">Runs daemon (SQSD) on EC2 instances to fetch messages from SQS and execute microservices.</data>
+    </node>
+    <node id="6">
+      <data key="d5">DYNAMO DB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Primary datastore for inventory and processed load curve data.</data>
+    </node>
+    <node id="7">
+      <data key="d5">REDSHIFT</data>
+      <data key="d6">RedShift</data>
+      <data key="d7">Used with Redshift Spectrum for BI tools to query archived data on S3.</data>
+    </node>
+    <node id="8">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Central data lake storing raw device data, microservice metrics, and DynamoDB backups.</data>
+    </node>
+    <node id="9">
+      <data key="d5">KINESIS</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Kinesis Data Streams &amp; Firehose used for pushing metrics and raw data to S3.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">IoT Greengrass on edge DEVICE intercepts publication events and pushes data to AWS IoT Core.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">IoT Core forwards telemetry payloads directly to SQS processing queue.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EC2 acquisition tier polls/connects to edge DEVICE to retrieve meter data.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EC2 acquisition tier forwards acquired meter data to SQS queue.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Elastic Beanstalk SQSD daemon fetches messages from SQS queue.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SQS event source mapping triggers Lambda function to process incoming messages.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda function writes processed metrics and inventory updates into DynamoDB.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Elastic Beanstalk microservices store inventory and processing data into DynamoDB.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="9" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Microservices push raw data and execution metrics to Kinesis Data Streams.</data>
+      <data key="d10">3'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Redshift Spectrum queries archived raw device data and metrics directly on S3.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="9" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Kinesis Firehose automatically persists stream data into Amazon S3 buckets.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Enel 2bit Smart Metering Architecture</data>
+    <data key="d1">https://www.youtube.com/watch?v=illMCyp4O9A</data>
+    <data key="d2">Enel's 2bit system manages remote electronic smart meters across 74 million end customers. Transitioning from legacy EC2 pull-based polling and Elastic Beanstalk workers to IoT Greengrass push-based ingestion, IoT Core, and SQS-triggered Lambda serverless processing.</data>
+    <data key="d3">IoT, Analytics &amp; Data Lakes, Compute</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

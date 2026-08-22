@@ -1,0 +1,124 @@
+{
+  "step_by_step_reasoning": "1. **Identify External Actors**: The flow starts from an external web request / user trying to verify/connect a custom domain, represented by `UserConsumerWebMobile` connecting to the Edge region.\n2. **Identify AWS Services (Edge Region)**: On the left (Region 1 / Edge), we observe Edge ELB, Edge ECS, Edge ElastiCache, and Edge SQS. (Region 2 is a redundant edge region performing the exact same function, deduplicated under the parsimony principle).\n3. **Identify AWS Services (Main Region)**: On the right (Main Region), we observe Main Region ELB, Certificate Manager running on EC2, RDS database, and SNS topic.\n4. **Trace Flow Sequence**: External domain traffic enters Edge ELB -> Edge ECS proxies verification request cross-region to Main Region ELB -> Main Region EC2 (Certificate Manager) -> Main Region RDS for verification storage -> Main Region SNS for broadcasting new certificates -> Edge SQS for edge region reception.",
+  "graph": {
+    "name": "Strikingly - Dynamic SSL Certificate Distribution Platform",
+    "link": "",
+    "categories": "Compute, Security, Messaging & Caching",
+    "graph_usable": true,
+    "notes": "Strikingly's multi-region architecture for issuing and fanning out dynamic SSL certificates for custom domains across global edge regions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User / Domain Traffic",
+      "notes": "External user or verification request for custom domain"
+    },
+    {
+      "id": "1",
+      "service": "ELB",
+      "name": "Edge ELB",
+      "notes": "Edge region load balancer receiving inbound domain requests"
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "Edge ECS",
+      "notes": "Edge ECS task proxying verification requests to Main Region"
+    },
+    {
+      "id": "3",
+      "service": "ElastiCache",
+      "name": "Edge ElastiCache",
+      "notes": "Caches distributed certificates locally in edge region"
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "Edge SQS",
+      "notes": "Subscribed queue receiving certificate updates from SNS"
+    },
+    {
+      "id": "5",
+      "service": "ELB",
+      "name": "Main Region ELB",
+      "notes": "Receives cross-region verification requests from edge regions"
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Certificate Manager (EC2)",
+      "notes": "Main Region EC2 managing SSL certificate requests and issuance"
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "Main Region RDS",
+      "notes": "Stores certificate metadata and verification details"
+    },
+    {
+      "id": "8",
+      "service": "SNS",
+      "name": "Main Region SNS",
+      "notes": "SNS topic for broadcasting new certificates to edge SQS queues"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Domain connection / verification request arrives at Edge ELB"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Edge ELB forwards request to Edge ECS"
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Edge ECS proxies cross-region request to Main Region ELB"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Main Region ELB routes request to Certificate Manager on EC2"
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Certificate Manager stores and retrieves certificate verification data in RDS"
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Certificate Manager publishes issued SSL certificate data to SNS topic"
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "SNS fans out certificate payload to subscribed SQS queue in Edge Region"
+    }
+  ]
+}

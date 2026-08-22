@@ -1,0 +1,98 @@
+{
+  "step_by_step_reasoning": "The whiteboard architecture shows a video transcoding workflow. A user/backend triggers the Scheduler (EC2), which coordinates with the Master node (EC2). The Master node pulls source video files from an Input S3 bucket, splices them into small segments, and distributes processing jobs to worker nodes (EC2 spot instances inside a Kubernetes cluster). Once workers complete transcoding, segments are returned to the Master node, which stitches them together and uploads the final video to an Output S3 bucket.",
+  "graph": {
+    "name": "Bitmovin Distributed Video Transcoding Architecture",
+    "link": "",
+    "categories": "Compute & Media Services",
+    "graph_usable": true,
+    "notes": "Distributed video transcoding pipeline using EC2 spot instances and S3."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "User / Backend System",
+      "notes": "Initiates transcoding requests via SDK/API"
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Scheduler",
+      "notes": "Receives job configurations and coordinates execution"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Input S3 Bucket",
+      "notes": "Stores original video source files"
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "Master Node",
+      "notes": "Splits video into chunks, dispatches jobs, and stitches output"
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "Workers (Spot Instances)",
+      "notes": "Kubernetes worker nodes running transcoding jobs on spot instances"
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "Output S3 Bucket",
+      "notes": "Stores completed transcoded video files"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "User sends API request to Scheduler"
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Scheduler passes job configuration to Master"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Master fetches input video file from Input S3 bucket"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Master dispatches video segment jobs to worker nodes"
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Workers return transcoded video chunks back to Master"
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Master stitches segments together and writes final file to Output S3 bucket"
+    }
+  ]
+}

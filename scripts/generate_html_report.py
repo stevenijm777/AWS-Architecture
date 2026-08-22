@@ -71,17 +71,25 @@ def generate_report():
     eval_vids = [f.stem for f in clean_files if (GT_DIR / f"{f.stem}.graphml").exists()]
     
     data_list = []
-    
+    skipped_unpaired: list[str] = []
+    skipped_unusable: list[str] = []
+
     for vid in eval_vids:
         gt_path = GT_DIR / f"{vid}.graphml"
         g_gt = nx.read_graphml(gt_path)
-        
+
         # Standard
         std_path = STANDARD_DIR / f"{vid}.graphml"
         g_std = nx.read_graphml(std_path)
         res_std_st = evaluate_pair(g_std, g_gt, vid, catalog)
         pm_std_nf1, pm_std_ef1 = eval_permissive(g_std, g_gt)
-        
+
+        # Cloudscape flags 56/396 of its own ground truths as unusable. They are
+        # left out of the comparison entirely rather than silently averaged in.
+        if not res_std_st["graph_usable"]:
+            skipped_unusable.append(vid)
+            continue
+
         # Parsimonious
         pars_path = PARSIMONIOUS_DIR / f"{vid}.graphml"
         if pars_path.exists():
@@ -89,8 +97,9 @@ def generate_report():
             res_pars_st = evaluate_pair(g_pars, g_gt, vid, catalog)
             pm_pars_nf1, pm_pars_ef1 = eval_permissive(g_pars, g_gt)
         else:
+            skipped_unpaired.append(vid)
             continue
-            
+
         st_sn_std, st_se_std = res_std_st["svc_f1"] * 100, res_std_st["edge_f1"] * 100
         st_sn_pars, st_se_pars = res_pars_st["svc_f1"] * 100, res_pars_st["edge_f1"] * 100
         
@@ -144,12 +153,38 @@ def generate_report():
     pm_wins_pars = (df["pm_winner"] == "Parsimonious").sum()
     pm_ties = (df["pm_winner"] == "Empate").sum()
 
+    pct_wins_std = 100 * st_wins_std / len(df) if len(df) else 0.0
+
+    def lead(std_val: float, pars_val: float, metric: str) -> str:
+        """Describe which mode leads, computed rather than hard-coded."""
+        d = std_val - pars_val
+        if abs(d) < 0.5:
+            return f"🤝 Desempeño equivalente en {metric} ({abs(d):.1f} pts de diferencia)"
+        winner = "v6 Standard" if d > 0 else "Parsimonious"
+        return f"📈 {winner} lidera en {metric} (+{abs(d):.1f} pts)"
+
+    lead_st_se = lead(avg_st_se_std, avg_st_se_pars, "captura de conectividad")
+    lead_pm_se = lead(avg_pm_se_std, avg_pm_se_pars, "aristas permisivas")
+    lead_pm_sn = lead(avg_pm_sn_std, avg_pm_sn_pars, "nodos permisivos")
+
     # Load chart base64s
     b64_chart1 = get_chart_b64("01_global_performance_comparison.png")
     b64_chart2 = get_chart_b64("02_score_distribution_boxplot.png")
     b64_chart3 = get_chart_b64("03_node_vs_edge_f1_scatter.png")
     b64_chart4 = get_chart_b64("04_per_video_f1_comparison.png")
     b64_chart5 = get_chart_b64("05_radar_multimetric_comparison.png")
+    b64_chart6 = get_chart_b64("06_hallucinated_services.png")
+    b64_chart7 = get_chart_b64("07_missing_services.png")
+    b64_chart8 = get_chart_b64("08_hallucinated_services_permissive.png")
+    b64_chart9 = get_chart_b64("09_missing_services_permissive.png")
+    b64_chart10 = get_chart_b64("10_strict_vs_permissive_error_volume.png")
+    b64_chart11 = get_chart_b64("11_strict_error_composition.png")
+    b64_chart12 = get_chart_b64("12_capability_breakdown_standard.png")
+    b64_chart13 = get_chart_b64("13_capability_breakdown_parsimonious.png")
+    b64_chart14 = get_chart_b64("14_health_boxplot_standard.png")
+    b64_chart15 = get_chart_b64("15_health_boxplot_parsimonious.png")
+    b64_chart16 = get_chart_b64("16_f1_distribution_pie_standard.png")
+    b64_chart17 = get_chart_b64("17_f1_distribution_pie_parsimonious.png")
     
     # Build HTML rows for Strict Table
     strict_table_rows = []
@@ -581,10 +616,11 @@ def generate_report():
     <header>
         <div>
             <h1>Dashboard Comparativo: v6 Standard vs. Parsimonious Mode</h1>
-            <p class="subtitle">Evaluación cuantitativa sobre {len(eval_vids)} vídeos de la base de datos Cloudscape (FAST25 Ground Truth)</p>
+            <p class="subtitle">Evaluación cuantitativa sobre {len(df)} vídeos de la base de datos Cloudscape (FAST25 Ground Truth)</p>
+            <p class="subtitle" style="font-size: 13px; opacity: .8;">Excluidos: {len(skipped_unusable)} marcados <code>graph_usable=False</code> por Cloudscape · {len(skipped_unpaired)} sin par Parsimonious</p>
         </div>
         <div>
-            <span class="badge win-std" style="font-size: 14px; padding: 8px 16px;">{len(eval_vids)} Vídeos Procesados</span>
+            <span class="badge win-std" style="font-size: 14px; padding: 8px 16px;">{len(df)} Vídeos Comparados</span>
         </div>
     </header>
 
@@ -603,22 +639,22 @@ def generate_report():
             <div class="kpi-card">
                 <div class="kpi-title">Victorias Estrictas Combinadas</div>
                 <div class="kpi-value">{st_wins_std} vs {st_wins_pars}</div>
-                <div class="kpi-subtext">🏆 v6 Standard gana en el 47.5% de los vídeos ({st_ties} empates)</div>
+                <div class="kpi-subtext">🏆 v6 Standard gana en el {pct_wins_std:.1f}% de los vídeos ({st_ties} empates)</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">F1 Aristas Estricto (Promedio)</div>
                 <div class="kpi-value">{avg_st_se_std:.1f}% vs {avg_st_se_pars:.1f}%</div>
-                <div class="kpi-subtext">📈 v6 Standard lidera en captura de conectividad (+3.2%)</div>
+                <div class="kpi-subtext">{lead_st_se}</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">F1 Aristas Permisivo (Promedio)</div>
                 <div class="kpi-value">{avg_pm_se_std:.1f}% vs {avg_pm_se_pars:.1f}%</div>
-                <div class="kpi-subtext">📈 v6 Standard supera a Parsimonious (+3.1%)</div>
+                <div class="kpi-subtext">{lead_pm_se}</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-title">F1 Nodos Permisivo (Promedio)</div>
                 <div class="kpi-value">{avg_pm_sn_std:.1f}% vs {avg_pm_sn_pars:.1f}%</div>
-                <div class="kpi-subtext">🤝 Desempeño equivalente (~89% vs 91%)</div>
+                <div class="kpi-subtext">{lead_pm_sn}</div>
             </div>
         </div>
 
@@ -713,6 +749,66 @@ def generate_report():
                 <h3>05. Comparación Radar Multimétrica</h3>
                 <img src="{b64_chart5}" alt="Radar Chart" onclick="openModal(this.src)">
                 <p>Evaluación multidimensional tipo Radar/Spider Chart.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>06. Top Servicios Alucinados (Estricto)</h3>
+                <img src="{b64_chart6}" alt="Hallucinated Services Chart" onclick="openModal(this.src)">
+                <p>Servicios que el modelo inventa y no están en el Ground Truth, comparado por modelo.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>07. Top Servicios Faltantes (Estricto)</h3>
+                <img src="{b64_chart7}" alt="Missing Services Chart" onclick="openModal(this.src)">
+                <p>Servicios presentes en el Ground Truth que el modelo no detecta, comparado por modelo.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>08. Top Servicios Alucinados (Permisivo)</h3>
+                <img src="{b64_chart8}" alt="Hallucinated Services Permissive Chart" onclick="openModal(this.src)">
+                <p>Mismo gráfico que 06, pero colapsando variantes de actor (User*/ThirdParty*) en una sola categoría. Los servicios AWS reales suben al top.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>09. Top Servicios Faltantes (Permisivo)</h3>
+                <img src="{b64_chart9}" alt="Missing Services Permissive Chart" onclick="openModal(this.src)">
+                <p>Mismo gráfico que 07, pero colapsando variantes de actor (User*/ThirdParty*) en una sola categoría.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>10. Volumen de Errores: Estricto vs. Permisivo</h3>
+                <img src="{b64_chart10}" alt="Strict vs Permissive Error Volume Chart" onclick="openModal(this.src)">
+                <p>Cuánto reduce la evaluación permisiva el total de alucinaciones y faltantes al colapsar variantes de actor (User*/ThirdParty*).</p>
+            </div>
+            <div class="gallery-card">
+                <h3>11. Composición de los Errores Estrictos</h3>
+                <img src="{b64_chart11}" alt="Strict Error Composition Chart" onclick="openModal(this.src)">
+                <p>Qué porción de cada error estricto es un desacuerdo de etiqueta de actor vs. un servicio AWS realmente distinto.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>12. Rendimiento por Capability — v6 Standard</h3>
+                <img src="{b64_chart12}" alt="Capability Breakdown Standard Chart" onclick="openModal(this.src)">
+                <p>Recall y composición de errores (correcto/faltante/alucinado) por tipo de servicio, solo Standard.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>13. Rendimiento por Capability — Parsimonious</h3>
+                <img src="{b64_chart13}" alt="Capability Breakdown Parsimonious Chart" onclick="openModal(this.src)">
+                <p>Mismo desglose que 12, solo Parsimonious.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>14. Salud General del Pipeline — v6 Standard</h3>
+                <img src="{b64_chart14}" alt="Health Boxplot Standard Chart" onclick="openModal(this.src)">
+                <p>Distribución de F1 Servicios, Nodos (multiset) y Aristas por vídeo, solo Standard.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>15. Salud General del Pipeline — Parsimonious</h3>
+                <img src="{b64_chart15}" alt="Health Boxplot Parsimonious Chart" onclick="openModal(this.src)">
+                <p>Mismo desglose que 14, solo Parsimonious.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>16. Distribución de Rangos F1 — v6 Standard</h3>
+                <img src="{b64_chart16}" alt="F1 Distribution Pie Standard Chart" onclick="openModal(this.src)">
+                <p>Qué porcentaje de vídeos cae en cada rango de calidad (Excelente/Bueno/Aceptable/Bajo), solo Standard.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>17. Distribución de Rangos F1 — Parsimonious</h3>
+                <img src="{b64_chart17}" alt="F1 Distribution Pie Parsimonious Chart" onclick="openModal(this.src)">
+                <p>Mismo desglose que 16, solo Parsimonious.</p>
             </div>
         </div>
     </div>

@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The architecture diagram and transcript describe Enel's 2bit remote meter data acquisition and processing system. 1) Current Pull Pattern: EC2 instances connect directly to edge DEVICE (smart meters/concentrators) to pull load curve data and send messages to SQS. The messages are fetched by Elastic Beanstalk EC2 workers, which process data, update DynamoDB (inventory and processed metrics), and push metrics/data streams to Kinesis. 2) Analytics Tier: Kinesis (Firehose/Streams) saves data to S3, which is queried via Amazon Redshift Spectrum for BI/reporting. 3) Serverless / Edge POC: IoT Greengrass on DEVICE enables a push model, forwarding publication events to IoT Core, which routes data to SQS. SQS then triggers AWS Lambda (using SQS event source mapping) to replace Elastic Beanstalk for unified serverless processing into DynamoDB.",
+  "graph": {
+    "name": "Enel 2bit Smart Metering Architecture",
+    "link": "https://www.youtube.com/watch?v=illMCyp4O9A",
+    "categories": "IoT, Analytics & Data Lakes, Compute",
+    "graph_usable": true,
+    "notes": "Enel's 2bit system manages remote electronic smart meters across 74 million end customers. Transitioning from legacy EC2 pull-based polling and Elastic Beanstalk workers to IoT Greengrass push-based ingestion, IoT Core, and SQS-triggered Lambda serverless processing."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerEdge",
+      "name": "DEVICE",
+      "notes": "Electronic smart meters and field concentrators deployed on Enel's distribution network."
+    },
+    {
+      "id": "1",
+      "service": "IoTCore",
+      "name": "IOT CORE",
+      "notes": "Receives pushed events and meter data forwarded from IoT Greengrass on edge devices."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Acquisition tier running custom code to connect to devices via pull pattern."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Decouples the acquisition tier from the processing tier."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Serverless processing function replacing Elastic Beanstalk via Lambda SQS polling capability."
+    },
+    {
+      "id": "5",
+      "service": "BeanStalk",
+      "name": "ELASTIC BEANSTALK",
+      "notes": "Runs daemon (SQSD) on EC2 instances to fetch messages from SQS and execute microservices."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Primary datastore for inventory and processed load curve data."
+    },
+    {
+      "id": "7",
+      "service": "RedShift",
+      "name": "REDSHIFT",
+      "notes": "Used with Redshift Spectrum for BI tools to query archived data on S3."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central data lake storing raw device data, microservice metrics, and DynamoDB backups."
+    },
+    {
+      "id": "9",
+      "service": "Kinesis",
+      "name": "KINESIS",
+      "notes": "Kinesis Data Streams & Firehose used for pushing metrics and raw data to S3."
+    }
+  ],
+  "edges": [
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "EC2 acquisition tier polls/connects to edge DEVICE to retrieve meter data."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 acquisition tier forwards acquired meter data to SQS queue."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Elastic Beanstalk SQSD daemon fetches messages from SQS queue."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Elastic Beanstalk microservices store inventory and processing data into DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "Microservices push raw data and execution metrics to Kinesis Data Streams."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "IoT Greengrass on edge DEVICE intercepts publication events and pushes data to AWS IoT Core."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "IoT Core forwards telemetry payloads directly to SQS processing queue."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "SQS event source mapping triggers Lambda function to process incoming messages."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda function writes processed metrics and inventory updates into DynamoDB."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kinesis Firehose automatically persists stream data into Amazon S3 buckets."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Redshift Spectrum queries archived raw device data and metrics directly on S3."
+    }
+  ]
+}

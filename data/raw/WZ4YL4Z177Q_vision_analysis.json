@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "The architecture describes Delhivery's supply chain event processing system. Web and Mobile clients submit requests to a Services fleet running on containers/serverless. The Services write real-time events to Kinesis via Kinesis Producer Library (KPL) over a Thrift service with micro-batching. Kinesis triggers Lambda functions that scale up and deliver events to Elasticsearch (OpenSearch). Concurrently, Services record transactional events (e.g. package tracking, bag addition) directly into MongoDB acting as the primary event store. MongoDB streams events into Kafka (MSK), where ECS consumers process and write raw streams to S3 for data lake storage, as well as fan out notifications/downstream workflows via SNS. Additionally, external clients access system functionality via API Gateway, which forwards order updates to the Order Management service to perform CRUD operations on MongoDB.",
+  "graph": {
+    "name": "Delhivery Logistics Event Processing and Data Lake Architecture",
+    "link": "https://www.youtube.com/watch?v=WZ4YL4Z177Q",
+    "categories": "Analytics, Serverless, Data Lake",
+    "graph_usable": true,
+    "notes": "Delhivery processes over 100 million events daily across 3,000+ facilities. The system combines real-time event streaming for analytics, transactional event storage in MongoDB fanning out via Kafka to an S3 data lake and SNS notifications, and external API entry via API Gateway."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Client",
+      "notes": "Web applications generating tracking and supply chain user events."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Mobile Client",
+      "notes": "Mobile applications used at facilities, doorsteps, and by end-customers."
+    },
+    {
+      "id": "2",
+      "service": "ECS",
+      "name": "SERVICES",
+      "notes": "Fleet of microservices built on containers and serverless stack handling client traffic. Integrates KPL thrift-based client with <15ms response time."
+    },
+    {
+      "id": "3",
+      "service": "KinesisDataStream",
+      "name": "KINESIS",
+      "notes": "Receives streaming events directly from services using KPL micro-batching and protocol buffers."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Scales up automatically to process incoming Kinesis streams and fan out distribution."
+    },
+    {
+      "id": "5",
+      "service": "OpenSearch",
+      "name": "ES",
+      "notes": "Elasticsearch cluster receiving processed real-time events for search and analytics."
+    },
+    {
+      "id": "6",
+      "service": "MongoDBAtlas",
+      "name": "MONGODB",
+      "notes": "Core transactional event store recording all package, facility, and shipment state changes."
+    },
+    {
+      "id": "7",
+      "service": "MSK",
+      "name": "KAFKA",
+      "notes": "Event streaming platform receiving transactions from MongoDB."
+    },
+    {
+      "id": "8",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Publishes event notifications to client SMS services and downstream microservice subscribers."
+    },
+    {
+      "id": "9",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Central data lake storing all historical supply chain events."
+    },
+    {
+      "id": "10",
+      "service": "ApiGateway",
+      "name": "API GW",
+      "notes": "Public entry point serving external requests such as shipment updates, cancellations, and tracking."
+    },
+    {
+      "id": "11",
+      "service": "ECS",
+      "name": "ORDER MGMT",
+      "notes": "Order Management service processing CRUD logic on order transactions."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Web apps send traffic and event data directly to services."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Mobile apps send traffic and event data directly to services."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Services push application events to Kinesis via KPL."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Kinesis stream invokes Lambda functions for processing."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda functions deliver transformed event data to Elasticsearch."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Services write transactional package events into MongoDB event store."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "MongoDB transaction updates stream into Kafka."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Kafka consumers fan out processed events to SNS for client notifications and downstream subscribers."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "ECS consumers push raw event stream from Kafka into S3 data lake."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "API Gateway routes external order tracking and update calls to Order Management."
+    },
+    {
+      "source": "11",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Order Management performs CRUD database operations on MongoDB."
+    }
+  ]
+}

@@ -8,13 +8,13 @@ Generado por `scripts/utils/audit_dataset_coverage.py` (solo lectura).
 |---|---:|
 | Grafos en el ground truth | 396 |
 | Con grafo Standard | 370 |
-| Con grafo Parsimonious | 344 |
-| **Pareados** (ambos, comparables) | **344** |
+| Con grafo Parsimonious | 370 |
+| **Pareados** (ambos, comparables) | **370** |
 | Marcados `graph_usable=False` por Cloudscape | 56 |
 | Ground truth sin aristas | 21 |
 | No-inglés | 42 |
 | Episodios especiales | 7 |
-| **Elegibles para el artículo** | **302** |
+| **Elegibles para el artículo** | **321** |
 
 ## 2. Impacto de aplicar cada filtro
 
@@ -22,12 +22,12 @@ Service F1 medio sobre los videos pareados, retirando cada grupo:
 
 | Conjunto | n | Standard | Parsimonious |
 |---|---:|---:|---:|
-| Todos los pareados (como se reporta hoy) | 344 | 86.4% | 85.4% |
-| Sin los `graph_usable=False` | 302 | 86.5% | 85.6% |
-| Sin especiales | 344 | 86.4% | 85.4% |
-| Sin no-inglés | 308 | 85.8% | 84.7% |
-| **Elegibles** (sin unusable ni especiales) | 302 | 86.5% | 85.6% |
-| Elegibles y solo inglés | 273 | 86.1% | 85.1% |
+| Todos los pareados (como se reporta hoy) | 370 | 86.3% | 85.1% |
+| Sin los `graph_usable=False` | 321 | 86.8% | 85.7% |
+| Sin especiales | 370 | 86.3% | 85.1% |
+| Sin no-inglés | 330 | 85.6% | 84.4% |
+| **Elegibles** (sin unusable ni especiales) | 321 | 86.8% | 85.7% |
+| Elegibles y solo inglés | 288 | 86.3% | 85.2% |
 
 ## 3. Marcados `graph_usable=False` por Cloudscape
 
@@ -36,29 +36,29 @@ Etiqueta del propio dataset. **Actualmente se incluyen en todas las métricas.**
 | Video | Título | Std F1 | Pars F1 | ¿en comparación? |
 |---|---|---:|---:|---|
 | `BgT_bDAejSQ` | GoDaddy: Empowering Agility with ZeroTrust Environme | 28.6% | 28.6% | **sí** |
-| `u9DZRkJxvWo` | PwC: Building an Efficient Intelligent Serverless Pi | 40.0% | — | no |
-| `zmJ7rL1iQBY` | Fidelity Investments: Using Containers at Scale with | 40.0% | — | no |
+| `u9DZRkJxvWo` | PwC: Building an Efficient Intelligent Serverless Pi | 40.0% | 40.0% | **sí** |
+| `zmJ7rL1iQBY` | Fidelity Investments: Using Containers at Scale with | 40.0% | 40.0% | **sí** |
 | `99nNHsbwBpg` | SkyScanner: Building HighlyAvailable MultiRegion Kub | 50.0% | 50.0% | **sí** |
 | `X3mC6Yfd138` | PredictHQ: Global Demand Intelligence for Data at Hy | 57.1% | 57.1% | **sí** |
 | `phN08pi3YzY` | Fiverr: Simplifying PCI DSS Compliance with Fully Ma | 60.0% | 60.0% | **sí** |
 | `K5ww_O4vsxo` | Samsung Cloud: Global Hybrid Network Optimization Ac | 66.7% | 66.7% | **sí** |
 | `fOgb0Es-lVs` | Deluxe One: Unifying Modern Content Creation and Del | 72.7% | 72.7% | **sí** |
 | `i10a06IU4WQ` | Pinterest: Scalable Access Control with STS Token Ve | 72.7% | 72.7% | **sí** |
-| `m8CBJEyHKIM` | Dream11: Building a Cost Effective Compute Model for | 72.7% | — | no |
+| `m8CBJEyHKIM` | Dream11: Building a Cost Effective Compute Model for | 72.7% | 66.7% | **sí** |
 | `1tGmQd0yOzE` | Whirlpool: Resilient SAP on AWS | 75.0% | 75.0% | **sí** |
 | `LPZlrX2cNjo` | RedBus: Building Optimized ML Models with Amazon Sag | 75.0% | 100.0% | **sí** |
-| `e3N5ZuHh7G0` | Wag: Deploying BlueGreen Architecture for Increased  | 75.0% | — | no |
-| `lA0lAgN0hTI` | Irdeto: Multi DRM Solution with Kubernetes on Amazon | 75.0% | — | no |
+| `e3N5ZuHh7G0` | Wag: Deploying BlueGreen Architecture for Increased  | 75.0% | 50.0% | **sí** |
+| `lA0lAgN0hTI` | Irdeto: Multi DRM Solution with Kubernetes on Amazon | 75.0% | 75.0% | **sí** |
 | `JSBB-BCvavQ` | Talabat: Applying the Right Strategies for a Success | 76.9% | 76.9% | **sí** |
 | `6sY0AunanlM` | NGINX: Deploy and Scale Applications with Ease Using | 80.0% | 80.0% | **sí** |
 | `OmVQ6pNDbaY` | Solarwinds: Monitoring Kubernetes Clusters on AWS | 80.0% | 80.0% | **sí** |
 | `QuyZHin9B70` | Veritas: Architecting a Global File System with AWS  | 80.0% | 66.7% | **sí** |
 | `U1kY6nSS2YQ` | Amdocs: DevOps Ecosystem Setup for Telco using Kuber | 80.0% | 87.5% | **sí** |
 | `W96L6ICcF3s` | Samsung Electronics: Samsung Developer Portal Using  | 80.0% | 80.0% | **sí** |
-| `hEB1J9-iOqs` | BristolMyers Squibb: Embracing InfrastructureasCode  | 80.0% | — | no |
+| `hEB1J9-iOqs` | BristolMyers Squibb: Embracing InfrastructureasCode  | 80.0% | 75.0% | **sí** |
 | `ruOhUEooJH0` | SK Telecom: EndtoEnd Cloud Management Platform on AW | 80.0% | 81.8% | **sí** |
 | `Ujs9o3CXUTU` | Telefónica Tech AI of Things: Providing Data Insight | 82.3% | 73.7% | **sí** |
-| `vp2Ipv2_uCg` | American Heart Assoc: 100 years of Content is Discov | 84.2% | — | no |
+| `vp2Ipv2_uCg` | American Heart Assoc: 100 years of Content is Discov | 84.2% | 94.7% | **sí** |
 | `YjASp_VccmI` | Vidsy: See How Vidsy Run Their Content Platform on A | 87.5% | 87.5% | **sí** |
 | `ameanoaMldM` | Bristol-Myers Squibb: Enabling DevOps with AWS Servi | 87.5% | 87.5% | **sí** |
 | `b93-zn-DtBw` | JD Power: Building a Rankings  Insights Engine with  | 88.9% | 88.9% | **sí** |
@@ -102,32 +102,32 @@ Videos elegibles (pareados, usables, no especiales) ordenados por Service F1 de 
 | 2 | `cRxvZBIa-gI` | Equifax: Achieving Cost Savings and Reliabil | 54.5% | 36.4% | 5 | 4 | English |
 | 3 | `BPvr0qWpJlA` | ContactSuite: Automated Omni-Channel Service | 58.8% | 70.0% | 10 | 9 | English |
 | 4 | `mmM_JnYygZM` | SHOPLINE: Building E-Commerce O2O platform o | 58.8% | 70.6% | 10 | 14 | English |
-| 5 | `FmhL2334GIY` | New Relic: Automated Monitoring on AWS with  | 60.0% | 72.7% | 10 | 11 | English |
-| 6 | `hMK2NJ-q9nc` | WarnerMedia: Cloudbased Linear Playout Syste | 60.0% | 61.5% | 6 | 5 | English |
-| 7 | `KgRib8AM0fs` | Hudl: Ingesting and Transcoding Video Data U | 62.5% | 71.4% | 7 | 8 | English |
-| 8 | `Dxq_U1TNx1s` | TCS: GeoSpatial Data Analysis Using TCS Digi | 63.2% | 63.2% | 11 | 17 | English |
-| 9 | `-wLEkq21cvA` | Versent: The Migration Factory | 66.7% | 66.7% | 9 | 10 | English |
-| 10 | `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League | 66.7% | 66.7% | 9 | 14 | English |
-| 11 | `GxjMSvwcgvw` | Sopra Banking Software: Secured & Industrial | 66.7% | 66.7% | 8 | 13 | English |
-| 12 | `KzJKdUZ3Ba4` | PwC: Streamlining Asset Tracking with Amazon | 66.7% | 57.1% | 4 | 6 | English |
-| 13 | `LYP98nPBj2A` | Singtel: Next-Generation Mobile Financial Se | 66.7% | 80.0% | 5 | 8 | English |
-| 14 | `N2mktbl8EQk` | An Under the Hood Tune Up with AWS DeepRacer | 66.7% | 83.3% | 6 | 9 | English |
-| 15 | `WxMBuBBIwpI` | NextRoll: Driving OpEx Efficiency for Ad Bid | 66.7% | 83.3% | 6 | 7 | English |
-| 16 | `c863uNkF0w4` | ENGIE Digital: Using Spot Instances to Optim | 66.7% | 82.3% | 10 | 8 | English |
-| 17 | `cmYI6axlicc` | Pirelli: Building a Data Platform at Scale | 66.7% | 66.7% | 10 | 14 | English |
-| 18 | `q_5U7z_vNug` | Flutura: Digital Twin - Shaping Operations f | 66.7% | 62.5% | 8 | 15 | English |
-| 19 | `qgW8LQ8iBuA` | Hancom: Building a Real-time Office Collabor | 66.7% | 71.4% | 10 | 4 | Korean |
-| 20 | `sKksbPPDznM` | Macquarie Bank: Securing Payment Websites at | 66.7% | 66.7% | 6 | 8 | English |
-| 21 | `wtl7CrSQnHA` | Fresenius Medical Care: Enabling Patient Car | 66.7% | 77.8% | 12 | 14 | English |
-| 22 | `i4ueYgjVDCw` | Rappi: Leveraging EKS, DocumentDB, RDS and E | 69.6% | 60.9% | 10 | 8 | English |
-| 23 | `8ZRWzn0G39g` | Replicon: MultiTenant SaaS Solution with Bri | 70.6% | 58.8% | 12 | 38 | English |
-| 24 | `G07keU4g-LU` | Jubilant FoodWorks: Driving a Quality Custom | 70.6% | 77.8% | 10 | 21 | English |
-| 25 | `-S-R7MWRpaI` | mimik: Hybrid Edge Cloud Leveraging AWS to S | 71.4% | 66.7% | 8 | 11 | English |
-| 26 | `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for  | 71.4% | 71.4% | 7 | 12 | English |
-| 27 | `aOZ4H98XROc` | Cyxtera: How to Enable Secure Zero Trust Acc | 71.4% | 71.4% | 8 | 9 | English |
-| 28 | `53sUjFv9ByI` | Neumora Therapeutics: Enabling DNA and RNA D | 72.7% | 76.9% | 6 | 6 | English |
-| 29 | `OWLGK-eVrTw` | Heimdall Data: Query Caching Without Code Ch | 72.7% | 72.7% | 6 | 16 | English |
-| 30 | `LD5ksgnu8r8` | DXC: Claims Automation Using Amazon Textract | 73.7% | 73.7% | 11 | 13 | English |
+| 5 | `mpgM2qeAfaQ` | Brain Power Fidgetology: Automatic Analysis  | 58.8% | 77.8% | 9 | 10 | English |
+| 6 | `FmhL2334GIY` | New Relic: Automated Monitoring on AWS with  | 60.0% | 72.7% | 10 | 11 | English |
+| 7 | `hMK2NJ-q9nc` | WarnerMedia: Cloudbased Linear Playout Syste | 60.0% | 61.5% | 6 | 5 | English |
+| 8 | `KgRib8AM0fs` | Hudl: Ingesting and Transcoding Video Data U | 62.5% | 71.4% | 7 | 8 | English |
+| 9 | `Dxq_U1TNx1s` | TCS: GeoSpatial Data Analysis Using TCS Digi | 63.2% | 63.2% | 11 | 17 | English |
+| 10 | `-wLEkq21cvA` | Versent: The Migration Factory | 66.7% | 66.7% | 9 | 10 | English |
+| 11 | `3WgTBTDlQN8` | FanFight: Building a Realtime Fantasy League | 66.7% | 66.7% | 9 | 14 | English |
+| 12 | `GxjMSvwcgvw` | Sopra Banking Software: Secured & Industrial | 66.7% | 66.7% | 8 | 13 | English |
+| 13 | `KzJKdUZ3Ba4` | PwC: Streamlining Asset Tracking with Amazon | 66.7% | 57.1% | 4 | 6 | English |
+| 14 | `LYP98nPBj2A` | Singtel: Next-Generation Mobile Financial Se | 66.7% | 80.0% | 5 | 8 | English |
+| 15 | `N2mktbl8EQk` | An Under the Hood Tune Up with AWS DeepRacer | 66.7% | 83.3% | 6 | 9 | English |
+| 16 | `WxMBuBBIwpI` | NextRoll: Driving OpEx Efficiency for Ad Bid | 66.7% | 83.3% | 6 | 7 | English |
+| 17 | `c863uNkF0w4` | ENGIE Digital: Using Spot Instances to Optim | 66.7% | 82.3% | 10 | 8 | English |
+| 18 | `cmYI6axlicc` | Pirelli: Building a Data Platform at Scale | 66.7% | 66.7% | 10 | 14 | English |
+| 19 | `q_5U7z_vNug` | Flutura: Digital Twin - Shaping Operations f | 66.7% | 62.5% | 8 | 15 | English |
+| 20 | `qgW8LQ8iBuA` | Hancom: Building a Real-time Office Collabor | 66.7% | 71.4% | 10 | 4 | Korean |
+| 21 | `sKksbPPDznM` | Macquarie Bank: Securing Payment Websites at | 66.7% | 66.7% | 6 | 8 | English |
+| 22 | `wtl7CrSQnHA` | Fresenius Medical Care: Enabling Patient Car | 66.7% | 77.8% | 12 | 14 | English |
+| 23 | `i4ueYgjVDCw` | Rappi: Leveraging EKS, DocumentDB, RDS and E | 69.6% | 60.9% | 10 | 8 | English |
+| 24 | `8ZRWzn0G39g` | Replicon: MultiTenant SaaS Solution with Bri | 70.6% | 58.8% | 12 | 38 | English |
+| 25 | `G07keU4g-LU` | Jubilant FoodWorks: Driving a Quality Custom | 70.6% | 77.8% | 10 | 21 | English |
+| 26 | `-S-R7MWRpaI` | mimik: Hybrid Edge Cloud Leveraging AWS to S | 71.4% | 66.7% | 8 | 11 | English |
+| 27 | `2XVgpMwY5iE` | Keen Eye: Building Deep Learning Models for  | 71.4% | 71.4% | 7 | 12 | English |
+| 28 | `aOZ4H98XROc` | Cyxtera: How to Enable Secure Zero Trust Acc | 71.4% | 71.4% | 8 | 9 | English |
+| 29 | `53sUjFv9ByI` | Neumora Therapeutics: Enabling DNA and RNA D | 72.7% | 76.9% | 6 | 6 | English |
+| 30 | `OWLGK-eVrTw` | Heimdall Data: Query Caching Without Code Ch | 72.7% | 72.7% | 6 | 16 | English |
 
 ### Peor Edge F1 (con ground truth que sí tiene aristas)
 
@@ -137,26 +137,26 @@ Videos elegibles (pareados, usables, no especiales) ordenados por Service F1 de 
 | 2 | `cRxvZBIa-gI` | Equifax: Achieving Cost Savings and Reliability  | 0.0% | 4 |
 | 3 | `OWLGK-eVrTw` | Heimdall Data: Query Caching Without Code Change | 9.1% | 16 |
 | 4 | `aOZ4H98XROc` | Cyxtera: How to Enable Secure Zero Trust Access  | 12.5% | 9 |
-| 5 | `A4Lfk1Zz1dE` | Spot.io: Optimizing Cloud Infrastructure Through | 16.7% | 5 |
-| 6 | `mmM_JnYygZM` | SHOPLINE: Building E-Commerce O2O platform on AW | 17.4% | 14 |
-| 7 | `KzJKdUZ3Ba4` | PwC: Streamlining Asset Tracking with Amazon Man | 20.0% | 6 |
-| 8 | `fSV0u48sEVg` | Social Quantum: Using Serverless in Gaming | 21.1% | 11 |
-| 9 | `NfUwtK8ALtw` | MX Player: Achieving Massive Scalability Using A | 22.2% | 16 |
-| 10 | `a6kqyqTNJM4` | Seera Group: Transforming Online Travel Booking  | 23.1% | 15 |
-| 11 | `3yJZ6rPoZfg` | Hexagon HxDR: Cloud-Based Visualization of Spati | 23.5% | 9 |
-| 12 | `KgRib8AM0fs` | Hudl: Ingesting and Transcoding Video Data Using | 23.5% | 8 |
-| 13 | `cmYI6axlicc` | Pirelli: Building a Data Platform at Scale | 25.0% | 14 |
-| 14 | `7V8wTCkjOqo` | NAB: Automating Cloud Governance at the National | 26.7% | 7 |
-| 15 | `XGVWdSnml6A` | Toyota Research Institute: On-Demand Self-Servic | 26.7% | 8 |
-| 16 | `hMK2NJ-q9nc` | WarnerMedia: Cloudbased Linear Playout System | 26.7% | 5 |
-| 17 | `8ZRWzn0G39g` | Replicon: MultiTenant SaaS Solution with Bring Y | 28.0% | 38 |
-| 18 | `9-6hQdFeolc` | Lyniate: Scaling Healthcare Data Exchange At Sca | 28.6% | 8 |
-| 19 | `JRDGId6N49E` | TRI-AD: Large-Scale and High-Performance Distrib | 28.6% | 3 |
-| 20 | `N2mktbl8EQk` | An Under the Hood Tune Up with AWS DeepRacer | 28.6% | 9 |
+| 5 | `l3f29v3IJGA` | Arvind Internet: Building a Multichannel Multite | 16.0% | 15 |
+| 6 | `A4Lfk1Zz1dE` | Spot.io: Optimizing Cloud Infrastructure Through | 16.7% | 5 |
+| 7 | `mmM_JnYygZM` | SHOPLINE: Building E-Commerce O2O platform on AW | 17.4% | 14 |
+| 8 | `KzJKdUZ3Ba4` | PwC: Streamlining Asset Tracking with Amazon Man | 20.0% | 6 |
+| 9 | `mpgM2qeAfaQ` | Brain Power Fidgetology: Automatic Analysis of B | 20.0% | 10 |
+| 10 | `fSV0u48sEVg` | Social Quantum: Using Serverless in Gaming | 21.1% | 11 |
+| 11 | `NfUwtK8ALtw` | MX Player: Achieving Massive Scalability Using A | 22.2% | 16 |
+| 12 | `a6kqyqTNJM4` | Seera Group: Transforming Online Travel Booking  | 23.1% | 15 |
+| 13 | `3yJZ6rPoZfg` | Hexagon HxDR: Cloud-Based Visualization of Spati | 23.5% | 9 |
+| 14 | `KgRib8AM0fs` | Hudl: Ingesting and Transcoding Video Data Using | 23.5% | 8 |
+| 15 | `cmYI6axlicc` | Pirelli: Building a Data Platform at Scale | 25.0% | 14 |
+| 16 | `7V8wTCkjOqo` | NAB: Automating Cloud Governance at the National | 26.7% | 7 |
+| 17 | `XGVWdSnml6A` | Toyota Research Institute: On-Demand Self-Servic | 26.7% | 8 |
+| 18 | `hMK2NJ-q9nc` | WarnerMedia: Cloudbased Linear Playout System | 26.7% | 5 |
+| 19 | `8ZRWzn0G39g` | Replicon: MultiTenant SaaS Solution with Bring Y | 28.0% | 38 |
+| 20 | `9-6hQdFeolc` | Lyniate: Scaling Healthcare Data Exchange At Sca | 28.6% | 8 |
 
 ## 5. Videos no-inglés
 
-**Italian** — 12 videos, 8 dentro de la comparación
+**Italian** — 12 videos, 11 dentro de la comparación
 
 | Video | Título | Std F1 | ¿en comparación? |
 |---|---|---:|---|
@@ -169,9 +169,9 @@ Videos elegibles (pareados, usables, no especiales) ordenados por Service F1 de 
 | `c6yBZBMwtLk` | RSI: Affordably Modernizing Audio and Video Conten | 88.9% | **sí** |
 | `illMCyp4O9A` | Enel: Management and Analysis of Meters Data Itali | — | no |
 | `mKZw29_UtoU` | Miriade: Forecasting and Real Time Tracking of the | 88.9% | **sí** |
-| `pCZ0bxgBL5c` | Shin Software: How to Implement a Platform for the | 90.9% | no |
-| `uda9s3U7vFw` | Tooso: How to Build a Serverless Pipeline for Data | 100.0% | no |
-| `vdujJAab1LM` | ShopFully International Group: Serverless Global L | 94.1% | no |
+| `pCZ0bxgBL5c` | Shin Software: How to Implement a Platform for the | 90.9% | **sí** |
+| `uda9s3U7vFw` | Tooso: How to Build a Serverless Pipeline for Data | 100.0% | **sí** |
+| `vdujJAab1LM` | ShopFully International Group: Serverless Global L | 94.1% | **sí** |
 
 **French** — 7 videos, 6 dentro de la comparación
 
@@ -208,12 +208,12 @@ Videos elegibles (pareados, usables, no especiales) ordenados por Service F1 de 
 | `l0mvXogANE4` | Smadex: Serving Billions of Ads with Amazon Elasti | 100.0% | **sí** |
 | `x76BIV88j_M` | Cabify: Building a Massively Scalable Ride-Sharing | 100.0% | **sí** |
 
-**German** — 3 videos, 2 dentro de la comparación
+**German** — 3 videos, 3 dentro de la comparación
 
 | Video | Título | Std F1 | ¿en comparación? |
 |---|---|---:|---|
 | `a1sEfGVDpEQ` | Swiss Post Ltd: Security and Compliance of AWS Acc | 92.3% | **sí** |
-| `chQ1phTqvnY` | Hi Res Cam: High Performance Object Detection with | 100.0% | no |
+| `chQ1phTqvnY` | Hi Res Cam: High Performance Object Detection with | 100.0% | **sí** |
 | `fTxvwVj02P0` | Simpego: Swiss InsurTech Running All Core Business | 85.7% | **sí** |
 
 **Japanese** — 2 videos, 2 dentro de la comparación
@@ -257,6 +257,6 @@ Videos elegibles (pareados, usables, no especiales) ordenados por Service F1 de 
 
 ## 7. Sin par — quedan fuera de cualquier comparación
 
-- Solo Standard: **26** — `chQ1phTqvnY`, `dy-drIboyNA`, `e3N5ZuHh7G0`, `h0HE3bOEiMk`, `hEB1J9-iOqs`, `iSkWd31X7zo`, `iwDNnyiD26M`, `jV8DwutbXbg`, `k7h0jpLcWdE`, `l3f29v3IJGA`, `lA0lAgN0hTI`, `lecbHMBD8KQ`, `m8CBJEyHKIM`, `m8xtR3-ZQs8`, `mpgM2qeAfaQ`, `mq3XuoN0rUM`, `mxKhbU_ToMs`, `nM-AkqNh7Yo`, `pCZ0bxgBL5c`, `r2xfxJ-sXMY`, `u9DZRkJxvWo`, `uNAmsoLed1E`, `uda9s3U7vFw`, `vdujJAab1LM`, `vp2Ipv2_uCg`, `zmJ7rL1iQBY`
+- Solo Standard: **0** — 
 - Solo Parsimonious: **0**
 - Sin ninguno de los dos: **26**

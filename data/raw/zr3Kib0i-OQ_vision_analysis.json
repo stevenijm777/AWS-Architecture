@@ -1,0 +1,116 @@
+{
+  "step_by_step_reasoning": "The architecture depicts the Accenture Cloud Platform inventory discovery system. A time-based trigger from CloudWatch invokes the COLLECTOR running on Fargate every 10 minutes to discover resources across 4,000 client accounts. The COLLECTOR writes the discovered inventory to an initial S3 bucket. An S3 bucket notification then triggers the DIFF process on Fargate, which compares current discovery results against previous runs. The DIFF process writes detected changes to a second S3 bucket, which triggers the PUBLISHER Lambda function. The PUBLISHER function then writes the final inventory changes into an OpenSearch (Elasticsearch) repository. Additionally, two standalone Lambda icons on the left represent legacy collector and diff functions that were replaced by Fargate containers for better efficiency.",
+  "graph": {
+    "name": "Accenture Cloud Platform Inventory Architecture",
+    "link": "https://www.youtube.com/watch?v=zr3Kib0i-OQ",
+    "categories": "Analytics, Compute, Storage, Management and Governance",
+    "graph_usable": true,
+    "notes": "System processes cloud resource discovery for 4,000 accounts every 10 minutes, using Fargate for collection and diff operations before updating an OpenSearch inventory search repository."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Time-based trigger running every 10 minutes across 4,000 client accounts."
+    },
+    {
+      "id": "1",
+      "service": "Fargate",
+      "name": "COLLECTOR",
+      "notes": "Fargate container executing account-based inventory discovery."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (Collector Output)",
+      "notes": "Stores output from the collector containers."
+    },
+    {
+      "id": "3",
+      "service": "Fargate",
+      "name": "DIFF",
+      "notes": "Fargate engine comparing current account state against previous run."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (Diff Output)",
+      "notes": "Stores detected difference output."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "PUBLISHER",
+      "notes": "Lambda function triggered by S3 event to push changes."
+    },
+    {
+      "id": "6",
+      "service": "OpenSearch",
+      "name": "ELASTICSEARCH",
+      "notes": "Central Elasticsearch repository holding all cloud resource inventory."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Legacy Collector)",
+      "notes": "Previous architecture serverless collector function, now replaced by Fargate."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda (Legacy Diff)",
+      "notes": "Previous architecture serverless diff function, now replaced by Fargate."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch time-based schedule launches the COLLECTOR task."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "COLLECTOR writes output files into S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "S3 object creation triggers the DIFF process."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "DIFF process writes detected changes to second S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "S3 event triggers the PUBLISHER Lambda function."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "PUBLISHER pushes change records to Elasticsearch repository."
+    }
+  ]
+}

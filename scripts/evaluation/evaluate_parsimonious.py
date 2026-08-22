@@ -73,6 +73,8 @@ def evaluate_parsimonious(
     edge_f1_all_list = []
     edge_f1_scored_list = []
     zero_edge_gt_list = []
+    unusable_list = []
+    svc_f1_legacy_list = []
     failed_list = []
     
     for g_file in all_gen_files:
@@ -91,16 +93,25 @@ def evaluate_parsimonious(
             continue
             
         pair_res = evaluate_pair(g_gen, g_gt, vid, catalog)
-        
+
+        # Cloudscape marks 56/396 of its own ground truths graph_usable=False.
+        # Those rows stay in the CSV but are dropped from every published mean.
+        graph_usable = pair_res["graph_usable"]
         is_zero_edge_gt = (g_gt.number_of_edges() == 0)
-        if is_zero_edge_gt:
-            zero_edge_gt_list.append(vid)
+
+        svc_f1_legacy_list.append(pair_res["svc_f1"])
+
+        if not graph_usable:
+            unusable_list.append(vid)
         else:
-            edge_f1_scored_list.append(pair_res["edge_f1"])
-            
-        svc_f1_list.append(pair_res["svc_f1"])
-        edge_f1_all_list.append(pair_res["edge_f1"])
-        
+            if is_zero_edge_gt:
+                zero_edge_gt_list.append(vid)
+            else:
+                edge_f1_scored_list.append(pair_res["edge_f1"])
+
+            svc_f1_list.append(pair_res["svc_f1"])
+            edge_f1_all_list.append(pair_res["edge_f1"])
+
         # Format metrics as percentages (0.0 to 100.0)
         results.append({
             "video_id": vid,
@@ -116,6 +127,7 @@ def evaluate_parsimonious(
             "edge_precision": round(100 * pair_res.get("edge_precision", 0.0), 2),
             "edge_recall": round(100 * pair_res.get("edge_recall", 0.0), 2),
             "edge_f1": round(100 * pair_res.get("edge_f1", 0.0), 2),
+            "graph_usable": graph_usable,
             "is_zero_edge_gt": is_zero_edge_gt
         })
         
@@ -125,16 +137,22 @@ def evaluate_parsimonious(
     mean_svc_f1 = mean(svc_f1_list)
     mean_edge_f1_all = mean(edge_f1_all_list)
     mean_edge_f1_scored = mean(edge_f1_scored_list)
-    
+    mean_svc_f1_legacy = mean(svc_f1_legacy_list)
+
     summary = {
         "mode": "parsimonious",
         "graphs_directory": str(graphs_dir),
         "total_evaluated": len(results),
+        "usable_evaluated": len(svc_f1_list),
+        "excluded_unusable_count": len(unusable_list),
         "failed_reads": len(failed_list),
         "skipped_no_gt_count": len(skipped_no_gt),
         "mean_service_f1": round(100 * mean_svc_f1, 2),
         "mean_edge_f1_all": round(100 * mean_edge_f1_all, 2),
         "mean_edge_f1_excluding_zero_edge_gt": round(100 * mean_edge_f1_scored, 2),
+        # Kept for continuity with reports published before the graph_usable filter.
+        "mean_service_f1_legacy_including_unusable": round(100 * mean_svc_f1_legacy, 2),
+        "excluded_unusable_videos": unusable_list,
         "zero_edge_gt_count": len(zero_edge_gt_list),
         "zero_edge_gt_videos": zero_edge_gt_list,
         "skipped_no_gt_videos": skipped_no_gt
@@ -147,7 +165,7 @@ def evaluate_parsimonious(
         "video_id", "title", "category",
         "gen_nodes", "gt_nodes", "svc_precision", "svc_recall", "svc_f1",
         "gen_edges", "gt_edges", "edge_precision", "edge_recall", "edge_f1",
-        "is_zero_edge_gt"
+        "graph_usable", "is_zero_edge_gt"
     ]
     with open(legacy_csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -191,11 +209,13 @@ def evaluate_parsimonious(
         },
         "counts": {
             "evaluated": len(results),
-            "scored_for_edges": len(results) - len(zero_edge_gt_list),
+            "excluded_unusable": len(unusable_list),
+            "scored_for_edges": len(edge_f1_scored_list),
             "excluded_from_edges": len(zero_edge_gt_list),
             "unreadable": len(failed_list)
         },
         "exclusions": {
+            "gt_marked_unusable": unusable_list,
             "gt_has_zero_edges": zero_edge_gt_list,
             "skipped_no_gt": skipped_no_gt,
             "unreadable": failed_list
@@ -214,7 +234,10 @@ def evaluate_parsimonious(
             # Parsimonious legacy compatibility
             "service_f1_mean": round(100 * mean_svc_f1, 2),
             "edge_f1_mean_all": round(100 * mean_edge_f1_all, 2),
-            "edge_f1_mean_excluding_zero_edge_gt": round(100 * mean_edge_f1_scored, 2)
+            "edge_f1_mean_excluding_zero_edge_gt": round(100 * mean_edge_f1_scored, 2),
+            "service_f1_legacy_including_unusable": {
+                "mean": round(100 * mean_svc_f1_legacy, 2)
+            }
         }
     }
     with open(run_json_path, "w", encoding="utf-8") as f:
@@ -225,8 +248,11 @@ def evaluate_parsimonious(
     print("======================================================================")
     print(f"Directorio de Grafos:                  {graphs_dir}")
     print(f"Total Evaluados:                       {len(results)}")
+    print(f"Excluidos (graph_usable=False):        {len(unusable_list)}")
+    print(f"Usables (base de las medias):          {len(svc_f1_list)}")
     print(f"Saltados por falta de Ground Truth:    {len(skipped_no_gt)}")
     print(f"Service F1 Medio:                      {mean_svc_f1 * 100:.2f}%")
+    print(f"  (antes del filtro, con inservibles:  {mean_svc_f1_legacy * 100:.2f}%)")
     print(f"Edge F1 Medio (General):               {mean_edge_f1_all * 100:.2f}%")
     print(f"Edge F1 Medio (Sin GT 0-Aristas):      {mean_edge_f1_scored * 100:.2f}%")
     print(f"Archivos Generados:")

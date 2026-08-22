@@ -1,0 +1,282 @@
+[
+  {
+    "start": 0.0,
+    "end": 15.6,
+    "text": "Welcome to This is My Architecture. My name is Kurt and today we're here in New York City,"
+  },
+  {
+    "start": 15.6,
+    "end": 20.16,
+    "text": "joined by Tom from Accenture Cloud Platform. Why don't you tell us about the platform?"
+  },
+  {
+    "start": 20.16,
+    "end": 28.14,
+    "text": "Okay, so we manage customer accounts in public cloud, providing governance and analytics and"
+  },
+  {
+    "start": 28.14,
+    "end": 33.9,
+    "text": "cloud management services. Thank you. As a matter of fact, Tom, you're joining us for the second time."
+  },
+  {
+    "start": 33.9,
+    "end": 37.5,
+    "text": "That's right. And we're going to talk about an architecture we talked about before,"
+  },
+  {
+    "start": 37.5,
+    "end": 43.1,
+    "text": "but you guys did a significant pivot on it. Why don't you remind our viewers of the architecture"
+  },
+  {
+    "start": 43.1,
+    "end": 49.82,
+    "text": "we're covering here? Okay, so the Accenture Cloud Platform is based on an inventory service that"
+  },
+  {
+    "start": 49.82,
+    "end": 56.78,
+    "text": "contains all the resources that the clients have in the cloud and we have a discovery process that we"
+  },
+  {
+    "start": 56.78,
+    "end": 62.86,
+    "text": "run which pulls that information from each account and stores it in our Elasticsearch repository,"
+  },
+  {
+    "start": 62.86,
+    "end": 69.02,
+    "text": "which is our inventory system. Tom, give our viewers an idea of just how many accounts you cover with"
+  },
+  {
+    "start": 69.02,
+    "end": 75.34,
+    "text": "the solution. Sure. So we cover about 4,000 accounts and we try and discover them because"
+  },
+  {
+    "start": 75.34,
+    "end": 83.1,
+    "text": "cloud estate changes so frequently about every 10 minutes. Okay. So we run a time-based trigger out"
+  },
+  {
+    "start": 83.1,
+    "end": 90.3,
+    "text": "of CloudWatch, which launches our collective service across 4,000 accounts in every region and discovers"
+  },
+  {
+    "start": 90.3,
+    "end": 97.25999999999999,
+    "text": "every resource type once every 10 minutes. So 4,000 accounts, lots of resources. I would assume that's"
+  },
+  {
+    "start": 97.25999999999999,
+    "end": 103.41999999999999,
+    "text": "a massive amount of jobs. We run, our collector process runs as many as 10,000 concurrent Lambda"
+  },
+  {
+    "start": 103.41999999999999,
+    "end": 111.41999999999999,
+    "text": "jobs running at a time. Each of those Lambda jobs writes its collected output into S3 and then each of those"
+  },
+  {
+    "start": 111.42,
+    "end": 118.7,
+    "text": "outputs triggers an S3 event that launches a difference engine which also runs about 10,000 concurrent"
+  },
+  {
+    "start": 118.7,
+    "end": 125.58,
+    "text": "processes. Each of those difference engines compares to the previous run and if there's a difference, writes"
+  },
+  {
+    "start": 125.58,
+    "end": 133.02,
+    "text": "that to S3 and then those S3 events trigger our publisher and our publisher then pushes the data into"
+  },
+  {
+    "start": 133.02,
+    "end": 141.34,
+    "text": "Plas Elasticsearch where it becomes part of our inventory. Great. So 4,000 accounts, lots of Lambda invocations,"
+  },
+  {
+    "start": 141.34,
+    "end": 147.98000000000002,
+    "text": "thousands of Lambda invocations to arrive at the inventory at the end. You told us about a change"
+  },
+  {
+    "start": 147.98000000000002,
+    "end": 155.1,
+    "text": "you made. What did you change? So we were running into issues where the Lambda functions were not being"
+  },
+  {
+    "start": 155.1,
+    "end": 160.78,
+    "text": "as efficient as we would like. Because we were timing it, they were running all in five seconds at the"
+  },
+  {
+    "start": 160.78,
+    "end": 166.54,
+    "text": "beginning of every minute and we didn't have convenient ways to spread that out. And so we looked around for"
+  },
+  {
+    "start": 166.54,
+    "end": 172.85999999999999,
+    "text": "what we could do to smooth that out and to make more efficient use. And so we found that we could swap out"
+  },
+  {
+    "start": 173.5,
+    "end": 181.82,
+    "text": "the Lambdas for the collector with Fargate. All right. Interesting change. Did you just change the"
+  },
+  {
+    "start": 181.82,
+    "end": 187.1,
+    "text": "collector process or did you make multiple changes? So we changed both the collector and then we also"
+  },
+  {
+    "start": 187.1,
+    "end": 193.5,
+    "text": "changed the difference engine because both of those were the services that ran to about 10,000 concurrent"
+  },
+  {
+    "start": 193.5,
+    "end": 200.3,
+    "text": "processes. By switching the collector to be account based rather than resource type based, we were able"
+  },
+  {
+    "start": 200.3,
+    "end": 205.74,
+    "text": "to then discover all the different resources in all the different regions within a single collector"
+  },
+  {
+    "start": 206.54,
+    "end": 214.06,
+    "text": "container execution. That then enabled us to make a number of efficiency choices having to do with memory,"
+  },
+  {
+    "start": 214.06,
+    "end": 220.22,
+    "text": "but also having to do with API calls for things like authentication, which we had to do multiple times,"
+  },
+  {
+    "start": 220.22,
+    "end": 225.42,
+    "text": "once from each Lambda. Now we could do that once for each account. And then in the difference engine,"
+  },
+  {
+    "start": 225.42,
+    "end": 230.54,
+    "text": "we could process these larger files that were being written out by the collector, but then still write"
+  },
+  {
+    "start": 230.54,
+    "end": 235.82,
+    "text": "the same smaller publisher files that were needed to get the changes into the inventory. So let me make"
+  },
+  {
+    "start": 235.82,
+    "end": 242.22,
+    "text": "sure I understand that correctly, Tom. The pivot to Fargate, so to containers, was driven mainly by"
+  },
+  {
+    "start": 242.94,
+    "end": 249.02,
+    "text": "efficiency and to utilize the runtime better and the memory utilization better. Is that correct? It also"
+  },
+  {
+    "start": 249.02,
+    "end": 253.66,
+    "text": "had the benefit of driving costs down a little bit because of the way that we were running it."
+  },
+  {
+    "start": 254.22,
+    "end": 260.86,
+    "text": "So because each Lambda function was exactly the same size, not not mattering whether it was a large or a"
+  },
+  {
+    "start": 260.86,
+    "end": 265.90000000000003,
+    "text": "small discovery, the amount of memory we had to allocate for the Lambda functions needed to be as big"
+  },
+  {
+    "start": 265.90000000000003,
+    "end": 272.54,
+    "text": "as the biggest one. By putting it into a container, we were able to just allocate enough for the entire"
+  },
+  {
+    "start": 272.54,
+    "end": 278.62,
+    "text": "account within that container. Plus we could make some more efficient choices around, you know, information that we"
+  },
+  {
+    "start": 278.62,
+    "end": 285.26,
+    "text": "already have about those accounts and so forth. So this is a fairly significant pivot in your architecture."
+  },
+  {
+    "start": 285.26,
+    "end": 293.26,
+    "text": "It's still serverless, but you went from Lambda to containers. Help our viewers understand how your"
+  },
+  {
+    "start": 293.26,
+    "end": 299.26,
+    "text": "development community made that transformation. Sure. So whenever we look at one of these sort of"
+  },
+  {
+    "start": 299.26,
+    "end": 305.74,
+    "text": "microservice components, we're trying to figure out what will make it run more effectively, more cost"
+  },
+  {
+    "start": 305.74,
+    "end": 312.22,
+    "text": "efficiently. And we were seeing that the hardest thing for us to really even get a handle on was all of these"
+  },
+  {
+    "start": 312.22,
+    "end": 317.42,
+    "text": "processes that were running concurrently. It was difficult for us to tell if we were seeing increased"
+  },
+  {
+    "start": 317.42,
+    "end": 324.22,
+    "text": "concurrency because of an issue or whether it was just a lot of things being discovered. And so by smoothing it out"
+  },
+  {
+    "start": 324.22,
+    "end": 331.82,
+    "text": "using the Fargate container, we're able to much more easily see where those concurrency spikes happen. We don't run into"
+  },
+  {
+    "start": 331.82,
+    "end": 336.78,
+    "text": "limits for the account for a number of concurrent processes. And honestly, we've run into a lot less"
+  },
+  {
+    "start": 336.78,
+    "end": 343.42,
+    "text": "throttling by the number of API calls we're making. Yeah. So this is a terrific example of taking"
+  },
+  {
+    "start": 344.21999999999997,
+    "end": 351.18,
+    "text": "a application that's already deployed on the platform and successfully running and continuously evolving it"
+  },
+  {
+    "start": 351.18,
+    "end": 358.38,
+    "text": "and driving improvements into that, in this case, on a pivot from a Lambda to a container. Tom, thank you so"
+  },
+  {
+    "start": 358.38,
+    "end": 362.86,
+    "text": "much for sharing this. I'm looking forward to seeing you hopefully in a couple of months with some more"
+  },
+  {
+    "start": 362.86,
+    "end": 377.82,
+    "text": "iterations on your architecture. Thank you. Thank you for watching. This is my architecture."
+  }
+]

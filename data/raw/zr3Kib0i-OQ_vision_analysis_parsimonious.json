@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "The architecture diagram shows an automated AWS resource inventory collection pipeline. CloudWatch triggers the Collector service (running on Fargate). The Collector writes discovered resource data into an S3 bucket. The creation of S3 objects triggers the Diff engine (Fargate), which compares current state to previous state. If changes are detected, Diff writes the delta into a second S3 bucket. S3 events from the second bucket trigger the Publisher function (Lambda), which pushes updated inventory data into an Elasticsearch (OpenSearch) cluster.",
+  "graph": {
+    "name": "Accenture Cloud Platform Inventory Architecture",
+    "link": "",
+    "categories": "Governance & Analytics",
+    "graph_usable": true,
+    "notes": "Accenture Cloud Platform evolved its inventory collection and difference engines from Lambda to Fargate to improve execution efficiency and reduce API throttling across thousands of managed accounts."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Time-based trigger every 10 minutes"
+    },
+    {
+      "id": "1",
+      "service": "Fargate",
+      "name": "Collector",
+      "notes": "Account-based discovery container process"
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores collected raw resource outputs"
+    },
+    {
+      "id": "3",
+      "service": "Fargate",
+      "name": "Diff",
+      "notes": "Compares current outputs to previous runs"
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores difference outputs"
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Publisher",
+      "notes": "Pushes changed state data to Elasticsearch"
+    },
+    {
+      "id": "6",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Inventory data repository"
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Triggers Collector on schedule"
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes discovered account state"
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "S3 event triggers Diff engine"
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes detected state differences"
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "S3 event triggers Publisher"
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Pushes state updates into inventory index"
+    }
+  ]
+}

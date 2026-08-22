@@ -1,0 +1,187 @@
+[
+  {
+    "start": 0.0,
+    "end": 16.0,
+    "text": "Hi everybody, welcome to Diziz's Markitecture. I'm Vudi from AWS and I'm joined today by Ivan from DAZN."
+  },
+  {
+    "start": 16.0,
+    "end": 24.0,
+    "text": "Hi Ivan. Hi Vudi, very nice to meet you. So Ivan, how DAZN do? DAZN streams sport events over the internet,"
+  },
+  {
+    "start": 24.0,
+    "end": 31.0,
+    "text": "both in video on demand and live sport events. And we stream to a number of devices,"
+  },
+  {
+    "start": 31.0,
+    "end": 38.0,
+    "text": "they can be smartphones, smart TVs, laptops, any kind of device you might think about."
+  },
+  {
+    "start": 38.0,
+    "end": 44.0,
+    "text": "So what are you showing today? Today I'm going to present the architecture for our feature Key Moments."
+  },
+  {
+    "start": 44.0,
+    "end": 51.0,
+    "text": "Key Moments are graphical elements overlaid on top of the play bar of our video player,"
+  },
+  {
+    "start": 51.0,
+    "end": 58.0,
+    "text": "in order to facilitate and simplify the navigation of the user who wants to review a particular action"
+  },
+  {
+    "start": 58.0,
+    "end": 68.0,
+    "text": "to lead to a noteworthy event. Like goal or substitution? Exactly. If you think about football, it can be a goal, substitution, kickoff, these kind of things."
+  },
+  {
+    "start": 68.0,
+    "end": 74.0,
+    "text": "So where does this architecture start? It is important to know that this architecture is a push-based architecture,"
+  },
+  {
+    "start": 74.0,
+    "end": 82.0,
+    "text": "because it gives us more control over the quality of our service and because it's more efficient, of course."
+  },
+  {
+    "start": 82.0,
+    "end": 88.0,
+    "text": "We have a challenge which is synchronizing data coming from the pitch with the video stream."
+  },
+  {
+    "start": 88.0,
+    "end": 98.0,
+    "text": "And all starts from the electronic program guide, which is served as a topic on SNS."
+  },
+  {
+    "start": 98.0,
+    "end": 104.0,
+    "text": "The electronic program guide gives us information about sport events that are about to start."
+  },
+  {
+    "start": 104.0,
+    "end": 110.0,
+    "text": "So the type of sport, start and end time, so we can plan for capacity in our architecture."
+  },
+  {
+    "start": 110.0,
+    "end": 115.0,
+    "text": "So it will send a notification to? Indeed. To the step function, which we see here."
+  },
+  {
+    "start": 115.0,
+    "end": 125.0,
+    "text": "The step function at the start of the sport event extracts the video streams in the different formats we serve,"
+  },
+  {
+    "start": 125.0,
+    "end": 138.0,
+    "text": "dash, smooth and HLS. Then invokes Fargate and instantiate number of containers, one per video stream,"
+  },
+  {
+    "start": 138.0,
+    "end": 149.0,
+    "text": "in order to extract keyframes. Those keyframes from the video are passed to recognition for analysis to detect text,"
+  },
+  {
+    "start": 149.0,
+    "end": 154.0,
+    "text": "which is in the keyframe. And specifically what we are looking at is the time information from the start,"
+  },
+  {
+    "start": 154.0,
+    "end": 162.0,
+    "text": "from the period. So you are looking for text, so I imagine you can use text and image feature."
+  },
+  {
+    "start": 162.0,
+    "end": 169.0,
+    "text": "Correct. Exactly. And then we pass this information to our stream offset service."
+  },
+  {
+    "start": 169.0,
+    "end": 178.0,
+    "text": "What this does is taking the information coming from the video, which might say we are 2 minutes and 5 seconds inside the period."
+  },
+  {
+    "start": 178.0,
+    "end": 185.0,
+    "text": "And that gives us the offset of the kickoff from the start of the video stream."
+  },
+  {
+    "start": 185.0,
+    "end": 190.0,
+    "text": "Note that the start of the video stream is not the same as the start of the sport event. It happens earlier."
+  },
+  {
+    "start": 190.0,
+    "end": 197.0,
+    "text": "So there is the delta. Indeed. So we want this delta in order to be able to position correctly the key moment on the play bar."
+  },
+  {
+    "start": 197.0,
+    "end": 209.0,
+    "text": "Makes sense. So what's about the other part? Exactly. The other part of the architecture is collecting the data which is coming from the pitch from a data feed,"
+  },
+  {
+    "start": 209.0,
+    "end": 221.0,
+    "text": "which is ingested into a Kinesis analytic stream. We process the stream filtering out the events we want."
+  },
+  {
+    "start": 221.0,
+    "end": 232.0,
+    "text": "And we pass them to a Lambda, which is our key moment service. We want to collect them, store them and then publish them, of course."
+  },
+  {
+    "start": 232.0,
+    "end": 242.0,
+    "text": "So what's the client's part about? So let's assume we are at the start of a live sport event. We have millions of clients connecting in a time span of a few minutes."
+  },
+  {
+    "start": 242.0,
+    "end": 249.0,
+    "text": "We have those clients connecting through API Gateway. So scalability is a challenge."
+  },
+  {
+    "start": 249.0,
+    "end": 253.0,
+    "text": "Exactly. Scalability is a challenge and is paramount for our service, of course."
+  },
+  {
+    "start": 253.0,
+    "end": 263.0,
+    "text": "We connect through API Gateway. API Gateway through Route 53 will use latency based routing to connect to the most appropriate AWS region,"
+  },
+  {
+    "start": 263.0,
+    "end": 270.0,
+    "text": "where we host in each of those we host ECS. So you are using a multi-regional approach for that?"
+  },
+  {
+    "start": 270.0,
+    "end": 278.0,
+    "text": "Indeed. Exactly. For a number of reasons. First, because we serve worldwide clients. Second, because we want fault tolerance, of course."
+  },
+  {
+    "start": 278.0,
+    "end": 294.0,
+    "text": "And in ECS, we associate a number of containers that are basically fetching the key moments from both a cache and DynamoDB in a sort of sophisticated cache."
+  },
+  {
+    "start": 294.0,
+    "end": 305.0,
+    "text": "What is live event is probably most probably coming from the Redis cache. What is video on demand is most likely to come from DynamoDB."
+  },
+  {
+    "start": 305.0,
+    "end": 313.0,
+    "text": "Okay, so let's. Okay, so very interesting. Thank you, Ivan. And thank you everybody for watching. This is my architecture."
+  }
+]

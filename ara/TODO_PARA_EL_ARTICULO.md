@@ -223,10 +223,22 @@ Cosas descubiertas al auditar, que no estaban en ningún documento:
    huérfanas sin título. Es un problema de calidad del dataset de origen que
    vale la pena reportar.
 
-2. **Resolución como variable oculta.** El selector logra 100% sobre 404 videos
-   a ≥720p y 26.5% sobre 67 a 360p. `constraints.md` ya exigía 720p pero nada
-   lo hacía cumplir: `VIDEO_FORMAT` degradaba en silencio. Es un requisito
-   operativo medido.
+2. **Resolución: correlación con la confianza del selector automático, no con si
+   el frame sirve.** El selector automático emite un candidato de alta confianza
+   100% de las veces sobre 404 videos a ≥720p, y solo 26.5% sobre 67 a 360p. Esa
+   cifra describe la seguridad del *scorer automático*, no la usabilidad real del
+   frame — `constraints.md` los confundía y pedía 720p como requisito de entrada.
+   Corregido el 2026-08-21 con evidencia directa: de 17 videos nuevos procesados
+   (todos cayeron a 640×360 por falta de un PO-Token provider local para yt-dlp,
+   un problema distinto al de las cookies), 3 fueron aprobados a mano como pizarra
+   válida a la misma resolución en la que otros 12 fallaron. La resolución sola no
+   explica el resultado. Hipótesis de trabajo, sin validar todavía: el detector de
+   íconos (`symbol_detector.py`) usa umbrales HSV fijos que pueden estar calibrados
+   para un estilo particular de pizarra/marcador, y fallar en otros estilos
+   independientemente de la resolución. Ver `constraints.md` §2.3 para el detalle
+   y la evidencia. `VIDEO_FORMAT` sigue degradando en silencio — eso sigue siendo
+   cierto y sigue siendo forzable — pero "forzar 720p" ya no es la corrección que
+   hay que documentar como la causa raíz.
 
 3. **42 videos no-inglés**, no los 12 que documentaba `Casos especiales.md`.
    Aparecen coreano (7), alemán (3), árabe (2), mandarín (2), hebreo (1).

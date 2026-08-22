@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "1. Identifies entry actor 'User' (modeled as UserConsumerAPI) submitting video transcoding job requests via SDK/API.\n2. SCHEDULER (EC2) receives the job configuration and coordinates with the MASTER (EC2) node.\n3. INPUT (S3) bucket holds raw source video files which MASTER reads and splices into chunks.\n4. WORKERS (EC2 spot instances running Kubernetes) receive video segment chunks from MASTER, encode them, and send processed segments back to MASTER.\n5. MASTER stitches the encoded chunks back together and writes the final transcoded video to the OUTPUT (S3) bucket.\n6. CloudFront (CDN) serves the final video files from the OUTPUT bucket to end-user devices.",
+  "graph": {
+    "name": "Bitmovin Distributed Video Transcoding Architecture",
+    "link": "https://www.youtube.com/watch?v=lcLw-Le_tXQ",
+    "categories": "Media & Entertainment, Compute, Storage",
+    "graph_usable": true,
+    "notes": "Bitmovin utilizes a chunk-based video transcoding architecture built on AWS EC2 spot instances with Kubernetes, allowing fast parallel processing and resiliency against spot instance terminations."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerAPI",
+      "name": "User",
+      "notes": "Triggers transcoding jobs via Bitmovin SDK or API requests."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "SCHEDULER",
+      "notes": "Receives API job requests and configurations."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "INPUT",
+      "notes": "Stores input video assets."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "MASTER",
+      "notes": "Pulls video source, analyzes and splices it, dispatches jobs to workers, and stitches output segments."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "WORKERS",
+      "notes": "Kubernetes cluster on EC2 Spot Instances encoding small chunked video segments."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "OUTPUT",
+      "notes": "Stores final stitched transcoded video files."
+    },
+    {
+      "id": "6",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Content Delivery Network (CDN) serving transcoded videos to end consumers."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "User sends API request with job config to Scheduler."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Scheduler passes job configuration and source location to Master node."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Master pulls source video file from S3 Input bucket."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Master dispatches spliced video segment jobs to Kubernetes Spot Workers."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Workers send encoded segment chunks back to Master."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Master stitches processed chunks together and writes output to S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront CDN fetches and distributes final video files to end-user devices."
+    }
+  ]
+}

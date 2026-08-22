@@ -1,0 +1,138 @@
+{
+  "step_by_step_reasoning": "The architecture diagram illustrates DAZN's 'Key Moments' feature pipeline. 1) EPG notifications on SNS trigger Step Functions, which invokes Fargate to launch containers per video stream format. 2) Fargate extracts keyframes and passes them to Rekognition to detect timestamp text, sending calculated stream offset info to Lambda. 3) Pitch data feeds are ingested by Kinesis Analytics and streamed into Lambda (Key Moment service). 4) Clients query key moments via API Gateway, which routes requests to ECS multi-region containers that retrieve data from DynamoDB (and Redis cache). All components and visual arrows are mapped accurately according to node/edge rules.",
+  "graph": {
+    "name": "DAZN Key Moments Architecture",
+    "link": "https://www.youtube.com/watch?v=dWCQw_KvlYQ",
+    "categories": "Media & Streaming",
+    "graph_usable": true,
+    "notes": "DAZN architecture for overlaid Key Moments synchronization during live and VOD sports streaming."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Serves Electronic Program Guide (EPG) event topics informing about upcoming sports events."
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "notes": "Extracts video stream manifests (DASH, Smooth, HLS) and orchestrates container tasks."
+    },
+    {
+      "id": "2",
+      "service": "Fargate",
+      "name": "FARGATE",
+      "notes": "Runs containers (one per stream) to extract keyframes from video streams."
+    },
+    {
+      "id": "3",
+      "service": "Rekognition",
+      "name": "REKOGNITION",
+      "notes": "Analyzes video keyframes using text detection to extract match time information."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Houses the Stream Offset Service and Key Moment Service to process video deltas and match events."
+    },
+    {
+      "id": "5",
+      "service": "KinesisAnalytics",
+      "name": "KINESIS ANALYTICS",
+      "notes": "Ingests real-time data feeds from the pitch and filters key match events."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DYNAMO DB",
+      "notes": "Stores key moments data for retrieval, especially for Video on Demand (VOD) playback."
+    },
+    {
+      "id": "7",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Multi-region service containers fetching key moments from Redis cache and DynamoDB."
+    },
+    {
+      "id": "8",
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "notes": "Receives user API requests and routes traffic via Route 53 latency-based routing."
+    },
+    {
+      "id": "9",
+      "service": "UserConsumerMobile",
+      "name": "CLIENTS",
+      "notes": "User client applications across smartphones, laptops, and smart TVs."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "SNS publishes event start notifications to Step Functions."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions instantiates Fargate containers for each video stream."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fargate passes extracted keyframes to Rekognition for text extraction."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fargate sends stream timing data to the Lambda Stream Offset Service."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kinesis Analytics forwards filtered pitch event data to Lambda."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Clients connect to API Gateway to retrieve overlay key moments."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes client requests to ECS container tasks."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "ECS fetches key moment markers from DynamoDB."
+    }
+  ]
+}
