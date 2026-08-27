@@ -185,6 +185,8 @@ def generate_report():
     b64_chart15 = get_chart_b64("15_health_boxplot_parsimonious.png")
     b64_chart16 = get_chart_b64("16_f1_distribution_pie_standard.png")
     b64_chart17 = get_chart_b64("17_f1_distribution_pie_parsimonious.png")
+    b64_chart18 = get_chart_b64("18_hallucinated_connections.png")
+    b64_chart19 = get_chart_b64("19_missing_connections.png")
     
     # Build HTML rows for Strict Table
     strict_table_rows = []
@@ -809,6 +811,16 @@ def generate_report():
                 <h3>17. Distribución de Rangos F1 — Parsimonious</h3>
                 <img src="{b64_chart17}" alt="F1 Distribution Pie Parsimonious Chart" onclick="openModal(this.src)">
                 <p>Mismo desglose que 16, solo Parsimonious.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>18. Top Conexiones Alucinadas</h3>
+                <img src="{b64_chart18}" alt="Hallucinated Connections Chart" onclick="openModal(this.src)">
+                <p>Conexiones específicas (ej. Lambda→DynamoDB) que el modelo inventa y no están en el Ground Truth, comparado por modelo.</p>
+            </div>
+            <div class="gallery-card">
+                <h3>19. Top Conexiones Faltantes</h3>
+                <img src="{b64_chart19}" alt="Missing Connections Chart" onclick="openModal(this.src)">
+                <p>Conexiones específicas presentes en el Ground Truth que el modelo no detecta, comparado por modelo.</p>
             </div>
         </div>
     </div>

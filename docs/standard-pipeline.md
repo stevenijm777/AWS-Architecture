@@ -106,30 +106,100 @@ should be treated as signal.
 Both negative-rule variants regressed. Telling the model what *not* to emit
 suppressed legitimate nodes along with the noise.
 
-### Generation 2 — `gemini-3.6-flash`, temperature 0.0
+### Generation 2 — historical table (superseded)
+
+These rows record a version *name*, not a prompt hash, and the notebook redefines
+the same constants across cells — so they cannot be attributed to a specific
+prompt text. Kept for provenance; **cite the verified table below instead.**
 
 | Version | Service F1 | Edge F1 | Change |
 |---|---:|---:|---|
-| baseline | 90.88% | 61.11% | carried over from V0 |
+| baseline | 90.88% | 61.11% | carried over from V0 — **measured on 3.5-flash** |
 | v4_anti_hallucination | **91.62%** | 63.45% | explicit valid-vocabulary lists, anti-hallucination directives |
-| v4_dynamic_few_shot (RAG) | 90.09% | 61.51% | inject 2 similar architectures as examples |
-| V5_with_vision | 86.67% | 53.87% | **vision only, no transcript** |
+| v4_dynamic_few_shot (RAG) | 90.09% | 61.51% | inject 2 similar architectures as examples — **3.5-flash, temperature never set** |
+| V5_with_vision | 86.67% | 53.87% | **vision only, no transcript** — source file absent from repo |
 | V5_STRICT_ROUTING | 90.99% | 65.14% | exact path routing, no intermediate shortcuts |
 | **V6_corrected_v2** ← production | 89.94% | 65.28% | faithful transcriber framing, unidirectional default |
 | V7_RETURN_FLOWS | 90.58% | **65.73%** | permits explicitly-evidenced return flows |
 | V7_RETURN_FLOWS_V6 | 89.30% | **66.52%** | same, on the V6 base |
 
-*(`v4_dynamic_few_shot` and `V5_with_vision` from `Proyecto/Avances/Avance Semanal 3.md`;
-the rest from `batch_results_*.json`.)*
+*(`v4_dynamic_few_shot` and `V5_with_vision` from `Proyecto/Avances/Avance Semanal 3.md`,
+which is not in this repository; the rest from `batch_results_*.json`.)*
+
+Two rows were misfiled under this heading: the `baseline` and
+`v4_dynamic_few_shot` runs were both on `gemini-3.5-flash`, and the few-shot
+script never sets `temperature` at all
+(`run_dynamic_few_shot_batch.py:66`, `:205`). The table therefore compared two
+models on one axis.
+
+### Generation 2 — verified re-run (2026-08-24)
+
+All 13 Stage 2 variants, same 14-video panel, uniformly on `gemini-3.6-flash` at
+temperature 0.0. Prompts loaded from `src/configs/prompts/` with the run aborting
+on any SHA-256 mismatch against `MANIFEST.json`. Stage 1 held fixed at
+`STAGE1_V0_BASELINE` (cached, not recomputed). Runner:
+`scripts/ablation/rerun_panel.py`; results in `reports/ablation/`.
+
+| Version | Cell | sha (12) | Service F1 | Edge F1 |
+|---|---|---|---:|---:|
+| V4_ANTI_HALLUCINATION | 8 | `cdb8998f48eb` | 90.58% | **65.60%** |
+| V5_STRICT_ROUTING | 7 | `53f8d9124406` | **90.99%** | 64.51% |
+| V5_STRICT_ROUTING | 8 | `a792c1328d02` | 89.44% | 64.11% |
+| V6_OPTIMIZED | 8 | `079b0aa855d7` | 88.43% | 64.11% |
+| V7_RETURN_FLOWS | 7 | `1ed4ebf91e68` | 89.75% | 63.89% |
+| V7_RETURN_FLOWS_V6 | 10 | `7ad8d9368bce` | 88.15% | 63.89% |
+| **V6_CORRECTED** ← production | 9 | `ed1d85054d73` | 89.79% | 63.21% |
+| V6_CORRECTED | 7 | `7228956f5fc6` | 88.26% | 61.64% |
+| V6_CORRECTED | 10 | `dbddf1f30bfb` | 89.76% | 60.48% |
+| V0_BASELINE | 8 | `feba1e16eb78` | 88.45% | 58.99% |
+| V4_ANTI_HALLUCINATION | 7 | `0b9217ea2267` | 88.94% | 58.73% |
+| V0_BASELINE | 7 | `4d0def75596f` | 90.75% | 58.29% |
+| V4_DYNAMIC_FEW_SHOT | (`.py`) | `45da674e4495` | 89.36% | 56.80% |
+
+Service F1 reproduces the historical figures to within ±0.15 points, but Edge F1
+lands 2–4.7 points low across every variant that had a prior number — a
+consistent direction rather than random scatter. Unexplained; worth declaring.
+
+`V7_RETURN_FLOWS_V6` builds on the cell-10 V6, not the cell-9 production one, so
+the historical `+1.24` attributed to the return-flow rules was confounded: the
+line separating those two bases is precisely the `Unidirectional Default`
+directive, i.e. about directionality. Same-base comparison: 60.48% → 63.89%.
+
+### The 14-video panel does not generalise
+
+The production prompt was chosen on this panel. Extended to 30 videos (the
+original 14 plus 16 eligible videos sampled at random, `seed=42`, within the same
+complexity range of 6–13 GT nodes and 5–20 GT edges), the same prompt gives:
+
+| Sample | n | Service F1 | Edge F1 |
+|---|---:|---:|---:|
+| Original panel | 14 | 89.79% | 63.21% |
+| 16 new | 16 | 84.99% | 55.50% |
+| **Combined** | **30** | **87.23%** | **59.10%** |
+
+The 30-video figure sits much closer to the pipeline's real average over all 370
+videos (86.78% / 59.65%) than the optimistic 14-video one. **The 14-video panel
+was biased upward** — −2.56 Service F1 and −4.11 Edge F1 on widening. This does
+not invalidate the *ordering* between variants, but it does invalidate any
+absolute number cited from that panel.
 
 Two dead ends worth preserving:
 
-- **Few-shot RAG regressed.** With two example architectures in context the model
-  over-connected, reproducing the topology of the examples instead of the video.
+- **Few-shot RAG is a null result, not a regression.** Against the baseline on
+  the *same* model (V0 cell 7: 90.75% / 58.29%) it gives −1.39 / −1.49, inside
+  the ~3-point noise floor. Against the best variant the 8.8-point Edge F1 gap is
+  real. The earlier claim that it "over-connected, reproducing the topology of the
+  examples" does not hold: its generated-to-ground-truth edge ratio is 0.785,
+  inside the 0.689–0.893 range of the other twelve, and *every* variant
+  under-generates edges. Caveat: the retriever excludes only the target video, so
+  in 4 of 14 cases it injected the ground truth of another panel video as an
+  example — making 56.80% an optimistic ceiling.
 - **Vision-only collapsed on edges**, 53.87% vs 61.11%. Much of the ground-truth
   connectivity is stated aloud and never drawn, so the transcript is not a
   supplement to the image — it carries edges the image does not contain. This is
-  the ceiling on any purely visual approach here.
+  the ceiling on any purely visual approach here. **Not currently reproducible:**
+  no script, prompt, or results file for this experiment exists in the repo; the
+  numbers come solely from the absent `Avance Semanal 3.md`.
 
 ### Image-routing experiments (2026-08-08)
 

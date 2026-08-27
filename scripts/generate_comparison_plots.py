@@ -123,6 +123,8 @@ def collect_evaluation_data():
             "services_hallucinated": res_std_st["services_hallucinated"],
             "services_missing_permissive": pm_std_missing,
             "services_hallucinated_permissive": pm_std_halluc,
+            "edges_missing": list(res_std_st["edges_only_gt"].keys()),
+            "edges_hallucinated": list(res_std_st["edges_only_gen"].keys()),
         })
         full_results["v6 Standard"].append(res_std_st)
 
@@ -146,6 +148,8 @@ def collect_evaluation_data():
                 "services_hallucinated": res_pars_st["services_hallucinated"],
                 "services_missing_permissive": pm_pars_missing,
                 "services_hallucinated_permissive": pm_pars_halluc,
+                "edges_missing": list(res_pars_st["edges_only_gt"].keys()),
+                "edges_hallucinated": list(res_pars_st["edges_only_gen"].keys()),
             })
             full_results["Parsimonious"].append(res_pars_st)
 
@@ -374,6 +378,16 @@ def plot_all():
         "services_missing_permissive",
         "Top Servicios Faltantes por Modelo — Evaluación Permisiva (User*/ThirdParty* colapsados)",
         "09_missing_services_permissive.png",
+    )
+    plot_service_errors(
+        "edges_hallucinated",
+        "Top Conexiones Alucinadas por Modelo (inventadas, no están en el GT)",
+        "18_hallucinated_connections.png",
+    )
+    plot_service_errors(
+        "edges_missing",
+        "Top Conexiones Faltantes por Modelo (presentes en el GT, no detectadas)",
+        "19_missing_connections.png",
     )
 
     # ── PLOT 8: Total Error Volume — Strict vs Permissive ──
