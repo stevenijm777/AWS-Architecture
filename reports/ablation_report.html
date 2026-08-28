@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ablación de prompts — reporte</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --surface: #fcfcfb; --panel: #fff; --line: #e4e3df;
+  --ink: #0b0b0b; --ink2: #52514e; --ink3: #86857f;
+  --good: #1a7f37; --bad: #cf222e; --warn: #9a6700; --accent: #2a78d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    --surface: #1a1a19; --panel: #212120; --line: #34342f;
+    --ink: #fff; --ink2: #c3c2b7; --ink3: #8b8a80;
+    --good: #3fb950; --bad: #f85149; --warn: #d29922; --accent: #3987e5;
+  }
+}
+:root[data-theme="dark"] {
+  --surface: #1a1a19; --panel: #212120; --line: #34342f;
+  --ink: #fff; --ink2: #c3c2b7; --ink3: #8b8a80;
+  --good: #3fb950; --bad: #f85149; --warn: #d29922; --accent: #3987e5;
+}
+* { box-sizing: border-box; }
+body { margin:0; padding:2.2rem 1.6rem 5rem; background:var(--surface); color:var(--ink);
+  font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,sans-serif;
+  max-width:1180px; margin-inline:auto; }
+h1 { font-size:1.65rem; margin:0 0 .3rem; letter-spacing:-.01em; }
+h2 { font-size:1.15rem; margin:2.8rem 0 .5rem; padding-top:1.4rem; border-top:1px solid var(--line); }
+h3 { font-size:.95rem; margin:1.6rem 0 .5rem; color:var(--ink2); }
+.lede { color:var(--ink2); max-width:74ch; margin:.2rem 0 1.4rem; }
+.meta { color:var(--ink3); font-size:.82rem; margin-bottom:2rem; }
+.note { color:var(--ink2); font-size:.89rem; max-width:78ch; margin:.6rem 0 1rem; }
+.scroll { overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
+table { border-collapse:collapse; width:100%; font-size:.87rem; }
+th { text-align:left; font-weight:600; font-size:.72rem; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--ink3); padding:.7rem .7rem .5rem; white-space:nowrap;
+  border-bottom:1px solid var(--line); position:sticky; top:0; background:var(--panel); }
+td { padding:.5rem .7rem; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:last-child td { border-bottom:0; }
+.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.strong { font-weight:650; }
+.sep { border-left:1px solid var(--line); }
+.name { font-weight:550; min-width:15rem; }
+.sub { display:block; font-weight:400; font-size:.74rem; color:var(--ink3); margin-top:.1rem; }
+code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--ink2); }
+.bar { display:inline-block; width:var(--w); height:8px; background:var(--c);
+  border-radius:2px; margin-right:.45rem; vertical-align:baseline; }
+.pill { display:inline-block; font-size:.66rem; text-transform:uppercase; letter-spacing:.05em;
+  background:var(--accent); color:#fff; border-radius:999px; padding:.05rem .45rem;
+  margin-left:.4rem; vertical-align:middle; }
+.gt td { background:color-mix(in srgb, var(--accent) 7%, transparent); font-weight:600; }
+.up { color:var(--good); } .down { color:var(--bad); } .tie { color:var(--ink3); }
+.rk { color:var(--ink3); font-size:.8rem; }
+.delta { color:var(--ink2); }
+.stats { display:flex; gap:1.6rem; flex-wrap:wrap; margin:1.1rem 0 .4rem; }
+.stat { border:1px solid var(--line); border-radius:10px; padding:.8rem 1.1rem;
+  background:var(--panel); min-width:12rem; }
+.stat .v { font-size:1.5rem; font-weight:650; font-variant-numeric:tabular-nums; }
+.stat .k { font-size:.74rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink3); }
+.stat .d { font-size:.8rem; color:var(--ink2); margin-top:.3rem; }
+.find { border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:8px;
+  background:var(--panel); padding:.9rem 1.1rem; margin:.9rem 0; }
+.find.neg { border-left-color:var(--bad); }
+.find.pos { border-left-color:var(--good); }
+.find.warn { border-left-color:var(--warn); }
+.find b { display:block; margin-bottom:.25rem; }
+.find p { margin:.35rem 0; color:var(--ink2); font-size:.9rem; }
+details { margin:.8rem 0; }
+summary { cursor:pointer; font-size:.88rem; color:var(--accent); padding:.3rem 0; }
+.p16 td:first-child { border-left:2px solid var(--warn); }
+footer { margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
+  color:var(--ink3); font-size:.8rem; }
+</style></head><body>
+
+<h1>Ablación de prompts — Stage 2</h1>
+<p class="lede">Cada variante corrida sobre el mismo panel de videos, con
+<code>gemini-3.6-flash</code> a temperatura 0, el mismo World Model de Stage 1 cacheado
+y el mismo evaluador. Cada prompt se carga desde <code>src/configs/prompts/</code> y se
+verifica por SHA-256 antes de la primera llamada.</p>
+<p class="meta">Generado 2026-08-26 23:22 · 11 variantes sobre 30 videos · datos en
+<code>reports/ablation_report_data.json</code></p>
+
+<div class="stats">
+  <div class="stat"><div class="k">Rango Edge F1</div><div class="v">3.00</div>
+    <div class="d">puntos entre la mejor y la peor de 11</div></div>
+  <div class="stat"><div class="k">Spearman @14 vs @30</div><div class="v">-0.185</div>
+    <div class="d">el orden del panel chico no predice el grande</div></div>
+  <div class="stat"><div class="k">Correlación puntaje↔caída</div><div class="v">-0.858</div>
+    <div class="d">cuanto mejor puntuaba a 14, más cayó a 30</div></div>
+  <div class="stat"><div class="k">Bidireccionalidad</div><div class="v">47%</div>
+    <div class="d">en el GT; el mejor modelo llega a 22%</div></div>
+</div>
+
+<h2>1. Rendimiento por variante — panel de 30</h2>
+<p class="note">Todo lo que sigue se mide <b>por servicio</b>, no por identificador de nodo —
+es la convención del evaluador (<code>evaluate_graphs.py</code>: <em>ID-agnostic, we compare by
+service names</em>), así que estas cifras son directamente comparables con el Edge F1.
+<b>Aristas</b> es el total generado contra las 361 del ground truth;
+<b>ratio</b> es esa proporción. Todas las variantes <em>sub-generan</em> aristas — ninguna
+llega a 1.00. <b>%bidir</b> es la fracción de pares conectados que tienen arista en ambos
+sentidos, y <b>actores</b> cuenta los nodos <code>User*</code>, que el GT sí incluye.</p>
+<div class="scroll"><table>
+<thead><tr><th>Variante</th><th class="num">Service F1</th><th class="num">Edge F1</th>
+<th class="num">Aristas</th><th class="num">Ratio</th><th class="num">%bidir</th>
+<th class="num">Actores</th></tr></thead>
+<tbody><tr>
+<td class="name">V7_RETURN_FLOWS_V6<span class="sub">celda 10 · <code>7ad8d9368bce</code></span></td>
+<td class="num"><span class="bar" style="--w:55.0px;--c:#184f95" aria-hidden="true"></span>88.07</td>
+<td class="num strong"><span class="bar" style="--w:64.0px;--c:#184f95" aria-hidden="true"></span>60.10</td>
+<td class="num">292</td>
+<td class="num">0.81</td>
+<td class="num">21.9%</td>
+<td class="num">19</td>
+</tr><tr>
+<td class="name">V6_OPTIMIZED<span class="sub">celda 8 · <code>079b0aa855d7</code></span></td>
+<td class="num"><span class="bar" style="--w:25.4px;--c:#6da7ec" aria-hidden="true"></span>86.75</td>
+<td class="num strong"><span class="bar" style="--w:43.5px;--c:#256abf" aria-hidden="true"></span>59.14</td>
+<td class="num">269</td>
+<td class="num">0.75</td>
+<td class="num">13.5%</td>
+<td class="num">22</td>
+</tr><tr>
+<td class="name">V6_CORRECTED <span class="pill">producción</span><span class="sub">celda 9 · <code>ed1d85054d73</code></span></td>
+<td class="num"><span class="bar" style="--w:55.0px;--c:#184f95" aria-hidden="true"></span>88.07</td>
+<td class="num strong"><span class="bar" style="--w:40.3px;--c:#3987e5" aria-hidden="true"></span>58.99</td>
+<td class="num">269</td>
+<td class="num">0.75</td>
+<td class="num">12.4%</td>
+<td class="num">20</td>
+</tr><tr>
+<td class="name">V7_RETURN_FLOWS<span class="sub">celda 7 · <code>1ed4ebf91e68</code></span></td>
+<td class="num"><span class="bar" style="--w:29.0px;--c:#6da7ec" aria-hidden="true"></span>86.91</td>
+<td class="num strong"><span class="bar" style="--w:33.1px;--c:#3987e5" aria-hidden="true"></span>58.65</td>
+<td class="num">305</td>
+<td class="num">0.84</td>
+<td class="num">17.2%</td>
+<td class="num">26</td>
+</tr><tr>
+<td class="name">V5_STRICT_ROUTING<span class="sub">celda 8 · <code>a792c1328d02</code></span></td>
+<td class="num"><span class="bar" style="--w:26.0px;--c:#6da7ec" aria-hidden="true"></span>86.78</td>
+<td class="num strong"><span class="bar" style="--w:28.8px;--c:#6da7ec" aria-hidden="true"></span>58.45</td>
+<td class="num">261</td>
+<td class="num">0.72</td>
+<td class="num">10.5%</td>
+<td class="num">22</td>
+</tr><tr>
+<td class="name">V8_ACTORS_AND_RETURNS<span class="sub">derivado · <code>277020bacda4</code></span></td>
+<td class="num"><span class="bar" style="--w:13.2px;--c:#9ec5f4" aria-hidden="true"></span>86.21</td>
+<td class="num strong"><span class="bar" style="--w:27.7px;--c:#6da7ec" aria-hidden="true"></span>58.40</td>
+<td class="num">299</td>
+<td class="num">0.83</td>
+<td class="num">17.9%</td>
+<td class="num">29</td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 10 · <code>dbddf1f30bfb</code></span></td>
+<td class="num"><span class="bar" style="--w:64.0px;--c:#184f95" aria-hidden="true"></span>88.47</td>
+<td class="num strong"><span class="bar" style="--w:21.3px;--c:#6da7ec" aria-hidden="true"></span>58.10</td>
+<td class="num">284</td>
+<td class="num">0.79</td>
+<td class="num">12.0%</td>
+<td class="num">20</td>
+</tr><tr>
+<td class="name">V5_STRICT_ROUTING<span class="sub">celda 7 · <code>53f8d9124406</code></span></td>
+<td class="num"><span class="bar" style="--w:23.1px;--c:#6da7ec" aria-hidden="true"></span>86.65</td>
+<td class="num strong"><span class="bar" style="--w:20.9px;--c:#9ec5f4" aria-hidden="true"></span>58.08</td>
+<td class="num">281</td>
+<td class="num">0.78</td>
+<td class="num">14.3%</td>
+<td class="num">25</td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 7 · <code>7228956f5fc6</code></span></td>
+<td class="num"><span class="bar" style="--w:6.7px;--c:#cde2fb" aria-hidden="true"></span>85.92</td>
+<td class="num strong"><span class="bar" style="--w:9.0px;--c:#cde2fb" aria-hidden="true"></span>57.52</td>
+<td class="num">281</td>
+<td class="num">0.78</td>
+<td class="num">11.9%</td>
+<td class="num">25</td>
+</tr><tr>
+<td class="name">V6_CORRECTED + evidencia visual<span class="sub">celda 9 · <code>ed1d85054d73</code></span></td>
+<td class="num"><span class="bar" style="--w:15.5px;--c:#9ec5f4" aria-hidden="true"></span>86.31</td>
+<td class="num strong"><span class="bar" style="--w:6.2px;--c:#cde2fb" aria-hidden="true"></span>57.39</td>
+<td class="num">272</td>
+<td class="num">0.75</td>
+<td class="num">11.3%</td>
+<td class="num">23</td>
+</tr><tr>
+<td class="name">V4_ANTI_HALLUCINATION<span class="sub">celda 8 · <code>cdb8998f48eb</code></span></td>
+<td class="num"><span class="bar" style="--w:0.0px;--c:#cde2fb" aria-hidden="true"></span>85.62</td>
+<td class="num strong"><span class="bar" style="--w:0.0px;--c:#cde2fb" aria-hidden="true"></span>57.10</td>
+<td class="num">260</td>
+<td class="num">0.72</td>
+<td class="num">11.0%</td>
+<td class="num">25</td>
+</tr><tr class="gt">
+<td class="name">GROUND TRUTH<span class="sub">referencia, 30 videos</span></td>
+<td class="num">—</td><td class="num">—</td>
+<td class="num">361</td><td class="num">1.00</td>
+<td class="num">46.7%</td>
+<td class="num">34</td></tr></tbody></table></div>
+
+<h2>2. Desglose 14 / 16 / 30</h2>
+<p class="note">Los 14 originales son el panel con el que se eligió el prompt de producción.
+Los 16 nuevos se muestrearon al azar (<code>seed=42</code>) del conjunto elegible dentro del
+mismo rango de complejidad, y <b>nunca se usaron para elegir nada</b> — son la partición
+limpia. La última columna es cuánto cae el Edge F1 entre unos y otros.</p>
+<div class="scroll"><table>
+<thead><tr><th rowspan="2">Variante</th><th class="num" colspan="2">14 originales</th>
+<th class="num sep" colspan="2">16 nuevos</th><th class="num sep" colspan="2">30 combinados</th>
+<th class="num" rowspan="2">Δ Edge<br>16 − 14</th></tr>
+<tr><th class="num">Svc</th><th class="num">Edge</th><th class="num sep">Svc</th><th class="num">Edge</th>
+<th class="num sep">Svc</th><th class="num">Edge</th></tr></thead>
+<tbody><tr>
+<td class="name">V7_RETURN_FLOWS_V6<span class="sub">celda 10</span></td>
+<td class="num">89.94</td><td class="num">66.33</td>
+<td class="num sep">86.43</td><td class="num">54.64</td>
+<td class="num sep strong">88.07</td><td class="num strong">60.10</td>
+<td class="num delta">-11.69</td>
+</tr><tr>
+<td class="name">V6_OPTIMIZED<span class="sub">celda 8</span></td>
+<td class="num">88.80</td><td class="num">64.53</td>
+<td class="num sep">84.96</td><td class="num">54.42</td>
+<td class="num sep strong">86.75</td><td class="num strong">59.14</td>
+<td class="num delta">-10.11</td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 9</span></td>
+<td class="num">89.79</td><td class="num">63.99</td>
+<td class="num sep">86.56</td><td class="num">54.60</td>
+<td class="num sep strong">88.07</td><td class="num strong">58.99</td>
+<td class="num delta">-9.39</td>
+</tr><tr>
+<td class="name">V7_RETURN_FLOWS<span class="sub">celda 7</span></td>
+<td class="num">89.89</td><td class="num">63.64</td>
+<td class="num sep">84.30</td><td class="num">54.28</td>
+<td class="num sep strong">86.91</td><td class="num strong">58.65</td>
+<td class="num delta">-9.36</td>
+</tr><tr>
+<td class="name">V5_STRICT_ROUTING<span class="sub">celda 8</span></td>
+<td class="num">89.73</td><td class="num">64.61</td>
+<td class="num sep">84.20</td><td class="num">53.07</td>
+<td class="num sep strong">86.78</td><td class="num strong">58.45</td>
+<td class="num delta">-11.54</td>
+</tr><tr>
+<td class="name">V8_ACTORS_AND_RETURNS<span class="sub">derivado</span></td>
+<td class="num">88.27</td><td class="num">64.70</td>
+<td class="num sep">84.40</td><td class="num">52.89</td>
+<td class="num sep strong">86.21</td><td class="num strong">58.40</td>
+<td class="num delta">-11.81</td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 10</span></td>
+<td class="num">91.62</td><td class="num">63.76</td>
+<td class="num sep">85.70</td><td class="num">53.15</td>
+<td class="num sep strong">88.47</td><td class="num strong">58.10</td>
+<td class="num delta">-10.61</td>
+</tr><tr>
+<td class="name">V5_STRICT_ROUTING<span class="sub">celda 7</span></td>
+<td class="num">90.52</td><td class="num">64.08</td>
+<td class="num sep">83.26</td><td class="num">52.83</td>
+<td class="num sep strong">86.65</td><td class="num strong">58.08</td>
+<td class="num delta">-11.25</td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 7</span></td>
+<td class="num">88.95</td><td class="num">63.17</td>
+<td class="num sep">83.26</td><td class="num">52.56</td>
+<td class="num sep strong">85.92</td><td class="num strong">57.52</td>
+<td class="num delta">-10.61</td>
+</tr><tr>
+<td class="name">V6_CORRECTED + evidencia visual<span class="sub">celda 9</span></td>
+<td class="num">88.91</td><td class="num">63.12</td>
+<td class="num sep">84.04</td><td class="num">52.38</td>
+<td class="num sep strong">86.31</td><td class="num strong">57.39</td>
+<td class="num delta">-10.74</td>
+</tr><tr>
+<td class="name">V4_ANTI_HALLUCINATION<span class="sub">celda 8</span></td>
+<td class="num">88.64</td><td class="num">63.73</td>
+<td class="num sep">82.98</td><td class="num">51.30</td>
+<td class="num sep strong">85.62</td><td class="num strong">57.10</td>
+<td class="num delta">-12.43</td>
+</tr></tbody></table></div>
+
+<h2>3. El ranking no sobrevive a la ampliación</h2>
+<p class="note">Compara la corrida independiente sobre los 14 contra la corrida sobre los 30.
+Son llamadas distintas a la API, así que parte de la diferencia es ruido de corrida a corrida
+— pero el <em>reordenamiento</em> no lo es.</p>
+<div class="scroll"><table>
+<thead><tr><th>Variante</th><th class="num">Edge @14</th><th class="num">Puesto</th>
+<th class="num sep">Edge @30</th><th class="num">Puesto</th><th class="num">Δ</th>
+<th class="num">Movimiento</th></tr></thead>
+<tbody><tr>
+<td class="name">V4_ANTI_HALLUCINATION<span class="sub">celda 8</span></td>
+<td class="num">65.60</td><td class="num rk">#1</td>
+<td class="num sep">57.10</td><td class="num rk">#9</td>
+<td class="num delta">-8.50</td>
+<td class="num down">↓ 8</td>
+</tr><tr>
+<td class="name">V5_STRICT_ROUTING<span class="sub">celda 7</span></td>
+<td class="num">64.51</td><td class="num rk">#2</td>
+<td class="num sep">58.08</td><td class="num rk">#7</td>
+<td class="num delta">-6.43</td>
+<td class="num down">↓ 5</td>
+</tr><tr>
+<td class="name">V6_OPTIMIZED<span class="sub">celda 8</span></td>
+<td class="num">64.11</td><td class="num rk">#3</td>
+<td class="num sep">59.14</td><td class="num rk">#2</td>
+<td class="num delta">-4.97</td>
+<td class="num up">↑ 1</td>
+</tr><tr>
+<td class="name">V5_STRICT_ROUTING<span class="sub">celda 8</span></td>
+<td class="num">64.11</td><td class="num rk">#4</td>
+<td class="num sep">58.45</td><td class="num rk">#5</td>
+<td class="num delta">-5.66</td>
+<td class="num down">↓ 1</td>
+</tr><tr>
+<td class="name">V7_RETURN_FLOWS_V6<span class="sub">celda 10</span></td>
+<td class="num">63.89</td><td class="num rk">#5</td>
+<td class="num sep">60.10</td><td class="num rk">#1</td>
+<td class="num delta">-3.79</td>
+<td class="num up">↑ 4</td>
+</tr><tr>
+<td class="name">V7_RETURN_FLOWS<span class="sub">celda 7</span></td>
+<td class="num">63.89</td><td class="num rk">#6</td>
+<td class="num sep">58.65</td><td class="num rk">#4</td>
+<td class="num delta">-5.24</td>
+<td class="num up">↑ 2</td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 9</span></td>
+<td class="num">63.21</td><td class="num rk">#7</td>
+<td class="num sep">58.99</td><td class="num rk">#3</td>
+<td class="num delta">-4.22</td>
+<td class="num up">↑ 4</td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 7</span></td>
+<td class="num">61.64</td><td class="num rk">#8</td>
+<td class="num sep">57.52</td><td class="num rk">#8</td>
+<td class="num delta">-4.12</td>
+<td class="num ">→ </td>
+</tr><tr>
+<td class="name">V6_CORRECTED<span class="sub">celda 10</span></td>
+<td class="num">60.48</td><td class="num rk">#9</td>
+<td class="num sep">58.10</td><td class="num rk">#6</td>
+<td class="num delta">-2.38</td>
+<td class="num up">↑ 3</td>
+</tr></tbody></table></div>
+<p class="note"><b>Spearman ρ = -0.185</b> entre ambos ordenamientos (rangos promediados,
+porque hay dos pares de empates exactos en el panel de 14): el orden del panel chico
+<b>no predice</b> el del grande. Y <b>r = -0.858</b> entre el Edge F1 a 14 y la variación al
+pasar a 30 — negativo significa que <b>cuanto mejor puntuaba una variante en el panel chico,
+más perdió al ampliar</b>. Es la firma cuantificada del sobreajuste a la muestra de
+selección.</p>
+
+<h2>4. Los videos</h2>
+<details><summary>Ver los 30 videos con su ground truth</summary>
+<div class="scroll" style="margin-top:.6rem"><table>
+<thead><tr><th>Video</th><th>Arquitectura (GT)</th><th class="num">Nodos</th><th class="num">Aristas</th></tr></thead>
+<tbody><tr class="p14"><td><code>-3lnf5lzsH0</code></td><td class="vname">MakeMyTrip: Building Next Generation SOC</td><td class="num">13</td><td class="num">16</td></tr><tr class="p14"><td><code>-kA0ahrhX3I</code></td><td class="vname">Oportun: Increasing the Accuracy of SensitiveData Discovery Using Amaz</td><td class="num">9</td><td class="num">8</td></tr><tr class="p14"><td><code>-wLEkq21cvA</code></td><td class="vname">Versent: The Migration Factory</td><td class="num">9</td><td class="num">10</td></tr><tr class="p14"><td><code>07lfvavMdfU</code></td><td class="vname">Levels Beyond: Digital Content Orchestration</td><td class="num">10</td><td class="num">14</td></tr><tr class="p14"><td><code>1aYoIZvabbk</code></td><td class="vname">OLX Autos: Building Developer Platform for Rapid Global Expansion</td><td class="num">6</td><td class="num">5</td></tr><tr class="p14"><td><code>2L0m28ZLmtE</code></td><td class="vname">Sanofi with TeamWork: OnDemand Data Science Environment</td><td class="num">13</td><td class="num">11</td></tr><tr class="p14"><td><code>2e3vOxsHekE</code></td><td class="vname">Mueller Water Products: A Water Intelligent Platform</td><td class="num">6</td><td class="num">6</td></tr><tr class="p14"><td><code>6CgqEzyWpeA</code></td><td class="vname">SundaySky: Create Personalized Videos in Real Time on GPU-based Spot I</td><td class="num">12</td><td class="num">19</td></tr><tr class="p14"><td><code>6EUknQqaV1w</code></td><td class="vname">CloudHealth by VMware: Secure State. Manages Over 50M Assets from Bill</td><td class="num">9</td><td class="num">11</td></tr><tr class="p14"><td><code>6YkguepAQuQ</code></td><td class="vname">Aetion: Deploy Applications  Provision Cloud Resources with AWS Develo</td><td class="num">10</td><td class="num">10</td></tr><tr class="p14"><td><code>BZ32w0SSAoY</code></td><td class="vname">PixelStrings by Cinnafilm: A Flexible &amp; Scalable Platform for Video Au</td><td class="num">7</td><td class="num">19</td></tr><tr class="p14"><td><code>Cgv0kfp_6xQ</code></td><td class="vname">Snap: Journey of a Snap on Snapchat Using AWS</td><td class="num">10</td><td class="num">14</td></tr><tr class="p14"><td><code>wjtSHyENv0I</code></td><td class="vname">Main Street America Insurance: The Independent Agent Portal, Breaking </td><td class="num">8</td><td class="num">14</td></tr><tr class="p14"><td><code>ww5fiygF6eg</code></td><td class="vname">Marathon Oil: Automating Drone Image Processing to Monitor Equipment H</td><td class="num">10</td><td class="num">20</td></tr><tr class="p16"><td><code>2XVgpMwY5iE</code></td><td class="vname">Keen Eye: Building Deep Learning Models for Digital Pathology Image An</td><td class="num">7</td><td class="num">12</td></tr><tr class="p16"><td><code>7V8wTCkjOqo</code></td><td class="vname">NAB: Automating Cloud Governance at the National Australia Bank</td><td class="num">7</td><td class="num">7</td></tr><tr class="p16"><td><code>90rWUjKjnAE</code></td><td class="vname">amazee.io: Kubernetes Deployments Made Easy</td><td class="num">8</td><td class="num">10</td></tr><tr class="p16"><td><code>9qTEHITVeLE</code></td><td class="vname">Majid Al Futtaim: Building a Custom Data Management Solution on AWS</td><td class="num">9</td><td class="num">14</td></tr><tr class="p16"><td><code>BlCXEMp_lqY</code></td><td class="vname">Vizio: Smart TV Analytics at Scale</td><td class="num">6</td><td class="num">9</td></tr><tr class="p16"><td><code>FfSNnH2bbNc</code></td><td class="vname">Carbon by Indigo: Carbon Credits for Regenerative Agriculture</td><td class="num">8</td><td class="num">19</td></tr><tr class="p16"><td><code>H2fOkeXxpyw</code></td><td class="vname">Atlassian: Secure Code Invocation at Scale with Atlassian Forge on AWS</td><td class="num">8</td><td class="num">10</td></tr><tr class="p16"><td><code>JYeXbUdFOdw</code></td><td class="vname">Noventiq: Harnessing Search and Analytics with Event-Driven Architectu</td><td class="num">8</td><td class="num">14</td></tr><tr class="p16"><td><code>SSWwnNVYi_Q</code></td><td class="vname">NHS Digital: From 137 Minutes to 137 Seconds Using EMR</td><td class="num">8</td><td class="num">10</td></tr><tr class="p16"><td><code>a6kqyqTNJM4</code></td><td class="vname">Seera Group: Transforming Online Travel Booking with Microservices</td><td class="num">11</td><td class="num">15</td></tr><tr class="p16"><td><code>c-1GXhOOOww</code></td><td class="vname">Anchor Operating System: Building a Serverless Guest Sightseeing Journ</td><td class="num">9</td><td class="num">16</td></tr><tr class="p16"><td><code>f5EJBUfGZtw</code></td><td class="vname">Expedia: Salesforce Integration with AWS</td><td class="num">10</td><td class="num">8</td></tr><tr class="p16"><td><code>hMK2NJ-q9nc</code></td><td class="vname">WarnerMedia: Cloudbased Linear Playout System</td><td class="num">6</td><td class="num">5</td></tr><tr class="p16"><td><code>jV8DwutbXbg</code></td><td class="vname">Tandem Bank: Processing Transaction Data using AWS Lambda with NLP</td><td class="num">7</td><td class="num">11</td></tr><tr class="p16"><td><code>jg85DzUZ9Ac</code></td><td class="vname">Veritiv: Enable Insights to Forecast Sales Demand on AWS Data Lakes</td><td class="num">10</td><td class="num">11</td></tr><tr class="p16"><td><code>u3ZwnulzLnU</code></td><td class="vname">SonarSource: Automatic Code Analysis in the Cloud with AWS</td><td class="num">8</td><td class="num">13</td></tr></tbody></table></div>
+<p class="note">Los marcados con barra ámbar son los 16 nuevos. GT de los 14:
+132 nodos y 177 aristas · GT de los 16:
+130 nodos y 184 aristas.</p>
+</details>
+
+<h2>5. Detalle por video — producción contra la mejor</h2>
+<p class="note">Columnas izquierda: <b>V6_CORRECTED</b> (celda 9).
+Derecha: <b>V7_RETURN_FLOWS_V6</b> (celda 10). La última columna es la diferencia
+de Edge F1; gris significa empate exacto, que es el caso más frecuente.</p>
+<details><summary>Ver comparación video por video</summary>
+<div class="scroll" style="margin-top:.6rem"><table>
+<thead><tr><th>Video</th><th class="num">GT n/a</th>
+<th class="num">Svc</th><th class="num">Edge</th><th class="num">Arist.</th>
+<th class="num sep">Svc</th><th class="num">Edge</th><th class="num">Arist.</th>
+<th class="num">Δ Edge</th></tr></thead>
+<tbody><tr class="p14">
+<td><code>-3lnf5lzsH0</code><span class="sub">panel 14</span></td>
+<td class="num">13/16</td>
+<td class="num">70</td><td class="num">32</td>
+<td class="num">9</td>
+<td class="num sep">70</td><td class="num">32</td>
+<td class="num">9</td>
+<td class="num tie">+0</td></tr><tr class="p14">
+<td><code>-kA0ahrhX3I</code><span class="sub">panel 14</span></td>
+<td class="num">9/8</td>
+<td class="num">92</td><td class="num">53</td>
+<td class="num">7</td>
+<td class="num sep">92</td><td class="num">67</td>
+<td class="num">4</td>
+<td class="num up">+13</td></tr><tr class="p14">
+<td><code>-wLEkq21cvA</code><span class="sub">panel 14</span></td>
+<td class="num">9/10</td>
+<td class="num">89</td><td class="num">78</td>
+<td class="num">8</td>
+<td class="num sep">100</td><td class="num">90</td>
+<td class="num">10</td>
+<td class="num up">+12</td></tr><tr class="p14">
+<td><code>07lfvavMdfU</code><span class="sub">panel 14</span></td>
+<td class="num">10/14</td>
+<td class="num">95</td><td class="num">75</td>
+<td class="num">10</td>
+<td class="num sep">95</td><td class="num">75</td>
+<td class="num">10</td>
+<td class="num tie">+0</td></tr><tr class="p14">
+<td><code>1aYoIZvabbk</code><span class="sub">panel 14</span></td>
+<td class="num">6/5</td>
+<td class="num">92</td><td class="num">83</td>
+<td class="num">7</td>
+<td class="num sep">83</td><td class="num">73</td>
+<td class="num">6</td>
+<td class="num down">-11</td></tr><tr class="p14">
+<td><code>2L0m28ZLmtE</code><span class="sub">panel 14</span></td>
+<td class="num">13/11</td>
+<td class="num">96</td><td class="num">80</td>
+<td class="num">14</td>
+<td class="num sep">96</td><td class="num">61</td>
+<td class="num">22</td>
+<td class="num down">-19</td></tr><tr class="p14">
+<td><code>2e3vOxsHekE</code><span class="sub">panel 14</span></td>
+<td class="num">6/6</td>
+<td class="num">83</td><td class="num">73</td>
+<td class="num">5</td>
+<td class="num sep">83</td><td class="num">83</td>
+<td class="num">6</td>
+<td class="num up">+11</td></tr><tr class="p14">
+<td><code>6CgqEzyWpeA</code><span class="sub">panel 14</span></td>
+<td class="num">12/19</td>
+<td class="num">95</td><td class="num">74</td>
+<td class="num">16</td>
+<td class="num sep">95</td><td class="num">74</td>
+<td class="num">16</td>
+<td class="num tie">+0</td></tr><tr class="p14">
+<td><code>6EUknQqaV1w</code><span class="sub">panel 14</span></td>
+<td class="num">9/11</td>
+<td class="num">86</td><td class="num">78</td>
+<td class="num">12</td>
+<td class="num sep">86</td><td class="num">83</td>
+<td class="num">13</td>
+<td class="num up">+5</td></tr><tr class="p14">
+<td><code>6YkguepAQuQ</code><span class="sub">panel 14</span></td>
+<td class="num">10/10</td>
+<td class="num">100</td><td class="num">57</td>
+<td class="num">4</td>
+<td class="num sep">100</td><td class="num">57</td>
+<td class="num">4</td>
+<td class="num tie">+0</td></tr><tr class="p14">
+<td><code>BZ32w0SSAoY</code><span class="sub">panel 14</span></td>
+<td class="num">7/19</td>
+<td class="num">80</td><td class="num">38</td>
+<td class="num">7</td>
+<td class="num sep">80</td><td class="num">60</td>
+<td class="num">11</td>
+<td class="num up">+22</td></tr><tr class="p14">
+<td><code>Cgv0kfp_6xQ</code><span class="sub">panel 14</span></td>
+<td class="num">10/14</td>
+<td class="num">100</td><td class="num">83</td>
+<td class="num">10</td>
+<td class="num sep">100</td><td class="num">83</td>
+<td class="num">10</td>
+<td class="num tie">+0</td></tr><tr class="p14">
+<td><code>wjtSHyENv0I</code><span class="sub">panel 14</span></td>
+<td class="num">8/14</td>
+<td class="num">86</td><td class="num">54</td>
+<td class="num">8</td>
+<td class="num sep">86</td><td class="num">54</td>
+<td class="num">8</td>
+<td class="num tie">+0</td></tr><tr class="p14">
+<td><code>ww5fiygF6eg</code><span class="sub">panel 14</span></td>
+<td class="num">10/20</td>
+<td class="num">93</td><td class="num">36</td>
+<td class="num">8</td>
+<td class="num sep">93</td><td class="num">36</td>
+<td class="num">8</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>2XVgpMwY5iE</code><span class="sub">nuevo</span></td>
+<td class="num">7/12</td>
+<td class="num">71</td><td class="num">46</td>
+<td class="num">10</td>
+<td class="num sep">77</td><td class="num">48</td>
+<td class="num">9</td>
+<td class="num up">+2</td></tr><tr class="p16">
+<td><code>7V8wTCkjOqo</code><span class="sub">nuevo</span></td>
+<td class="num">7/7</td>
+<td class="num">91</td><td class="num">31</td>
+<td class="num">6</td>
+<td class="num sep">83</td><td class="num">29</td>
+<td class="num">7</td>
+<td class="num down">-2</td></tr><tr class="p16">
+<td><code>90rWUjKjnAE</code><span class="sub">nuevo</span></td>
+<td class="num">8/10</td>
+<td class="num">86</td><td class="num">67</td>
+<td class="num">8</td>
+<td class="num sep">86</td><td class="num">67</td>
+<td class="num">8</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>9qTEHITVeLE</code><span class="sub">nuevo</span></td>
+<td class="num">9/14</td>
+<td class="num">77</td><td class="num">40</td>
+<td class="num">11</td>
+<td class="num sep">77</td><td class="num">40</td>
+<td class="num">11</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>BlCXEMp_lqY</code><span class="sub">nuevo</span></td>
+<td class="num">6/9</td>
+<td class="num">100</td><td class="num">71</td>
+<td class="num">5</td>
+<td class="num sep">100</td><td class="num">71</td>
+<td class="num">5</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>FfSNnH2bbNc</code><span class="sub">nuevo</span></td>
+<td class="num">8/19</td>
+<td class="num">75</td><td class="num">58</td>
+<td class="num">12</td>
+<td class="num sep">75</td><td class="num">69</td>
+<td class="num">16</td>
+<td class="num up">+10</td></tr><tr class="p16">
+<td><code>H2fOkeXxpyw</code><span class="sub">nuevo</span></td>
+<td class="num">8/10</td>
+<td class="num">100</td><td class="num">82</td>
+<td class="num">7</td>
+<td class="num sep">100</td><td class="num">74</td>
+<td class="num">9</td>
+<td class="num down">-9</td></tr><tr class="p16">
+<td><code>JYeXbUdFOdw</code><span class="sub">nuevo</span></td>
+<td class="num">8/14</td>
+<td class="num">86</td><td class="num">43</td>
+<td class="num">14</td>
+<td class="num sep">86</td><td class="num">43</td>
+<td class="num">14</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>SSWwnNVYi_Q</code><span class="sub">nuevo</span></td>
+<td class="num">8/10</td>
+<td class="num">92</td><td class="num">53</td>
+<td class="num">5</td>
+<td class="num sep">92</td><td class="num">53</td>
+<td class="num">5</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>a6kqyqTNJM4</code><span class="sub">nuevo</span></td>
+<td class="num">11/15</td>
+<td class="num">84</td><td class="num">32</td>
+<td class="num">10</td>
+<td class="num sep">84</td><td class="num">32</td>
+<td class="num">10</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>c-1GXhOOOww</code><span class="sub">nuevo</span></td>
+<td class="num">9/16</td>
+<td class="num">75</td><td class="num">30</td>
+<td class="num">11</td>
+<td class="num sep">75</td><td class="num">30</td>
+<td class="num">11</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>f5EJBUfGZtw</code><span class="sub">nuevo</span></td>
+<td class="num">10/8</td>
+<td class="num">94</td><td class="num">78</td>
+<td class="num">10</td>
+<td class="num sep">94</td><td class="num">78</td>
+<td class="num">10</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>hMK2NJ-q9nc</code><span class="sub">nuevo</span></td>
+<td class="num">6/5</td>
+<td class="num">73</td><td class="num">33</td>
+<td class="num">7</td>
+<td class="num sep">73</td><td class="num">25</td>
+<td class="num">11</td>
+<td class="num down">-8</td></tr><tr class="p16">
+<td><code>jV8DwutbXbg</code><span class="sub">nuevo</span></td>
+<td class="num">7/11</td>
+<td class="num">100</td><td class="num">71</td>
+<td class="num">6</td>
+<td class="num sep">100</td><td class="num">78</td>
+<td class="num">7</td>
+<td class="num up">+7</td></tr><tr class="p16">
+<td><code>jg85DzUZ9Ac</code><span class="sub">nuevo</span></td>
+<td class="num">10/11</td>
+<td class="num">88</td><td class="num">73</td>
+<td class="num">11</td>
+<td class="num sep">88</td><td class="num">73</td>
+<td class="num">11</td>
+<td class="num tie">+0</td></tr><tr class="p16">
+<td><code>u3ZwnulzLnU</code><span class="sub">nuevo</span></td>
+<td class="num">8/13</td>
+<td class="num">93</td><td class="num">67</td>
+<td class="num">11</td>
+<td class="num sep">93</td><td class="num">67</td>
+<td class="num">11</td>
+<td class="num tie">+0</td></tr></tbody></table></div>
+</details>
+
+<h2>6. Evaluación permisiva — ¿aparecen diferencias?</h2>
+<p class="note">La permisiva relaja <b>tres cosas a la vez</b>, no solo los actores:
+(1) colapsa <code>User*</code>→<code>User</code> y <code>ThirdParty*</code>→<code>ThirdParty</code>;
+(2) usa <b>conjuntos</b> en vez de multiconjuntos, o sea ignora servicios duplicados;
+(3) usa aristas <b>no dirigidas</b>. Cuesta cero llamadas: el <code>analysis</code> completo
+está guardado en cada <code>run.json</code>.</p>
+<div class="scroll"><table>
+<thead><tr><th>Variante</th><th class="num">Edge estricto</th>
+<th class="num sep">Node permisivo</th><th class="num">Edge permisivo</th>
+<th class="num">Ganancia</th></tr></thead>
+<tbody><tr><td class="name">V6_OPTIMIZED<span class="sub">celda 8</span></td><td class="num">59.14</td><td class="num sep">92.34</td><td class="num strong">78.02</td><td class="num delta">+18.88</td></tr><tr><td class="name">V5_STRICT_ROUTING<span class="sub">celda 8</span></td><td class="num">58.45</td><td class="num sep">91.90</td><td class="num strong">77.74</td><td class="num delta">+19.29</td></tr><tr><td class="name">V7_RETURN_FLOWS_V6<span class="sub">celda 10</span></td><td class="num">60.10</td><td class="num sep">91.89</td><td class="num strong">77.46</td><td class="num delta">+17.36</td></tr><tr><td class="name">V6_CORRECTED <span class="pill">producción</span><span class="sub">celda 9</span></td><td class="num">58.99</td><td class="num sep">92.07</td><td class="num strong">76.88</td><td class="num delta">+17.89</td></tr><tr><td class="name">V6_CORRECTED +evidencia<span class="sub">celda 9</span></td><td class="num">57.39</td><td class="num sep">91.88</td><td class="num strong">76.83</td><td class="num delta">+19.44</td></tr><tr><td class="name">V6_CORRECTED<span class="sub">celda 7</span></td><td class="num">57.52</td><td class="num sep">92.23</td><td class="num strong">76.53</td><td class="num delta">+19.01</td></tr><tr><td class="name">V7_RETURN_FLOWS<span class="sub">celda 7</span></td><td class="num">58.65</td><td class="num sep">93.18</td><td class="num strong">76.45</td><td class="num delta">+17.80</td></tr><tr><td class="name">V8_ACTORS_AND_RETURNS<span class="sub">celda None</span></td><td class="num">58.40</td><td class="num sep">92.85</td><td class="num strong">76.44</td><td class="num delta">+18.04</td></tr><tr><td class="name">V4_ANTI_HALLUCINATION<span class="sub">celda 8</span></td><td class="num">57.10</td><td class="num sep">92.25</td><td class="num strong">76.42</td><td class="num delta">+19.32</td></tr><tr><td class="name">V6_CORRECTED<span class="sub">celda 10</span></td><td class="num">58.10</td><td class="num sep">92.43</td><td class="num strong">75.30</td><td class="num delta">+17.20</td></tr><tr><td class="name">V5_STRICT_ROUTING<span class="sub">celda 7</span></td><td class="num">58.08</td><td class="num sep">92.83</td><td class="num strong">75.27</td><td class="num delta">+17.19</td></tr></tbody></table></div>
+
+<h3>Aporte aislado de cada relajación (promedio de las 11)</h3>
+<div class="scroll"><table>
+<thead><tr><th>Métrica</th><th class="num">Edge F1</th><th class="num">Sobre estricto</th></tr></thead>
+<tbody>
+<tr><td class="name">Estricta</td><td class="num">58.36</td><td class="num">—</td></tr>
+<tr><td class="name">+ solo actores</td><td class="num">62.00</td><td class="num delta">+3.65</td></tr>
+<tr><td class="name">+ solo no dirigido</td><td class="num">60.21</td><td class="num delta">+1.86</td></tr>
+<tr><td class="name">+ solo conjunto</td><td class="num">61.65</td><td class="num delta">+3.30</td></tr>
+<tr><td class="name"><b>Permisiva sin la regla 2</b><span class="sub">actores + no dirigido</span></td>
+<td class="num strong">63.88</td><td class="num delta">+5.52</td></tr>
+<tr><td class="name">Permisiva completa</td><td class="num">76.67</td><td class="num delta">+18.31</td></tr>
+</tbody></table></div>
+<p class="note">Las tres por separado suman +8.81; juntas dan +18.31 — la interacción es
+<b>super-aditiva</b>, porque achicar los conjuntos por tres vías a la vez hace mucho más fácil
+emparejar. Y <b>la regla 2 sola aporta +12.79 de los +18.31</b>, más que las otras dos juntas.</p>
+
+<div class="find warn"><b>La regla de conjuntos borra una capacidad que el prompt implementa</b>
+<p>El prompt tiene una regla dedicada a esto: <em>«Dynamic Logical Fusion: …if they perform
+distinct architectural steps, KEEP THEM SEPARATE as distinct nodes»</em>. Colapsar a conjunto
+da el mismo puntaje al modelo que acierta la multiplicidad y al que la ignora.</p>
+<p>Ejemplo real del panel — <code>-wLEkq21cvA</code>, una migración on-prem: el GT tiene
+<code>EC2 ×3</code>, <code>ThirdParty ×3</code> y la arista <code>ThirdParty → EC2</code>
+<b>tres veces</b>. Con multiconjunto son 3 aristas y encontrar 1 da recall 1/3; con conjunto
+colapsan a una y ese mismo modelo obtiene crédito completo. En el GT de los 30 videos,
+<b>47 de 361 aristas (13.0%)</b> repiten un par ya conectado y <b>40 de 262 nodos (15.3%)</b>
+son instancias repetidas.</p>
+<p><b>Recomendación:</b> reportar la permisiva <b>sin la regla 2</b> (63.88) como métrica
+secundaria y la completa solo como cota superior declarada. Las otras dos relajaciones sí tienen
+defensa: distinguir <code>UserConsumerWeb</code> de <code>UserConsumerMobile</code> a menudo no
+es determinable visualmente, y la dirección de una flecha en pizarra es genuinamente ambigua.</p></div>
+
+<h3>¿Discrimina mejor? No — discrimina peor</h3>
+<div class="stats">
+  <div class="stat"><div class="k">Significativas, estricta</div><div class="v">3 / 55</div>
+    <div class="d">esperadas por azar: 2.8</div></div>
+  <div class="stat"><div class="k">Significativas, permisiva</div><div class="v">2 / 55</div>
+    <div class="d">esperadas por azar: 2.8</div></div>
+  <div class="stat"><div class="k">Sobreviven Bonferroni</div><div class="v">0</div>
+    <div class="d">α = 0.05/55 = 0.00091</div></div>
+  <div class="stat"><div class="k">Empates promedio</div><div class="v">14.9 → 20.4</div>
+    <div class="d">de 30, estricta → permisiva</div></div>
+</div>
+<div class="find neg"><b>El conteo de significativas es el que predice el azar</b>
+<p>Con 55 comparaciones a α=0.05 se esperan 2.8 falsos positivos; salieron
+3 y 2. Con Bonferroni no sobrevive ninguna. <b>Cero pares son significativos en ambas
+métricas</b> — una diferencia real sobreviviría al cambio de métrica. Y los empates
+<em>suben</em> de 14.9 a 20.4 de 30: quitar tres fuentes de variación vuelve a las
+variantes más parecidas, no menos.</p></div>
+
+<div class="find"><b>Un tercer ordenamiento</b>
+<p>ρ = +0.618 entre el ranking estricto y el permisivo. <code>V6_OPTIMIZED</code> pasa de 2º a 1º,
+<code>V7_RETURN_FLOWS_V6</code> de 1º a 3º, <code>V5_STRICT_ROUTING c7</code> de 8º a último.
+Sumado al cambio entre paneles, ya son <b>tres rankings distintos</b> de las mismas variantes
+según muestra y métrica — ninguno estable.</p></div>
+
+<h2>7. Hallazgos</h2>
+
+<div class="find warn"><b>El panel de 14 estaba sobreajustado</b>
+<p>Las 11 variantes caben en <b>3.00 puntos</b> de Edge F1. En el panel de
+14 las diferencias parecían mayores y ordenaban un ranking; a 30 ese orden se desarma
+(ρ = -0.185) y la pérdida es proporcional a lo bien que le había ido a cada una
+(r = -0.858).</p></div>
+
+<div class="find neg"><b>Ninguna diferencia entre variantes es estadísticamente significativa</b>
+<p>Test de signos pareado por video: p entre 0.118 y 1.000 en todas las comparaciones, con
+<b>12 a 19 empates de 30</b> según el par. En 9 de los 30 videos las cuatro variantes
+principales dan Edge F1 <em>idéntico</em>. Los prompts se diferencian mucho menos de lo que
+sugieren sus promedios.</p></div>
+
+<div class="find neg"><b>Cuatro intervenciones independientes, ningún efecto</b>
+<p>Reescrituras de reglas, few-shot RAG con arquitecturas de ejemplo, inyección de la
+topología detectada por visión por computadora, y corrección de reglas dirigida por análisis
+del error. Cada una mejor fundamentada que la anterior; ninguna movió el Edge F1.
+<b>Conclusión defendible: el Edge F1 de ~59% no está limitado por el prompt de Stage 2.</b></p></div>
+
+<div class="find"><b>El volumen de aristas es la métrica que más informa</b>
+<p>Todas las variantes sub-generan: ratio entre
+0.72 y
+0.84 contra el GT.
+De las 178 aristas que pierde producción: <b>80 (45%)</b> son aristas de retorno que el modelo
+no emitió (puso <code>b→a</code> pero no <code>a→b</code>), <b>58 (33%)</b> son por un nodo
+ausente —y el 91% de esos son actores <code>User*</code> o <code>ThirdParty</code>—, y
+<b>40 (22%)</b> son pares sin conexión en ningún sentido.</p></div>
+
+<div class="find warn"><b>Dos reglas del propio prompt causan el 75% de la pérdida</b>
+<p><code>Unidirectional Default</code> explica las 80 aristas de retorno.
+<code>Pruning: Remove generic human actors</code> explica los actores ausentes — y
+<b>contradice el propio vocabulario</b> del prompt, que ofrece una lista
+<code>User and Client Actors</code>. El GT tiene 34 actores <code>User*</code>
+en estos 30 videos.</p></div>
+
+<div class="find neg"><b>Pero arreglarlas no mejoró el resultado</b>
+<p>V8 corrigió ambas reglas. Los mecanismos respondieron —actores de 20 a 29, bidireccionalidad
+de 12.4% a 17.9%, 30 aristas más— y el Edge F1 no se movió (p = 0.607), mientras el Service F1
+se degradó de forma significativa (p = 0.039). <b>La contabilidad de errores no es un mapa de
+mejoras disponibles</b>: saber que falta una arista de retorno no es saber entre qué dos
+servicios va.</p></div>
+
+<div class="find pos"><b>La brecha de bidireccionalidad sigue abierta</b>
+<p>El GT tiene <b>46.7%</b> de pares conectados en ambos sentidos.
+La mejor variante llega a
+21.9% y producción a
+12.4%.
+Es la diferencia estructural más grande entre lo generado y la referencia, y ninguna
+intervención la cerró.</p></div>
+
+<div class="find"><b>Reutilizar scores de producción para ampliar un panel es válido</b>
+<p>El primer panel de 30 se armó de forma híbrida (14 de la ablación + 16 tomados del CSV de la
+corrida de 370 videos, sin pagar llamadas). Dio 87.23 / 59.10 contra 88.07 / 58.99 de la corrida
+limpia de punta a punta: <b>0.11 puntos de diferencia en Edge F1</b>. Abarata cualquier
+ampliación futura.</p></div>
+
+<footer>Prompts verificados por SHA-256 contra <code>src/configs/prompts/MANIFEST.json</code>.
+Corridas individuales en <code>reports/ablation/</code>, cada una con su <code>run.json</code>
+(hash del prompt, modelo, commit, procedencia de Stage 1 y de la pizarra por video).
+Regenerar: <code>build_report_data.py</code> y luego <code>build_report_html.py</code>.</footer>
+</body></html>

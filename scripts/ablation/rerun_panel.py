@@ -315,25 +315,97 @@ def git_commit() -> str:
 
 # ── Gemini call with key rotation ────────────────────────────────────
 class KeyRotator:
-    """Rotates through the configured API keys when one hits its quota."""
+    """Rotates through the configured API keys, retiring the ones that are dead.
+
+    Two failure modes are distinct and must not be conflated. A quota wall (429)
+    is temporary: the key works again tomorrow, so it is only skipped for this
+    run. A 401/403 means the key is revoked or malformed, and retrying it is
+    pure waste — it gets retired so the rotation never lands on it again.
+
+    Not separating them cost a whole panel run: four dead keys sat consecutively
+    at the end of the list, 401 was not in the rotation trigger, and every video
+    burned its five retries against the same dead credential before failing.
+    """
 
     def __init__(self, keys: list[str]):
-        if not keys:
-            console.print("[bold red]✗ No hay GEMINI_API_KEYS configuradas en .env[/]")
+        # A key with non-ASCII characters is a paste artifact (smart quotes, an
+        # ellipsis from a truncated copy). It cannot be put in an HTTP header and
+        # blows up at request time, so drop it here where the message is useful.
+        live, malformed = [], []
+        for k in keys:
+            (live if k.isascii() and k.strip() else malformed).append(k)
+        if malformed:
+            console.print(f"[yellow]⚠ {len(malformed)} llave(s) descartada(s) por "
+                          f"caracteres no-ASCII o vacías — revisá el .env[/]")
+        if not live:
+            console.print("[bold red]✗ No hay GEMINI_API_KEYS utilizables en .env[/]")
             sys.exit(1)
         from google import genai
         self._genai = genai
-        self.keys = keys
+        self.keys = live
         self.idx = 0
-        self.client = genai.Client(api_key=keys[0])
+        self.retired: set[int] = set()
+        self.cycles = 0
+        self.client = genai.Client(api_key=live[0])
+
+    # El 429 del tier gratuito casi siempre es el límite por minuto, no el diario:
+    # se despeja solo en menos de un minuto. Avanzar en línea recta y rendirse al
+    # llegar al final convierte un tope transitorio en una corrida perdida, que es
+    # exactamente lo que pasó dos veces. El anillo da la vuelta y espera.
+    COOLDOWN_S = 60
+    MAX_CYCLES = 4
+
+    def _select(self, i: int, label: str) -> None:
+        self.idx = i
+        console.print(f"[yellow]🔄 {label} llave #{i + 1}/{len(self.keys)}[/]")
+        self.client = self._genai.Client(api_key=self.keys[i])
+
+    def _next_live(self) -> int | None:
+        for step in range(1, len(self.keys) + 1):
+            j = (self.idx + step) % len(self.keys)
+            if j not in self.retired:
+                return j
+        return None
 
     def rotate(self) -> bool:
-        self.idx += 1
-        if self.idx >= len(self.keys):
+        """Tope de cuota en la llave actual: pasar a la siguiente, dando la vuelta.
+
+        Una vuelta completa sin éxito significa que todas las llaves vivas están
+        en su tope al mismo tiempo, así que espera y vuelve a intentar en vez de
+        abandonar el panel.
+        """
+        nxt = self._next_live()
+        if nxt is None:
             return False
-        console.print(f"[yellow]🔄 Rotando a la llave #{self.idx + 1}/{len(self.keys)}[/]")
-        self.client = self._genai.Client(api_key=self.keys[self.idx])
+        if nxt <= self.idx:                      # dimos la vuelta al anillo
+            self.cycles += 1
+            if self.cycles >= self.MAX_CYCLES:
+                return False
+            console.print(f"[yellow]⏳ Las {self.n_live} llaves vivas están en su tope. "
+                          f"Espero {self.COOLDOWN_S}s (vuelta {self.cycles}/"
+                          f"{self.MAX_CYCLES - 1}).[/]")
+            time.sleep(self.COOLDOWN_S)
+        self._select(nxt, "Rotando a")
         return True
+
+    def retire(self, reason: str = "inválida (401/403)") -> bool:
+        """Sacar la llave actual de la rotación por lo que queda de la corrida."""
+        console.print(f"[yellow]⛔ Llave #{self.idx + 1}/{len(self.keys)} {reason}, "
+                      f"la retiro de la rotación.[/]")
+        self.retired.add(self.idx)
+        nxt = self._next_live()
+        if nxt is None:
+            return False
+        self._select(nxt, "Paso a")
+        return True
+
+    def note_success(self) -> None:
+        """Una llamada salió bien: el anillo no está agotado, reiniciar el conteo."""
+        self.cycles = 0
+
+    @property
+    def n_live(self) -> int:
+        return len(self.keys) - len(self.retired)
 
 
 def call_gemini(rot: KeyRotator, prompt: str, image_b64: str | list[str], model: str,
@@ -368,13 +440,31 @@ def call_gemini(rot: KeyRotator, prompt: str, image_b64: str | list[str], model:
                 res = rot.client.models.generate_content(
                     model=model, contents=contents, config=config
                 )
+                rot.note_success()
                 return json.loads(res.text)
             except Exception as e:
                 err = str(e).upper()
                 if any(k in err for k in ("429", "RESOURCE_EXHAUSTED", "QUOTA")):
+                    # El tier gratuito tiene dos topes distintos y el mensaje dice
+                    # cuál se chocó. "PerDay" no se despeja esperando — el
+                    # `retryDelay: 39s` que devuelve la API es engañoso — así que
+                    # la llave se retira en vez de dormir un minuto en vano.
+                    if "PERDAY" in err.replace("_", "").replace("-", ""):
+                        if not rot.retire("sin cuota diaria"):
+                            raise QuotaExhausted(
+                                "Todas las llaves agotaron su cuota DIARIA. "
+                                "No se recupera esperando: hay que esperar el "
+                                "reset o usar llaves de otros proyectos.") from e
+                        break
                     if not rot.rotate():
                         raise QuotaExhausted("Se agotaron todas las llaves API") from e
                     break  # retry immediately with the new key
+                if any(k in err for k in ("401", "UNAUTHENTICATED", "403",
+                                          "PERMISSION_DENIED", "API KEY NOT VALID")):
+                    if not rot.retire():
+                        raise QuotaExhausted(
+                            "Todas las llaves quedaron inválidas o agotadas") from e
+                    break  # la llave estaba muerta, no el request
                 console.print(f"  [yellow]⚠ intento {attempt}/{max_attempts}: {str(e)[:90]}[/]")
                 if attempt == max_attempts:
                     raise
@@ -481,16 +571,22 @@ def ensure_stage1(vids: list[str], stage1_tmpl: str, rot: KeyRotator, model: str
 # ── Per-video Stage 2 ────────────────────────────────────────────────
 def run_video(vid: str, stage2_tmpl: str, rot: KeyRotator, model: str,
               aws_str: str, users_str: str, catalog: dict, rag=None,
-              conn_evidence: bool = False) -> dict:
-    """Reuses the cached Stage 1 World Model; only Stage 2 costs an API call."""
+              conn_evidence: bool = False, wm_name: str = "world_model.json") -> dict:
+    """Reuses the cached Stage 1 World Model; only Stage 2 costs an API call.
+
+    `wm_name` selects which World Model to feed Stage 2. The default is the
+    cached Stage 1 output; the oracle conditions swap in a different file at the
+    same path so that *only* the input changes and everything downstream —
+    prompt, image, transcript, evaluator — stays byte-for-byte identical.
+    """
     wb = GOOD_WHITEBOARD_DIR / f"{vid}.jpg"
     if not wb.exists():
         return {"video_id": vid, "status": "error", "error": "sin pizarra en good_whiteboard/"}
 
-    wm_path = LAB_WORKSPACE / vid / "world_model.json"
+    wm_path = LAB_WORKSPACE / vid / wm_name
     if not wm_path.exists():
         return {"video_id": vid, "status": "error",
-                "error": "sin World Model cacheado (correr Stage 1 primero)"}
+                "error": f"sin World Model en {wm_name} (correr Stage 1 primero)"}
     world_model = json.loads(wm_path.read_text(encoding="utf-8"))
 
     transcript_text = ""
@@ -569,13 +665,15 @@ def run_video(vid: str, stage2_tmpl: str, rot: KeyRotator, model: str,
 
 
 # ── Reporting ────────────────────────────────────────────────────────
-def report(rows: list[dict], entry: dict, label: str) -> tuple[float, float]:
+def report(rows: list[dict], entry: dict, label: str, oracle: str | None = None) -> tuple[float, float]:
     ok = [r for r in rows if r["status"] == "success"]
     svc = 100 * sum(r["svc_f1"] for r in ok) / len(ok) if ok else 0.0
     edge = 100 * sum(r["edge_f1"] for r in ok) / len(ok) if ok else 0.0
 
-    t = Table(title=f"Panel de 14 — {entry['name']} (celda {entry.get('source_cell')})",
-              border_style="cyan")
+    title = f"Panel de {len(rows)} — {entry['name']} (celda {entry.get('source_cell')})"
+    if oracle:
+        title += f" · oráculo {oracle}"
+    t = Table(title=title, border_style="cyan")
     t.add_column("video", style="bold")
     t.add_column("Svc F1", justify="right")
     t.add_column("Edge F1", justify="right")
@@ -591,6 +689,17 @@ def report(rows: list[dict], entry: dict, label: str) -> tuple[float, float]:
 
     console.print(f"\n[bold]Promedio ({len(ok)}/{len(rows)} exitosos):[/] "
                   f"Service F1 [green]{svc:.2f}%[/]  ·  Edge F1 [green]{edge:.2f}%[/]")
+
+    # An oracle run changes the input, not the prompt, so the historical rows — which
+    # are production Stage 1 on the 14-panel — are the wrong reference. Printing them
+    # here is exactly how a spurious "the oracle gained N points" gets manufactured.
+    if oracle:
+        console.print(
+            f"\n[yellow]Sin comparación automática: esta es una corrida oráculo.[/]\n"
+            f"[dim]La referencia válida es producción sobre estos MISMOS "
+            f"{len(rows)} videos, no la tabla histórica ni el promedio del panel completo.[/]"
+        )
+        return svc, edge
 
     ref = HISTORICAL.get(label)
     if ref:
@@ -616,12 +725,30 @@ def main() -> None:
     ap.add_argument("--dry-run", action="store_true", help="verificar todo sin llamar a la API")
     ap.add_argument("--panel", type=int, default=14, choices=sorted(PANELS),
                     help="tamaño del panel: 14 (original) o 30 (ampliado)")
+    ap.add_argument("--replicate", type=int, default=None, metavar="N",
+                    help="repetición del MISMO prompt para medir ruido test-retest. "
+                         "Cada N usa su propio checkpoint y su propio directorio, así que "
+                         "nunca reanuda la corrida anterior — vuelve a pagar las llamadas "
+                         "a propósito, que es justamente el punto.")
     ap.add_argument("--connection-evidence", action="store_true",
                     help="añade la imagen con badges + los vínculos candidatos a Stage 2")
+    ap.add_argument("--oracle", default=None, metavar="NOMBRE",
+                    help="condición oráculo: alimenta Stage 2 con "
+                         "lab_workspace/<vid>/world_model_<NOMBRE>.json en vez del Stage 1 "
+                         "cacheado. 'oracle_gt' es el brazo B (GT convertido, techo 100/100); "
+                         "'vision' es el brazo A (transcripción humana de la pizarra). "
+                         "El panel se restringe a los videos que tengan ese archivo, y el "
+                         "checkpoint y el directorio de salida llevan tag propio para no "
+                         "colisionar con las corridas normales.")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
     panel = PANELS[args.panel]
+
+    # La condición oráculo cambia UNA sola cosa: el World Model que entra a Stage 2.
+    # El prompt, la imagen de la pizarra, el transcript y el evaluador quedan igual,
+    # que es lo que hace comparable el resultado contra la corrida de producción.
+    wm_name = f"world_model_{args.oracle}.json" if args.oracle else "world_model.json"
 
     manifest = load_manifest()
 
@@ -646,22 +773,43 @@ def main() -> None:
     console.print(f"[dim]Stage 1: {stage1_entry['name']} ({stage1_entry['sha256'][:12]}) — cacheado, no se recalcula.[/]")
 
     # Stage 1 cache freshness: a World Model older than its whiteboard describes
-    # a different image than the one Stage 2 now receives.
+    # a different image than the one Stage 2 now receives. Meaningless for an
+    # oracle World Model, which is not derived from the image at all.
     stale = []
-    for vid in panel:
-        wm = LAB_WORKSPACE / vid / "world_model.json"
-        wb = GOOD_WHITEBOARD_DIR / f"{vid}.jpg"
-        if wm.exists() and wb.exists() and wb.stat().st_mtime > wm.stat().st_mtime:
-            stale.append(vid)
-    if stale:
-        console.print(f"[yellow]⚠ World Model más viejo que su pizarra en: {', '.join(stale)} "
-                      f"— su Stage 1 describe una imagen anterior.[/]")
+    if not args.oracle:
+        for vid in panel:
+            wm = LAB_WORKSPACE / vid / wm_name
+            wb = GOOD_WHITEBOARD_DIR / f"{vid}.jpg"
+            if wm.exists() and wb.exists() and wb.stat().st_mtime > wm.stat().st_mtime:
+                stale.append(vid)
+        if stale:
+            console.print(f"[yellow]⚠ World Model más viejo que su pizarra en: {', '.join(stale)} "
+                          f"— su Stage 1 describe una imagen anterior.[/]")
 
     label = args.label or entry["name"].replace("STAGE2_", "")
 
-    need_s1 = [v for v in panel if not (LAB_WORKSPACE / v / "world_model.json").exists()]
-    console.print(f"[dim]Panel de {len(panel)} · Stage 2: {len(panel)} llamadas · "
-                  f"Stage 1 a generar: {len(need_s1)}[/]")
+    if args.oracle:
+        # A partial oracle panel is a different population than the production run it
+        # gets compared against, so the drop has to be visible, not silent.
+        full, panel = panel, [v for v in panel if (LAB_WORKSPACE / v / wm_name).exists()]
+        skipped = [v for v in full if v not in panel]
+        if not panel:
+            console.print(f"[bold red]🛑 Ningún video del panel tiene {wm_name}.[/]")
+            sys.exit(2)
+        console.print(f"[bold]Condición oráculo:[/] Stage 2 lee [bold]{wm_name}[/] "
+                      f"(no el Stage 1 cacheado).")
+        if skipped:
+            console.print(f"[yellow]⚠ {len(skipped)} de {len(full)} videos sin ese archivo, "
+                          f"quedan fuera: {', '.join(skipped)}[/]\n"
+                          f"[dim]La referencia de producción hay que recalcularla sobre estos "
+                          f"{len(panel)} videos, no sobre el panel completo.[/]")
+        need_s1 = []
+        console.print(f"[dim]Panel efectivo de {len(panel)} · Stage 2: {len(panel)} llamadas · "
+                      f"Stage 1: no se genera (el oráculo lo reemplaza)[/]")
+    else:
+        need_s1 = [v for v in panel if not (LAB_WORKSPACE / v / wm_name).exists()]
+        console.print(f"[dim]Panel de {len(panel)} · Stage 2: {len(panel)} llamadas · "
+                      f"Stage 1 a generar: {len(need_s1)}[/]")
 
     if args.dry_run:
         if need_s1:
@@ -676,7 +824,9 @@ def main() -> None:
     # presence as the switch that turns the retriever on.
     rag = build_rag_db() if "<FEW_SHOT_PLACEHOLDER>" in stage2 else None
 
-    ev_tag = "_connev" if args.connection_evidence else ""
+    ev_tag = ("_connev" if args.connection_evidence else "") + \
+             (f"_oracle-{args.oracle}" if args.oracle else "") + \
+             (f"_rep{args.replicate}" if args.replicate else "")
     ckpt = checkpoint_path(entry["sha256"], args.model, args.panel, ev_tag)
     done = load_checkpoint(ckpt)
     if done:
@@ -693,9 +843,12 @@ def main() -> None:
                   f"{len(pending)} llamadas pendientes (Stage 2)[/]\n")
 
     # Pay for Stage 1 once; every later variant on this panel reads the cache.
+    # The oracle conditions supply their own World Model, so there is nothing to pay for.
+    stage1_generated: list[str] = []
     try:
-        stage1_generated = ensure_stage1(pending, stage1_prompt_text, rot, args.model,
-                                         aws_str, users_str)
+        if not args.oracle:
+            stage1_generated = ensure_stage1(pending, stage1_prompt_text, rot, args.model,
+                                             aws_str, users_str)
     except QuotaExhausted as e:
         console.print(f"[bold red]🛑 {e} durante Stage 1.[/]\n"
                       f"Los World Models ya generados quedaron cacheados; volvé a correr "
@@ -705,7 +858,7 @@ def main() -> None:
     # Stage 2 on an incomplete panel would cost 30 calls for a result that cannot be
     # published anyway, so stop before spending them.
     still_missing = [v for v in pending
-                     if not (LAB_WORKSPACE / v / "world_model.json").exists()]
+                     if not (LAB_WORKSPACE / v / wm_name).exists()]
     if still_missing:
         console.print(f"[bold red]🛑 Sin World Model tras reintentar: {', '.join(still_missing)}[/]\n"
                       f"[dim]{len(stage1_generated)} generados y cacheados en esta pasada.[/]\n"
@@ -717,6 +870,7 @@ def main() -> None:
     ckpt_meta = {
         "prompt_file": entry["file"], "prompt_sha256": entry["sha256"],
         "model": args.model, "panel": f"{len(panel)}_videos",
+        "world_model_file": wm_name, "oracle": args.oracle,
     }
     rows = [done[v] for v in panel if v in done]
     quota_wall = False
@@ -725,7 +879,7 @@ def main() -> None:
         console.print(f"[cyan][{i}/{len(pending)}][/] {vid} …")
         try:
             r = run_video(vid, stage2, rot, args.model, aws_str, users_str, catalog,
-                          rag, args.connection_evidence)
+                          rag, args.connection_evidence, wm_name)
         except QuotaExhausted as e:
             # Stop here on purpose: burning the remaining videos would only
             # produce errors and would not save any work.
@@ -769,7 +923,7 @@ def main() -> None:
 
     order = {v: i for i, v in enumerate(panel)}
     rows.sort(key=lambda r: order.get(r["video_id"], 999))
-    svc, edge = report(rows, entry, label)
+    svc, edge = report(rows, entry, label, args.oracle)
 
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H%M")
     suffix = (f"_p{len(panel)}" if len(panel) != 14 else "") + ev_tag
@@ -788,13 +942,28 @@ def main() -> None:
             "source_cell": entry.get("source_cell"), "chars": entry["chars"],
             "sha256": entry["sha256"], "matches_production": entry.get("matches_production", False),
         },
-        "stage1_prompt": {
+        "stage1_prompt": None if args.oracle else {
             "name": stage1_entry["name"], "sha256": stage1_entry["sha256"],
             "note": "leído del cache lab_workspace/<vid>/world_model.json salvo los listados "
                     "en stage1_generated_now, que se generaron en esta corrida con inyección "
                     "de símbolos (mismo camino que el notebook y que producción).",
         },
+        "oracle": None if not args.oracle else {
+            "name": args.oracle,
+            "world_model_file": wm_name,
+            "note": "Stage 1 NO corrió: Stage 2 recibió un World Model provisto en vez del "
+                    "generado por el modelo. Todo lo demás (prompt, imagen de pizarra, "
+                    "transcript, evaluador) es idéntico a la corrida de producción.",
+            "confound": "Stage 2 igual recibe la imagen de la pizarra y el transcript "
+                        "completo, así que esto NO es un intercambio limpio de entrada: "
+                        "mide Stage 2 en configuración de producción con la mejor entrada "
+                        "posible.",
+            "reference": "producción sobre estos mismos video_ids — no la tabla histórica "
+                         "ni el promedio del panel completo.",
+        },
+        "world_model_file": wm_name,
         "connection_evidence_enabled": args.connection_evidence,
+        "replicate": args.replicate,
         "stage1_generated_now": stage1_generated,
         "stale_stage1_cache": stale,
         "metrics": {

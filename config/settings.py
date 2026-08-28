@@ -38,8 +38,11 @@ if not GEMINI_API_KEYS and GEMINI_API_KEY:
 
 # ── Whisper ──────────────────────────────────────────────────
 WHISPER_MODEL: str = os.getenv("WHISPER_MODEL", "turbo")
-import torch
-WHISPER_DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+try:
+    import torch
+    WHISPER_DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+except ImportError:
+    WHISPER_DEVICE: str = "cpu"
 
 
 # ── Frame Extraction ────────────────────────────────────────

@@ -184,7 +184,34 @@ function computeLayout(nodes, edges) {
   const positions = {};
 
   const sortedLayerKeys = Object.keys(layers).map(Number).sort((a, b) => a - b);
-  
+
+  // Una capa se apila entera sobre el eje Y, así que un grafo donde casi todos
+  // los nodos tienen grado de entrada 0 — el caso normal del ground truth de
+  // Cloudscape — sale como una tira de una sola columna y miles de píxeles de
+  // alto, ilegible dentro de cualquier maquetado. Con RG_COMPACT=1 las capas
+  // que no entran en la altura objetivo se parten en varias sub-columnas.
+  // Apagado por defecto: este renderizador también alimenta otros pipelines y
+  // no corresponde cambiarles la salida sin avisar.
+  if (process.env.RG_COMPACT === '1') {
+    const perCol = Math.max(3, Math.ceil(Math.sqrt(nodes.length)));
+    let xCursor = 0;
+    for (const l of sortedLayerKeys) {
+      const inLayer = layers[l];
+      const nCols = Math.ceil(inLayer.length / perCol);
+      const colH = Math.ceil(inLayer.length / nCols);
+      for (let i = 0; i < inLayer.length; i++) {
+        const col = Math.floor(i / colH), row = i % colH;
+        const thisColCount = Math.min(colH, inLayer.length - col * colH);
+        positions[inLayer[i]] = {
+          x: xCursor + col * hSpacing,
+          y: -(thisColCount - 1) * hSpacing / 2 + row * hSpacing,
+        };
+      }
+      xCursor += nCols * hSpacing + vSpacing;
+    }
+    return positions;
+  }
+
   for (const l of sortedLayerKeys) {
     const nodesInLayer = layers[l];
     const layerWidth = nodesInLayer.length * hSpacing;

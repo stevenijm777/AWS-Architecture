@@ -8,6 +8,7 @@ from __future__ import annotations
 import sys
 import base64
 import json
+from collections import Counter
 from pathlib import Path
 import networkx as nx
 import pandas as pd
@@ -21,8 +22,25 @@ DATA_DIR = PROJECT_ROOT / "data"
 STANDARD_DIR = DATA_DIR / "graphs"
 PARSIMONIOUS_DIR = DATA_DIR / "graphs_parsimonious"
 GT_DIR = DATA_DIR / "cloudscape_gt"
+# Ver la nota extensa en generate_comparison_plots.py. Resumen: el protocolo permisivo
+# histórico ("legacy") relaja tres cosas a la vez —subtipos de actor, duplicados y
+# dirección de las aristas— y las dos últimas achican el ground truth un 41 %, así que
+# la ganancia que muestra no es que el sistema acierte más. "actor_only" deja sólo el
+# colapso de actores, que es la única relajación que trata nomenclatura y no estructura.
+MODE = "legacy"
 GRAFICAS_DIR = PROJECT_ROOT / "graficas"
 OUTPUT_HTML = PROJECT_ROOT / "reporte_comparativo_v6_vs_parsimonious.html"
+
+
+def set_mode(mode: str) -> None:
+    global MODE, GRAFICAS_DIR, OUTPUT_HTML
+    MODE = mode
+    if mode == "legacy":
+        GRAFICAS_DIR = PROJECT_ROOT / "graficas"
+        OUTPUT_HTML = PROJECT_ROOT / "reporte_comparativo_v6_vs_parsimonious.html"
+    else:
+        GRAFICAS_DIR = PROJECT_ROOT / f"graficas_{mode}"
+        OUTPUT_HTML = PROJECT_ROOT / f"reporte_comparativo_{mode}.html"
 
 catalog = load_services_catalog(GT_DIR / "services.csv")
 
@@ -47,16 +65,24 @@ def eval_permissive(g_gen, g_gt):
     _, _, node_f1 = compute_prf1(len(gen_set & gt_set), len(gen_set), len(gt_set))
     
     def extract_base_edges(G):
-        edges = set()
+        """En `actor_only` la arista conserva dirección y multiplicidad; sólo se
+        colapsan los subtipos de actor. En `legacy` además se pierde la dirección
+        (se ordena el par) y los duplicados (se guarda en un conjunto)."""
+        pares = []
         for u, v in G.edges():
             su = norm_permissive(G.nodes[u].get("service", ""))
             sv = norm_permissive(G.nodes[v].get("service", ""))
             if su and sv and su != "Unknown" and sv != "Unknown":
-                edges.add(tuple(sorted([su, sv])))
-        return edges
-        
+                pares.append(tuple(sorted([su, sv])) if MODE == "legacy" else (su, sv))
+        return set(pares) if MODE == "legacy" else Counter(pares)
+
     gen_edges, gt_edges = extract_base_edges(g_gen), extract_base_edges(g_gt)
-    _, _, edge_f1 = compute_prf1(len(gen_edges & gt_edges), len(gen_edges), len(gt_edges))
+    if MODE == "legacy":
+        inter, n_gen, n_gt = len(gen_edges & gt_edges), len(gen_edges), len(gt_edges)
+    else:
+        inter = sum((gen_edges & gt_edges).values())
+        n_gen, n_gt = sum(gen_edges.values()), sum(gt_edges.values())
+    _, _, edge_f1 = compute_prf1(inter, n_gen, n_gt)
     return node_f1, edge_f1
 
 def get_chart_b64(img_name: str) -> str:
@@ -219,6 +245,27 @@ def generate_report():
             <td>{badge}</td>
         </tr>
         """)
+
+    # Cada modo declara su propia regla dentro del reporte. Sin esto, dos archivos
+    # HTML con las mismas gráficas y distintos números no se distinguen al abrirlos.
+    if MODE == "legacy":
+        PERM_TITULO = "protocolo histórico (tres relajaciones)"
+        PERM_NOTA = (
+            "Relaja <b>tres</b> cosas a la vez: colapsa los subtipos de actor "
+            "(<code>User*</code>, <code>ThirdParty*</code>), trata las aristas como "
+            "conjunto (ignora instancias duplicadas) y las vuelve <b>no dirigidas</b> "
+            "(los errores de dirección dejan de penalizar). Las dos últimas no son "
+            "nomenclatura: cambian la tarea, y achican el ground truth un 41 %. "
+            "Comparar contra <code>reporte_comparativo_actor_only.html</code>.")
+    else:
+        PERM_TITULO = "sólo colapso de actores"
+        PERM_NOTA = (
+            "Relaja <b>una sola</b> cosa respecto del protocolo estricto: colapsa los "
+            "subtipos de actor (<code>User*</code> → <code>User</code>, "
+            "<code>ThirdParty*</code> → <code>ThirdParty</code>). Las aristas siguen "
+            "siendo <b>dirigidas</b> y contadas con su multiplicidad, igual que en la "
+            "evaluación estricta. Es la única relajación que trata variación de "
+            "nomenclatura sin cambiar la tarea.")
 
     html_content = f"""<!DOCTYPE html>
 <html lang="es">
@@ -503,6 +550,12 @@ def generate_report():
             border: 1px solid rgba(148, 163, 184, 0.3);
         }}
 
+        .protocolo-nota {{
+            background: rgba(56,189,248,.08);
+            border-left: 3px solid #38bdf8;
+            padding: 12px 16px; margin: 8px 0 18px;
+            font-size: .92rem; line-height: 1.55; border-radius: 6px;
+        }}
         html, body {{
             max-width: 100vw;
             overflow-x: hidden;
@@ -703,7 +756,8 @@ def generate_report():
     <div id="tab-permissive" class="tab-content">
         <div class="table-container">
             <div class="search-bar">
-                <h2>Tabla de Evaluación Permisiva (Normalización a Grupos Base)</h2>
+                <h2>Tabla de Evaluación Permisiva — {PERM_TITULO}</h2>
+                <p class="protocolo-nota">{PERM_NOTA}</p>
                 <input type="text" id="searchPermissive" placeholder="Buscar por Video ID..." onkeyup="filterTable('permissiveTable', 'searchPermissive')">
             </div>
             <table id="permissiveTable">
@@ -926,4 +980,13 @@ def generate_report():
     print(f"✓ HTML Report successfully generated → {OUTPUT_HTML}")
 
 if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--mode", choices=["legacy", "actor_only"], default="legacy",
+                    help="protocolo permisivo. 'legacy' relaja actores + duplicados + "
+                         "dirección (el histórico); 'actor_only' relaja SÓLO los "
+                         "subtipos de actor y escribe reporte_comparativo_actor_only.html")
+    set_mode(ap.parse_args().mode)
+    print(f"modo permisivo: {MODE} · gráficas desde {GRAFICAS_DIR.name}/")
     generate_report()

@@ -286,21 +286,22 @@ completos** (86.78% / 59.65%, `reports/MANIFEST.md`) que el optimista de 14.
 |---|---|---:|---:|---:|
 | V4_ANTI_HALLUCINATION | 8 | **65.60** *(1º)* | 57.10 *(9º)* | −8.50 |
 | V5_STRICT_ROUTING | 7 | 64.51 *(2º)* | 58.08 *(7º)* | −6.43 |
-| V5_STRICT_ROUTING | 8 | 64.11 *(3º)* | 58.45 *(5º)* | −5.66 |
-| V6_OPTIMIZED | 8 | 64.11 *(4º)* | 59.14 *(2º)* | −4.97 |
-| V7_RETURN_FLOWS | 7 | 63.89 *(5º)* | 58.65 *(4º)* | −5.24 |
-| V7_RETURN_FLOWS_V6 | 10 | 63.89 *(6º)* | **60.10** *(1º)* | −3.79 |
+| V5_STRICT_ROUTING | 8 | 64.11 *(3º–4º)* | 58.45 *(5º)* | −5.66 |
+| V6_OPTIMIZED | 8 | 64.11 *(3º–4º)* | 59.14 *(2º)* | −4.97 |
+| V7_RETURN_FLOWS | 7 | 63.89 *(5º–6º)* | 58.65 *(4º)* | −5.24 |
+| V7_RETURN_FLOWS_V6 | 10 | 63.89 *(5º–6º)* | **60.10** *(1º)* | −3.79 |
 | V6_CORRECTED ← producción | 9 | 63.21 *(7º)* | 58.99 *(3º)* | −4.22 |
 | V6_CORRECTED | 7 | 61.64 *(8º)* | 57.52 *(8º)* | −4.12 |
 | V6_CORRECTED | 10 | 60.48 *(9º)* | 58.10 *(6º)* | −2.38 |
 
-- **Correlación de rangos Spearman entre ambos paneles: ρ = −0.233.** El orden que
+- **Correlación de rangos Spearman entre ambos paneles: ρ = −0.185** (rangos
+  promediados; hay dos pares de empates exactos en el panel de 14). El orden que
   produce el panel de 14 **no predice** el de 30; si acaso, lo invierte levemente.
   La que salía primera termina última; la que termina primera salía sexta.
-- **Correlación entre la posición en el ranking de 14 y la caída al ampliar:
-  r = +0.925.** Cuanto mejor puntuaba una variante en el panel chico, más cayó.
-  Es la firma cuantificada del sobreajuste a la muestra de selección: el panel de
-  14 premiaba el ruido que le era propio.
+- **Correlación entre el Edge F1 a 14 y la variación al pasar a 30: r = −0.858.**
+  Negativo significa que **cuanto mejor puntuaba una variante en el panel chico,
+  más perdió al ampliar**. Es la firma cuantificada del sobreajuste a la muestra
+  de selección: el panel de 14 premiaba el ruido que le era propio.
 
 **Corrección a una versión anterior de este documento**, que decía *"esto no
 invalida el orden entre variantes, pero sí cualquier cifra absoluta"*. La segunda
@@ -483,15 +484,23 @@ Juntas explican **133 de 178 aristas perdidas (75%)**.
 
 #### El techo de la direccionalidad
 
-El GT tiene **41.1%** de sus pares conectados en ambos sentidos; producción produce
-**6.4%**, y ni el prompt que permite retornos llega lejos:
+El GT tiene **46.7%** de sus pares conectados en ambos sentidos; producción produce
+**12.4%**, y ni el prompt que permite retornos llega lejos:
 
 | | % pares bidireccionales |
 |---|---:|
-| Ground truth | 41.1% |
-| V7_RETURN_FLOWS | 10.3% |
-| V6_CORRECTED (producción) | 6.4% |
-| V4_ANTI_HALLUCINATION | 4.4% |
+| Ground truth | 46.7% |
+| V7_RETURN_FLOWS_V6 (celda 10) | 21.9% |
+| V8_ACTORS_AND_RETURNS | 17.9% |
+| V7_RETURN_FLOWS (celda 7) | 17.2% |
+| V6_CORRECTED (producción) | 12.4% |
+| V4_ANTI_HALLUCINATION | 11.0% |
+
+*(Todo medido **por servicio**, que es la convención del evaluador
+—`evaluate_graphs.py`: *"ID-agnostic — we compare by service names"*— y por lo tanto
+la única comparable con el Edge F1. Una versión anterior de esta sección daba 41.1%
+y 6.4% contando por identificador de nodo: esas cifras no deben citarse, porque
+mezclan dos convenciones en un mismo documento.)*
 
 Colapsando a pares no dirigidos, el Edge F1 de producción pasa de **62.23 a
 73.40**: si la dirección fuera gratis se ganarían **+11.17 puntos**.
@@ -502,7 +511,7 @@ no aíslan la dirección. El número correcto exige colapsar a un conjunto de pa
 ordenados. El `ara/` no debe citar la cifra de 2.6.)*
 
 *(El `ara/` decía antes "33% del GT vs 11% en V6". Sobre el panel de 30 medido con
-hash da 41.1% vs 6.4%.)*
+hash da 46.7% vs 12.4%, medido por servicio.)*
 
 ### 2.8 V8: arreglar las dos reglas culpables — los mecanismos funcionan, el F1 no (2026-08-26)
 
@@ -532,7 +541,7 @@ panel de 30.
 |---|---:|---:|---:|---:|---:|
 | V6 c9 (producción) | 88.07 | 58.99 | 269 | 12.4% | 20 |
 | **V8** | **86.21** | **58.40** | **299** | **17.9%** | **29** |
-| Ground truth | — | — | 361 | 41.1% | 34 |
+| Ground truth | — | — | 361 | 46.7% | 34 |
 
 Actores recuperados: 20 → 29 de 34. Bidireccionalidad: 12.4% → 17.9%. Aristas
 generadas: +30.
@@ -586,7 +595,7 @@ contra **58.99%** de producción, con **el mismo Service F1 (88.07%)** y sin la
 degradación que sí mostró V8. Es la única variante que queda por encima de
 producción en aristas sin costo en servicios, y su mecanismo avanzó más que
 ninguna otra: **21.9% de pares bidireccionales contra 12.4% de producción**
-(GT: 41.1%).
+(GT: 46.7%).
 
 Pero pareado da **8-5 con 17 empates, p = 0.581**. **No hay evidencia para
 cambiar el prompt de producción.** Es la candidata a re-evaluar si alguna vez se
@@ -597,6 +606,102 @@ más las reglas de retorno de V7 — o sea, la hipótesis de §2.7 y §2.8 aplic
 sobre la base que mejor identifica pares. Que sea la mejor de las once es
 coherente con el diagnóstico; que no sea significativa es coherente con todo lo
 demás.
+
+### 2.10 La evaluación permisiva tampoco distingue entre variantes (2026-08-26)
+
+Hipótesis razonable: si la métrica estricta está dominada por ruido que las
+variantes no controlan —qué subtipo de actor se nombró, si un servicio duplicado
+se fusionó, hacia dónde apunta una flecha—, quitar esas fuentes debería dejar ver
+las diferencias reales. Se re-evaluaron las 11 variantes bajo reglas permisivas.
+**Costo cero de API**: el `analysis` completo está guardado en cada `run.json`.
+
+Script: `scripts/ablation/evaluate_permissive_panel.py` · datos en
+`reports/permissive_panel.json`.
+
+#### Primero: la permisiva relaja TRES cosas, no una
+
+El ARA (C04) la describe como agrupación ontológica de actores. Es bastante más
+(ver `generate_comparison_plots.py`, `norm_permissive` / `eval_permissive`):
+
+1. **Actores:** todo `User*` colapsa a `User`, todo `ThirdParty*` a `ThirdParty`.
+2. **Conjunto en vez de multiconjunto:** ignora instancias duplicadas.
+3. **Aristas no dirigidas:** ignora los errores de dirección.
+
+El artículo tiene que declarar las tres, o el lector atribuirá toda la ganancia a
+los actores.
+
+#### Aporte de cada relajación (promedio de las 11, Edge F1)
+
+| Métrica | Edge F1 | sobre estricto |
+|---|---:|---:|
+| Estricta | 58.36 | — |
+| + solo actores | 62.00 | +3.65 |
+| + solo no dirigido | 60.21 | +1.86 |
+| + solo conjunto | 61.65 | +3.30 |
+| **Permisiva sin la regla 2** (actores + no dirigido) | **63.88** | **+5.52** |
+| Permisiva completa | 76.67 | +18.31 |
+
+Dos cosas que saltan:
+
+- **La interacción es super-aditiva.** Las tres por separado suman +8.81; juntas
+  dan +18.31. Al achicar los conjuntos por tres vías a la vez, emparejar se
+  vuelve mucho más fácil. No es "estricto más tres perdones chicos".
+- **La regla 2 aporta +12.79 de los +18.31**, más que las otras dos juntas.
+
+#### La regla 2 es la menos defendible
+
+Colapsar a conjunto borra una capacidad que **el prompt implementa a propósito**:
+
+> `4. **Dynamic Logical Fusion:** …If they act as a single logical unit, FUSE them.
+> If they perform distinct architectural steps (e.g., three Lambda functions doing
+> different processing stages), KEEP THEM SEPARATE as distinct nodes.`
+
+Ejemplo real del panel — `-wLEkq21cvA`, una migración on-prem: el GT tiene `EC2 ×3`,
+`ThirdParty ×3` y la arista `ThirdParty → EC2` **tres veces** (tres servidores, cada
+uno a su instancia). Con multiconjunto son 3 aristas y un modelo que encuentra 1
+obtiene recall 1/3; **con conjunto colapsan a una sola y ese mismo modelo obtiene
+crédito completo.**
+
+No es marginal: de las 361 aristas del GT en los 30 videos, **47 (13.0%)** repiten
+un par ya conectado, y de los 262 nodos, **40 (15.3%)** son instancias repetidas.
+
+Las otras dos relajaciones sí tienen defensa ante un revisor: distinguir
+`UserConsumerWeb` de `UserConsumerMobile` a menudo no es determinable visualmente,
+y la dirección de una flecha en pizarra es genuinamente ambigua.
+
+**Recomendación: reportar la permisiva sin la regla 2 (63.88) como métrica
+secundaria, y la completa solo como cota superior declarada.** Un +18 donde dos
+tercios vienen de la relajación menos justificable es difícil de sostener.
+
+#### Y el resultado principal: no discrimina mejor — discrimina peor
+
+| | significativas (p<0.05) | empates promedio |
+|---|---:|---:|
+| Estricta | 3 de 55 | 14.9 / 30 |
+| Permisiva | 2 de 55 | 20.4 / 30 |
+| **Esperadas por azar** | **2.8 de 55** | — |
+
+- **El número de "significativas" es exactamente el que predice el azar.** Con 55
+  comparaciones a α=0.05 se esperan 2.8 falsos positivos; salieron 3 y 2. Con
+  corrección de Bonferroni (α = 0.05/55 = 0.00091) **no sobrevive ninguna, en
+  ninguna de las dos métricas**.
+- **Cero pares son significativos en ambas.** `V6_OPTIMIZED vs V6_CORRECTED c7`
+  da p=0.007 estricto y p=0.344 permisivo; `V7_RETURN_FLOWS_V6 vs V4` da p=0.021
+  y p=0.180. Una diferencia real sobreviviría al cambio de métrica.
+- **Los empates suben de 14.9 a 20.4 de 30.** Quitar tres fuentes de variación
+  vuelve a las variantes *más* parecidas, no menos.
+
+Además aparece un **tercer ordenamiento**: ρ = +0.618 entre el ranking estricto y
+el permisivo. `V6_OPTIMIZED` pasa de 2º a 1º, `V7_RETURN_FLOWS_V6` de 1º a 3º,
+`V5_STRICT_ROUTING c7` de 8º a último. Sumado a §2.3, ya son **tres rankings
+distintos** de las mismas variantes según panel (14 vs 30) y métrica (estricta vs
+permisiva), ninguno estable.
+
+**Valor para el artículo:** la conclusión *"las variantes de prompt son
+indistinguibles"* ahora se sostiene bajo **dos métricas independientes**, con
+corrección por comparaciones múltiples, y con el conteo de falsos positivos
+coincidiendo con lo que predice el azar. Es mucho más difícil de refutar que el
+resultado estricto solo.
 
 ---
 
@@ -641,9 +746,10 @@ Cosas descubiertas al auditar, que no estaban en ningún documento:
    variantes). Ampliado a 30 videos elegibles del mismo rango de complejidad, el
    prompt de producción cae de 89.79% / 63.99% a 88.07% / 58.99%, quedando cerca
    del promedio real sobre los 370 completos (86.78% / 59.65%). Y el ranking entre
-   variantes **se desarma**: correlación de Spearman ρ = −0.233 entre ambos
-   paneles, con r = +0.925 entre lo bien que puntuaba una variante a 14 y lo mucho
-   que caía a 30. Ver §2.3.
+   variantes **se desarma**: correlación de Spearman ρ = −0.185 entre ambos
+   paneles (rangos promediados), con r = −0.858 entre el Edge F1 a 14 y la
+   variación al ampliar — cuanto mejor puntuaba una variante en el panel chico,
+   más perdió. Ver §2.3.
 
 6. **Dos filas de la tabla de ablación estaban archivadas bajo el modelo
    equivocado** (2026-08-24): `V0 (Baseline)` y `v4_dynamic_few_shot` figuraban

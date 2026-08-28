@@ -29,8 +29,38 @@ DATA_DIR = PROJECT_ROOT / "data"
 STANDARD_DIR = DATA_DIR / "graphs"
 PARSIMONIOUS_DIR = DATA_DIR / "graphs_parsimonious"
 GT_DIR = DATA_DIR / "cloudscape_gt"
+
+# ── Modo de evaluación permisiva ─────────────────────────────────
+#
+# El protocolo permisivo original relaja TRES cosas a la vez, y sólo la primera es
+# la que se anuncia:
+#
+#   1. colapso de subtipos de actor  (User* -> User, ThirdParty* -> ThirdParty)
+#   2. aristas como conjunto          (las instancias duplicadas dejan de contar)
+#   3. aristas no dirigidas           (los errores de dirección dejan de penalizar)
+#
+# Las dos últimas no son un ajuste de nomenclatura: cambian la tarea. Medido sobre
+# el panel de producción, achican el ground truth un 41 % (361 -> 212 aristas) y los
+# aciertos absolutos BAJAN de 183 a 163. O sea que la "ganancia" permisiva viene de
+# medir contra una referencia más chica, no de acertar más.
+#
+# `actor_only` deja sólo la regla 1: las aristas siguen siendo dirigidas y contadas
+# como multiconjunto, igual que en el protocolo estricto. Es lo único que de verdad
+# separa variación de nomenclatura de variación de estructura.
+MODE = "legacy"
 OUTPUT_DIR = PROJECT_ROOT / "graficas"
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def set_mode(mode: str) -> None:
+    """Fija el modo y el directorio de salida. Cada modo escribe en el suyo."""
+    global MODE, OUTPUT_DIR
+    MODE = mode
+    OUTPUT_DIR = PROJECT_ROOT / ("graficas" if mode == "legacy"
+                                 else f"graficas_{mode}")
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+set_mode(MODE)
 
 # Catalog
 catalog = load_services_catalog(GT_DIR / "services.csv")
@@ -56,16 +86,28 @@ def eval_permissive(g_gen, g_gt):
     _, _, node_f1 = compute_prf1(len(gen_set & gt_set), len(gen_set), len(gt_set))
     
     def extract_base_edges(G):
-        edges = set()
+        """Aristas del grafo bajo el modo permisivo activo.
+
+        En `actor_only` la arista conserva su dirección y su multiplicidad: lo único
+        que cambia respecto del protocolo estricto es que los subtipos de actor se
+        colapsan. En `legacy` además se ordena el par (pierde la dirección) y se
+        guarda en un conjunto (pierde los duplicados).
+        """
+        pares = []
         for u, v in G.edges():
             su = norm_permissive(G.nodes[u].get("service", ""))
             sv = norm_permissive(G.nodes[v].get("service", ""))
             if su and sv and su != "Unknown" and sv != "Unknown":
-                edges.add(tuple(sorted([su, sv])))
-        return edges
-        
+                pares.append(tuple(sorted([su, sv])) if MODE == "legacy" else (su, sv))
+        return set(pares) if MODE == "legacy" else Counter(pares)
+
     gen_edges, gt_edges = extract_base_edges(g_gen), extract_base_edges(g_gt)
-    _, _, edge_f1 = compute_prf1(len(gen_edges & gt_edges), len(gen_edges), len(gt_edges))
+    if MODE == "legacy":
+        inter, n_gen, n_gt = len(gen_edges & gt_edges), len(gen_edges), len(gt_edges)
+    else:
+        inter = sum((gen_edges & gt_edges).values())
+        n_gen, n_gt = sum(gen_edges.values()), sum(gt_edges.values())
+    _, _, edge_f1 = compute_prf1(inter, n_gen, n_gt)
     return node_f1, edge_f1
 
 def permissive_missing_hallucinated(g_gen, g_gt):
@@ -595,4 +637,13 @@ def plot_all():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--mode", choices=["legacy", "actor_only"], default="legacy",
+                    help="protocolo permisivo. 'legacy' relaja actores + duplicados + "
+                         "dirección (el histórico); 'actor_only' relaja SÓLO los "
+                         "subtipos de actor y escribe en graficas_actor_only/")
+    set_mode(ap.parse_args().mode)
+    print(f"modo permisivo: {MODE} → {OUTPUT_DIR.name}/")
     plot_all()
