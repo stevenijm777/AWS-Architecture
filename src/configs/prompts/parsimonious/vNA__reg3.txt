@@ -1,0 +1,53 @@
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.) in a way that matches the style and level of detail of the manual ground truth dataset as closely as possible.
+
+## RULES:
+1. Use SHORT AWS service names for `service` field: e.g. "S3", "Lambda", "EC2", "DynamoDB", "EKS", "CloudFront", etc.
+
+2. USER ACTOR NORMALIZATION: Only add User nodes that are explicitly shown or mentioned. Choose EXCLUSIVELY from this list: <USER_ACTORS_PLACEHOLDER>. 
+   - Map actors based on their functional role described in the transcript (e.g., map external consumers to web/mobile users, and internal staff to developers, analysts, or agents based on whether they handle code, data/security, or operations). Do not force a generic default if a specific role is clear.
+
+3. Map rendering engine clusters/instances running on EC2 directly to service "EC2", putting "Rendering Engines" or "ASG" in the name or notes field.
+
+4. NON-CLOUD & ON-PREMISE NORMALIZATION: Distinguish logically between external entities. Map a company's own external/legacy infrastructure (corporate networks, local databases) to "OnPremDC". Strictly reserve "ThirdParty" for external SaaS vendors, public APIs, or external internet actors.
+
+5. AUDIO-VISUAL BALANCE (HIDDEN CORE SERVICES): The whiteboard physical drawing is the primary structural guide, but DO NOT strictly limit nodes to large drawn boxes. You MUST explicitly include core backend services that are detailed in the transcript as driving the architecture's logic (such as messaging decoupling, security/monitoring, or event routing), even if they are only represented on the board by a small badge, a generic arrow, or implied logically by the data flow.
+
+6. Edges must have: flow_id (integer), seq (string), type ("data" or "meta"). Default to "data" for all edges.
+
+7. STRICT UNIDIRECTIONAL EDGES (NO RETURN PATHS): Map strictly the primary, forward-moving flow of data, requests, or triggers to form the structural backbone. **STRICTLY PROHIBITED:** Do not add return paths, response edges, bidirectional arrows, or API acknowledgments under any circumstances. If Service A initiates contact with Service B, draw exactly one edge: A -> B.
+
+8. CORE CONNECTIVITY: Focus only on establishing the primary structural links. If the audio describes a complex, multi-step back-and-forth communication between two components, compress it into a single directed edge representing the main logical intent.
+
+9. The `notes` field for nodes should capture context from the transcript: how the service is used.
+
+10. AVOID TRANSIENT ARTIFACTS: Do NOT create nodes for transient artifacts, machine images, config templates, or zip files. Represent these actions as descriptions or notes on the edges connecting permanent components.
+
+## PARSIMONY PRINCIPLE (STRICT DEDUPLICATION ONLY):
+Your goal is a clean graph, but you MUST NEVER delete or omit distinct functional AWS services. 
+- "Parsimony" STRICTLY means deduplicating multiple instances of the SAME service (e.g., if there are 3 EC2 instances doing the same logical job, combine them into 1 EC2 node) and ignoring transient artifacts (like AMIs or config files). 
+- It NEVER means deleting different, distinct services. If CloudTrail, GuardDuty, SNS, SQS, or any other distinct service is drawn on the board or explicitly mentioned in the audio as a data source or routing mechanism, YOU MUST INCLUDE IT. Do not prune them just because they sit at the edge of the architecture.
+
+## VALID SERVICE NAMES:
+You MUST only use names from this list of canonical services when defining the `service` field in the nodes list (do not invent names or use raw abbreviations unless listed here):
+<AWS_SERVICES_PLACEHOLDER>
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Analyze the transcript chronologically...",
+  "graph": {
+    "name": "<title of the architecture>",
+    "link": "<youtube URL if known, else empty string>",
+    "categories": "<comma-separated from: data_ingestion, interactive, compute_intensive, control, other>",
+    "graph_usable": true,
+    "notes": "<distilled context>"
+  },
+  "nodes": [
+    {"id": "0", "service": "...", "name": "", "notes": "..."}
+  ],
+  "edges": [
+    {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""}
+  ]
+}

@@ -39,8 +39,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-PROJECT = Path("/home/stemjara/Projects/AWS-Architecture")
-PKG = Path("/home/stemjara/Projects/hpc-and-edge-cloud-architectures/Workshop_paper")
+PROJECT = Path(__file__).resolve().parent.parent.parent
+PKG = find_pkg()
 ORIG = PKG / "hpc_n_edge_clouds_archs.ipynb"
 
 RAW_DIR = PROJECT / "data" / "raw"
@@ -60,6 +60,19 @@ VARIANTES = {
         salida="run_extended",
         nota="457 arquitecturas — Cloudscape + las 61 nuevas de nuestro pipeline",
     ),
+    # Par para medir propagación de error: mismas 385 arquitecturas, una vez con
+    # anotación humana y otra con extracción automática. Cualquier diferencia entre
+    # estas dos corridas es error del pipeline, no del corpus.
+    "gt385": dict(
+        graphml=PROJECT / "data" / "cloudscape_gt385",
+        salida="run_gt385",
+        nota="385 arquitecturas con anotación humana (referencia del par)",
+    ),
+    "extracted385": dict(
+        graphml=PROJECT / "data" / "cloudscape_extracted385",
+        salida="run_extracted385",
+        nota="las MISMAS 385, extraídas por nuestro pipeline",
+    ),
 }
 
 def celda_setup(graphml: Path, salida: str, nota: str) -> str:
@@ -71,6 +84,8 @@ def celda_setup(graphml: Path, salida: str, nota: str) -> str:
 # esos archivos son la única referencia independiente contra la cual comparar.
 import os, shutil
 from pathlib import Path
+
+from _paths import find_pkg  # noqa: E402
 
 GT_DIR = r"{graphml}"         # directorio de graphml que alimenta todo el análisis
 RAW_DIR = Path(r"{RAW_DIR}")  # metadatos de YouTube ya descargados

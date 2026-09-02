@@ -50,6 +50,12 @@ CSV_COLUMNS = [
     "video_id", "gt_name",
     "gen_nodes", "gt_nodes", "gen_edges", "gt_edges",
     "svc_precision", "svc_recall", "svc_f1",
+    # `svc_f1` compara CONJUNTOS de servicios: duplicar o colapsar instancias de un tipo
+    # que el GT ya tiene sale gratis. `ms_f1` usa MULTICONJUNTOS y por lo tanto exige
+    # acertar tambien la multiplicidad. `evaluate_pair` calculaba las dos desde siempre,
+    # pero solo la primera llegaba al CSV — y el 15.3 % de los nodos del GT son instancias
+    # repetidas, asi que la diferencia no es marginal (~2.4 pts sobre el corpus).
+    "ms_precision", "ms_recall", "ms_f1",
     "edge_precision", "edge_recall", "edge_f1",
     "edge_type_accuracy",
     "graph_usable", "scored_for_edges", "exclusion_reason",
@@ -141,6 +147,8 @@ def summarize(rows: list[dict]) -> dict:
         "service_precision": stats([r["svc_precision"] for r in usable]),
         "service_recall": stats([r["svc_recall"] for r in usable]),
         "service_f1": stats([r["svc_f1"] for r in usable]),
+        # Variante de multiconjunto: misma poblacion, pero exigiendo la multiplicidad.
+        "service_f1_multiset": stats([r["ms_f1"] for r in usable]),
         "edge_precision": stats([r["edge_precision"] for r in scored]),
         "edge_recall": stats([r["edge_recall"] for r in scored]),
         "edge_f1": stats([r["edge_f1"] for r in scored]),
@@ -157,6 +165,7 @@ def write_csv(rows: list[dict], path: Path) -> None:
         for r in sorted(rows, key=lambda x: x["video_id"]):
             row = dict(r)
             for k in ("svc_precision", "svc_recall", "svc_f1",
+                      "ms_precision", "ms_recall", "ms_f1",
                       "edge_precision", "edge_recall", "edge_f1", "edge_type_accuracy"):
                 row[k] = round(100 * row[k], 2)
             row["categories"] = ", ".join(row["categories"]) if isinstance(row["categories"], (list, tuple)) else row["categories"]
@@ -175,6 +184,7 @@ def print_summary(agg: dict, excluded_edges: list[str], excluded_unusable: list[
         ("Service Precision", "service_precision", n_usable),
         ("Service Recall", "service_recall", n_usable),
         ("Service F1", "service_f1", n_usable),
+        ("Service F1 (multiconjunto)", "service_f1_multiset", n_usable),
         ("Edge Precision", "edge_precision", agg["n_scored_for_edges"]),
         ("Edge Recall", "edge_recall", agg["n_scored_for_edges"]),
         ("Edge F1", "edge_f1", agg["n_scored_for_edges"]),

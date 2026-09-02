@@ -23,10 +23,12 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from _paths import find_pkg  # noqa: E402
+
 import pandas as pd
 
 PROJECT = Path(__file__).resolve().parent.parent.parent
-PKG = Path("/home/stemjara/Projects/hpc-and-edge-cloud-architectures/Workshop_paper")
+PKG = find_pkg()
 BASE, EXT = PKG / "run_local", PKG / "run_extended"
 GT_DIR = PROJECT / "data" / "cloudscape_gt"
 SALIDA = PROJECT / "docs" / "actualizacion-santillan-abad.md"
@@ -116,6 +118,28 @@ def main() -> None:
     solo_nuevas = e[e["architecture"].isin(nuevos)]["tipo_arquitectura"].value_counts()
     L.append("Sólo entre las nuevas: " + " · ".join(
         f"**{t}** {int(solo_nuevas.get(t, 0))}" for t in ORDEN) + ".")
+    L.append("")
+    # Los grupos chicos no admiten lectura porcentual: con 11 arquitecturas HPC y 4
+    # HPC+Edge, un delta de un punto porcentual es una sola arquitectura. Los propios
+    # autores dicen que el grupo HPC+Edge "es demasiado chico para generar insights" y
+    # que las generalizaciones sobre HPC estan limitadas por su tamano. Se avisa acá
+    # para que la tabla no se lea como si las cuatro filas pesaran igual.
+    chicos = [t for t in ORDEN if int(cb.get(t, 0)) < 30]
+    if chicos:
+        L.append("> ⚠️ **Los grupos chicos no soportan lectura porcentual.** " +
+                 ", ".join(f"**{t}** tiene {int(cb.get(t, 0))} arquitecturas en el "
+                           f"análisis publicado" for t in chicos) +
+                 ". A esa escala un Δ de una arquitectura mueve varios puntos "
+                 "porcentuales, y los autores advierten que el tamaño de esos grupos "
+                 "limita cualquier generalización. La conclusión de esta actualización "
+                 "se apoya en **Edge**, que es el único grupo con muestra suficiente.")
+        L.append("")
+    L.append("> **Sobre la lectura temporal.** Los autores no afirman ninguna tendencia: "
+             "en su §III-E advierten que la variación anual *«puede ocurrir por azar o "
+             "por un esfuerzo humano explícito»* del equipo de AWS, y que al ser material "
+             "promocional *«no se hacen afirmaciones de representatividad»*. Lo que esta "
+             "actualización muestra es estabilidad de las prevalencias al sumar un año, "
+             "no adopción creciente de edge en la industria.")
     L.append("")
 
     # ── evolución por año ──
@@ -248,9 +272,16 @@ def main() -> None:
              "paquete de reproducibilidad de los autores; lo hicieron a mano y no lo "
              "publicaron. La celda falla con su propio "
              "`assert len(df_meta) == 396`. |")
-    L.append("| §III-G — clustering k-means | **fuera** | No es reproducible: da resultados "
-             "distintos entre dos corridas consecutivas en la misma máquina, porque el "
-             "orden de entrada no está fijado. |")
+    # Antes esta fila reportaba que su k-means no es reproducible. Es cierto, pero
+    # irrelevante: los autores corrieron ese analisis, no encontraron clusters
+    # ("we found no clearly identifiable clusters") y decidieron NO incluirlo en el
+    # articulo, dejandolo solo en su repositorio. Ninguna conclusion depende de el.
+    # Reportar la no-reproducibilidad de un analisis que sus propios autores
+    # descartaron no aporta nada y se lee como una critica de mala fe.
+    L.append("| §III-G — clustering k-means | **fuera** | Los autores lo corrieron, no "
+             "hallaron clusters identificables y **decidieron no incluirlo en el "
+             "artículo**; queda sólo en su repositorio. Ninguna conclusión depende de "
+             "él, así que no entra en esta actualización. |")
     L.append("")
     L.append("## Limitaciones de esta actualización")
     L.append("")

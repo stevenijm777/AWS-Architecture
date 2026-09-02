@@ -571,7 +571,8 @@ def ensure_stage1(vids: list[str], stage1_tmpl: str, rot: KeyRotator, model: str
 # ── Per-video Stage 2 ────────────────────────────────────────────────
 def run_video(vid: str, stage2_tmpl: str, rot: KeyRotator, model: str,
               aws_str: str, users_str: str, catalog: dict, rag=None,
-              conn_evidence: bool = False, wm_name: str = "world_model.json") -> dict:
+              conn_evidence: bool = False, wm_name: str = "world_model.json",
+              use_transcript: bool = True) -> dict:
     """Reuses the cached Stage 1 World Model; only Stage 2 costs an API call.
 
     `wm_name` selects which World Model to feed Stage 2. The default is the
@@ -589,9 +590,13 @@ def run_video(vid: str, stage2_tmpl: str, rot: KeyRotator, model: str,
                 "error": f"sin World Model en {wm_name} (correr Stage 1 primero)"}
     world_model = json.loads(wm_path.read_text(encoding="utf-8"))
 
+    # `use_transcript=False` corta el canal verbal: Stage 2 se queda con la imagen de la
+    # pizarra y el World Model, nada mas. Es la ablacion que testea de forma directa la
+    # conclusion de RQ3 — si la topologia vive en la narracion y no en el dibujo, quitarla
+    # tiene que derrumbar el Edge F1. Si no lo mueve, la conclusion esta mal.
     transcript_text = ""
     t_path = RAW_DIR / f"{vid}_transcript.json"
-    if t_path.exists():
+    if use_transcript and t_path.exists():
         data = json.loads(t_path.read_text(encoding="utf-8"))
         if isinstance(data, list):
             transcript_text = " ".join(s.get("text", "").strip() for s in data)
@@ -740,6 +745,11 @@ def main() -> None:
                          "El panel se restringe a los videos que tengan ese archivo, y el "
                          "checkpoint y el directorio de salida llevan tag propio para no "
                          "colisionar con las corridas normales.")
+    ap.add_argument("--no-transcript", action="store_true",
+                    help="corta el canal verbal: Stage 2 recibe solo la imagen de la pizarra "
+                         "y el World Model, sin el transcript del audio. Es la ablacion que "
+                         "testea de forma directa si la topologia que falta vive en la "
+                         "narracion. Combinable con --oracle para el diseño 2x2.")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
@@ -826,6 +836,7 @@ def main() -> None:
 
     ev_tag = ("_connev" if args.connection_evidence else "") + \
              (f"_oracle-{args.oracle}" if args.oracle else "") + \
+             ("_notranscript" if args.no_transcript else "") + \
              (f"_rep{args.replicate}" if args.replicate else "")
     ckpt = checkpoint_path(entry["sha256"], args.model, args.panel, ev_tag)
     done = load_checkpoint(ckpt)
@@ -879,7 +890,8 @@ def main() -> None:
         console.print(f"[cyan][{i}/{len(pending)}][/] {vid} …")
         try:
             r = run_video(vid, stage2, rot, args.model, aws_str, users_str, catalog,
-                          rag, args.connection_evidence, wm_name)
+                          rag, args.connection_evidence, wm_name,
+                          use_transcript=not args.no_transcript)
         except QuotaExhausted as e:
             # Stop here on purpose: burning the remaining videos would only
             # produce errors and would not save any work.
@@ -963,6 +975,15 @@ def main() -> None:
         },
         "world_model_file": wm_name,
         "connection_evidence_enabled": args.connection_evidence,
+        "transcript_enabled": not args.no_transcript,
+        "transcript_ablation": None if not args.no_transcript else {
+            "note": "Stage 2 NO recibio el transcript: solo la imagen de la pizarra y el "
+                    "World Model. Todo lo demas (prompt, imagen, World Model, evaluador) "
+                    "es identico a la condicion equivalente con transcript.",
+            "mide": "cuanta de la topologia del ground truth llega por el canal verbal y "
+                    "no por el dibujo.",
+            "referencia": "la corrida con el MISMO world_model_file y transcript activado.",
+        },
         "replicate": args.replicate,
         "stage1_generated_now": stage1_generated,
         "stale_stage1_cache": stale,

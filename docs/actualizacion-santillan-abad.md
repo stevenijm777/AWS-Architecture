@@ -40,6 +40,10 @@ Las **33 de 2024** son el hueco que el dataset original no cubre. Las de 2020–
 
 Sólo entre las nuevas: **HPC** 1 · **Edge** 24 · **Edge+HPC** 0 · **None** 36.
 
+> ⚠️ **Los grupos chicos no soportan lectura porcentual.** **HPC** tiene 11 arquitecturas en el análisis publicado, **Edge+HPC** tiene 4 arquitecturas en el análisis publicado. A esa escala un Δ de una arquitectura mueve varios puntos porcentuales, y los autores advierten que el tamaño de esos grupos limita cualquier generalización. La conclusión de esta actualización se apoya en **Edge**, que es el único grupo con muestra suficiente.
+
+> **Sobre la lectura temporal.** Los autores no afirman ninguna tendencia: en su §III-E advierten que la variación anual *«puede ocurrir por azar o por un esfuerzo humano explícito»* del equipo de AWS, y que al ser material promocional *«no se hacen afirmaciones de representatividad»*. Lo que esta actualización muestra es estabilidad de las prevalencias al sumar un año, no adopción creciente de edge en la industria.
+
 ### Conteo absoluto por año
 
 | Año | HPC base → ext | Edge base → ext | Edge+HPC base → ext | None base → ext |
@@ -93,16 +97,16 @@ Sale del top 10: UserCompanyAnalyst.
 
 | # | Publicado | | Actualizado | | Movimiento |
 | ---: | :--- | ---: | :--- | ---: | :--- |
-| 1 | Lambda | 3 (75 %) | CloudFront | 3 (75 %) | = |
-| 2 | CloudFront | 3 (75 %) | S3 | 3 (75 %) | = |
-| 3 | S3 | 3 (75 %) | Lambda | 3 (75 %) | = |
+| 1 | Lambda | 3 (75 %) | S3 | 3 (75 %) | = |
+| 2 | S3 | 3 (75 %) | CloudFront | 3 (75 %) | = |
+| 3 | CloudFront | 3 (75 %) | Lambda | 3 (75 %) | = |
 | 4 | EC2 | 2 (50 %) | EC2 | 2 (50 %) | = |
 | 5 | Aurora | 2 (50 %) | Aurora | 2 (50 %) | = |
-| 6 | ApiGateway | 1 (25 %) | CloudWatch | 1 (25 %) | = |
-| 7 | CloudWatch | 1 (25 %) | ApiGateway | 1 (25 %) | = |
-| 8 | StepFunctions | 1 (25 %) | SQS | 1 (25 %) | = |
-| 9 | SQS | 1 (25 %) | UserConsumerWebMobile | 1 (25 %) | = |
-| 10 | UserConsumerWebMobile | 1 (25 %) | StepFunctions | 1 (25 %) | = |
+| 6 | ApiGateway | 1 (25 %) | UserConsumerWebMobile | 1 (25 %) | = |
+| 7 | StepFunctions | 1 (25 %) | SQS | 1 (25 %) | = |
+| 8 | CloudWatch | 1 (25 %) | ApiGateway | 1 (25 %) | = |
+| 9 | SQS | 1 (25 %) | StepFunctions | 1 (25 %) | = |
+| 10 | UserConsumerWebMobile | 1 (25 %) | CloudWatch | 1 (25 %) | = |
 
 ### None (280 → 316 arquitecturas)
 
@@ -157,7 +161,7 @@ Arquitecturas con al menos un servicio de ML.
 | RQ5 — objetivos funcionales | **fuera** | Cloudscape usa un vocabulario controlado (`data_ingestion`, `interactive`, `control`, `compute_intensive`, `other`) y nuestro pipeline genera texto libre. Requiere etiquetar a mano las 61 nuevas. |
 | RQ7 — workflows | **fuera** | Depende de las aristas y de `flow_id`. Nuestro pipeline mide 59.7 % de F1 en aristas contra 86.8 % en servicios: publicar una distribución de workflows construida sobre eso sería publicar ruido. |
 | Fig. 2 — industrias | **fuera** | El dato de industria no está en el paquete de reproducibilidad de los autores; lo hicieron a mano y no lo publicaron. La celda falla con su propio `assert len(df_meta) == 396`. |
-| §III-G — clustering k-means | **fuera** | No es reproducible: da resultados distintos entre dos corridas consecutivas en la misma máquina, porque el orden de entrada no está fijado. |
+| §III-G — clustering k-means | **fuera** | Los autores lo corrieron, no hallaron clusters identificables y **decidieron no incluirlo en el artículo**; queda sólo en su repositorio. Ninguna conclusión depende de él, así que no entra en esta actualización. |
 
 ## Limitaciones de esta actualización
 

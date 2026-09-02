@@ -21,14 +21,20 @@ import sys
 import time
 from pathlib import Path
 
+from _paths import find_pkg  # noqa: E402
+
 import nbformat
 from nbclient import NotebookClient
 
-PKG = Path("/home/stemjara/Projects/hpc-and-edge-cloud-architectures/Workshop_paper")
-VARIANTES = ("local", "extended")
+PKG = find_pkg()
+VARIANTES = ("local", "extended", "gt385", "extracted385")
 
 # Fallos conocidos y aceptados: (variante, subcadena del mensaje) -> por qué
 ESPERADOS = {
+    ("gt385", "Row count changed"): "misma celda de industrias, corpus de 385.",
+    ("gt385", "metadata_actualizada_con_industrias_seguro.csv"): "cascada.",
+    ("extracted385", "Row count changed"): "misma celda de industrias, corpus de 385.",
+    ("extracted385", "metadata_actualizada_con_industrias_seguro.csv"): "cascada.",
     ("extended", "Row count changed"):
         "assert len(df_meta) == 396 de los autores: la celda de industrias no admite "
         "un corpus mayor. Fuera de alcance (el dato de industria no está en su paquete).",

@@ -95,10 +95,23 @@ def comparable(d: dict) -> bool:
     saltó de 8.76 a 11.71 y tres comparaciones nulas dieron significativas. Lo detectó
     correr el script dentro del repositorio publicable y comparar contra el resultado
     ya establecido.
+
+    Ojo con `world_model_file`: una versión anterior de este guard lo usaba como señal
+    de oráculo, y es incorrecto. Las corridas normales también lo graban, con el valor
+    por defecto `world_model.json`; solo las de oráculo apuntan a otro archivo, y esas
+    ya quedan atrapadas por la clave `oracle`. Filtrar por `world_model_file` excluía
+    réplicas legítimas (rep3, rep4) y dejaba el piso de ruido con 2 pares en vez de 6,
+    subiendo sigma_d de 6.43 a 10.31 — el mismo tipo de error que el guard busca evitar,
+    en la dirección opuesta.
+
+    `transcript_enabled=False` sí excluye: quitar la transcripción del contexto cambia
+    la entrada, no el prompt. Es una ablación de información, hermana de las de oráculo.
     """
     if d.get("connection_evidence_enabled"):
         return False
-    if d.get("oracle") or d.get("world_model_file"):
+    if d.get("oracle"):
+        return False
+    if d.get("transcript_enabled") is False:
         return False
     return True
 

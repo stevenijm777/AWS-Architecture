@@ -42,6 +42,7 @@ def select_best_frame(
         output_dir: Path | None = None,
         debug: bool = False,
         min_area_icono: int = 2000,
+        write_outputs: bool = True,
 ) -> dict:
     """
     Select the best whiteboard frame for a video following the final algorithm:
@@ -236,6 +237,32 @@ def select_best_frame(
     best = scored_frames[0]
     console.print(f"  [bold green]✓ Selected:[/] {best['path'].name} "
                   f"(score={best['score']:.3f}, edge={best['edge_density']:.3f}, occ={best['occlusion']:.1%}, bonus={best['skin_bonus']:.2f}, iconos={best.get('num_iconos', 0)})")
+
+    # `write_outputs=False` deja la funcion en modo consulta: devuelve la eleccion sin
+    # tocar el disco. Hace falta para poder RE-EVALUAR el selector sobre videos ya
+    # curados sin sobrescribir `<video>_pizarra/best_whiteboard.jpg` ni volver a sembrar
+    # `bad_whiteboard/`, que es la bandeja de revision manual. El default conserva el
+    # comportamiento historico intacto.
+    if not write_outputs:
+        return {
+            "best_frame": None,
+            "source_frame": best["path"],
+            "final_score": best["score"],
+            "content_score": best["edge_density"],
+            "occlusion_pct": best["occlusion"] * 100,
+            "discarded_count": discarded_count,
+            "skin_bonus": best["skin_bonus"],
+            # Diagnostico: `num_iconos` y `usó_fallback` distinguen una eleccion con
+            # evidencia real de una que sobrevivio porque no quedaba nada mejor. El
+            # fallback significa que TODOS los candidatos fueron descartados y se tomo
+            # el ultimo frame del video sin puntuarlo de verdad.
+            "num_iconos": best.get("num_iconos", 0),
+            "candidatos_analizados": len(candidates),
+            "uso_fallback": len(scored_frames) == 1 and best.get("num_iconos", 0) == 0
+                            and discarded_count >= len(candidates),
+            "top10_frames": [{"rank": i, "source_path": sf["path"], "score": sf["score"]}
+                             for i, sf in enumerate(scored_frames[:10], start=1)],
+        }
 
     # Determine target directory
     pizarra_dir = Path(output_dir) if output_dir else video_frames_dir.parent / f"{video_id}_pizarra"

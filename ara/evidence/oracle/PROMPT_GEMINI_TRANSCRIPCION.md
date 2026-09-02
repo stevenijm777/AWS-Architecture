@@ -94,12 +94,20 @@ Reglas para mapear al vocabulario:
   `ThirdParty`.
 - Si es un actor humano (usuarios, equipos, clientes), elegí el `UserXxx` más
   cercano por rol. Si no calza ninguno bien, decímelo en vez de forzar uno.
+- **Regla de Formas sin ícono ni marca propia**: Formas geométricas abstractas
+  (círculos, cajas vacías, etiquetas como SPOT, CDN, MS1, F.E., x25) NO son
+  nodos de arquitectura. No los crees como nodos ThirdParty. Documenta todo ese
+  detalle en el `rationale` del nodo iconificado vecino (o en el `description` de
+  la arista de paso).
+- **Regla de Multiplicidad**: Si hay N íconos iguales repetidos dibujados para
+  indicar "muchos de lo mismo" (ej. 3 EC2 dentro de un recuadro) sin roles o nombres
+  distintos, crea UN solo nodo y añade la nota de cantidad en el `rationale`. Solo
+  crea nodos separados si cada ícono tiene un nombre o función distinta (ej.
+  microservicios nombrados).
 - Si es un ícono genérico que representa "el lado de AWS" en general (una
-  nube, un logo de AWS, sin ser un servicio específico dibujado), y no hay una
-  entrada mejor en la lista, usá `VPC` como proxy — pero dejalo como UNA sola
-  entidad genérica. No lo descompongas en los servicios que "probablemente"
-  esconde: eso es exactamente lo que el audio aportaría, y este experimento
-  mide qué pasa si el audio NO está.
+  nube, un logo de AWS, sin ser un servicio específico dibujado), NO inventes
+  un servicio ni uses VPC como proxy — descríbelo en el `rationale` del nodo
+  vecino.
 
 ## Qué hacer con líneas punteadas / divisores
 

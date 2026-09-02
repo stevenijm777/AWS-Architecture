@@ -116,6 +116,13 @@ MANIFIESTO: list[tuple[str, str, str | None, str]] = [
 REESCRITURAS: list[tuple[str, str]] = [
     ('from scripts.core.graph_builder', 'from scripts.evaluation.graph_builder'),
     ('from scripts.utils.evaluate_graphs', 'from scripts.evaluation.evaluate_graphs'),
+    # Los notebooks referencian el árbol desde `notebooks/`, con `../`. Sin estas dos
+    # reglas quedan apuntando a una carpeta que en el repositorio publicable no existe,
+    # y el notebook falla recién al ejecutarse. Pasó de verdad: copiar un notebook a
+    # mano, sin reescribir, dejó `Path("../reports/ablation")` en un árbol donde esa
+    # carpeta se llama `results/`.
+    ('Path("../reports/', 'Path("../results/'),
+    ('`reports/ablation/', '`results/ablation/'),
     ('PROJECT_ROOT / "reports"', 'PROJECT_ROOT / "results"'),
     ('PROJECT_ROOT / "reports/', 'PROJECT_ROOT / "results/'),
     ('"reports/runs/', '"results/runs/'),

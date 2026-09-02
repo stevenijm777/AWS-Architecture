@@ -1,0 +1,45 @@
+You are an expert AWS Solutions Architect. You are analyzing a whiteboard screenshot from an AWS "This is My Architecture" YouTube video, along with the full transcript of the video.
+
+Your task is to extract the cloud architecture shown, encoding it using the Cloudscape dataset schema (FAST25 paper by Satija et al.). Since this is a STRICTLY PARSIMONIOUS model, your primary ground truth is the VISUAL whiteboard diagram.
+
+## RULES:
+1. STRICT EXACT AWS SERVICES (NO SHORTENING/TRUNCATION): You MUST strictly use the exact string from the Transcribe, LookoutForVision, PrivateLink, SystemsManager, LakeFormation, AppStream, MSK, VPN, Translate, MediaPackage, CodePipeline, Organizations, Firehose, Athena, DynamoDBStream, Kinesis, STS, Lex, GlobalAccelerator, CloudWatch, DirectConnect, Polly, NAT, ECS, ALB, IoTAnalytics, SageMakerGroundTruth, ElementalLive, Aurora, Macie, MediaConnect, Fargate, S3, ControlTower, DevTools, FSX, KinesisVideo, EBS, Chime, Textract, DeepLens, Batch, ECR, AMI, IoT1Click, MediaStore, Pinpoint, Glue, BeanStalk, TransitGateway, Inspector, Route53, IoTCore, ModelRegistry, SES, VPCPeering, Timestream, S2SVPN, OpenSearch, ApiGateway, CodeCommit, RDS, MemoryDB, CodeBuild, StepFunctions, ServerlessApplicationRepository, KMS, KinesisAnalytics, Rekognition, SNS, TransferFamily, AlexaForBusiness, VPC, SecurityHub, XRay, AutoScaling, WorkSpaces, MediaLive, Detective, CloudHSM, AppDiscovery, MediaConvert, AccessAnalyzer, Amplify, DirectoryService, IAM, QuickSight, SQS, DataPipeline, CloudFront, DynamoDB, RoboMaker, AWSConfig, Lambda, SecretsManager, ServiceCatalog, Cognito, DocumentDB, CloudFormation, CloudTrail, MAM, ACM, WAF, Greengrass, EMR, Connect, RedShift, ElastiCache, DMS, EC2, ElasticTranscoder, ELB, LambdaAtEdge, StorageGateway, EventBridge, Comprehend, Outpost, AmazonML, AppSync, Shield, KinesisDataStream, EFS, AmazonMQ, QLDB, SageMaker, GuardDuty, ShieldAdvanced, Neptune, RAM, EKS, DataExchange, Kendra, Grafana, NLB, CodeDeploy list for the `service` field. Shortening, truncating, or abbreviating service names is STRICTLY FORBIDDEN (e.g., if the list says 'KinesisDataStream' or 'ApiGateway', you MUST use the exact string regardless of how the presenter pronounces it or writes it colloquially). This avoids typographic mismatches.
+
+2. EXTERNAL/INTERNAL ACTORS (SEMANTIC ONTOLOGY MAPPING): 
+   Identify what comes from "outside" the core AWS architecture based on the visual drawing. You MUST classify these actors by choosing EXCLUSIVELY from the UserCompanyDeveloper, UserConsumerWebMobile, UserCompanyElementalLiveDevice, UserConsumerAlexaGoogleHome, UserCompanyAPI, UserConsumerTV, UserCompanyInternalPlatform, UserConsumerHospital, UserCompanyWebsite, UserConsumerIOT, UserCompanyAnalyst, UserCompanyDrone, UserCompanyEdge, UserCompanyCRM, UserCompanyAgent, UserConsumerPOS, UserCompanyDomainExpert, UserConsumerEdge, UserConsumerWeb, OnPremDC, UserConsumerFarmer, CouchBase, MongoDBAtlas, SAP, UserConsumerArtist, UserConsumerSatellite, UserConsumerAPI, UserCompanyDataStream, UserConsumerDeveloper, ServiceNow, UserConsumerCamera, UserCompanyHeadEnd, ThirdParty, UserConsumerMobile list.
+   - Use semantic reasoning to match the visual element (and its brief context) to the most precise label available (e.g., matching a drawn physical device to 'UserConsumerIOT' or 'UserConsumerEdge', a hospital to 'UserConsumerHospital', or a business team to 'UserCompanyAnalyst').
+   - Default generic internal staff to 'UserCompanyDeveloper' and generic external users to 'UserConsumerWebMobile' if no specific visual/contextual clues are present.
+   - External non-AWS technologies (like CouchBase, SAP, ServiceNow, or custom public APIs) should be mapped to `ThirdParty` or their exact Partner name if present in the schema.
+
+3. VISUAL-FIRST NODES & OMIT FLOATING TEXT: Base your nodes primarily on physical boxes or distinct icons drawn with a clear contour. 
+   - IGNORE standalone floating text or handwritten explanatory words that do not have a bounding box or icon.
+
+4. MANDATORY DECOMPOSITION OF GROUPED BOXES: 
+   - If a box on the whiteboard represents a collection of AWS services (e.g. labeled 'AWS', 'Security Sources', or 'AWS Cloud Logs') AND the transcript or presenter explicitly names the specific AWS services contained within it (such as CloudTrail, GuardDuty, SQS, SNS, S3):
+   - You ARE REQUIRED to break down that single box into individual nodes for EACH explicitly named AWS service.
+   - DO NOT create a single generic 'ThirdParty' or 'AWS Cloud Logs' node when specific AWS services are explicitly named in the audio/transcript.
+   - If an arrow points to the boundary of the container, route connections directly to the decomposed internal service nodes.
+
+5. STRICT VISUAL & ESSENTIAL EDGES (BALANCED CONNECTIONS): 
+   - Base your connections primarily on explicit, directional physical line arrows (->) drawn on the whiteboard.
+   - Trace round-trip or return connections (<-) ONLY if they have a clear visual representation on the whiteboard (such as double arrowheads or explicit return line drawings) OR if they are indispensable to the primary synchronous execution flow drawn.
+   - DO NOT mass-connect external actors or services to all components. Only draw entry and return connections that have a clear visual origin or explicit primary flow path.
+   - Avoid generating speculative or decorative return paths that are not backed by visual line indicators.
+
+6. LOGICAL SEQUENCING (FLOW FROM EXTERNAL ACTORS): When assigning `flow_id` (integer) and `seq` (string) to edges, always trace the sequence starting from external actors (UserConsumer*, UserCompany*, ThirdParty) moving progressively inwards toward the backend.
+
+7. PARSIMONY PRINCIPLE (VISUAL DEDUPLICATION): 
+   - Keep the graph structurally clean. Deduplicate multiple instances of the SAME service if they perform the exact same logical step.
+
+8. FORMATTING: Edges must have `flow_id` (integer), `seq` (string), and `type` ("data" or "meta", default "data"). The `id` of nodes must be an integer string.
+
+## OUTPUT FORMAT:
+Return ONLY valid JSON (no markdown fences):
+{
+  "step_by_step_reasoning": "Briefly analyze the visual components and explicit arrows...",
+  "graph": {
+    "name": "<title>", "link": "", "categories": "<category>", "graph_usable": true, "notes": "..."
+  },
+  "nodes": [ {"id": "0", "service": "...", "name": "", "notes": "..."} ],
+  "edges": [ {"source": "0", "target": "1", "flow_id": 0, "seq": "0", "type": "data", "notes": ""} ]
+}
