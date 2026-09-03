@@ -1,0 +1,174 @@
+{
+  "entities": [
+    {
+      "service": "UserConsumerWebMobile",
+      "name": "PHONE OR COMPUTER",
+      "type": "UserConsumerWebMobile",
+      "rationale": "End-user devices accessing frontend content and submitting API requests."
+    },
+    {
+      "service": "CloudFront",
+      "name": "CLOUDFRONT",
+      "type": "CloudFront",
+      "rationale": "Amazon CloudFront content delivery network serving media and static assets."
+    },
+    {
+      "service": "S3",
+      "name": "S3",
+      "type": "S3",
+      "rationale": "Amazon S3 bucket serving as origin storage for media content and processed output."
+    },
+    {
+      "service": "ApiGateway",
+      "name": "API GATEWAY",
+      "type": "ApiGateway",
+      "rationale": "Amazon API Gateway handling REST API requests from client devices."
+    },
+    {
+      "service": "Lambda",
+      "name": "LAMBDA (INGEST)",
+      "type": "Lambda",
+      "rationale": "AWS Lambda function processing initial requests and dispatching tasks to SQS queues."
+    },
+    {
+      "service": "SQS",
+      "name": "SQS (BOTTOM)",
+      "type": "SQS",
+      "rationale": "Secondary Amazon SQS queue managing task distribution to worker instances."
+    },
+    {
+      "service": "SQS",
+      "name": "SQS (TOP)",
+      "type": "SQS",
+      "rationale": "Primary Amazon SQS queue receiving task dispatches from Lambda and Auto Scaling."
+    },
+    {
+      "service": "AutoScaling",
+      "name": "EC2 AUTO SCALING",
+      "type": "AutoScaling",
+      "rationale": "EC2 Auto Scaling group processing tasks and sending metrics to CloudWatch."
+    },
+    {
+      "service": "StepFunctions",
+      "name": "STEP FUNCTIONS",
+      "type": "StepFunctions",
+      "rationale": "AWS Step Functions state machine orchestrating batch workflow steps."
+    },
+    {
+      "service": "Lambda",
+      "name": "LAMBDA (STEP FUNCTIONS)",
+      "type": "Lambda",
+      "rationale": "AWS Lambda function triggered by Step Functions to manage Auto Scaling tasks."
+    },
+    {
+      "service": "CloudWatch",
+      "name": "CLOUDWATCH EVENTS",
+      "type": "CloudWatch",
+      "rationale": "Amazon CloudWatch Events capturing system state changes and scheduled triggers."
+    },
+    {
+      "service": "Lambda",
+      "name": "LAMBDA (CLOUDWATCH EVENTS)",
+      "type": "Lambda",
+      "rationale": "AWS Lambda function invoked by CloudWatch Events to scale or manage EC2 worker nodes."
+    }
+  ],
+  "visual_connections": [
+    {
+      "source_label": "S3",
+      "target_label": "CLOUDFRONT",
+      "arrow_direction": "left",
+      "description": "S3 serves media assets to CloudFront distribution."
+    },
+    {
+      "source_label": "PHONE OR COMPUTER",
+      "target_label": "CLOUDFRONT",
+      "arrow_direction": "up",
+      "description": "End-user devices fetch media content directly from CloudFront."
+    },
+    {
+      "source_label": "PHONE OR COMPUTER",
+      "target_label": "API GATEWAY",
+      "arrow_direction": "right",
+      "description": "Client devices send API requests to Amazon API Gateway."
+    },
+    {
+      "source_label": "API GATEWAY",
+      "target_label": "LAMBDA (INGEST)",
+      "arrow_direction": "right",
+      "description": "API Gateway passes incoming API invocations to primary Lambda function."
+    },
+    {
+      "source_label": "LAMBDA (INGEST)",
+      "target_label": "PHONE OR COMPUTER",
+      "arrow_direction": "up_left",
+      "description": "Lambda function returns playlist responses directly back to client devices."
+    },
+    {
+      "source_label": "LAMBDA (INGEST)",
+      "target_label": "SQS (TOP)",
+      "arrow_direction": "up_right",
+      "description": "Lambda function pushes processing work items to top SQS queue."
+    },
+    {
+      "source_label": "LAMBDA (INGEST)",
+      "target_label": "SQS (BOTTOM)",
+      "arrow_direction": "down_right",
+      "description": "Lambda function dispatches tasks to bottom SQS queue."
+    },
+    {
+      "source_label": "EC2 AUTO SCALING",
+      "target_label": "SQS (TOP)",
+      "arrow_direction": "up_left",
+      "description": "EC2 Auto Scaling group sends tasks/messages directly to top SQS queue."
+    },
+    {
+      "source_label": "SQS (BOTTOM)",
+      "target_label": "EC2 AUTO SCALING",
+      "arrow_direction": "down_right",
+      "description": "EC2 worker instances consume tasks from bottom SQS queue."
+    },
+    {
+      "source_label": "EC2 AUTO SCALING",
+      "target_label": "S3",
+      "arrow_direction": "up_right",
+      "description": "EC2 instances store processed media and output files into S3 bucket."
+    },
+    {
+      "source_label": "STEP FUNCTIONS",
+      "target_label": "LAMBDA (STEP FUNCTIONS)",
+      "arrow_direction": "up",
+      "description": "Step Functions triggers associated Lambda function."
+    },
+    {
+      "source_label": "LAMBDA (STEP FUNCTIONS)",
+      "target_label": "EC2 AUTO SCALING",
+      "arrow_direction": "up_right",
+      "description": "Lambda coordinates actions on EC2 Auto Scaling group."
+    },
+    {
+      "source_label": "LAMBDA (STEP FUNCTIONS)",
+      "target_label": "CLOUDWATCH EVENTS",
+      "arrow_direction": "down_right",
+      "description": "Lambda emits execution events into CloudWatch Events."
+    },
+    {
+      "source_label": "CLOUDWATCH EVENTS",
+      "target_label": "LAMBDA (CLOUDWATCH EVENTS)",
+      "arrow_direction": "right",
+      "description": "CloudWatch Events invokes monitoring Lambda function."
+    },
+    {
+      "source_label": "LAMBDA (CLOUDWATCH EVENTS)",
+      "target_label": "EC2 AUTO SCALING",
+      "arrow_direction": "left",
+      "description": "Monitoring Lambda triggers adjustments to EC2 Auto Scaling group."
+    },
+    {
+      "source_label": "EC2 AUTO SCALING",
+      "target_label": "CLOUDWATCH EVENTS",
+      "arrow_direction": "down",
+      "description": "EC2 Auto Scaling group pushes lifecycle events to CloudWatch Events."
+    }
+  ]
+}
