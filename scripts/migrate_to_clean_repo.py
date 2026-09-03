@@ -105,6 +105,26 @@ MANIFIESTO: list[tuple[str, str, str | None, str]] = [
      "El antes/después de la actualización"),
 ]
 
+# Los notebooks NO están en el manifiesto y es deliberado: los del repositorio publicable
+# son versiones condensadas que viven ya en el destino, y copiarlos desde acá los
+# pisaría. Lo que sí hace falta es comprobarlos, porque tres veces quedaron rotos al
+# sincronizarlos a mano sin aplicar las reescrituras de layout — y el fallo solo aparecía
+# al ejecutarlos, no al copiarlos.
+RUTAS_OBSOLETAS = ("../reports/", "scripts.core.", "scripts.utils.evaluate_graphs",
+                   "../src/configs/prompts", "../whiteboard_selection_lab/")
+
+
+def revisar_notebooks_del_destino() -> list[str]:
+    """Devuelve los notebooks del destino que apuntan a rutas del layout viejo."""
+    fallas = []
+    for nb in sorted((DESTINO / "notebooks").glob("*.ipynb")):
+        texto = nb.read_text(encoding="utf-8")
+        malas = [r for r in RUTAS_OBSOLETAS if r in texto]
+        if malas:
+            fallas.append(f"{nb.name}: {', '.join(malas)}")
+    return fallas
+
+
 # El repositorio publicable reorganiza las carpetas (`reports/` pasa a `results/`,
 # `ara/evidence/tables/` a `evidence/`, `scripts/utils` y `scripts/core` se unen en
 # `scripts/evaluation`). Los scripts traen esas rutas escritas, así que se reescriben
@@ -245,6 +265,15 @@ def main() -> None:
         copiados += 1
     print(f"\n✓ {copiados} archivos copiados "
           f"({reescritos} con rutas reescritas al layout publicable)")
+
+    fallas = revisar_notebooks_del_destino()
+    if fallas:
+        print("\n✗ Notebooks del destino con rutas del layout viejo:")
+        for f in fallas:
+            print(f"    {f}")
+        raise SystemExit("corregí las rutas antes de publicar")
+    print(f"✓ {len(list((DESTINO / 'notebooks').glob('*.ipynb')))} notebooks del destino "
+          f"sin rutas obsoletas")
 
 
 if __name__ == "__main__":
