@@ -1,0 +1,155 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Drone</data>
+      <data key="d6">UserCompanyDrone</data>
+      <data key="d7">Drones flown by licensed third-party pilots that routinely capture imagery of every well pad, replacing manual inspections by people.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Third-Party Imagery Processing Software</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Third-party software/server that processes the drone imagery and creates three files per well pad: an orthomosaic (high-resolution top-down view), a digital terrain model and a digital elevation model. Exposes an API.</data>
+    </node>
+    <node id="2">
+      <data key="d5">CloudWatch Event</data>
+      <data key="d6">CloudWatch</data>
+      <data key="d7">Scheduled CloudWatch Event; the first event on the AWS side, which calls the Step Function.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Step Functions</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">State machine consisting of three separate Lambda functions.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Lambda 1 - Check New Flights</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Calls the third-party software via API to determine whether new images and new flights are available.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Lambda 2 - Copy Images to S3</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Called when a new flight or image is found; takes the images from the third party and stores them in an S3 bucket in Marathon Oil's environment.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Lambda 3 - Create Raster Proxy</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Takes the S3 images and creates raster proxies, which act as a URL the on-prem server understands for fetching the images. Removes the need to change the on-prem application.</data>
+    </node>
+    <node id="7">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">S3 bucket in Marathon Oil's environment storing the processed well pad image files.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Storage Gateway</data>
+      <data key="d6">StorageGateway</data>
+      <data key="d7">Lets the on-prem mapping software read image files from the S3 bucket, since it cannot read from S3 directly.</data>
+    </node>
+    <node id="9">
+      <data key="d5">Server (On-Prem Mapping Software)</data>
+      <data key="d6">OnPremDC</data>
+      <data key="d7">On-premises mapping software server. Cannot read directly from S3; uses raster proxies and Storage Gateway to find and display images for maintenance and operations teams.</data>
+    </node>
+    <node id="10">
+      <data key="d5">Database (Local Server Database)</data>
+      <data key="d6">OnPremDC</data>
+      <data key="d7">Local database of the on-prem mapping server, where the raster proxies are stored.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Drone imagery of the well pads is loaded into the third-party software, which processes it into three image files per well pad.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The second Lambda takes the images from the third-party software.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The scheduled CloudWatch Event calls the Step Function.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Step Functions invokes the first Lambda function.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">If a new flight or image is found, the second Lambda function is called within the state machine.</data>
+      <data key="d10">3</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The third (separate) Lambda function is called once the images are in S3.</data>
+      <data key="d10">6</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The first Lambda queries the third-party software via API to determine whether new images and new flights are available.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The second Lambda stores the images in the S3 bucket.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="10" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The raster proxies (URL-like references to the S3 images) are stored in the local server's database.</data>
+      <data key="d10">8</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The third Lambda takes the S3 images to create raster proxies.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Storage Gateway reads the image files from the S3 bucket so they can be displayed to the end user.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">When a user requests images, the mapping software goes out via Storage Gateway to find the image files.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="10" target="9" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The mapping software uses the raster proxies stored in its database to know how to fetch the images.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Marathon Oil: Serverless Drone Imagery Ingestion for Well Pad Monitoring</data>
+    <data key="d1">https://www.youtube.com/watch?v=ww5fiygF6eg</data>
+    <data key="d2">Marathon Oil monitors well pads with drones flown by licensed third-party pilots. Third-party software processes the imagery into three files per well pad (orthomosaic, digital terrain model, digital elevation model). A scheduled CloudWatch Event triggers a Step Functions workflow of three Lambda functions that detect new flights, copy the images to S3, and create raster proxies in the on-prem mapping software's database. The on-prem mapping software reads the images from S3 through Storage Gateway with no application changes.</data>
+    <data key="d3">Serverless, IoT, Hybrid Cloud, Storage, Energy</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "1. Entities: I transcribed the 8 drawn components. The pathologist actor (\"User\") is not in the vocabulary. It is an internal medical expert who uses the labeling platform, so I mapped it to UserCompanyDomainExpert. I kept it because it is the endpoint of a ledger edge. The hospital maps to UserConsumerHospital. FSx maps to the vocabulary value FSX.\n2. Fusion check: I kept the two S3 icons as separate nodes because they do different jobs. The left bucket holds the raw and annotated images (about 5 TB per project). The right bucket stores the trained models.\n3. Flows from the audio:\n - Flow 0 (ingestion and labeling): Hospital -> S3 left -> EKS labeling platform. The pathologist works in EKS. Enriched data goes from EKS back to S3 left.\n - Flow 1 (training and model delivery): S3 left -> SageMaker, which trains using FSx for I/O performance and IAM for security in parallel. SageMaker -> S3 right (model stored) -> EKS (model and results exported for validation and inference, with HDS compliance).\n - Flow 2 (consumption): once a validated model is in inference on EKS, the hospital uses it.\n4. Self-check: there are 10 visual_connections entries and I emit 10 edges. No edges were added and none were removed.",
+  "graph": {
+    "name": "Kinaï - Medical Image Labeling and ML Training Platform",
+    "link": "https://www.youtube.com/watch?v=2XVgpMwY5iE",
+    "categories": "Healthcare, Machine Learning, Data Labeling, Kubernetes",
+    "graph_usable": true,
+    "notes": "Hospitals and biologists upload medical images (about 5 TB per project) to S3. Pathologists annotate them in a Kubernetes (EKS) labeling platform. The enriched data trains one model per project in SageMaker, using Dockerized pipelines plus FSx and IAM. Models are stored in S3 and exported back to EKS for pathologist validation and then inference used by hospitals. Reported benefits: thousands of trainings can run in parallel, training is 30x faster, and infrastructure costs dropped by up to 30% (dynamic infrastructure). Compliance: HDS certification, and data stays in the same region as the project (for example, Germany)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDomainExpert",
+      "name": "Pathologist",
+      "notes": "Pathologist who annotates and labels medical images on the EKS platform, then validates or rejects the trained models."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerHospital",
+      "name": "Hospital",
+      "notes": "Hospitals, biologists and clients who send medical images and later use the validated model for inference."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS (Kubernetes product / labeling platform)",
+      "notes": "Kinaï product on Kubernetes. Labeling platform for pathologists, model validation, and inference serving once the model is validated. HDS certification."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 (Images / Enriched Data)",
+      "notes": "Stores the medical images uploaded by customers (about 5 TB per project) and the enriched, annotated data."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Trains one model per project. Existing pipelines were containerized in Docker and reused in SageMaker, which made migration easy. Training is 30x faster, thousands of trainings can run in parallel, and costs are up to 30% lower because no idle resources are paid for."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3 (Models)",
+      "notes": "Stores the trained models and results before they are exported to the Kubernetes product."
+    },
+    {
+      "id": "6",
+      "service": "FSX",
+      "name": "FSx",
+      "notes": "High-performance storage used by SageMaker training for I/O performance."
+    },
+    {
+      "id": "7",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "Fine-grained data access control and documentation for medical compliance (HDS). Data stays in the project's region (for example, Germany)."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Hospitals and biologists upload medical images to S3 buckets (about 5 TB per project)."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Images are loaded into the Kubernetes product to be shown to pathologists."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Pathologist annotates and labels the images on the labeling platform, then validates or rejects the models."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Enriched, labeled data is written back to S3."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Enriched data is used to train one model per project in SageMaker."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "SageMaker training uses FSx for high I/O performance."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "IAM provides security and data access control (HDS compliance)."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "The trained model is stored in an S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Model and results are exported to the Kubernetes product for pathologist validation and then inference. HDS certification."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Hospital uses the validated model running in inference on Kubernetes."
+    }
+  ]
+}

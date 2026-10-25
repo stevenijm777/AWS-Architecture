@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "1) Nodes: took the nine drawn services (S3, Step Functions, MediaConvert, Rekognition, Transcribe, Comprehend, DynamoDB, EC2, EKS). The speaker mentions 'another step function' for the AI stage, but the board shows a single Step Functions icon, so it is kept as one node. Lambdas are mentioned verbally as tasks inside the step function but are not drawn; the board shows a direct Step Functions -> DynamoDB arrow, so that edge is kept direct and the Lambdas are recorded in notes. The uploading user is a generic human actor with no drawn icon, so it is pruned; S3 is the system entry point. Reach Engine is drawn as a box containing EC2 and EKS, so both are kept as nodes annotated as Reach Engine. 2) Edges follow the drawn arrows: S3 -> Step Functions (upload trigger), Step Functions -> MediaConvert / Rekognition / Transcribe (orchestration), Step Functions -> DynamoDB (technical metadata), Rekognition -> DynamoDB, Transcribe -> Comprehend, Transcribe -> DynamoDB, Comprehend -> DynamoDB, and DynamoDB -> Reach Engine box. The last arrow points at the box as a whole, so it is represented as edges to both EC2 and EKS; no EC2-EKS edge is drawn or added. No MediaConvert -> DynamoDB edge is drawn or added. 3) Flows: flow 0 = ingest, proxy transcode and technical metadata; flow 1 = AI/ML metadata extraction; flow 2 = ingest of metadata from the temporary DynamoDB store into Reach Engine.",
+  "graph": {
+    "name": "Levels Beyond - Media to Cloud Workflow with Reach Engine",
+    "link": "https://www.youtube.com/watch?v=07lfvavMdfU",
+    "categories": "Media & Entertainment, Serverless, Machine Learning, Media Processing",
+    "graph_usable": true,
+    "notes": "Levels Beyond Media2Cloud workflow: a file uploaded to S3 triggers Step Functions, which creates a browser proxy with MediaConvert, extracts technical metadata, and runs Rekognition, Transcribe and Comprehend. All metadata lands in DynamoDB as a temporary store and is then ingested into the Reach Engine platform (EC2 and EKS) for playback, search and visualization."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Ingest bucket. The user uploads a media file (any format) here; the upload triggers the Step Functions workflow."
+    },
+    {
+      "id": "1",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates the Media to Cloud workflow: kicks off the MediaConvert transcode, triggers Lambdas that extract checksums and technical metadata (frame rates, media info), then a further step function runs Rekognition and Transcribe."
+    },
+    {
+      "id": "2",
+      "service": "MediaConvert",
+      "name": "Elemental MediaConvert",
+      "notes": "Transcodes the uploaded media into a proxy suitable for browser playback, giving users a visual check alongside the extracted metadata."
+    },
+    {
+      "id": "3",
+      "service": "Rekognition",
+      "name": "Rekognition",
+      "notes": "Analyzes the video to identify celebrities, violence, nudity and other content data; results are associated with time codes."
+    },
+    {
+      "id": "4",
+      "service": "Transcribe",
+      "name": "Transcribe",
+      "notes": "Converts the audio of the content into text."
+    },
+    {
+      "id": "5",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Analyzes the transcribed text to extract entities and detect things such as profanity."
+    },
+    {
+      "id": "6",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Temporary data store for technical metadata (checksums, frame rates, media info) and for Rekognition, Transcribe and Comprehend results. Once data is there, an ingest into Reach Engine is triggered."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "Reach Engine (EC2)",
+      "notes": "EC2 component of the Reach Engine platform, the core product: playback of ingested content, viewing and searching extracted metadata, celebrity track visualization, and feeding an orchestration engine to distribute content."
+    },
+    {
+      "id": "8",
+      "service": "EKS",
+      "name": "Reach Engine (EKS)",
+      "notes": "EKS component of the Reach Engine platform, drawn alongside EC2 inside the Reach Engine box."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "The file upload to the S3 bucket triggers the step function."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions first kicks off the transcode in MediaConvert to create a browser playback proxy."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "After the proxy is generated, Lambdas triggered by the step function extract checksums and technical metadata (frame rates, media info) and store it in DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "After the basic metadata is extracted, a further step function starts Rekognition on the video."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Rekognition results (celebrities, violence, nudity) with time codes are written to DynamoDB."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "The same step function triggers Transcribe to convert audio to text."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "The transcribed text is driven into Comprehend for analysis."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Transcription output is stored in DynamoDB."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4'",
+      "type": "data",
+      "notes": "Comprehend output (entities, profanity detection) is stored in DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Once the data is in DynamoDB, an ingest into Reach Engine is triggered; the arrow points to the Reach Engine box."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Same ingest into Reach Engine; the arrow targets the Reach Engine box, which contains both EC2 and EKS."
+    }
+  ]
+}

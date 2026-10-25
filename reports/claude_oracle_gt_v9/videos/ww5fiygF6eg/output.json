@@ -1,0 +1,234 @@
+{
+  "step_by_step_reasoning": "Nodes: all 10 world-model entities are kept. The drone is the system entry point. The third-party imagery software and the on-premises server and database are ThirdParty. The three Lambda functions perform distinct Step Functions steps, so they stay separate. No audio-driven expansion was needed. Flows: flow 0 is the drone imagery upload to the third-party software. Flow 1 is the scheduled pipeline: the CloudWatch event calls Step Functions; Lambda 1 checks the third-party API for new images; Lambda 2 pulls the images to S3; Lambda 3 reads the S3 images, creates raster proxies and stores them in the on-prem database. Flow 2 is the user view path: the on-prem mapping server reads from S3 through Storage Gateway and gets the image files back. Ledger self-check: visual_connections has 20 entries and 20 edges are emitted, one per entry, with every bidirectional pair kept as two edges. No edges were added beyond the ledger. Edges the audio does not describe directly (returns to Step Functions, S3 to Lambda 2) are typed as meta acknowledgments or results.",
+  "graph": {
+    "name": "Marathon Oil: Serverless Drone Imagery Processing for Well Pad Monitoring",
+    "link": "https://www.youtube.com/watch?v=ww5fiygF6eg",
+    "categories": "Serverless, Hybrid Storage, Energy, Image Processing",
+    "graph_usable": true,
+    "notes": "Drones flown by licensed third-party pilots capture well pad imagery, which third-party software processes into three files per well pad (orthomosaic, digital terrain model, digital elevation model). A scheduled CloudWatch event calls a Step Functions workflow of three Lambda functions: check for new imagery, pull it to S3, and create raster proxies stored in the on-prem database. The on-prem mapping software reads the imagery from S3 via Storage Gateway for maintenance and operations teams."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDrone",
+      "name": "UserCompanyDrone",
+      "notes": "Drones flown by licensed third-party pilots that routinely capture imagery of every well pad, replacing manual inspection by people."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Imagery process (into three files per well pad)",
+      "notes": "Third-party software and server that processes drone imagery into three files per well pad: an orthomosaic (high-resolution top-down view), a digital terrain model and a digital elevation model. Exposes an API to check for new flights and images."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "on-premises database & server",
+      "notes": "On-prem mapping software. The database stores the raster proxies; the server handles user queries. The server cannot read imagery directly from S3 without raster proxies. No application change was needed to use Storage Gateway. Used by maintenance and operations teams to spot equipment issues, plan preventative maintenance and check well pad health."
+    },
+    {
+      "id": "3",
+      "service": "CloudWatch",
+      "name": "CloudWatch Event",
+      "notes": "CloudWatch event running on a scheduled basis that calls the Step Functions workflow."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 bucket in the Marathon Oil environment storing the processed imagery data."
+    },
+    {
+      "id": "5",
+      "service": "StorageGateway",
+      "name": "StorageGateway",
+      "notes": "Lets the on-prem mapping software read image files from the S3 bucket, using the raster proxies."
+    },
+    {
+      "id": "6",
+      "service": "StepFunctions",
+      "name": "StepFunctions",
+      "notes": "Workflow of three Lambda steps: test whether new imagery data is available; pull images from the third party to S3; process images into raster proxies."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda - check for new imagery",
+      "notes": "First Lambda: calls the third-party software API to determine whether new images or new flights are available."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda - pull imagery to S3",
+      "notes": "Second Lambda: called when a new flight or image is found; takes the images from the third party and stores them in the S3 bucket."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Lambda - create raster proxies",
+      "notes": "Third Lambda: turns the S3 images into raster proxies, which act like URLs telling the on-prem server how to fetch the images (the on-prem software cannot read directly from S3). The raster proxies are stored in the on-prem server's database."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Drone imagery is loaded into the third-party software, which creates three files per well pad."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "The CloudWatch event calls the Step Functions workflow on a scheduled basis."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions invokes the first Lambda to check for new imagery."
+    },
+    {
+      "source": "7",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "The Lambda calls the third-party API to check whether new images or flights are available."
+    },
+    {
+      "source": "1",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "The third-party API responds with the availability of new images or flights."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Returns the check result to the workflow (new flight or image found)."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "control",
+      "notes": "If new imagery is found, Step Functions invokes the second Lambda."
+    },
+    {
+      "source": "8",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "The Lambda requests the image files from the third party."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Image files are pulled from the third-party server."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "8",
+      "type": "data",
+      "notes": "The Lambda stores the images in the S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "9",
+      "type": "meta",
+      "notes": "Write acknowledgment from S3."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "10",
+      "type": "meta",
+      "notes": "Returns completion of the image pull to the workflow."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "11",
+      "type": "control",
+      "notes": "Step Functions invokes the third Lambda to create raster proxies."
+    },
+    {
+      "source": "9",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "12",
+      "type": "data",
+      "notes": "The Lambda accesses the images stored in S3."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "13",
+      "type": "data",
+      "notes": "S3 images are read to create the raster proxies."
+    },
+    {
+      "source": "9",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "14",
+      "type": "data",
+      "notes": "Raster proxies (URL-like references) are stored in the on-prem server's database."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "When a user views images, the mapping software uses the raster proxy to request the image files via Storage Gateway."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Storage Gateway finds the image files in the S3 bucket."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Image files are returned from S3 to Storage Gateway."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Image files are delivered to the on-prem mapping server and displayed to the end user."
+    }
+  ]
+}

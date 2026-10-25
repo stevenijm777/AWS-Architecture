@@ -1,0 +1,110 @@
+{
+  "step_by_step_reasoning": "1. Inventory: the World Model lists 8 entities: Users, EC2 Gateway, AD, EMR, RDS, S3, KMS and EC2 Sandbox. Each one maps to a vocabulary value. The Users are NHS Digital internal teams who analyse data, so they map to UserCompanyAnalyst. They are kept as the system entry point because a ledger arrow starts from them, and ledger endpoints cannot be pruned.\n2. Fusion: the two EC2 icons do different jobs. One is the public gateway running Guacamole. The other is the secure sandbox compute environment. They stay as separate nodes.\n3. Hosted software: Guacamole (on the gateway EC2) and Apache Ranger (fine-grained access control used by the data processing tools) are only recorded in notes. The rule says to keep the host nodes, and the whiteboard does not draw these tools as separate components. RStudio, JupyterHub and Hue are also recorded in notes as tooling.\n4. Ledger transcription: there are 6 visual_connections entries, and I emit exactly one edge for each, keeping its direction:\n- Users -> EC2 Gateway\n- EC2 Gateway -> AD\n- EMR -> S3\n- KMS -> RDS\n- KMS -> S3\n- EC2 Sandbox -> S3\n5. Flows:\n- Flow 0 (user access and authentication): Users -> Gateway (data, seq 0), then Gateway -> AD (control, auth, seq 1).\n- Flow 1 (data analytics): EMR -> S3 (data, EMR reads Parquet datasets, seq 0) and Sandbox -> S3 (data, users analyse data in the sandbox, seq 0' in parallel).\n- Flow 2 (encryption): KMS -> S3 (control, seq 0) and KMS -> RDS (control, seq 0').\n6. I added no extra edges. A Gateway -> Sandbox link is only implied in the audio and is not drawn, so it is left out.\n7. Self-check: there are 6 visual_connections entries and 6 edges emitted.",
+  "graph": {
+    "name": "NHS Digital - Data Access Environment on AWS",
+    "link": "https://www.youtube.com/watch?v=SSWwnNVYi_Q",
+    "categories": "Analytics, Big Data, Security, Healthcare",
+    "graph_usable": true,
+    "notes": "This is NHS Digital's data access environment. It is replacing legacy systems. Users connect through a public gateway (Guacamole on EC2) and authenticate with Directory Services. They then work in a secure sandbox where they can analyse data but cannot take it out. Datasets are converted to Parquet and stored in S3, and they are encrypted with KMS at rest and in transit. EMR runs the analytics jobs, and Apache Ranger enforces role-based fine-grained access. Analytics jobs that used to take hours now take minutes or seconds, and audit is stronger. Tooling includes RStudio, JupyterHub and Hue. The long-term goal is machine learning."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAnalyst",
+      "name": "Users (NHS Digital internal teams)",
+      "notes": "Internal NHS Digital teams who log in to analyse data. The service is expanding to more teams."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Gateway (Guacamole)",
+      "notes": "Public gateway on the public side of the dotted line. Users log in to Apache Guacamole here and are then placed in the secure sandbox."
+    },
+    {
+      "id": "2",
+      "service": "DirectoryService",
+      "name": "AD",
+      "notes": "Active Directory/Directory Services authenticates users. User roles are also used by the data processing tools (Apache Ranger) to control which data each user can see."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs the analytics jobs and provides a consistent compute layer. Reads data from S3. Apache Ranger provides fine-grained access control. Chosen over Cloudera and on-prem options for its flexibility and scale. Jobs went from hours to minutes or seconds."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Database within the secure environment, encrypted with KMS keys."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores existing NHS datasets migrated and converted to Parquet format. The data is confidential and always encrypted, both at rest and in transit."
+    },
+    {
+      "id": "6",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Provides the keys that encrypt the data in S3 and other information in the system. Data is encrypted at all times."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 Sandbox",
+      "notes": "Secure sandbox compute environment where users look at and analyse data but cannot take it out of the system. Tools include RStudio, JupyterHub and Hue."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Internal users log in to the public gateway (Guacamole)."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Users authenticate through Directory Services. Their roles drive data access permissions (Apache Ranger)."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR reads the Parquet datasets from S3 to run the analytics jobs."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "The sandbox environment reads data in S3 for analysis. Data cannot leave the system."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "KMS provides the keys that encrypt the confidential data in S3, both at rest and in transit."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "KMS provides the encryption keys for RDS."
+    }
+  ]
+}

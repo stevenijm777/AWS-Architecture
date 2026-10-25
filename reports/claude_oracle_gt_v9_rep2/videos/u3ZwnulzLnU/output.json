@@ -1,0 +1,166 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the world model lists 8 entities (Developers, Lambda, SQS, two Fargate clusters, EC2, Aurora, non-AWS Elasticsearch). All are kept as nodes. The two Fargate icons do different jobs (Autoscan analyzer vs. Compute Engine), so they stay separate. Developers are kept as the system entry point and as the consumers of results. GitHub is not in the authoritative entity list, so it is not added as a node; its role is recorded in the notes of the Developer -> Lambda edge. Elasticsearch is in-house (not Amazon), so it uses ThirdParty.\n2) Flows: Flow 0 = analysis ingestion (code push -> Lambda -> SQS -> Fargate analyzer -> EC2 API -> Aurora). Flow 1 = Compute Engine processing (Fargate #2 polls Aurora, extracts reports, computes metrics, updates Aurora and writes search-optimized data to Elasticsearch). Flow 2 = results consumption (developers call the UI/API on EC2, which reads Aurora and returns the results).\n3) Ledger self-check: visual_connections has 13 entries; 13 edges are emitted, one per entry, with the same source and target. Repeated pairs (Fargate #2 -> Aurora x2, EC2 -> Aurora x2) and reverse pairs (Aurora -> Fargate #2, Aurora -> EC2, EC2 -> Developer) are all kept as distinct steps. No edges outside the ledger were added.",
+  "graph": {
+    "name": "SonarSource: SonarCloud Autoscan Code Analysis Pipeline",
+    "link": "https://www.youtube.com/watch?v=u3ZwnulzLnU",
+    "categories": "Developer Tools, Serverless, Containers, Code Analysis",
+    "graph_usable": true,
+    "notes": "SonarCloud Autoscan: code pushes to GitHub trigger a Lambda that creates analysis requests in SQS; an auto-scaled Fargate service clones and analyzes the code and pushes reports to an EC2 API, which stores them in Aurora (used as a temporary queue). A Fargate Compute Engine polls Aurora, computes code quality metrics, updates Aurora and writes search data to an in-house Elasticsearch. Users read results through the UI/API. Up to 150k analyses per week; around 300,000 organizations supported. Planned: move to managed Amazon Elasticsearch, replace the Aurora queue with SQS, and support compiled languages (Java, C#)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developers",
+      "notes": "Developers write code and push it to a GitHub repo; they later view analysis results through the UI or the API."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Captures the event triggered by a code push to GitHub, does triage and some analysis, and creates an analysis request."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue of analysis requests. Used to level the load so the Fargate service is not overwhelmed, and as the signal for Fargate auto-scaling."
+    },
+    {
+      "id": "3",
+      "service": "Fargate",
+      "name": "ECS Fargate (Autoscan analyzer)",
+      "notes": "Auto-scaled Fargate service plugged into the SQS queue. Polls the queue, clones the code, and analyzes it. Uses only ephemeral storage, no external storage. Supports non-compiled languages (TypeScript, Python, etc.); Java and C# planned."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "ECS Fargate (Compute Engine)",
+      "notes": "Compute Engine. Polls the database to extract reports, computes many code quality metrics, updates the database, and writes search-optimized data to Elasticsearch."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "EC2 instance that receives analysis reports through an API and stores them in the database; also serves the UI/API users call to get results. AUTOSCALE: False, SPOT: False."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Database that stores analysis reports. Used as temporary storage / a queuing mechanism for reports, and holds the final analysis results. Plan is to replace the Aurora queue with a proper SQS queue."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "non-aws ElasticSearch",
+      "notes": "In-house Elasticsearch service (not Amazon). Stores additional shared data in an optimized format for search. Plan is to move to the managed Amazon version."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Developers push a code change to a GitHub repo; this triggers an event that is captured by Lambda."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "After triage, Lambda creates an analysis request and sends it to the SQS queue."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "The Fargate service polls the queue and receives analysis requests; the queue also drives its auto-scaling."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "After cloning and analyzing the code, Fargate pushes an analysis report to the EC2 instance through an API."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "The EC2 instance stores the received report in the Aurora database (temporary storage / queue)."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "The Compute Engine polls the database for reports."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reports are extracted from the database by the Compute Engine."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "After computing code quality metrics, the Compute Engine updates the database with the analysis result, ready to be consumed by users."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "The Compute Engine stores additional shared data in an optimized format for search."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Users call the UI or the API to see the analysis results."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "The EC2 UI/API queries the database for the analysis results."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "The database returns the analysis results to the EC2 UI/API."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Analysis results are returned to the users through the UI or the API."
+    }
+  ]
+}

@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Expedia Group</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Source applications (bookings, partner data, etc.), both on-prem and mostly in the cloud. Data arrives in mixed formats such as Parquet, CSV and JSON. The Kafka producer for real-time events also runs on these applications.</data>
+    </node>
+    <node id="1">
+      <data key="d5">S3 (Data Lake / Ingestion)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Data ingestion layer, or data lake, that collects data from the Expedia Group applications daily in mixed formats (Parquet, CSV, JSON).</data>
+    </node>
+    <node id="2">
+      <data key="d5">EC2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Custom transformation. It is used because Glue lacked bookmark support for Parquet files at the time and because some customization could not be done in Glue.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Glue</data>
+      <data key="d6">Glue</data>
+      <data key="d7">Serverless ETL that consumes and transforms the mixed data into a unified format.</data>
+    </node>
+    <node id="4">
+      <data key="d5">S3 (CSV)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Holds the transformed data in a common CSV format, because Salesforce Einstein Analytics only accepts CSV. The batch layer processes 500 to 800 million rows per day.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Salesforce Einstein Analytics</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Reporting engine that gives business users a unified global view. It receives both the batch CSV data and the real-time data.</data>
+    </node>
+    <node id="6">
+      <data key="d5">ECS (Kafka Consumer)</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Runs a Kafka consumer that reads real-time events from the Kafka producer on the Expedia applications. Kinesis and MSK were not used because the producer runs on the Expedia side. The layer handles 5 to 10 million events per day. Fargate adoption is planned.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Aurora (MySQL)</data>
+      <data key="d6">Aurora</data>
+      <data key="d7">Aggregates and sorts the data using the MySQL engine. It was chosen over S3 and other evaluated solutions.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Processes records from Aurora and turns them into queueable messages.</data>
+    </node>
+    <node id="9">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queues the messages. From SQS, additional Lambdas call APIs that push the data to Salesforce.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Daily batch ingestion of data from the Expedia applications in mixed formats (Parquet, CSV, JSON).</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The Kafka consumer on ECS reads real-time events from the Kafka producer running on the Expedia Group applications. This edge comes from the audio and is not drawn on the board.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EC2 reads data for custom transformation, including Parquet bookmarking and customizations not supported by Glue.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Glue ETL consumes and transforms the data into a unified format.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Writes the transformed data in the common CSV format.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Writes the unified data in CSV format.</data>
+      <data key="d10">2'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Pushes the CSV data to Salesforce Einstein Analytics, at 500 to 800 million rows per day.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Pushes real-time events into Aurora for aggregation and sorting, at 5 to 10 million events per day.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda processes the aggregated data.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Queues the processed records as messages in SQS.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">From SQS, additional Lambdas call APIs that push the data to Salesforce in real time.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Expedia Group - AWS to Salesforce Einstein Analytics Integration (Batch and Real-Time)</data>
+    <data key="d1">https://www.youtube.com/watch?v=f5EJBUfGZtw</data>
+    <data key="d2">There are two patterns. The top pattern is daily batch processing of 500 to 800 million rows per day. Data from Expedia applications (bookings, partner data, etc.) is ingested into S3 and transformed by Glue and EC2 into a unified CSV format, which is then pushed to Salesforce Einstein Analytics. The bottom pattern is a real-time integration that handles 5 to 10 million events per day. A Kafka consumer on ECS writes to Aurora (MySQL) for aggregation and sorting. Lambda then processes the data and queues it in SQS, and further Lambdas call APIs that push the data to Salesforce. The team plans to adopt Fargate in the future.</data>
+    <data key="d3">Data Integration, ETL, Batch Processing, Real-Time Streaming, Analytics, SaaS Integration</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

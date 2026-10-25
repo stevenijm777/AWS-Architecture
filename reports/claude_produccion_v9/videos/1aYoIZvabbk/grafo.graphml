@@ -1,0 +1,99 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">USER</data>
+      <data key="d6">UserCompanyDeveloper</data>
+      <data key="d7">Developer or end user who opens the Orion portal over HTTPS to request a new environment. The request gives the environment name, business use case and business vertical.</data>
+    </node>
+    <node id="1">
+      <data key="d5">ROUTE 53</data>
+      <data key="d6">Route53</data>
+      <data key="d7">Does DNS resolution for the Orion portal and resolves to the Application Load Balancer.</data>
+    </node>
+    <node id="2">
+      <data key="d5">ALB</data>
+      <data key="d6">ALB</data>
+      <data key="d7">Application Load Balancer that sends requests to the Kubernetes application pods.</data>
+    </node>
+    <node id="3">
+      <data key="d5">EKS</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Container orchestrator for all workloads. It has scaled from 100 to more than 10,000 pods. The main application pod creates one Kubernetes job per microservice (a business vertical may need more than 70 microservices). EKS replaces jobs that are disrupted by Spot terminations.</data>
+    </node>
+    <node id="4">
+      <data key="d5">SPOT</data>
+      <data key="d6">EC2</data>
+      <data key="d7">100% Spot instances run the pods and the microservice jobs, chosen to keep costs efficient. The AWS Node Termination Handler listens for termination events and drains nodes so workloads move to other nodes.</data>
+    </node>
+    <node id="5">
+      <data key="d5">SNS</data>
+      <data key="d6">SNS</data>
+      <data key="d7">Receives an event whenever a job is triggered to create a microservice. It fans the message out to SQS.</data>
+    </node>
+    <node id="6">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Holds the job state and unfinished jobs. Replacement jobs watch the queue to finish tasks interrupted by Spot terminations, which keeps environment provisioning consistent.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The user opens the Orion portal over HTTPS, and DNS resolution goes to Route 53.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Route 53 resolves the DNS name to the Application Load Balancer.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The ALB sends the environment creation request to the Kubernetes pods that EKS orchestrates.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The request reaches the application pod running on the underlying Spot instances.</data>
+      <data key="d10">2'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Whenever a job is triggered to create a microservice, it sends an event to SNS.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SNS fans the message out to the SQS queue, which stores the job state.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The replacement job on Spot watches SQS for unfinished jobs, for example a microservice launch that failed when the Spot node was terminated, and finishes them.</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <data key="d0">OLX Autos - Orion Internal Developer Platform on EKS with 100% Spot</data>
+    <data key="d1">https://www.youtube.com/watch?v=1aYoIZvabbk</data>
+    <data key="d2">OLX Autos runs in 11 countries (up from 9 in December 2021). Orion is an internal developer platform that creates replica environments of the OLX Autos stack, to reduce time to market and speed up deployments. All workloads run on EKS on 100% Spot instances. EKS has scaled from 100 pods to more than 10,000. The AWS Node Termination Handler drains nodes when a Spot interruption is coming. SNS and SQS persist the state of the job for each microservice, so that replacement jobs can resume unfinished provisioning.</data>
+    <data key="d3">Containers, Kubernetes, Cost Optimization, Developer Platform, Messaging</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

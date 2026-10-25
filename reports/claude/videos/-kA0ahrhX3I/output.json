@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the board shows a central AWS account (Security Engineers, QuickSight, Athena, a hand-drawn S3 findings bucket, MySQL, Glue, Macie) and two further AWS accounts, each with Macie and S3. 2) Pruning: Security Engineers is a generic human actor with no arrows, so it is removed. 3) Fusion: the three Macie icons act as one multi-account Macie deployment (production accounts connected to Macie), so they are fused into one node. The two member-account S3 icons are fused into one 'production S3 buckets' node (the scan targets). The central hand-drawn bucket is kept separate because it plays a different role (findings/results bucket). 4) MySQL is not an AWS service icon, so it is typed ThirdParty ('MySQL data lake'). 5) Edges from drawn arrows: Macie -> findings S3, Athena -> findings S3 (query), QuickSight -> findings S3 (the speaker says this is done via Athena), findings S3 -> MySQL. 6) Edges from the audio only: production S3 buckets -> Macie (Macie inventories and scans the buckets), and findings S3 -> Glue (Glue automations get, load and aggregate the data). Glue has no drawn arrow, so the Glue edge is an interpretation of the transcript. 7) Flows: flow 0 = discovery and findings delivery; flow 1 = query and dashboarding; flow 2 = load/aggregation into the MySQL data lake for remediation reporting.",
+  "graph": {
+    "name": "Oportun: Sensitive Data Discovery and DSPM with Amazon Macie",
+    "link": "https://www.youtube.com/watch?v=-kA0ahrhX3I",
+    "categories": "Security, Data Protection, Analytics",
+    "graph_usable": true,
+    "notes": "Multi-account Amazon Macie scans production S3 buckets for sensitive member data (SSNs, ITINs, government IDs). Findings (metadata only, no PII) land in a company-owned S3 bucket, are queried with Athena, visualized in QuickSight, and loaded into a MySQL data lake with Glue automations to identify bucket owners and remediate. Reported accuracy of automated sensitive data discovery for patterns such as SSNs and ITINs is 95%."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "Production S3 Buckets (member AWS accounts)",
+      "notes": "S3 buckets in the connected production AWS accounts. Macie inventories them and the team selects which ones to scan. Fused from the two member-account S3 icons."
+    },
+    {
+      "id": "1",
+      "service": "Macie",
+      "name": "Amazon Macie",
+      "notes": "Data discovery tool connected across multiple AWS accounts, with production accounts prioritized. Quickly inventories all S3 buckets and runs manual or scheduled scans. Automated sensitive data discovery accuracy is 95% for patterns/regexes such as SSNs and ITINs. Fused from the three Macie icons."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "Amazon S3 (Macie findings bucket)",
+      "notes": "Company-owned bucket set up per connected account to receive Macie results. Holds only metadata (e.g. number of SSNs per bucket); no PII or sensitive data."
+    },
+    {
+      "id": "3",
+      "service": "Athena",
+      "name": "Amazon Athena",
+      "notes": "SQL-based query tool that looks into the findings buckets and queries the findings information."
+    },
+    {
+      "id": "4",
+      "service": "QuickSight",
+      "name": "Amazon QuickSight",
+      "notes": "Dashboards showing the top 10/20/30 risky buckets by PII type and their owners, used to drive remediation. Other BI tools such as Tableau or Power BI could be used instead."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "MySQL",
+      "notes": "MySQL data lake built by the company, into which findings data is dropped to identify bucket owners and support remediation."
+    },
+    {
+      "id": "6",
+      "service": "Glue",
+      "name": "AWS Glue",
+      "notes": "Automations that get, load and aggregate the findings data for reporting to data owners. No arrow is drawn to it on the board."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Macie inventories and scans the selected production S3 buckets (manual or scheduled) for sensitive data. From the audio; no arrow drawn."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Macie writes scan findings (metadata only, e.g. counts of SSNs per bucket) to the findings S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Athena queries the findings stored in the S3 bucket with SQL."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "QuickSight reads the findings from the S3 bucket (via Athena, per the speaker) to build dashboards of risky buckets by PII type and owner."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Glue automations get, load and aggregate the findings data. From the audio; no arrow drawn."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Findings data is dropped into the MySQL data lake for owner identification and remediation reporting."
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows two patterns separated by a line: a batch/daily pipeline on top and a real-time pipeline below. Batch (flow 0): Expedia Group applications land heterogeneous data in S3 #1 (data lake); Glue and EC2 transform it in parallel; unified CSV output is written to S3 #2. Real-time (flow 1): a Kafka consumer on ECS writes events to Aurora, Lambda processes them, messages are queued in SQS, and data is pushed to Salesforce. The two S3 icons are kept as separate nodes because they are distinct stages (raw ingestion vs. unified CSV output). The Kafka consumer is recorded as a note on its ECS host, since Kafka is not a drawn entity. Self-check: visual_connections has 8 entries; I emit 9 edges. All 8 ledger edges are kept with their original direction. The one extra edge, EC2 -> S3 #2, is added because the transcript says the data transformed there comes into the common format in the second S3, and the arrow is visible on the board. No S3 #2 -> Salesforce edge and no Expedia -> ECS edge were added, because neither is in the ledger nor stated as a direct flow between those components.",
+  "graph": {
+    "name": "Expedia Group: Batch and Real-Time Integration of AWS with Salesforce Einstein Analytics",
+    "link": "https://www.youtube.com/watch?v=f5EJBUfGZtw",
+    "categories": "Analytics, Data Integration, ETL, Real-Time Streaming",
+    "graph_usable": true,
+    "notes": "Two patterns: a batch/daily pipeline (S3 -> Glue/EC2 -> S3 as CSV) processing 500-800 million rows per day, and a real-time pipeline (ECS Kafka consumer -> Aurora -> Lambda -> SQS -> Salesforce) consuming 5-10 million events per day. Future plan: adopt Fargate."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerAPI",
+      "name": "Expedia Group Applications",
+      "notes": "Expedia Group channels and platforms (booking and partner data), some on-prem but mostly in the cloud. Source of the daily batch data; also hosts the Kafka producer."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 Data Ingestion Layer (Data Lake)",
+      "notes": "Data ingestion layer / data lake. Collects data from Expedia Group applications in heterogeneous formats (Parquet, CSV, JSON)."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 Unified Output (CSV)",
+      "notes": "Stores transformed data in a common CSV format, because Salesforce Einstein Analytics only accepts CSV."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Custom Processing",
+      "notes": "Handles work Glue could not do at the time: bookmark support for Parquet files and other customizations."
+    },
+    {
+      "id": "4",
+      "service": "Glue",
+      "name": "Glue ETL",
+      "notes": "Serverless ETL. Consumes and transforms the heterogeneous data into a unified format. Batch section processes 500-800 million rows per day."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS (Kafka Consumer)",
+      "notes": "Runs a Kafka consumer that consumes real-time events. Chosen over Kinesis/managed Kafka because the Kafka producer runs in Expedia Group applications. Fargate planned for the future."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora (MySQL)",
+      "notes": "Stores real-time events; used for aggregating and sorting data with the MySQL engine. Chosen over S3 and other options for this use case."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda Processing",
+      "notes": "Processes events and creates queueable messages; further Lambdas are called from SQS to call the APIs and push data to Salesforce. Scale: 5-10 million events per day."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues messages produced by Lambda before they are pushed to Salesforce."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Salesforce",
+      "notes": "Salesforce Einstein Analytics, the reporting engine for business users. Batch input limited to CSV; receives real-time data via API calls."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Expedia Group applications deliver daily data (Parquet, CSV, JSON) into the S3 data lake."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 reads data needing custom processing, such as Parquet files requiring bookmark support."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Glue consumes the heterogeneous data for ETL transformation."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Glue writes the transformed data in unified CSV format to S3."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "EC2 writes its transformed data in the common CSV format to S3."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "The Kafka consumer on ECS pushes real-time events into Aurora."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda processes the data from Aurora."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queues the processed data as messages in SQS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "From SQS, further Lambdas are called which call the APIs and push the data straight into Salesforce."
+    }
+  ]
+}

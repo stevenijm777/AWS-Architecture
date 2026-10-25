@@ -1,0 +1,204 @@
+{
+  "step_by_step_reasoning": "1) The board shows a generic 'AWS' source icon; the audio explicitly lists S3, SNS, SQS, CloudTrail and GuardDuty as the public cloud telemetry sources, so the icon is expanded into five separate nodes. 2) On-prem sources feed Apache Metron via syslog/Kafka. 3) Apache Metron (ThirdParty) is the core of the SOC: parsing to JSON, enrichment, profiling. Apache NiFi is mentioned only as the integration tool that pulls AWS telemetry, and is not drawn, so it is recorded in notes rather than as a node. 4) Security data lake: an EMR job moves Metron's persisted HDFS data to S3, and Athena queries S3. The drawn arrow from the data lake back to Metron is the feedback loop of long-term profiles/models, recorded as a meta edge from Athena. 5) Metron sends alerts to the SOAR platform (Blitz, drawn with an EC2 icon), which enriches the alert and presents it to the SOC analyst. The analyst responds at the click of a button, and the SOAR applies the mitigation to the WAF. The board draws the arrow Alerts -> WAF; it is routed analyst -> SOAR -> WAF because the speaker describes the block being executed through the SOAR integrations. 6) The two S3 icons in the world model are kept separate: one is a telemetry source, the other is the data lake store. 7) The world model's WAF -> EC2 and EC2 -> Metron connections are omitted because neither the board nor the transcript supports them. 8) The analyst is kept as the human-in-the-loop for the semi-automated response, matching the 'Alerts' icon on the board.",
+  "graph": {
+    "name": "MakeMyTrip: Next-Gen SOC with Apache Metron and a Serverless Security Data Lake",
+    "link": "https://www.youtube.com/watch?v=-3lnf5lzsH0",
+    "categories": "Security, Analytics, Data Lake, Incident Response",
+    "graph_usable": true,
+    "notes": "Next-gen SOC built from the ground up by MakeMyTrip. Hybrid data ingest (public cloud and on-prem) into Apache Metron, a security data lake (EMR, S3, Athena) with a feedback loop of long-term profiles, and a SOAR platform (Blitz) for semi-automated incident response through WAF, firewall and router integrations. Scale: about 20 data sources, about 5000 events per second, about 250 million events indexed per day in the data lake. Example use case: detecting server compromise through deviation in the producer-consumer ratio (PCR)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 (AWS telemetry source)",
+      "notes": "Public cloud telemetry source; events pulled into Apache Metron via Apache NiFi workflows."
+    },
+    {
+      "id": "1",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Public cloud telemetry source integrated via Apache NiFi workflows."
+    },
+    {
+      "id": "2",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Public cloud telemetry source integrated via Apache NiFi workflows."
+    },
+    {
+      "id": "3",
+      "service": "CloudTrail",
+      "name": "CloudTrail",
+      "notes": "CloudTrail log messages are ingested and parsed into JSON by Apache Metron."
+    },
+    {
+      "id": "4",
+      "service": "GuardDuty",
+      "name": "GuardDuty",
+      "notes": "GuardDuty log messages are ingested and parsed into JSON by Apache Metron."
+    },
+    {
+      "id": "5",
+      "service": "OnPremDC",
+      "name": "On-Prem",
+      "notes": "On-premise data sources; standard syslog or Kafka integration directly into Apache Metron."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Apache Metron",
+      "notes": "Heart of the next-gen SOC (drawn with an EC2 icon). Parses telemetry into JSON, enriches events with contextual intelligence (geolocation, AS number, server role such as flight/hotel/payment), and builds short-term profiles in the stream processing layer. Persists data in HDFS. About 20 data sources, about 5000 events per second."
+    },
+    {
+      "id": "7",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "EMR job picks up persisted data from Metron's HDFS and transforms it into S3. Part of the security data lake."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 (Security Data Lake)",
+      "notes": "Serverless security data lake storing telemetry for months to years; about 250 million events indexed per day. Migrated from an on-prem HDFS setup."
+    },
+    {
+      "id": "9",
+      "service": "Athena",
+      "name": "Athena",
+      "notes": "SQL queries and analytics over S3 for log mining, analytics, forensics and threat hunting. Generates models/profiles over months of telemetry that are fed back to Apache Metron."
+    },
+    {
+      "id": "10",
+      "service": "EC2",
+      "name": "SOAR (Blitz)",
+      "notes": "Security orchestration and response platform called Blitz (open source on GitHub). Takes alerts from Metron, adds further context (reverse DNS, whois lookup), presents the alert in a single pane of glass (mobile handset or Jira integration), and integrates with WAF, firewall and internal routers for mitigation."
+    },
+    {
+      "id": "11",
+      "service": "UserCompanyAnalyst",
+      "name": "SOC Analyst (Alerts)",
+      "notes": "Receives enriched alerts and responds at the click of a button, for example by blocking a source. Reduces investigation and triage time."
+    },
+    {
+      "id": "12",
+      "service": "WAF",
+      "name": "WAF",
+      "notes": "Mitigation target; settings are modified to block malicious sources as the incident response."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Telemetry events from S3 pulled into Apache Metron (via Apache NiFi workflows)."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Telemetry events from SNS pulled into Apache Metron (via Apache NiFi workflows)."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Telemetry events from SQS pulled into Apache Metron (via Apache NiFi workflows)."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0'''",
+      "type": "data",
+      "notes": "CloudTrail logs pulled into Apache Metron (via Apache NiFi workflows)."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0''''",
+      "type": "data",
+      "notes": "GuardDuty findings pulled into Apache Metron (via Apache NiFi workflows)."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "0'''''",
+      "type": "data",
+      "notes": "On-prem events ingested directly via syslog or Kafka integration."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Persisted data in Metron's HDFS is picked up by an EMR job."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR job transforms the HDFS data and writes it to S3."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Athena runs SQL queries and analytics on the data in S3."
+    },
+    {
+      "source": "9",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Feedback loop: long-term (months-long) models and profiles from the security data lake are fed back into Apache Metron for more accurate enrichment and profiling."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Metron sends the alert to the SOAR platform (Blitz)."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Enriched alert presented to the SOC analyst in a single pane of glass (mobile handset or Jira integration)."
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "Analyst responds to the incident at the click of a button, for example blocking a source."
+    },
+    {
+      "source": "10",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "control",
+      "notes": "SOAR sends the control action that modifies WAF settings to block the threat."
+    }
+  ]
+}

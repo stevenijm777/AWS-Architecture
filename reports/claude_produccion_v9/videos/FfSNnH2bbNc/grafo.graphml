@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Satellite</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Existing satellites from organizations like NASA. Sends a series of lightly processed and corrected tiles every day, throughout the day.</data>
+    </node>
+    <node id="1">
+      <data key="d5">EC2 SPOT</data>
+      <data key="d6">EC2</data>
+      <data key="d7">A large cluster of Spot instances that is started as quickly as possible to post-process incoming tiles (more correction and format conversion for downstream use), then shut down again.</data>
+    </node>
+    <node id="2">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Holds the bulk imagery data as fairly large compressed chunks. Catalog of about 30 years, mostly about 10 years, about 5 PB in total, growing about 100 GB/day and rising as data sources are added. HTTP range requests let readers fetch only part of an object.</data>
+    </node>
+    <node id="3">
+      <data key="d5">RDS</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Holds the imagery metadata, used to look up which source imagery belongs to a given tile or area.</data>
+    </node>
+    <node id="4">
+      <data key="d5">ELASTICACHE</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">Redis used as a central cache for tiles already generated. Common tiles, such as the full-US map shown to every user at login, are computed once and then served from the cache.</data>
+    </node>
+    <node id="5">
+      <data key="d5">AWS FARGATE</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">Web tile service. Each map load is split into about 16 tile requests. For each tile it looks up the source imagery in RDS, reads small parts of objects from S3 using HTTP range requests, stitches them together, downsamples, applies color correction (RGB) or color mapping (intensity values such as 0-1 greenness), and returns the tile.</data>
+    </node>
+    <node id="6">
+      <data key="d5">LAMBDA</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">A series of Lambda functions that compute time series from the source data cube for a farmer-supplied custom field boundary. They look up imagery in RDS, read it from S3, build the tile of interest, clip it to the area of interest, and compute a summary (for example mean greenness), repeated about 1000 times to build the time series.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Users</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">Farmers and app users who log in and view a map of the US with imagery layers, choosing the layer type and time frame.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Daily satellite tiles (lightly processed and corrected) are taken in for post-processing.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Processed output stored as bulk imagery data in S3.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Processed output metadata written to RDS.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Bidirectional arrow. Reads cached tiles from Redis, and writes newly computed tiles so common tiles are computed only once.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Bidirectional arrow. Looks up which source imagery corresponds to the requested tile.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Bidirectional arrow. Pulls only the needed parts of large compressed chunks using S3 HTTP range requests.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Bidirectional arrow. Serves back the stitched, downsampled, and color-corrected or color-mapped tile.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="3" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Looks up the source imagery needed for the farmer-supplied area of interest.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Reads the imagery from S3, then clips it to the field and computes the mean greenness about 1000 times to build the time series.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">A map load is split into about 16 individual web tile requests sent to Fargate (added from explicit audio statement).</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Indigo Carbon - Satellite Imagery Processing and Tile Serving for Regenerative Agriculture</data>
+    <data key="d1">https://www.youtube.com/watch?v=FfSNnH2bbNc</data>
+    <data key="d2">Indigo Carbon helps farmers move to regenerative agriculture and earn carbon credits. It takes in satellite imagery (about 30-year catalog, mostly about 10 years, about 5 PB total, growing about 100 GB/day). The imagery is processed on EC2 Spot clusters, with bulk data stored in S3 and metadata in RDS. Web map tiles are generated on the fly by Fargate with an ElastiCache (Redis) tile cache. Field-level time series are computed on demand by a series of Lambda functions. Doing the processing on the fly saves orders of magnitude in cost.</data>
+    <data key="d3">Analytics, Geospatial, Serverless, Agriculture, Data Lake</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

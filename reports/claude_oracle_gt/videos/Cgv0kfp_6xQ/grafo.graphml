@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">iOS Client (Sender)</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">Snapchat iOS app that sends a snap.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Android Client (Recipient)</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">Snapchat recipient client. Holds a persistent connection to a gateway server so messages can be pushed with low latency.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Gateway (GW)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Snap-built gateway service running on EKS. Entry point for client apps; also holds the persistent connections used to push messages to recipients.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Media Delivery Service</data>
+      <data key="d6">EKS</data>
+      <data key="d7">EKS workload that sends the snap media to CloudFront so it is persisted in S3 close to the recipient.</data>
+    </node>
+    <node id="4">
+      <data key="d5">MCS (Messaging Service)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">EKS messaging service. Checks permissions via Friend Graph, persists metadata via SnapDB, looks up the recipient's connection/server ID in ElastiCache and pushes the message to the recipient.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Friend Graph</data>
+      <data key="d6">EKS</data>
+      <data key="d7">EKS workload that checks whether the sender has permission to send snaps to the recipient.</data>
+    </node>
+    <node id="6">
+      <data key="d5">SnapDB</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Snap's own database layer on EKS, a front end to DynamoDB. Adds transactions, TTL, efficient handling of ephemeral data and incremental state synchronization to reduce the load on DynamoDB and keep costs under control.</data>
+    </node>
+    <node id="7">
+      <data key="d5">CloudFront</data>
+      <data key="d6">CloudFront</data>
+      <data key="d7">Receives snap media from the media service and serves it to recipients by media ID, keeping content close to the recipient.</data>
+    </node>
+    <node id="8">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Persists snap media (images/video).</data>
+    </node>
+    <node id="9">
+      <data key="d5">ElastiCache</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">Stores session metadata: the connection ID / server ID of the persistent connection for each client, plus the media ID.</data>
+    </node>
+    <node id="10">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores snap metadata, including the media ID. 400 TB of data. Nightly scans run at 2 billion rows per minute, e.g. for friend suggestions and deleting ephemeral data.</data>
+    </node>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The iOS app sends a snap through the gateway.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The gateway forwards the snap media to the media delivery service.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The gateway passes the message to the messaging service (MCS).</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The gateway pushes the message to the recipient client over the persistent connection. This step is latency sensitive.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The media service sends the snap to CloudFront.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">MCS checks with Friend Graph whether the sender has permission to send snaps.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">MCS persists the snap metadata (including the media ID) through SnapDB.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">MCS looks up the connection ID / server ID in ElastiCache to find the server holding the recipient's persistent connection.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">MCS sends the message to the gateway server the recipient is connected to.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="10" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SnapDB stores the metadata in DynamoDB.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The media is persisted in S3 so it is closer to the recipient when needed.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The recipient uses the media ID to retrieve the image/video from CloudFront. Stated in the transcript; not drawn on the whiteboard.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Snap: Snapchat Send/Receive Snap Platform on AWS</data>
+    <data key="d1">https://www.youtube.com/watch?v=Cgv0kfp_6xQ</data>
+    <data key="d2">End-to-end lifecycle of sending and receiving a snap on Snapchat. Scale: 300M+ daily active users, 5B+ snaps/day and 10M+ QPS (whiteboard figures). 900+ EKS clusters, many with 1000+ instances. Moving to this architecture reduced P50 send latency by 24%. Compute cost is controlled with auto-scaling and Graviton instance types.</data>
+    <data key="d3">Containers, Messaging, Media Delivery, Databases</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

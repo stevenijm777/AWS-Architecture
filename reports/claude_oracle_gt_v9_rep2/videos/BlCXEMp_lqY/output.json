@@ -1,0 +1,122 @@
+{
+  "step_by_step_reasoning": "Nodes: the six drawn entities are kept as-is (TV entry point, Kinesis, Firehose, RedShift, S3, QuickSight). No fusion or expansion needed; Aurora is mentioned only as an abandoned experiment, so it is not added. Edges: the ledger has 9 visual_connections entries and I emit 9 edges, one per entry with the same source and target. Flow 0 is ingestion (TV -> Kinesis -> Firehose -> RedShift / S3) with reverse ledger edges recorded as meta acknowledgments. Flow 1 is the reload of historical data from S3 through Firehose into RedShift path (S3 -> Firehose ledger edge). Flow 2 is visualization (QuickSight queries RedShift with custom SQL, RedShift returns data into SPICE). Ledger count: 9; emitted edges: 9.",
+  "graph": {
+    "name": "Vizio: Smart TV Telemetry Analytics with Kinesis, Redshift and QuickSight",
+    "link": "https://www.youtube.com/watch?v=BlCXEMp_lqY",
+    "categories": "Analytics, IoT, Data Warehousing, Streaming",
+    "graph_usable": true,
+    "notes": "Vizio ingests logs, performance telemetry and user data from millions of connected smart TVs (billions of events per month) through Kinesis Data Streams and Kinesis Firehose into Redshift for aggregation, keeps raw data forever in S3, and visualizes it with QuickSight SPICE. Built with AWS Professional Services: prototype in a few weeks, production in about 4-6 weeks. Aurora was tried first but did not aggregate billions of rows well."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerTV",
+      "name": "Vizio Smart TVs",
+      "notes": "Millions of connected devices generating logs, performance telemetry and user/application usage data; billions of events per month. No fixed schema, different formats and columns."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Kinesis Data Streams",
+      "notes": "Front door to the cloud; everything is piped through it. Eight-shard pipeline that has not yet needed scaling."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Takes the data as is and delivers it to Redshift and S3."
+    },
+    {
+      "id": "3",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Data warehouse for events/logs/user data. Only a subset of the columns is imported. Columnar storage gives optimized IO for large aggregations over billions of rows; replaced an Aurora experiment."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Long-term store of historical raw events/logs/user data, kept forever for future use. Was used to reload everything into Redshift without data loss."
+    },
+    {
+      "id": "5",
+      "service": "QuickSight",
+      "name": "QuickSight",
+      "notes": "Visualization and reporting. Uses the in-memory SPICE database populated with custom SQL queries against Redshift for snappy slicing and dicing."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "TVs send logs, performance telemetry and user data directly to Kinesis in any format."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Drawn return connection from Kinesis to the TVs; not described in the audio (ingestion acknowledgment)."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Stream data is piped through Firehose."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Firehose takes the data as is and loads it into Redshift (subset of columns)."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "Raw data is stored in S3 as its long-term home."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "meta",
+      "notes": "Drawn return connection from Redshift to Firehose; not described in the audio."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Historical data held in S3 can be reloaded into Redshift, as was done when migrating from Aurora without data loss."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "QuickSight runs custom SQL queries against Redshift."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Subsets of data are downloaded from Redshift into SPICE datasets for visualization and reports."
+    }
+  ]
+}

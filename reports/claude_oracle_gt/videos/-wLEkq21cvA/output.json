@@ -1,0 +1,192 @@
+{
+  "step_by_step_reasoning": "1) Inventory: took the world model nodes (On-Prem, App Discovery Service, DynamoDB, three distinct EC2 roles, Slack, CloudEndure, migration team). The three EC2 icons do different jobs (migration factory, hot replica, migrated target instance), so they stay separate. 2) Added two AMI nodes (Bake AMI, Shared AMI) that are not in the world model, because both are drawn on the whiteboard with arrows from the migration factory EC2 and described in the audio. 3) Kept On-Prem as ThirdParty to match the world model, although OnPremDC is also in the vocabulary. 4) Kept the migration team as UserCompanyAgent because it is the system entry point (fills DynamoDB, issues the Slack command). 5) Flows: flow 0 = agents on on-prem servers send discovery data to App Discovery Service and CloudEndure block-level replication to the hot replica; flow 1 = migration team fills DynamoDB with metadata; flow 2 = the migration run: Slack command -> migration factory API -> App Discovery API call (TCP connections returned) -> CloudEndure API call (replication stopped) -> bake AMI -> share encrypted AMI to the target account -> launch the target EC2 with instance type, IP and tags. 6) Added a DynamoDB -> migration factory read edge, which is not a drawn arrow; it rests on the audio saying the AMI is shared and the instance launched \"using the metadata that lives in DynamoDB\". 7) Edge types: data for payloads and reads, control for API calls and triggers, meta for the CloudEndure response. TSO Logic is described as future work and is excluded.",
+  "graph": {
+    "name": "Versent Migration Factory: Automated On-Premises to AWS Server Migration",
+    "link": "https://www.youtube.com/watch?v=-wLEkq21cvA",
+    "categories": "Migration, Automation, DevOps",
+    "graph_usable": true,
+    "notes": "Versent's automated migration factory. It uses AWS Application Discovery Service for TCP connections and performance metadata, CloudEndure for block-level replication, DynamoDB for operational metadata and tags, and an EC2 migration factory triggered from Slack that bakes an AMI, shares it encrypted to the target account and launches the instance. Migration time per server dropped from about 3-4 hours to about 10 minutes. Future work: use TSO Logic instance type recommendations stored in DynamoDB."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "On Premise Infra",
+      "notes": "On-premises servers to be migrated. The Application Discovery agent and the CloudEndure live migration agent are installed on them."
+    },
+    {
+      "id": "1",
+      "service": "AppDiscovery",
+      "name": "Application Discovery Service",
+      "notes": "Collects inbound and outbound TCP connections and performance utilization from on-premises servers, used for firewall rules and instance sizing."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Operational metadata filled in by the migration team: RTO, RPO, infrastructure and business owners, about 10 tags per server, target account, subnet, IP and instance type."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Migration Factory",
+      "notes": "Migration orchestration and processing. Exposes an API called from Slack and does all integrations via API calls: App Discovery, CloudEndure, AMI bake, AMI share and instance launch. About 10 minutes per server instead of 3-4 hours."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Hot Replica",
+      "notes": "Replicated data of on-premises servers. Continuous block-by-block volume replication through CloudEndure."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 Migrated Instance (Target Account)",
+      "notes": "EC2 instance to which the on-premises server has been migrated. Launched in the target account from the shared AMI with the instance type, specific IP, subnet and about 10 tags."
+    },
+    {
+      "id": "6",
+      "service": "UserCompanyAgent",
+      "name": "Migration Team",
+      "notes": "Fills DynamoDB with metadata and issues a single Slack command to start the migration."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": "Chat interface. One command from the migration team calls the API on the migration factory EC2 instance."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "CloudEndure",
+      "notes": "CloudEndure live migration. Block-level continuous volume replication from on-premises to AWS; replication is stopped via API at cutover."
+    },
+    {
+      "id": "9",
+      "service": "AMI",
+      "name": "Bake AMI",
+      "notes": "AMI baked from the hot replicated instance, so the on-premises data now lives in an AMI."
+    },
+    {
+      "id": "10",
+      "service": "AMI",
+      "name": "Shared AMI",
+      "notes": "AMI shared with encryption to the target account, which is determined from the DynamoDB metadata."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "The Application Discovery agent on the on-premises server sends inbound/outbound TCP connections and performance utilization."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "The CloudEndure agent continuously replicates volumes block by block from the on-premises server to the hot replica in AWS."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "The migration team fills DynamoDB with operational metadata: RTO, RPO, owners, tags, target account, subnet and IP."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "The migration team issues one command in Slack."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Slack calls the API on the migration factory EC2 instance, which starts the migration."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "API call to the Application Discovery Service to gather inbound and outbound TCP connections."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Returns the TCP connection data, used for firewall rules."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "control",
+      "notes": "API call to CloudEndure to stop the replication."
+    },
+    {
+      "source": "8",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "control",
+      "notes": "CloudEndure stops the replication on the hot replica."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "meta",
+      "notes": "CloudEndure API response to the migration factory."
+    },
+    {
+      "source": "3",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "7",
+      "type": "control",
+      "notes": "The migration factory bakes the AMI from the hot replicated instance via an API call."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "8",
+      "type": "data",
+      "notes": "The migration factory reads the DynamoDB metadata: target account, instance type, IP, subnet and tags."
+    },
+    {
+      "source": "3",
+      "target": "10",
+      "flow_id": 2,
+      "seq": "9",
+      "type": "control",
+      "notes": "Shares the AMI, with encryption, to the target account."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "10",
+      "type": "control",
+      "notes": "Starts the instance in the target account with the instance type, specific IP, firewall rules and about 10 tags."
+    }
+  ]
+}

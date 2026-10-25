@@ -1,0 +1,152 @@
+{
+  "step_by_step_reasoning": "Transcribed the Kinaï (healthcare) whiteboard: hospitals and clients send medical images to S3 (5 TB per project); the images are loaded into the Kubernetes (EKS) product, where pathologists annotate and label them; the enriched data is used to train one model per project in SageMaker, with FSx for IO performance and IAM for security; the model is stored in an S3 bucket and exported with its results back to the EKS product, where the pathologist validates or refuses it; validated models are frozen and served for inference on the same Kubernetes platform. The whiteboard shows two S3 icons (raw-data bucket and model bucket), but the world model lists a single S3 entity, so they are kept as one S3 node and all S3 arrows are attached to it. No nodes were pruned: both actors are system entry points (hospital data source and pathologist using the labelling platform). Ledger self-check: visual_connections has 12 entries and 12 edges are emitted, one per entry with the same source and target, keeping both directions and repeated pairs (UserCompanyAgent->EKS x2, S3->EKS x2, SageMaker<->IAM). No edges were added beyond the ledger. Flows: 0 = ingestion and labelling, 1 = model training, 2 = model validation and inference.",
+  "graph": {
+    "name": "Kinaï - Medical Image Labelling and Per-Project Model Training on EKS and SageMaker",
+    "link": "https://www.youtube.com/watch?v=2XVgpMwY5iE",
+    "categories": "Healthcare, Machine Learning, Containers",
+    "graph_usable": true,
+    "notes": "Kinaï builds technology for research and clinical studies, guiding pathologists and doctors in analysing medical images. Dynamic infrastructure after migrating to SageMaker: scientists work on several projects at once and switch project in seconds, thousands of trainings can run in parallel, training is more than 30 times faster, and infrastructure cost is reduced by up to 30% (no payment for unused resources). Compliance: HDS certification for health data security; data stays in the region of the project (e.g. a German project keeps its data in Germany)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDataStream",
+      "name": "Hospitals / Biologists / Clients",
+      "notes": "Hospitals, biologists and clients send medical images. Hospitals later use the validated model."
+    },
+    {
+      "id": "1",
+      "service": "UserCompanyAgent",
+      "name": "Pathologist",
+      "notes": "Enriches the data by annotating and labelling images; validates or refuses the trained model."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Kubernetes Product (Labelling Platform)",
+      "notes": "Kinaï product running on Kubernetes: labelling platform for pathologists, shows model results, and hosts inference once the model is validated and frozen."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Buckets",
+      "notes": "Buckets holding the incoming medical images (about 5 TB of data per project) and the trained model. Data is kept in the project's region (e.g. Germany)."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker Training",
+      "notes": "Trains one model per project. Existing pipelines were containerised in Docker and the same Docker image is reused in SageMaker, making migration easy. Thousands of trainings in parallel; training more than 30 times faster."
+    },
+    {
+      "id": "5",
+      "service": "FSX",
+      "name": "FSx",
+      "notes": "Used with SageMaker training for IO performance."
+    },
+    {
+      "id": "6",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "Security and fine-grained control of data access; helps document and comply with certifications (HDS)."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Hospitals and clients send medical images to S3 buckets (about 5 TB per project)."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Images are loaded into the Kubernetes product to be shown to pathologists."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Images (and later model results) are shown to the pathologist."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pathologist enriches the data by annotating and labelling the images."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Enriched (annotated) data is used to train one model per project in SageMaker."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "SageMaker relies on IAM for security."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "IAM provides access control over the data used in training."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "FSx provides high IO performance storage for training."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "The trained model is stored in an S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Model and results are exported to the Kubernetes product to be shown to the pathologist."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Pathologist validates or refuses the model; a validated model is frozen and moved to inference on Kubernetes."
+    }
+  ]
+}

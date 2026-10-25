@@ -1,0 +1,118 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the whiteboard shows 8 entities: the CLI, the Browser, 3 EC2 instances, DynamoDB, SQS and Lambda. The three EC2 instances each do a different job: the deployment web service, the backend worker and the internal invocation service. Because of that they are not fused. 2) Vocabulary normalization: 'UserDeveloper' is not a valid value. The CLI is used by customers and third-party vendors, so it maps to UserConsumerDeveloper. The Browser maps to UserConsumerWeb. 3) The audio mentions an ALB in front of the deployment EC2 service, but it is not drawn. Adding it would mean re-routing the ledger edge from the CLI to the EC2 service, so I recorded it as a note instead. The green line is an account boundary, not a component, so it is also recorded as a note. The V8 isolates run inside Lambda and are recorded as a Lambda note. 4) Flows: Flow 0 is deployment: CLI -> EC2 Deployment Service -> DynamoDB (state tracking) -> SQS (queues the deployment request) -> EC2 Worker (pulls from the queue) -> Lambda (creates the function across the account boundary without being rate limited). Flow 1 is invocation: Browser -> EC2 Internal Service (checks permissions and finds the right Lambda) -> invokes Lambda with parameters. The page fragment is returned to the browser, but no return arrow is drawn, so it is recorded in the notes only. 5) Self-check: there are 7 visual_connections entries and I emit 7 edges.",
+  "graph": {
+    "name": "Atlassian Forge - Customer App Deployment and Invocation Platform",
+    "link": "https://www.youtube.com/watch?v=H2fOkeXxpyw",
+    "categories": "Serverless, Multi-tenant SaaS, Security, Decoupling/Queueing",
+    "graph_usable": true,
+    "notes": "Atlassian Forge lets customers, developers and third-party vendors build custom apps that extend Atlassian products such as Jira and Confluence. The platform has two parts: (1) deployment of customer JavaScript/TypeScript code as Lambda functions, and (2) invocation of that code from the browser. The Forge platform and the customer Lambdas run in separate AWS accounts (the account boundary is the green line), and neither account touches the other. The platform serves thousands of customers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerDeveloper",
+      "name": "CLI",
+      "notes": "Developers write code in JavaScript or TypeScript and deploy it with the Forge CLI."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerWeb",
+      "name": "Browser",
+      "notes": "End-user browser. It triggers invocation of a Forge app and renders the page fragment that comes back."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2 Deployment Service",
+      "notes": "Deployment web service that sits behind an ALB, so it can scale to handle thousands of customers. It turns customer JS functions into Lambda functions."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores deployment state (in progress, completed, failed) so the outcome can be reported back to the user."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues deployment requests. This decouples ingestion from Lambda creation and avoids the Lambda control-plane rate limits on how many functions can be created per time interval."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 Worker Service",
+      "notes": "Backend service that reads deployment requests from SQS and creates the Lambdas at its own pace, when it is allowed to, so it is not rate limited."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 Internal Service",
+      "notes": "Atlassian internal service. It checks whether the user is allowed to execute the Lambda, finds the right Lambda for that user and product, passes the correct parameters, and returns the constructed page fragment to the browser."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Customer code runs in a separate, dedicated customer Lambda account. The Lambdas are multi-tenant and can be shared between customers. Every invocation spins up a new V8 isolate and deletes it afterwards, so no state or global variables leak between customers. No data is stored in the Lambda. It can fetch data from other systems and products."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "The developer deploys customer code with the CLI to the deployment web service (through the ALB)."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stores and tracks deployment state and progress (completed, failed, etc.)."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queues the deployment request onto SQS to absorb load from thousands of customers."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "The backend worker pulls deployment requests off the queue at its own pace."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Creates or deploys the customer Lambda function across the account boundary, staying within Lambda control-plane rate limits."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "The browser sends an invocation request to the internal service, which checks permissions and finds the Lambda for that user and product. The page fragment is returned to the browser to render."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Invokes the customer Lambda in the customer account with the correct parameters. The Lambda runs the code in a fresh V8 isolate and returns data used to build the page fragment."
+    }
+  ]
+}

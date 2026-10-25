@@ -1,0 +1,158 @@
+{
+  "step_by_step_reasoning": "1) Ingestion flow: satellite tiles (from organizations like NASA) arrive throughout the day; a large cluster of EC2 Spot instances spins up, post-processes them and spins down; outputs are written to S3 (bulk data) and RDS (metadata). 2) User map tile flow: users load the web app map, which is sliced into ~16 tile requests to Fargate; Fargate checks/reads the ElastiCache Redis cache, looks up source imagery in RDS, pulls partial objects from S3 with HTTP range requests, stitches/downsamples/color-corrects, writes the tile to ElastiCache and serves it back to the user. 3) Time series analytics flow: the farmer-supplied field boundary (area of interest) is passed to a series of Lambda functions, which look up imagery in RDS, read from S3, clip to the area and compute a summary (e.g. mean greenness) ~1000 times to build a time series. The whiteboard shows only a one-way arrow from the user side into Lambda, so no return edge to the user is recorded. Lambda functions are fused into one node since they act as a single logical unit. Reads from RDS/S3 are modelled as data edges from the store to the consumer.",
+  "graph": {
+    "name": "Indigo Carbon: Serverless Satellite Imagery Processing for Regenerative Agriculture",
+    "link": "https://www.youtube.com/watch?v=FfSNnH2bbNc",
+    "categories": "Serverless, Analytics, Geospatial, Agriculture, Storage",
+    "graph_usable": true,
+    "notes": "Indigo Carbon ingests satellite imagery (about 5 PB catalog, growing 100 GB/day), preprocesses it on EC2 Spot, stores bulk data in S3 and metadata in RDS, then serves on-the-fly web map tiles through Fargate (cached in ElastiCache Redis) and computes on-the-fly field-level time series with Lambda to generate carbon credits."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerSatellite",
+      "name": "Satellites (NASA and others)",
+      "notes": "Existing satellites from organizations like NASA. Deliver a series of modestly processed and corrected tiles every day, throughout the day."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Spot",
+      "notes": "Large cluster of Spot instances spun up as quickly as possible to post-process incoming imagery (further correction and conversion to formats more accessible downstream), then spun back down."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Bulk imagery data in relatively large compressed chunks. Catalog spans back 30 years, mostly within 10 years; about 5 PB total, growing about 100 GB/day and increasing as data sources are added. Read with HTTP range requests to fetch only part of an object."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Metadata store. Used to look up which source imagery corresponds to a given tile or area."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Cluster serving web map tiles. Each map load is sliced into about 16 tiles arriving as individual requests. Looks up source imagery in RDS, pulls partial objects from S3, stitches the pieces into a larger image, downsamples to the right resolution, applies color correction (RGB) or color mapping (intensity values such as greenness 0 to 1), and serves the tile back."
+    },
+    {
+      "id": "5",
+      "service": "ElastiCache",
+      "name": "ElastiCache (Redis)",
+      "notes": "Redis used as a central cache for already generated tiles. Common tiles (e.g. the whole-US view shown to most users at app load) are computed once on the fly, stored, and read/written as needed."
+    },
+    {
+      "id": "6",
+      "service": "UserConsumerWeb",
+      "name": "Users / Farmers (Web App)",
+      "notes": "Users log into the app and see a map of the United States with the most up-to-date imagery; they can select the layer and time frame. Farmers supply their custom field boundary (area of interest), which is not known ahead of time."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "A series of Lambda functions computing a time series from the source data cube. Looks up imagery in RDS, reads it from S3, builds the tile of interest, clips it to the farmer's area of interest and computes a summary (e.g. mean greenness of all pixels in the field), repeated about 1000 times to produce the time series. On-the-fly processing across millions of possible combinations saves orders of magnitude of cost."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Satellite tiles arrive every day, throughout the day, and are processed by the EC2 Spot cluster."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Processed bulk imagery outputs are stored in S3 (about 100 GB/day)."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Metadata about the processed imagery is stored in RDS."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Loading the map issues about 16 individual web tile requests to Fargate for the selected layer and time frame."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Fargate reads already generated tiles from the Redis cache instead of recomputing them."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Fargate looks up in RDS which source imagery corresponds to the requested tile."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Fargate pulls only the needed subsection of the large compressed objects from S3 using HTTP range requests."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Newly computed tiles are written to ElastiCache so they are computed on the fly only once."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "The stitched, downsampled and color corrected/mapped tile is served back to the user."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "The farmer-defined field boundary (area of interest) is passed to the series of Lambda functions."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda looks up the needed imagery in RDS metadata."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda reads the source imagery from S3, clips it to the area of interest and computes the summary (e.g. mean greenness), repeated about 1000 times to build the time series."
+    }
+  ]
+}

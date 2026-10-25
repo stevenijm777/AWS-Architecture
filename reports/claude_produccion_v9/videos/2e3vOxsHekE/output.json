@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "1. Inventory: the world model lists 6 drawn entities: Fire Hydrant, API Gateway, S3, ECS, SageMaker and ANALYST. The transcript names no extra services, so no audio-driven expansion is needed. Each icon plays a different role, so nothing is fused.\n2. Normalization: the Fire Hydrant is the smart hydrant IoT device network. It keeps the authoritative world-model service ThirdParty and stays as the system entry point. ANALYST maps to UserCompanyAnalyst. It is kept rather than pruned because it is drawn on the board, it is a specific role (the human analyst team), and the transcript explicitly says SageMaker leak scores are fed to it.\n3. Ledger: there are 4 visual_connections entries, and each becomes one edge with the same direction: Fire Hydrant->API Gateway, API Gateway->S3, S3->ECS, ECS->SageMaker.\n4. Edge added from the audio: the transcript says \"from the SageMaker endpoint, we get a leak score... and then we feed that to our human analyst team\". This adds SageMaker->Analyst so the Analyst is not left without connections.\n5. Flows: everything is one daily leak-detection pipeline (flow 0, seq 0-4). All edges are data transfers: files, correlations and scores. S3->ECS is the daily batch process reading the persisted files, so it is typed as data. The model retraining from field feedback every 6 weeks has no drawn components or explicit service flow, so it is recorded only in notes.\n6. Self-check: 4 visual_connections entries, 5 edges emitted (4 from the ledger and 1 from the audio). 5 >= 4.",
+  "graph": {
+    "name": "Mueller Water Products - Water Intelligence Platform (Acoustic Leak Detection)",
+    "link": "https://www.youtube.com/watch?v=2e3vOxsHekE",
+    "categories": "IoT, Machine Learning, Batch Processing, Containers",
+    "graph_usable": true,
+    "notes": "Large-scale IoT network (meters, smart fire hydrants, pressure and water quality devices). Smart hydrants record correlated acoustic signals on the pipe network every day. Files go through API Gateway for authentication and security (strong focus on IoT security) and are persisted in S3. A daily ECS batch processes node pairs to find correlations and persistent correlations (over many days). A SageMaker endpoint assigns a leak probability, and analysts qualify the leaks and mark them for field investigation. Field feedback is used about every 6 weeks to retrain the model. Planned: add flow and pressure data."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Fire Hydrant",
+      "notes": "Smart fire hydrant IoT devices. They collect acoustic data measuring noises on the pipe network, recorded daily and correlated across multiple hydrants."
+    },
+    {
+      "id": "1",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Receives the daily acoustic signal files. Provides the authentication and security layer, which is why devices do not push straight to S3 (heavy focus on IoT security)."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Persists the incoming acoustic signal files."
+    },
+    {
+      "id": "3",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Container microservices running a daily batch process. Each file is processed as a node pair to find correlations and persistent correlations (over many days). Chosen over Lambda because the acoustic algorithms are very processor-intensive."
+    },
+    {
+      "id": "4",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "ML endpoint that classifies persistent correlations and assigns a leak probability score. Retrained with field feedback about every 6 weeks to reduce false positives."
+    },
+    {
+      "id": "5",
+      "service": "UserCompanyAnalyst",
+      "name": "ANALYST",
+      "notes": "Human analyst team. Receives leak scores, reviews the persistent correlation, checks with the water utility for other nearby noise sources, and updates the leak status to 'field investigation required'."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Daily correlated acoustic signal files are pushed through API Gateway."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Authenticated and secured files are pushed to and persisted in S3."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Daily batch process on ECS processes each file as a node pair to find acoustic correlations."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Persistent correlations are sent to the SageMaker ML endpoint for classification and a leak probability."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Leak score (probability) is fed to the human analyst team for further classification and field investigation scheduling."
+    }
+  ]
+}

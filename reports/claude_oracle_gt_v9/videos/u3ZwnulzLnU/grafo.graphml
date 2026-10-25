@@ -1,0 +1,140 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Developers</data>
+      <data key="d6">UserCompanyDeveloper</data>
+      <data key="d7">Developers write code and push it to a GitHub repository, which triggers an event. They later consume analysis results through the UI or the API.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Captures the GitHub code-change event, does triage and some analysis, and creates an analysis request.</data>
+    </node>
+    <node id="2">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queue of analysis requests. Used to level the load so the Fargate service is not overwhelmed, and to drive Fargate auto-scaling.</data>
+    </node>
+    <node id="3">
+      <data key="d5">ECS Fargate #1 (Scanner)</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">Auto-scaled Fargate service plugged into the SQS queue. Pulls the queue, clones the code, analyzes it, and pushes an analysis report. Uses only ephemeral storage for the cloned repositories; no external storage.</data>
+    </node>
+    <node id="4">
+      <data key="d5">ECS Fargate #2 (Compute Engine)</data>
+      <data key="d6">Fargate</data>
+      <data key="d7">The Compute Engine, implemented as a Fargate cluster. Polls the database to extract reports, computes many code quality metrics, updates the database, and writes search-optimized data to Elasticsearch.</data>
+    </node>
+    <node id="5">
+      <data key="d5">EC2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Receives analysis reports through an API and stores them in the database. Also serves the UI and API used to view results. No auto-scaling, no spot.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Aurora</data>
+      <data key="d6">Aurora</data>
+      <data key="d7">Database used as temporary storage (a queuing mechanism) for incoming reports, and as storage for the final analysis reports ready to be consumed by users. The Aurora-based queue is planned to be replaced by a proper SQS queue.</data>
+    </node>
+    <node id="7">
+      <data key="d5">non-aws ElasticSearch</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">In-house (non-AWS) Elasticsearch service that stores additional data in an optimized format for search. Planned move to the Amazon managed version.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">A code change pushed to the GitHub repo triggers an event that is captured by Lambda.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="0" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Users call the UI or the API to see the analysis results.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">After triage, Lambda creates an analysis request and sends it to the SQS queue.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Fargate service pulls analysis requests from the queue; the queue also drives its auto-scaling and levels the load.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">After cloning and analyzing the code, Fargate pushes the analysis report to the EC2 instance through an API.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Compute Engine polls the database for reports to process.</data>
+      <data key="d10">5</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="4" target="6" id="1">
+      <data key="d8">0</data>
+      <data key="d9">After computing code quality metrics, the Compute Engine updates the database and creates the analysis report ready to be consumed by users.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Compute Engine stores additional data in an optimized format for search in the in-house Elasticsearch.</data>
+      <data key="d10">7'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EC2 stores the received report in the Aurora database (temporary storage / queue).</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="1">
+      <data key="d8">1</data>
+      <data key="d9">EC2 queries the database for the analysis report.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="0" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The analysis results are returned to the users through the UI or the API.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Reports are extracted from the database by the Compute Engine.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Aurora returns the analysis report data to EC2.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">SonarSource: SonarCloud Autoscan Code Analysis Pipeline</data>
+    <data key="d1">https://www.youtube.com/watch?v=u3ZwnulzLnU</data>
+    <data key="d2">SonarCloud Autoscan analyzes code pushed to GitHub repositories. Up to 150k analyses per week; the SonarCloud ecosystem supports around 300,000 organizations. Autoscan currently supports non-compiled languages (TypeScript, Python, etc.); Java and C# are planned. Future plans: move to the managed Amazon Elasticsearch service and replace the Aurora-based queue with a proper SQS queue.</data>
+    <data key="d3">DevTools, Serverless, Containers, Code Analysis</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

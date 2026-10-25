@@ -1,0 +1,137 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">iOS</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">iOS Snapchat client. It is the sender in the send-snap flow.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Android</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">Android Snapchat client. It is the recipient and keeps a persistent connection to a server, which is used to push messages to it.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Gateway</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Gateway built by Snap as an EKS service. It is the entry point for clients and routes requests to the media and messaging services. The recipient's messages are also sent through it.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Media</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Media delivery service on EKS. It sends snap media to CloudFront, which persists it in S3.</data>
+    </node>
+    <node id="4">
+      <data key="d5">MCS</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Messaging service on EKS. It looks up the connection ID and server ID in ElastiCache to reach the recipient's persistent connection quickly. This path is latency-sensitive.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Friend Graph</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Friend Graph microservice on EKS that handles friend relationships. The nightly DynamoDB scans support friend suggestions.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Snap DB</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Snap's own database layer, used as a front end to DynamoDB. It adds transactions, TTL, handling of ephemeral data and incremental state synchronization. These reduce load on DynamoDB and keep costs under control.</data>
+    </node>
+    <node id="7">
+      <data key="d5">CloudFront</data>
+      <data key="d6">CloudFront</data>
+      <data key="d7">Delivers snap media close to the recipient. The media ID is used to fetch the content when the recipient opens it.</data>
+    </node>
+    <node id="8">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Persists snap media such as images, video and chat content.</data>
+    </node>
+    <node id="9">
+      <data key="d5">ElastiCache</data>
+      <data key="d6">ElastiCache</data>
+      <data key="d7">Caches connection IDs and server IDs (plus media IDs) so messages can be pushed to the connected client with low latency.</data>
+    </node>
+    <node id="10">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Main metadata store, holding about 400 TB. Nightly scans run at 2B rows/minute for friend suggestions and for deleting ephemeral data.</data>
+    </node>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The iOS app sends a snap through the Gateway, which runs as an EKS service.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Gateway routes the snap to the media delivery service.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Gateway routes messaging traffic to the messaging service (MCS).</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The media service sends the snap to CloudFront so it is closer to the recipient.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The media service talks to Friend Graph about relationships. This arrow is drawn but not described in the audio.</data>
+      <data key="d10">2'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Snap metadata, including the media ID, is written through Snap DB.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">On the receive side, MCS looks up the connection ID and server ID in ElastiCache to find the server the recipient is connected to.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The message is pushed to the Android recipient over its persistent connection, through the gateway. The client then fetches the media from CloudFront using the media ID.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="10" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Snap DB stores the metadata in DynamoDB (about 400 TB). It uses incremental state sync to reduce load and cost.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The snap media is persisted in S3.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Snap - Snapchat Send/Receive Snap Platform on AWS</data>
+    <data key="d1">https://www.youtube.com/watch?v=Cgv0kfp_6xQ</data>
+    <data key="d2">Snapchat platform on AWS: 300M+ daily active users, 5B+ snaps/day, 10M+ QPS. Over 900 EKS clusters, many with 1000+ instances. Moving to this architecture cut the P50 (median) latency of sending a snap by 24%. Compute cost is kept low with auto-scaling and Graviton instance types. DynamoDB stores about 400 TB of metadata, and nightly scans run at 2B rows/minute.</data>
+    <data key="d3">Mobile, Messaging, Microservices, Containers, Content Delivery, NoSQL, Caching</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

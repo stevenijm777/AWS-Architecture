@@ -1,0 +1,186 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows Snapchat's send/receive snap workflow on AWS. Entities: two mobile clients (iOS sender, Android recipient), four distinct EKS-hosted services (Media, MCS messaging service, Friend Graph, SnapDB) kept separate because each performs a different architectural step, plus CloudFront, S3, ElastiCache and DynamoDB. The gateway (GW) box is drawn and mentioned as an EKS service, but it is not in the authoritative entity inventory, so it is not added as a node; it is recorded in the notes of the client edges. Flow 0 (send snap): the iOS client goes through the gateway to the Media service, which sends the snap to CloudFront and persists it in S3; the iOS client also reaches MCS, which checks sender permission with Friend Graph and persists snap metadata through SnapDB into DynamoDB. Flow 1 (receive snap): MCS looks up the connection/server ID in ElastiCache, pushes the message to the Android recipient over the persistent connection, and the media is retrieved by media ID from S3 through CloudFront. Metrics from the transcript and board (300M+ DAU, 5B+ snaps/day, 10M+ QPS, 900+ EKS clusters with 1000+ instances, 400 TB in DynamoDB, nightly scans at 2 billion rows/min, 24% P50 latency reduction, Graviton and auto-scaling) are placed in notes. Ledger self-check: visual_connections has 14 entries and 14 edges are emitted, one per entry with the same source and target; both directions are kept wherever the ledger lists them. No edges outside the ledger were added.",
+  "graph": {
+    "name": "Snap: Snapchat Send and Receive Snap Platform on AWS",
+    "link": "https://www.youtube.com/watch?v=Cgv0kfp_6xQ",
+    "categories": "Containers, Messaging, Media Delivery, Databases",
+    "graph_usable": true,
+    "notes": "Snapchat platform on AWS: 300M+ daily active users, 5B+ snaps/day, 10M+ QPS. 900+ EKS clusters, many with 1000+ instances. Moving to this architecture reduced P50 send-snap latency by 24%. Compute cost is kept low with auto-scaling and Graviton instance types. Clients reach the EKS services through a gateway (GW) that is itself an EKS service built by Snap."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "iOS Client (Sender)",
+      "notes": "Snapchat iOS app that sends the snap; talks to the backend through Snap's gateway (an EKS service)."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerMobile",
+      "name": "Android Client (Recipient)",
+      "notes": "Recipient Snapchat client; holds a persistent connection to a gateway server through which messages are pushed."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "Media Delivery Service",
+      "notes": "Media delivery service running on EKS; sends the snap media to CloudFront and persists it in S3 so that it is close to the recipient."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "MCS Messaging Service",
+      "notes": "Messaging service on EKS; orchestrates permission checks, metadata persistence and delivery to the recipient. Receiving is very latency sensitive."
+    },
+    {
+      "id": "4",
+      "service": "EKS",
+      "name": "Friend Graph",
+      "notes": "EKS service that checks whether the sender has permission to send snaps to the recipient."
+    },
+    {
+      "id": "5",
+      "service": "EKS",
+      "name": "SnapDB",
+      "notes": "Snap's own database front end to DynamoDB running on EKS; implements higher-level features such as transactions, TTL, efficient handling of ephemeral data and incremental state synchronization to reduce the load on DynamoDB and keep costs under control."
+    },
+    {
+      "id": "6",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Receives the snap media so it is close to the recipient; media is retrieved through it using the media ID."
+    },
+    {
+      "id": "7",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Persists the snap media (images, video)."
+    },
+    {
+      "id": "8",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Session metadata: connection ID / server ID identifying the server holding the persistent connection to the recipient client. The media ID is also persisted here."
+    },
+    {
+      "id": "9",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores snap metadata (including the media ID); 400 TB of data. Nightly scans run at 2 billion rows per minute, e.g. for friend suggestions and deleting ephemeral data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "The iOS app uses the gateway (an EKS service) to talk to the media delivery service and upload the snap media."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "The media service sends the snap to CloudFront so it is closer to the recipient."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "The snap media is persisted in S3."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "The iOS app sends the snap message through the gateway to the MCS messaging service."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "MCS asks Friend Graph whether the sender has permission to send snaps."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Friend Graph returns the permission check result."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "MCS persists the snap metadata (including the media ID) in SnapDB."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "SnapDB stores the metadata in DynamoDB under the covers."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "DynamoDB returns the result / stored metadata to SnapDB."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "SnapDB returns the result to MCS."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "MCS looks up the connection ID / server ID of the recipient's persistent connection in ElastiCache."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "ElastiCache returns the session metadata identifying the server the client is already connected to."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "The message is pushed to the recipient through the gateway over the persistent connection."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "The media (image or video) is retrieved from S3 through CloudFront using the media ID."
+    }
+  ]
+}

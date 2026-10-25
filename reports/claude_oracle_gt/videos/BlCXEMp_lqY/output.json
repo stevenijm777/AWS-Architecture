@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "1) Whiteboard shows six components: a smart TV, Kinesis, Kinesis Firehose, Redshift, S3 and QuickSight, with arrows TV->Kinesis, Kinesis->Firehose, Firehose->Redshift, Firehose->S3, Redshift->QuickSight. 2) Transcript confirms: TVs send logs, performance telemetry and user data directly to Kinesis Data Streams (the front door, 8 shards). Data is piped through Firehose, which delivers it as-is into Redshift, and raw data is kept forever in S3. A subset of columns is loaded into Redshift. QuickSight uses custom SQL to pull data from Redshift into SPICE in-memory datasets for reporting. 3) Aurora was mentioned only as an abandoned past experiment and is not on the board, so it is not included as a node. 4) The reverse connections in the world model are not supported by drawn arrows or by the transcript, so flows are kept unidirectional. 5) Ingestion and storage form flow 0; visualization forms flow 1. Firehose deliveries to Redshift and S3 are parallel (2 and 2').",
+  "graph": {
+    "name": "Vizio Smart TV Telemetry Analytics Pipeline",
+    "link": "https://www.youtube.com/watch?v=BlCXEMp_lqY",
+    "categories": "Analytics, IoT, Data Warehouse, Streaming",
+    "graph_usable": true,
+    "notes": "Vizio ingests logs, performance telemetry and user data from millions of connected smart TVs (billions of events per month) through Kinesis Data Streams and Kinesis Firehose into Redshift and S3, and visualizes it with QuickSight (SPICE). Built with AWS Professional Services: first prototype in a few weeks, production in about the fourth or fifth week, roughly six weeks from zero to users running reports. Aurora was tried first but did not aggregate billions of rows well; data was reloaded into Redshift without data loss."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerTV",
+      "name": "Vizio Smart TVs",
+      "notes": "Millions of connected devices generating logs, performance telemetry and user (application usage) data. Billions of events per month. Data is sent in different formats with no fixed schema."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Kinesis Data Streams",
+      "notes": "Front door to the cloud; everything is piped through Kinesis. Runs an 8-shard pipeline that has not yet needed to be scaled."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Takes the data as is and delivers it into Redshift; raw data is also stored in S3."
+    },
+    {
+      "id": "3",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Data warehouse for events/logs/user data. Only a subset of the columns is imported. Columnar storage gives optimized IO for large aggregations over billions of rows. Replaced an earlier Aurora experiment; everything was reloaded without data loss."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Long-term data store for raw historical events/logs/user data, kept forever for future use. Allows reloading the data warehouse if needed."
+    },
+    {
+      "id": "5",
+      "service": "QuickSight",
+      "name": "QuickSight",
+      "notes": "Visualization and reporting. Uses the built-in in-memory SPICE database; custom SQL queries download subsets of data from Redshift into SPICE datasets for fast slicing, dicing and reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "TVs send logs, performance telemetry and user data directly to Kinesis Data Streams, in varying formats without a fixed schema."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stream data is piped from Kinesis Data Streams through Kinesis Firehose."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Firehose takes the data as is and loads it into Redshift; only a subset of the columns is ingested into the data warehouse."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Raw data is stored in S3 as its long-term home, kept forever for future use and reloads."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Custom SQL queries download subsets of data from Redshift into QuickSight SPICE datasets for visualization and reports."
+    }
+  ]
+}

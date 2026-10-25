@@ -1,0 +1,182 @@
+{
+  "step_by_step_reasoning": "1) Main request path as drawn: USER -> CloudFront -> Load Balancer -> EKS -> RDS, with S3 and Lambda both pointing into CloudFront, the Load Balancer branching to Legacy, and EKS branching to MONGO/KAFKA. 2) Audio confirms S3 serves static content and images through the CDN, and Lambda decides the region and device of incoming traffic at the CDN layer; the Lambda edge is typed control. 3) About 60 load balancers route between backend and frontend and between legacy monoliths (hosted on EC2) and the new microservices on EKS. The Legacy box is drawn with the EC2 instances icon and described as hosted on EC2, so it is mapped to EC2 rather than ThirdParty (a judgment call against the world model). 4) EKS runs 250+ microservices on 1400+ pods; services use self-managed MongoDB on EC2 (NoSQL), RDS (transactional SQL) and Kafka (event-driven). MONGO/KAFKA is non-native software, so it is mapped to ThirdParty instead of the world model's MongoDBAtlas. 5) The standalone EC2 icon is kept as the host of self-managed tooling (Prometheus, ELK, self-managed Mongo); application flows are routed directly to the functional MONGO/KAFKA node. 6) Monitoring: CloudWatch checks pod health, and Prometheus/ELK on EC2 watch metrics and logs; both are meta edges from EKS. The whiteboard lines from EC2 and CloudWatch are incomplete, so these edges rest on the audio. 7) The audio says all monitoring ties into alerting through Slack and PagerDuty, so one ThirdParty alerting node was added with meta edges from CloudWatch and EC2; it is not drawn on the whiteboard.",
+  "graph": {
+    "name": "Seera Group: Scalable Microservices Travel Platform on Amazon EKS",
+    "link": "https://www.youtube.com/watch?v=a6kqyqTNJM4",
+    "categories": "Containers, Microservices, Travel, Migration, Content Delivery, Monitoring",
+    "graph_usable": true,
+    "notes": "Seera Group (transcribed as 'Syrah Group'; Almosafer brand example) handles about 300k requests per minute. Traffic enters through CloudFront, with S3 for static content and Lambda for region/device decisions. Around 60 load balancers route between frontend and backend and between legacy monoliths on EC2 and microservices on EKS (80% migrated, 250+ microservices, 1400+ pods). The data layer is self-managed MongoDB on EC2, RDS and Kafka. Monitoring uses CloudWatch, Prometheus and ELK, with alerting through Slack and PagerDuty."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "End customers of the travel platform (Almosafer example); about 300k requests per minute on average."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN receiving all user traffic; first layer of scaling and resiliency."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Cost-efficient storage serving static content and images for a content-heavy platform."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Decides which region and which device the traffic comes from, giving intelligence at the edge for routing and better customer serving."
+    },
+    {
+      "id": "4",
+      "service": "ELB",
+      "name": "Load Balancer",
+      "notes": "About 60 load balancers. Decide whether traffic is backend service or web (frontend) traffic, and route between legacy systems and new microservices."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "Legacy",
+      "notes": "Legacy monolithic systems still hosted on EC2, being gradually migrated to microservices."
+    },
+    {
+      "id": "6",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Core for all backend and micro-frontend services. About 80% of services migrated; more than 250 microservices on over 1400 pods in production."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Managed SQL database for services that need proper transactional capabilities."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Mongo / Kafka",
+      "notes": "Self-managed MongoDB instances on EC2 for the NoSQL needs of most services; Kafka plays a major role in the event-driven part of the microservices system."
+    },
+    {
+      "id": "9",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Hosts self-managed software: MongoDB instances and internal monitoring tools such as Prometheus and the ELK stack for metrics and log monitoring."
+    },
+    {
+      "id": "10",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Used to make sure pod health is in proper shape; part of the end-to-end monitoring view."
+    },
+    {
+      "id": "11",
+      "service": "ThirdParty",
+      "name": "Slack / PagerDuty",
+      "notes": "Alerting system that all monitoring ties into, keeping the team on top of everything happening. Mentioned in audio only, not drawn on the whiteboard."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User traffic (about 300k requests per minute) goes through CloudFront."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "S3 serves static content and images through CloudFront."
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Lambda decides the region and device of the traffic to steer how CloudFront serves and routes requests."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Traffic is forwarded from CloudFront to the load balancers."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Load balancer routes backend and frontend traffic to microservices on EKS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "data",
+      "notes": "Load balancer routes traffic to legacy monolithic systems hosted on EC2."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Services that need transactional SQL read from and write to RDS."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "data",
+      "notes": "Most services use self-managed MongoDB (NoSQL) and Kafka for event-driven communication."
+    },
+    {
+      "source": "6",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "CloudWatch monitors pod health of the EKS services."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "Metrics and logs from services are monitored by self-managed Prometheus and the ELK stack on EC2."
+    },
+    {
+      "source": "10",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "CloudWatch monitoring ties into alerting through Slack and PagerDuty."
+    },
+    {
+      "source": "9",
+      "target": "11",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "meta",
+      "notes": "Prometheus and ELK monitoring ties into alerting through Slack and PagerDuty."
+    }
+  ]
+}

@@ -1,0 +1,228 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the whiteboard has 13 entities, and all of them are active runtime participants. I kept each one as its own node. The three Lambda functions do different jobs: the RAS frontend, custom scaling and spot interruption handling. The two SQS queues also do different jobs: one holds jobs and one holds responses. So none of them were fused. The Auto Scaling Group is kept apart from the EC2 instances because Lambdas act on it directly by detaching instances and scaling. Nothing was pruned. The client devices are the system entry point.\n2) Flows:\n- Flow 0 is the rendering request. Client to API Gateway (usage plans and API keys) to the frontend Lambda (validation) to the SQS jobs queue. The EC2 spot instances pull jobs when they have capacity. The engine replies right away to the responses queue, and the same Lambda invocation pulls from it. The playlist link goes back to the client. At the same time, the engine uploads video segments to S3.\n- Flow 1 is playback. The client asks CloudFront for segments, and CloudFront pulls them from the S3 origin.\n- Flow 2 is spot interruption (2-minute notice). A CloudWatch Event triggers the interruption Lambda. That Lambda calls an API on the instance to stop pulling jobs and drain the current ones, then detaches the instance from the ASG.\n- Flow 3 is custom scaling. The instances push metrics to CloudWatch. Step Functions triggers the scaling Lambda every 15 seconds. The Lambda reads the CloudWatch metrics and tells the ASG to scale.\n3) Ledger self-check: there are 16 visual_connections entries, and all 16 are emitted with the same direction. I added 1 edge that the audio states but the ledger does not have: CloudWatch -> Scaling Lambda ('metrics ... consumed by Lambda function'). Total edges emitted: 17, which is at least 16.",
+  "graph": {
+    "name": "Sundaysky Rendering as a Service (RAS) - Personalized Video Rendering on Spot Instances",
+    "link": "https://www.youtube.com/watch?v=6CgqEzyWpeA",
+    "categories": "Media, Video Rendering, Serverless, Compute, Spot Instances, Auto Scaling",
+    "graph_usable": true,
+    "notes": "Personalized video experiences, for example a monthly telco bill as a video. Rendering runs entirely on EC2 Spot instances spread across multiple AZs with diverse instance types. Scale: billions of videos a year and millions a day. Planned next step: ASG instance weights so scaling can be expressed in units of rendering capacity."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWebMobile",
+      "name": "Client Devices",
+      "notes": "Mobile/PC player that requests the personalized video (e.g., monthly bill) and streams the segments."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "CDN that serves the video segments listed in the playlist and pulls them from the S3 origin."
+    },
+    {
+      "id": "2",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point of the RAS ecosystem. Usage plans and API keys per customer control the load on the render farm."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "RAS Frontend Lambda",
+      "notes": "RAS service frontend. Validates rendering requests, pushes rendering instructions to SQS, and in the same invocation pulls the response from the responses queue to return the playlist link."
+    },
+    {
+      "id": "4",
+      "service": "SQS",
+      "name": "SQS Jobs Queue",
+      "notes": "Holds rendering instructions. Engine services pull jobs when they have capacity."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS Responses Queue",
+      "notes": "Gives a fast response from the rendering engine, including the playlist file link."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Rendering EC2 Instances",
+      "notes": "Rendering engine on Spot instances across multiple AZs with diverse instance types. Uploads video segments to S3 and pushes custom metrics to CloudWatch."
+    },
+    {
+      "id": "7",
+      "service": "AutoScaling",
+      "name": "Auto Scaling Group",
+      "notes": "Manages the pool of rendering Spot instances. Instances are detached when interrupted. Planned: instance-type weights."
+    },
+    {
+      "id": "8",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Stores the rendered video segments referenced by the playlist file. Origin for CloudFront."
+    },
+    {
+      "id": "9",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Triggers the custom scaling Lambda every 15 seconds."
+    },
+    {
+      "id": "10",
+      "service": "Lambda",
+      "name": "Scaling Lambda",
+      "notes": "Reads the CloudWatch metrics pushed by the rendering instances, calculates expected traffic, and tells the ASG to raise or lower the number of in-service instances."
+    },
+    {
+      "id": "11",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Collects custom rendering metrics. CloudWatch Events sends the Spot instance interruption notice (2-minute warning)."
+    },
+    {
+      "id": "12",
+      "service": "Lambda",
+      "name": "Interruption Handler Lambda",
+      "notes": "On a Spot interruption, calls an API on the instance to stop pulling jobs and drain current renders (they finish within the 2-minute window), then detaches the instance from the ASG."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User requests the personalized video (e.g., monthly bill) through API Gateway."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "API Gateway routes the request to the RAS frontend Lambda after usage plan/API key checks."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda validates the request and pushes rendering instructions to the jobs queue."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Rendering engines on Spot instances pull jobs when they have capacity."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Engine responds immediately to the responses queue with the playlist info."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "data",
+      "notes": "Rendering engine uploads the rendered video segments to S3."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "The same Lambda invocation pulls the response (playlist link) from the queue."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Playlist file link returned to the player on the client device."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Player requests video segments through the CloudFront links."
+    },
+    {
+      "source": "1",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront pulls video segments from the S3 origin and plays them to the user."
+    },
+    {
+      "source": "11",
+      "target": "12",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "CloudWatch Event notifies that a specific instance ID is about to be reclaimed (2-minute Spot interruption notice)."
+    },
+    {
+      "source": "12",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "API call telling the instance to stop pulling rendering requests and drain its current jobs."
+    },
+    {
+      "source": "12",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "control",
+      "notes": "After draining, the instance is detached from the Auto Scaling Group."
+    },
+    {
+      "source": "6",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Rendering instances push custom performance metrics to CloudWatch."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions triggers the scaling Lambda every 15 seconds."
+    },
+    {
+      "source": "11",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Scaling Lambda reads the CloudWatch metrics to calculate the capacity it needs (stated in the audio)."
+    },
+    {
+      "source": "10",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "control",
+      "notes": "Scaling Lambda tells the ASG to increase or decrease the number of in-service instances based on expected traffic."
+    }
+  ]
+}

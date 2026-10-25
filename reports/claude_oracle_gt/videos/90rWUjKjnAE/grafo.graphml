@@ -1,0 +1,133 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Developer</data>
+      <data key="d6">UserConsumerDeveloper</data>
+      <data key="d7">Developers write code and push it to their Git repositories. Everything to be deployed is defined in the repository (infrastructure as code).</data>
+    </node>
+    <node id="1">
+      <data key="d5">Git server</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Git repositories holding application code and deployment definitions. Webhooks connect them to Lagoon.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Lagoon (EKS)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Lagoon core, the open source application delivery platform, running on EKS. Listens to the Git repositories through webhooks and decides what to do (e.g., feature branch or pull request opened), then deploys to the hosting zones. The platform was migrated from OpenShift to Kubernetes for flexibility and to stay on the bleeding edge.</data>
+    </node>
+    <node id="3">
+      <data key="d5">EKS (hosting zone)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Hosting-zone EKS cluster that runs the developer environments. An operator on the cluster works out which storage a workload needs (EFS or EBS). When a developer asks for a database, an operator provisions it and exposes it back to the project as a set of secrets.</data>
+    </node>
+    <node id="4">
+      <data key="d5">EC2</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Normal EC2 instances running the whole base infrastructure / base workload.</data>
+    </node>
+    <node id="5">
+      <data key="d5">EC2 Spot</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Spot instances for development / non-productive infrastructure that can tolerate failure or termination of a pod. Cost benefit of 70-90% versus regular EC2. More workload is being moved from EC2 to Spot.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Aurora R6G</data>
+      <data key="d6">Aurora</data>
+      <data key="d7">Provisioned by an operator when the developer explicitly asks for a database; exposed to the project as a set of secrets. Runs on Graviton2 r6g instances, first adopted in non-production with no regressions seen, now being rolled out to more production workload. Holds the developer's application data.</data>
+    </node>
+    <node id="7">
+      <data key="d5">EBS GP3</data>
+      <data key="d6">EBS</data>
+      <data key="d7">Used when the workload needs specialized storage, e.g., a database or a search server such as OpenSearch or Solr. gp3 volumes were adopted from mid-December 2020 for lower storage cost and better IOPS, rolled out during maintenance windows. Holds the developer's application data.</data>
+    </node>
+    <node id="8">
+      <data key="d5">EFS</data>
+      <data key="d6">EFS</data>
+      <data key="d7">General file storage for normal assets/files that need nothing specific. Holds the developer's application data.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Developers create code and push it to their Git repositories.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Webhooks notify Lagoon of repository events (feature branch, pull request opened); Lagoon decides what needs to be done.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lagoon goes to the hosting zones and deploys everything the environment needs onto the hosting EKS cluster.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EKS runs the base workload on normal EC2 instances.</data>
+      <data key="d10">3</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">EKS runs development / non-productive workloads on EC2 Spot instances.</data>
+      <data key="d10">3'</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Workloads use an Aurora database when the developer requests one; credentials are exposed as secrets.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Specialized workloads (database, search server) store data on EBS gp3 volumes.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Workloads store general files/assets in EFS.</data>
+      <data key="d10">0''</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Non-production workloads on Spot use an Aurora database when the developer requests one.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Specialized workloads on Spot (database, search server) store data on EBS gp3 volumes.</data>
+      <data key="d10">1'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Workloads on Spot store general files/assets in EFS.</data>
+      <data key="d10">1''</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">amazee.io Lagoon: Application Delivery Platform on Amazon EKS</data>
+    <data key="d1">https://www.youtube.com/watch?v=90rWUjKjnAE</data>
+    <data key="d2">amazee.io built Lagoon, an open source application delivery platform that lets developers move applications onto Kubernetes without deep Kubernetes knowledge. Developers push code to Git; webhooks notify Lagoon (on EKS), which deploys to hosting-zone EKS clusters. Those clusters run on EC2 (base workload) and EC2 Spot (development/non-production, 70-90% cost benefit). Operators provision EFS, EBS gp3 or Aurora (Graviton2 r6g) depending on what the application needs.</data>
+    <data key="d3">Containers, DevOps, Compute, Storage, Cost Optimization</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "1) The whiteboard shows six components: a TV (labeled Logs, Perf, User), Kinesis, Kinesis Firehose, S3, Redshift, and QuickSight. 2) Arrows drawn: TV -> Kinesis, Kinesis -> Kinesis Firehose, Kinesis Firehose -> Redshift, Kinesis Firehose -> S3, Redshift -> QuickSight. 3) The transcript confirms: TVs talk directly to Kinesis Data Streams (the front door, 8 shards, not yet scaled); data in varied formats with no fixed schema is piped through Firehose; Firehose dumps data into Redshift (a subset of columns) and the raw data is kept in S3 forever as long-term storage; QuickSight uses custom SQL to pull data from Redshift into SPICE in-memory datasets for visualization and reports. 4) Aurora was only an abandoned experiment (billions of rows did not aggregate well), so it is not an active runtime component and is not included as a node; it is recorded in notes only. 5) Amazon Professional Services is a human/organizational participant and is pruned. 6) All edges are data payload transfers and form one single ingestion-to-analytics flow (flow 0). The two Firehose deliveries (S3 and Redshift) are parallel, so they are sequenced as 2 and 2'. The Redshift -> QuickSight edge follows the direction of the drawn arrow (data downloaded from Redshift into SPICE).",
+  "graph": {
+    "name": "Vizio: Smart TV Telemetry Analytics Pipeline with Kinesis, Redshift and QuickSight",
+    "link": "https://www.youtube.com/watch?v=BlCXEMp_lqY",
+    "categories": "Analytics, Streaming Data, Data Warehouse, IoT, Media & Entertainment",
+    "graph_usable": true,
+    "notes": "Vizio smart TVs send logs, performance telemetry and user/application usage data directly to Kinesis Data Streams. Kinesis Firehose delivers the raw data to S3 for long-term retention and loads a subset into Redshift for large-scale aggregation. QuickSight visualizes the data using SPICE datasets populated by custom SQL against Redshift. Scale: millions of connected devices and billions of events per month. Built with Amazon Professional Services: first prototype within a few weeks, in production in the fourth or fifth week, roughly six weeks from zero to users running reports. Aurora was tried first and abandoned because billions of rows did not aggregate well; data was reloaded into Redshift from S3 and the data streams without data loss."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerTV",
+      "name": "Vizio Smart TV",
+      "notes": "Millions of connected smart TVs generating logs, performance telemetry and user/application usage data. TVs talk directly to Kinesis to send their data to the cloud. Billions of events per month."
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams",
+      "notes": "Front door to the cloud; everything is piped through Kinesis. Runs an eight-shard pipeline that has not yet needed to be scaled up. Receives data in different formats and columns with no fixed schema."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Firehose",
+      "notes": "Takes the data as is from Kinesis Data Streams and delivers it to Redshift, with the raw data stored in S3."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "Amazon S3",
+      "notes": "Long-term data store for the raw data, kept forever for future use because storage is cheap. Not all columns stored here are imported into Redshift. Was used to reload everything into Redshift without data loss when migrating away from the Aurora experiment."
+    },
+    {
+      "id": "4",
+      "service": "RedShift",
+      "name": "Amazon Redshift",
+      "notes": "Data warehouse holding a subset of the columns of the raw data. Columnar storage with optimized IO for large aggregations over billions of events per month. Replaced an earlier Aurora experiment, where billions of rows did not aggregate well."
+    },
+    {
+      "id": "5",
+      "service": "QuickSight",
+      "name": "Amazon QuickSight",
+      "notes": "Visualization and reporting tool. Uses the built-in in-memory database SPICE; custom SQL queries download subsets of data from Redshift into SPICE datasets, making it fast to slice and dice the data and create reports."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Smart TVs send logs, performance telemetry and user data directly to Kinesis Data Streams, in different formats with no fixed schema."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stream data is piped from Kinesis Data Streams through Kinesis Firehose."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Firehose stores the raw data in S3 as its long-term home, kept forever for future use."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Firehose takes the data as is and loads it into Redshift; only a subset of the columns is ingested into the data warehouse."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Custom SQL queries download subsets of data from Redshift into QuickSight SPICE in-memory datasets for visualization and reports."
+    }
+  ]
+}

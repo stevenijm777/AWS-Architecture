@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows two patterns separated by a line: a batch/daily pipeline on top and a real-time pipeline below. All 10 entities are kept as nodes. The two S3 icons are kept separate because they play distinct roles (raw ingestion data lake vs. unified CSV output). Kafka is not added as a separate node: the Kafka consumer is described as software running on ECS, so it is recorded in the ECS notes. Fargate is only a future plan and is omitted. Ledger self-check: visual_connections has 8 entries; I emit 9 edges. The 8 ledger edges are transcribed with the same source and target. One extra edge (EC2 -> S3 #2) is added because the speaker states that the data transformed through Glue and EC2 lands in a common CSV format in the second S3 bucket. No batch edge from S3 #2 to Salesforce and no edge from Expedia to ECS were added, since neither is drawn nor stated as a specific hop. Flow 0 is the batch pipeline (Expedia apps -> S3 -> Glue / EC2 in parallel -> S3 CSV). Flow 1 is the real-time pipeline (ECS Kafka consumer -> Aurora -> Lambda -> SQS -> Salesforce).",
+  "graph": {
+    "name": "Expedia Group: Batch and Real-Time Integration of AWS with Salesforce Einstein Analytics",
+    "link": "https://www.youtube.com/watch?v=f5EJBUfGZtw",
+    "categories": "Analytics, Data Integration, ETL, Serverless, Streaming",
+    "graph_usable": true,
+    "notes": "Expedia collects data from its applications (some on-prem, mostly cloud), processes it in AWS and pushes it to Salesforce Einstein Analytics for business users. Top section: batch/daily processing, 500-800 million rows per day. Bottom section: real-time integration, 5-10 million events per day. Future plans: add more sources and adopt Fargate."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerAPI",
+      "name": "Expedia Group Applications",
+      "notes": "Expedia applications and platforms providing booking, VMIN and partner data. Some on-prem, mostly in the cloud. Also host the Kafka producer for real-time events."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 #1 (Data Ingestion / Data Lake)",
+      "notes": "Data ingestion layer / data lake. Collects data daily from Expedia Group applications in heterogeneous formats (Parquet, CSV, JSON)."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 #2 (CSV)",
+      "notes": "Holds transformed data in a common unified CSV format, because Salesforce Einstein Analytics is limited to CSV."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Handles work Glue could not do at the time: Parquet files (Glue had no bookmark support for Parquet) and additional customizations."
+    },
+    {
+      "id": "4",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Serverless ETL. Consumes and transforms the heterogeneous data into a unified format. Batch section processes 500-800 million rows per day."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS (Kafka Consumer)",
+      "notes": "Runs a Kafka consumer that consumes real-time events. Chosen over Kinesis / managed Kafka because the Kafka producer runs on Expedia Group applications. Fargate planned for the future."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "Used for aggregating and sorting data, leveraging the MySQL engine. Chosen over S3 and other solutions for this use case."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Processes the data and creates queueable messages. Further Lambdas are called from SQS to call APIs and push data to Salesforce. Scale: 5-10 million events per day."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues the messages produced by Lambda before they are pushed to Salesforce."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "Salesforce",
+      "notes": "Salesforce Einstein Analytics, the reporting engine for business users. Accepts only CSV for batch data; receives real-time data through API calls."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Expedia applications deliver data daily (booking, VMIN, partner data) into S3 in various formats (Parquet, CSV, JSON)."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue consumes the heterogeneous data from S3 for ETL transformation."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "EC2 processes the Parquet files and customizations that Glue did not support."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Glue writes the transformed data in unified CSV format to S3."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "EC2 writes the transformed data in the common CSV format to S3. Not in the connection ledger; added from the transcript."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "The Kafka consumer on ECS pushes real-time events to Aurora."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Aggregated and sorted data from Aurora is processed by Lambda."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda queues the processed data as queueable messages in SQS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "From SQS, further Lambdas are called, which call APIs and push the data straight into Salesforce."
+    }
+  ]
+}

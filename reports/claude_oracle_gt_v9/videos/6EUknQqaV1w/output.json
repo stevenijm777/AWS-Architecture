@@ -1,0 +1,156 @@
+{
+  "step_by_step_reasoning": "Nodes: all 9 world-model entities are kept. The two Kinesis Data Streams are kept separate because they perform distinct steps (Collect stream for resource ingestion, Rules stream fronting the rule execution pipeline). Shard(er) Service and the Slack/email/Splunk notification channels are ThirdParty. Elasticsearch is mapped to OpenSearch. Flows: Flow 0 = collection and persistence (event source -> Collect Kinesis -> Neptune -> Elasticsearch / DynamoDB backing stores). Flow 1 = sharding feedback (Neptune and Elasticsearch metrics -> CloudWatch -> Sharder Service). Flow 2 = rule execution (Collect stream and Neptune resource changes -> Rules Kinesis stream -> violations persisted in DynamoDB and real-time notifications to Slack/email/Splunk). Self-check: visual_connections has 11 entries; 11 edges are emitted, one per ledger entry with the same source and target. No extra edges were added since the audio does not explicitly state any flow beyond the ledger with a clear direction not already covered.",
+  "graph": {
+    "name": "CloudHealth by VMware: Secure State real-time cloud security and monitoring pipeline",
+    "link": "https://www.youtube.com/watch?v=6EUknQqaV1w",
+    "categories": "Security, Analytics, Graph Database, Streaming",
+    "graph_usable": true,
+    "notes": "CloudHealth Secure State collects cloud provider security event streams, publishes resource state into Kinesis Data Streams, persists it in Amazon Neptune (primary graph store) with Elasticsearch and DynamoDB as backing stores, scales writes through a sharder service driven by CloudWatch metrics, and executes rules through a second Kinesis stream, persisting violations in DynamoDB and notifying customers via Slack, email and Splunk. Scale: billions of events per day, 50M+ resources, three major cloud providers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDataStream",
+      "name": "Cloud provider security event streams",
+      "notes": "Native security event streams from cloud providers (e.g. CloudWatch events, Azure activity log). A collection framework evaluates events, determines the current state of the resource and publishes it. Three major cloud providers supported; billions of events per day."
+    },
+    {
+      "id": "1",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Collect)",
+      "notes": "Collection stream into which the current state of cloud resources is published. A consumer publishes the resources into Neptune."
+    },
+    {
+      "id": "2",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Rules)",
+      "notes": "Fronts the rule execution pipeline. Incoming events along with resource changes are propagated here; the rule engine determines which rules (possibly thousands) to execute for a given event and runs them over the Neptune graph."
+    },
+    {
+      "id": "3",
+      "service": "Neptune",
+      "name": "Amazon Neptune",
+      "notes": "Primary persistence; graph database for highly interconnected cloud resource data, enabling graph-based exploration. Chosen for read scale-out for rule execution and for being schema-less (agnostic to varied resource configurations). 50M+ resources collected and monitored. Provisioned clusters with customer data load balanced by the sharder service."
+    },
+    {
+      "id": "4",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Backing store for search, aggregations, reporting and analytical use cases. Its CloudWatch metrics are also used by the sharder service."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Shard Service",
+      "notes": "Sharder service used to scale writes out; provides logical grouping of data stored in provisioned Neptune clusters. Uses CloudWatch metrics (CPU, memory and other parameters) from Neptune and Elasticsearch to determine shard capacity and load balance customers' data; this information flows back to drive write placement decisions."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Slack, email, Splunk",
+      "notes": "Real-time notification channels to customers for detected security violations (Slack, email, Splunk and the like)."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Backing store for other use cases such as visualizing how resource configurations changed over time; also persists detected security violations."
+    },
+    {
+      "id": "8",
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "notes": "Metrics from Neptune and Elasticsearch (CPU, memory and other parameters) used by the sharder service to determine whether a Neptune cluster is full."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Collection framework evaluates incoming security events, determines current resource state and publishes resources into the Kinesis data stream (billions of events per day)."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stream consumer publishes the ingested cloud resources into Amazon Neptune (50M+ resources)."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Resource data also stored in Elasticsearch as a backing store for search, aggregation, reporting and analytics."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Resource data also stored in DynamoDB as a backing store, e.g. for how resource configurations changed over time."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Neptune metrics (CPU, memory and other parameters) emitted to CloudWatch."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "Elasticsearch metrics emitted to CloudWatch."
+    },
+    {
+      "source": "8",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Sharder service uses CloudWatch metrics to determine shard capacity of the provisioned Neptune clusters and load balance customers' data; the information flows back to guide writes."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Incoming events are propagated to the rule execution pipeline, fronted by the rules Kinesis data stream."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Resource changes, once persisted, are propagated to the rule execution pipeline; rules are exercised over the Neptune graph to perform security checks."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Detected security violations are persisted in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Real-time notifications of security violations sent to customers through Slack, email, Splunk and similar channels."
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">ECS</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Runs Kong, which publishes the Deputy API endpoints. Receives pipeline build events and promote/deploy API calls from the service teams' non-production accounts.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">About 25 Lambda functions (x25 on the whiteboard). Captures build events and stores them in DynamoDB, and executes the compliance assessment by matching build events against the standards and controls in RDS. Result is success or failure. Chosen for speed to market, no infrastructure to manage and low operational overhead.</data>
+    </node>
+    <node id="2">
+      <data key="d5">RDS</data>
+      <data key="d6">RDS</data>
+      <data key="d7">RDS PostgreSQL. Holds the compliance framework (standard, control, how it is tested), plus which teams exist and which services they run. Chosen because this data is relational.</data>
+    </node>
+    <node id="3">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores build events and their evidence from team pipelines (e.g. build started, code scan executed) as key-value pairs. Chosen for low operational overhead and performance.</data>
+    </node>
+    <node id="4">
+      <data key="d5">SNS</data>
+      <data key="d6">SNS</data>
+      <data key="d7">Used for promotion. Securely sends notifications to production accounts that the platform team has no access to, and fans out to 80 to 100 NAB service teams.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Non Production Environment</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Service team's non-production account, where their pipelines run. Sends build events and makes the promote and deploy API calls to Deputy.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Production Environment</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Service team's production account. Runs distributed Deputy components (Lambda in prod) that are triggered for promotion. Receives the promoted artifacts and the deployment trigger.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Kong forwards the events and API calls to Lambda.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">API response with the compliance result returned to the non-production account. Purpose inferred; the audio does not describe this arrow.</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda captures the build events and stores them in DynamoDB.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="0" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Assessment result (success or failure) returned to the Kong API layer. Purpose inferred; the audio does not describe this arrow.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="1" target="4" id="0">
+      <data key="d8">2</data>
+      <data key="d9">When compliance passes and promotion is requested, a notification is published to SNS.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda reads the compliance standards and controls from RDS PostgreSQL to match against the build events.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">On a promote call, Lambda reads the team's stored build events from DynamoDB.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SNS notifies the production account and triggers the promotion there (Lambda running in prod). Fan-out to many team accounts.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Pipelines in the non-production account send all build events to Kong running on ECS. Promote and deploy API calls use the same entry point.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Artifacts are copied from the non-production account to the production account. A deployment message (SQS in the audio) then triggers the team's deployment tools.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">National Australia Bank: Deputy Compliance Platform for Automated Cloud Deployment Promotion</data>
+    <data key="d1">https://www.youtube.com/watch?v=7V8wTCkjOqo</data>
+    <data key="d2">NAB's Deputy platform is an API-based solution that automates compliance attestation for service teams moving thousands of workloads to AWS. Build events from team pipelines in non-production accounts are captured through Kong on ECS and Lambda into DynamoDB. On a promote call, Lambda assesses those events against the compliance framework (standards and controls) held in RDS PostgreSQL, with a pass or fail result. On success, SNS notifies the production account to trigger the promotion and artifacts are copied from non-prod to prod. Designed for 80 to 100 NAB service teams.</data>
+    <data key="d3">Compliance, DevOps, Serverless, Financial Services</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

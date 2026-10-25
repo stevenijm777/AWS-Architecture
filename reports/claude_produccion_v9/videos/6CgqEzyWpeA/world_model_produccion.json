@@ -1,0 +1,180 @@
+{
+  "entities": [
+    {
+      "service": "UserConsumerWebMobile",
+      "name": "Client Devices",
+      "type": "UserConsumerWebMobile",
+      "rationale": "Client mobile and web devices requesting and streaming the personalized videos."
+    },
+    {
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "type": "CloudFront",
+      "rationale": "CloudFront CDN used to deliver personalized video segments efficiently to the client devices."
+    },
+    {
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "type": "ApiGateway",
+      "rationale": "API Gateway serving as the frontend entry point managing usage plans and API keys to control load."
+    },
+    {
+      "service": "Lambda",
+      "name": "RAS Frontend Lambda",
+      "type": "Lambda",
+      "rationale": "Lambda function serving as the RAS frontend to validate rendering requests and manage SQS workflows."
+    },
+    {
+      "service": "SQS",
+      "name": "SQS Jobs Queue",
+      "type": "SQS",
+      "rationale": "SQS queue storing rendering tasks and instructions for the rendering engine."
+    },
+    {
+      "service": "SQS",
+      "name": "SQS Responses Queue",
+      "type": "SQS",
+      "rationale": "SQS queue holding status responses and playlist links that the frontend pulls from."
+    },
+    {
+      "service": "EC2",
+      "name": "Rendering EC2 Instances",
+      "type": "EC2",
+      "rationale": "EC2 Spot instances used to render video segments under the Auto Scaling group. Visually grouped inside the EC2 Auto Scaling box."
+    },
+    {
+      "service": "AutoScaling",
+      "name": "Auto Scaling Group",
+      "type": "AutoScaling",
+      "rationale": "Auto Scaling group managing the pool of rendering spot instances. Visually grouped inside the EC2 Auto Scaling box."
+    },
+    {
+      "service": "S3",
+      "name": "S3 Bucket",
+      "type": "S3",
+      "rationale": "S3 bucket storing the rendered personalized video segments."
+    },
+    {
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "type": "StepFunctions",
+      "rationale": "Step Functions used to trigger the custom scaling Lambda function every 15 seconds."
+    },
+    {
+      "service": "Lambda",
+      "name": "Scaling Lambda",
+      "type": "Lambda",
+      "rationale": "Lambda function evaluating capacity based on CloudWatch metrics and instructing the Auto Scaling group to scale."
+    },
+    {
+      "service": "CloudWatch",
+      "name": "CloudWatch",
+      "type": "CloudWatch",
+      "rationale": "CloudWatch collecting performance metrics and dispatching spot instance interruption events."
+    },
+    {
+      "service": "Lambda",
+      "name": "Interruption Handler Lambda",
+      "type": "Lambda",
+      "rationale": "Lambda function reacting to Spot Interruption Events to safely drain and detach instances from the Auto Scaling Group."
+    }
+  ],
+  "visual_connections": [
+    {
+      "source_label": "Client Devices",
+      "target_label": "API Gateway",
+      "arrow_direction": "right",
+      "description": "Users request monthly video bill through API Gateway."
+    },
+    {
+      "source_label": "API Gateway",
+      "target_label": "RAS Frontend Lambda",
+      "arrow_direction": "right",
+      "description": "API Gateway routes requests to frontend validation Lambda."
+    },
+    {
+      "source_label": "RAS Frontend Lambda",
+      "target_label": "SQS Jobs Queue",
+      "arrow_direction": "up_right",
+      "description": "Lambda pushes rendering instructions to SQS queue."
+    },
+    {
+      "source_label": "SQS Jobs Queue",
+      "target_label": "Rendering EC2 Instances",
+      "arrow_direction": "right",
+      "description": "EC2 spot instances pull jobs from SQS when they have capacity."
+    },
+    {
+      "source_label": "Rendering EC2 Instances",
+      "target_label": "SQS Responses Queue",
+      "arrow_direction": "left",
+      "description": "Engine immediately responds back to the response SQS queue."
+    },
+    {
+      "source_label": "SQS Responses Queue",
+      "target_label": "RAS Frontend Lambda",
+      "arrow_direction": "left",
+      "description": "Frontend Lambda polls SQS for the playlist information."
+    },
+    {
+      "source_label": "RAS Frontend Lambda",
+      "target_label": "Client Devices",
+      "arrow_direction": "left",
+      "description": "Provides the playlist file link back to the player on the client device."
+    },
+    {
+      "source_label": "Rendering EC2 Instances",
+      "target_label": "S3 Bucket",
+      "arrow_direction": "up_right",
+      "description": "EC2 rendering engine uploads finished video segments to S3."
+    },
+    {
+      "source_label": "Client Devices",
+      "target_label": "CloudFront",
+      "arrow_direction": "up_left",
+      "description": "Client device requests video playback through CloudFront."
+    },
+    {
+      "source_label": "CloudFront",
+      "target_label": "S3 Bucket",
+      "arrow_direction": "right",
+      "description": "CloudFront pulls video segments from the S3 origin."
+    },
+    {
+      "source_label": "CloudWatch",
+      "target_label": "Interruption Handler Lambda",
+      "arrow_direction": "up",
+      "description": "CloudWatch Events triggers Lambda on spot interruption notice."
+    },
+    {
+      "source_label": "Interruption Handler Lambda",
+      "target_label": "Rendering EC2 Instances",
+      "arrow_direction": "left",
+      "description": "Lambda calls API on EC2 to stop pulling new jobs and drain current ones."
+    },
+    {
+      "source_label": "Interruption Handler Lambda",
+      "target_label": "Auto Scaling Group",
+      "arrow_direction": "right",
+      "description": "Lambda detaches the interrupted instance from the ASG."
+    },
+    {
+      "source_label": "Step Functions",
+      "target_label": "Scaling Lambda",
+      "arrow_direction": "up",
+      "description": "Step Functions trigger the custom scaling calculation every 15 seconds."
+    },
+    {
+      "source_label": "Scaling Lambda",
+      "target_label": "Auto Scaling Group",
+      "arrow_direction": "right",
+      "description": "Scaling Lambda instructs ASG to scale up or down based on metrics."
+    },
+    {
+      "source_label": "Rendering EC2 Instances",
+      "target_label": "CloudWatch",
+      "arrow_direction": "down_right",
+      "description": "Rendering instances publish custom performance metrics to CloudWatch."
+    }
+  ]
+}

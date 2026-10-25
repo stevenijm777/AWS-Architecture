@@ -1,0 +1,157 @@
+You are an Expert Cloud Architecture Transcriber. Your task is to faithfully transcribe the architecture EXACTLY as it is drawn on the whiteboard and described in the audio transcript. You are RECORDING the architecture, not redesigning it.
+Do NOT invent unmentioned intermediate components or deployment layers unless they are explicitly present as active runtime participants.
+## VALID VOCABULARY LISTS (CRITICAL):
+You may ONLY use exact values from these lists for the "service" field.
+AWS Services:
+ACM, ALB, AMI, AWSConfig, AccessAnalyzer, AlexaForBusiness, AmazonML, AmazonMQ, Amplify, ApiGateway, AppDiscovery, AppStream, AppSync, Athena, Aurora, AutoScaling, Batch, BeanStalk, Chime, CloudFormation, CloudFront, CloudHSM, CloudTrail, CloudWatch, CodeBuild, CodeCommit, CodeDeploy, CodePipeline, Cognito, Comprehend, Connect, ControlTower, CouchBase, DMS, DataExchange, DataPipeline, DeepLens, Detective, DevTools, DirectConnect, DirectoryService, DocumentDB, DynamoDB, DynamoDBStream, EBS, EC2, ECR, ECS, EFS, EKS, ELB, EMR, ElastiCache, ElasticTranscoder, ElementalLive, EventBridge, FSX, Fargate, Firehose, GlobalAccelerator, Glue, Grafana, Greengrass, GuardDuty, IAM, Inspector, IoT1Click, IoTAnalytics, IoTCore, KMS, Kendra, Kinesis, KinesisAnalytics, KinesisDataStream, KinesisVideo, LakeFormation, Lambda, LambdaAtEdge, Lex, LookoutForVision, MAM, MSK, Macie, MediaConnect, MediaConvert, MediaLive, MediaPackage, MediaStore, MemoryDB, ModelRegistry, MongoDBAtlas, NAT, NLB, Neptune, OnPremDC, OpenSearch, Organizations, Outpost, Pinpoint, Polly, PrivateLink, QLDB, QuickSight, RAM, RDS, RedShift, Rekognition, RoboMaker, Route53, S2SVPN, S3, SAP, SES, SNS, SQS, STS, SageMaker, SageMakerGroundTruth, SecretsManager, SecurityHub, ServerlessApplicationRepository, ServiceCatalog, ServiceNow, Shield, ShieldAdvanced, StepFunctions, StorageGateway, SystemsManager, Textract, ThirdParty, Timestream, Transcribe, TransferFamily, TransitGateway, Translate, VPC, VPCPeering, VPN, WAF, WorkSpaces, XRay
+User and Client Actors:
+UserCompanyAPI, UserCompanyAgent, UserCompanyAnalyst, UserCompanyCRM, UserCompanyDataStream, UserCompanyDeveloper, UserCompanyDomainExpert, UserCompanyDrone, UserCompanyEdge, UserCompanyElementalLiveDevice, UserCompanyHeadEnd, UserCompanyInternalPlatform, UserCompanyWebsite, UserConsumerAPI, UserConsumerAlexaGoogleHome, UserConsumerArtist, UserConsumerCamera, UserConsumerDeveloper, UserConsumerEdge, UserConsumerFarmer, UserConsumerHospital, UserConsumerIOT, UserConsumerMobile, UserConsumerPOS, UserConsumerSatellite, UserConsumerTV, UserConsumerWeb, UserConsumerWebMobile
+## MULTILINGUAL TRANSLATION RULE:
+Translate all output text fields (notes, graph name, reasoning, etc.) into ENGLISH.
+## WORLD MODEL (BASE INPUT):
+Use this as your visual inventory.
+{
+  "entities": [
+    {
+      "service": "S3",
+      "name": "S3",
+      "type": "S3",
+      "rationale": "Ícono de S3 al inicio del primer flujo."
+    },
+    {
+      "service": "SQS",
+      "name": "SQS",
+      "type": "SQS",
+      "rationale": "Cola SQS entre S3 y Lambda (1)."
+    },
+    {
+      "service": "Lambda",
+      "name": "Lambda (1)",
+      "type": "Lambda",
+      "rationale": "Función Lambda principal que conecta hacia Datalake y DynamoDB."
+    },
+    {
+      "service": "LakeFormation",
+      "name": "Datalake",
+      "type": "LakeFormation",
+      "rationale": "Ícono de Data Lake (mapeado a LakeFormation) receptor de Lambda (1) y Redshift."
+    },
+    {
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "type": "DynamoDB",
+      "rationale": "Base de datos DynamoDB receptora desde Lambda (1)."
+    },
+    {
+      "service": "Lambda",
+      "name": "Lambda (2)",
+      "type": "Lambda",
+      "rationale": "Segunda función Lambda dibujada aislada sin conexiones."
+    },
+    {
+      "service": "OnPremDC",
+      "name": "OnPrem",
+      "type": "OnPremDC",
+      "rationale": "Centro de datos On-Premises al inicio del segundo flujo."
+    },
+    {
+      "service": "VPN",
+      "name": "VPN",
+      "type": "VPN",
+      "rationale": "Conexión VPN entre OnPrem y DMS."
+    },
+    {
+      "service": "DMS",
+      "name": "DMS",
+      "type": "DMS",
+      "rationale": "Servicio DMS entre VPN y Redshift."
+    },
+    {
+      "service": "RedShift",
+      "name": "Redshift",
+      "type": "RedShift",
+      "rationale": "Base de datos Redshift que conecta hacia Datalake."
+    }
+  ],
+  "visual_connections": [
+    {
+      "source_label": "S3",
+      "target_label": "SQS",
+      "arrow_direction": "right",
+      "description": "Flecha desde S3 hacia SQS."
+    },
+    {
+      "source_label": "SQS",
+      "target_label": "Lambda (1)",
+      "arrow_direction": "right",
+      "description": "Flecha desde SQS hacia Lambda (1)."
+    },
+    {
+      "source_label": "Lambda (1)",
+      "target_label": "Datalake",
+      "arrow_direction": "right",
+      "description": "Flecha desde Lambda (1) hacia Datalake."
+    },
+    {
+      "source_label": "Lambda (1)",
+      "target_label": "DynamoDB",
+      "arrow_direction": "right",
+      "description": "Flecha desde Lambda (1) hacia DynamoDB."
+    },
+    {
+      "source_label": "OnPrem",
+      "target_label": "VPN",
+      "arrow_direction": "right",
+      "description": "Flecha desde OnPrem hacia VPN."
+    },
+    {
+      "source_label": "VPN",
+      "target_label": "DMS",
+      "arrow_direction": "right",
+      "description": "Flecha desde VPN hacia DMS."
+    },
+    {
+      "source_label": "DMS",
+      "target_label": "Redshift",
+      "arrow_direction": "right",
+      "description": "Flecha desde DMS hacia Redshift."
+    },
+    {
+      "source_label": "Redshift",
+      "target_label": "Datalake",
+      "arrow_direction": "right",
+      "description": "Flecha desde Redshift hacia Datalake."
+    }
+  ]
+}
+## NODE RULES (PRUNING, FUSION, AND AUDIO-DRIVEN EXPANSION):
+1. **Strict Normalization & Third-Party Abstraction (CRITICAL):** The "service" field MUST match exactly with the VALID VOCABULARY LISTS. Non-native AWS services, databases, or external integrations MUST use the generic `ThirdParty` service type.
+2. **Numeric Identifiers:** The "id" field of each node MUST be strictly a sequential integer in string format (e.g., "0", "1", "2").
+3. **Audio-Driven Expansion (CRITICAL OVERRIDE):** If the visual World Model shows a generic abstraction (e.g., a single "AWS" cloud icon), but the audio transcript explicitly lists specific services belonging to that group, you MUST expand the generic visual node into separate, individual nodes for each explicitly mentioned service.
+4. **Dynamic Logical Fusion:** Evaluate multiple icons of the same service dynamically. If they act as a single logical unit, FUSE them. If they perform distinct architectural steps (e.g., three Lambda functions doing different processing stages), KEEP THEM SEPARATE as distinct nodes.
+5. **Pruning:** Remove generic human actors or purely physical concepts. Keep system entry points.
+6. **Note Assimilation:** Extract specific constraints and metrics from the transcript and inject them into the "notes".
+## EDGE AND FLOW RULES (LOGICAL ROUTING):
+1. **Strict Flow Segmentation (`flow_id`):** Group related architectural actions into distinct logical workflows using an integer `flow_id` (starting at 0).
+2. **Chronological Sequence (`seq`):** Order events within a flow using string integers ("0", "1"). Use the prime character for parallel actions.
+3. **Edge Types (`type`):** Use "data" for payload transfers/reads/writes. Use "control" for events, triggers, or asynchronous invocations. Use "meta" for feedback loops, acknowledgments, polling, or monitoring connections.
+
+## TOPOLOGY & CONTAINMENT RULES:
+- **Hosted Software & Substrates:** When third-party software (e.g., Kafka, Metron, Nginx) runs on top of compute hosts (EC2, ECS), preserve the host node if explicitly mentioned, but route logical application flows directly to/from the functional service entity.
+- **No Unused Deployment Layers:** Omit infrastructure management layers (e.g., CloudFormation) unless explicitly described as active runtime triggers.
+
+## EVIDENCE-BALANCED EDGE GENERATION:
+- **Visual & Verbal Grounding:** Primary evidence for edges must come from visual arrows or explicit verbal flow statements in the transcript (e.g., "sends to", "triggers", "stores in").
+- **Completeness:** Ensure that every active service node identified is connected to the graph if a logical flow is described in the audio, avoiding orphan nodes while preventing unmentioned canonical edge hallucinations.
+
+## STRICT EDGE ROUTING & DIRECTIONALITY:
+- **Unidirectional Default:** Treat data and control flows as strictly unidirectional unless a reverse flow is explicitly shown or stated.
+- **Exact Edge Type Mapping:** Accurately differentiate `data` (direct payloads), `control` (triggers, orchestration, events), and `meta` (monitoring, feedback).
+- **No Intermediate Shortcuts:** Preserve exact path routing. Do not bypass intermediate nodes.
+
+
+## VIDEO URL:
+https://www.youtube.com/watch?v=jg85DzUZ9Ac
+
+## FULL TRANSCRIPT:
+Welcome to This is My Architecture. I am Han from AWS and today we are joined by Josh from Veritiv. Welcome Josh and thank you for joining us. Thanks Han. Before we get into your architecture, can you tell me a little bit about Veritiv? So Veritiv is a Fortune 500 company that distributes products to other businesses within facility solutions, packaging, print and publishing. And then we also have some services around supply chain management and logistics. Wow. So you must be experiencing quite a bit of a demand. How do you handle that? Yes. Yeah. And actually with COVID-19 and the impact there, the need to have time in your more accurate analytics on our orders and as well as our demand was huge for our senior leadership to be able to make key decisions for the company's future. Okay. So my team was actually tasked to look at how we produce our sales and our demand today at an invoice level and take a step back and look at it from a different perspective. So we brought in and utilized AWS's architecture and services to do that. Cool. So how do you orchestrate all of that data set together? So today what we have is we actually have an on-premises database that stores our sales data at that invoice level and some other key attributes. Okay. That data is actually piped through our VPN and we use DMS and CDC to be able to pull that data out of our VPN. So we have to pull that data and then populate it into our Redshift cluster that then makes it available to not only our data lake and read back completely in, but also other analytics and reports outside of our lake. So once we have that data in, now we are, we started receiving files, flat files, things of that nature at the order level. Okay. And some of that demand from our ERP system that came into our drop bucket, our S3 drop bucket here. When those files landed, they actually kick off an SQS that handles all of our messaging services. Okay. And at that point SQS will launch what we call our initiator Lambda job. This Lambda job actually talks to DynamoDB and it pulls the metadata and some other key information about these files that are coming in through this pipeline. Okay. Once it's done, the Lambda will, from that information, be able to understand how to populate our data lake and push that information into the appropriate structures. I see. Within our raw and refined buckets. Once we're out into the refined and raw buckets here in our data lake, we have a trigger on our S3 bucket that's event driven and it will launch our next Lambda job. And this Lambda jobs are actually, is, is our complex Lambda job that does not only the merging of both data sets. So we merge our order cells that come in through one pipeline as well as our inventory cells that comes through the other. And we apply some different logic and, and some rules and exceptions that we have in orders. It also then will create a new file. And that file, we apply some Python stats model packages and things like that to create a demand. And to fan that data out to be able to look at what not only our current, but maybe our future demands going to be. Once that completes, that is fed into Redshift again, at which point our business users and all of our leaderships can use many different tools to be able to query and get that data out on a daily basis. That's amazing. So what benefits did you saw out of this architecture? So one of the biggest benefits was, especially with this solution, was that we had a very small focused team that could work in an agile method. Okay. And we were able to use a lot of these services and really find the best tool for the job when it came to an AWS service without increasing spend and cost. Right. The other thing is speed to business. These type of solutions, and specifically this solution, we were able to deliver within four to five weeks, whereas other more traditional type of routes would take longer. So overall, great, great performance as well. That's amazing. Well, what is next for Verityv? So next for us is to really focus on our data lake and these processes, mature it, grow it, increase our cloud solution presence. Also, we are implementing things today, such as cloud formation for these things to automate them more and move us closer to a DevOps solution. I see. Lastly, we have some SageMaker and machine learning type of work going on right now. That's amazing. So thank you so much for going over your architecture and taking through your cloud journey. Thank you. And thank you for watching This Is My Architecture.

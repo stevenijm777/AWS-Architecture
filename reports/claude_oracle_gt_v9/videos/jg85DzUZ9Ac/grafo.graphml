@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">S3 Drop Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Drop bucket receiving order-level flat files and demand data from the ERP system. Landing files kick off SQS.</data>
+    </node>
+    <node id="1">
+      <data key="d5">S3 Data Lake</data>
+      <data key="d6">S3</data>
+      <data key="d7">Data lake with raw and refined buckets. An event-driven S3 trigger launches the next Lambda job. Redshift data is also made available to the lake.</data>
+    </node>
+    <node id="2">
+      <data key="d5">On-Premises Sales Database</data>
+      <data key="d6">UserCompanyDataStream</data>
+      <data key="d7">On-premises database storing sales data at invoice level plus other key attributes.</data>
+    </node>
+    <node id="3">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Handles messaging; launches the initiator Lambda job when files land in the drop bucket.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Initiator Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Initiator Lambda job: talks to DynamoDB and pulls metadata and key information about incoming files, then populates the data lake in the appropriate raw/refined structures.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Complex Merge and Demand Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Complex Lambda job: merges order sales and inventory datasets, applies business logic, rules and exceptions, uses Python stats model packages to create a new demand file (current and future demand).</data>
+    </node>
+    <node id="6">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores metadata and key information about the input files coming through the pipeline.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Redshift Cluster</data>
+      <data key="d6">RedShift</data>
+      <data key="d7">Redshift cluster holding sales data from on-premises and the demand output; queried daily by business users and leadership with many different tools, and feeds the data lake and other analytics and reports.</data>
+    </node>
+    <node id="8">
+      <data key="d5">VPN</data>
+      <data key="d6">VPN</data>
+      <data key="d7">VPN through which on-premises data is piped into AWS.</data>
+    </node>
+    <node id="9">
+      <data key="d5">DMS</data>
+      <data key="d6">DMS</data>
+      <data key="d7">DMS with CDC (change data capture) pulls on-premises sales data and populates the Redshift cluster.</data>
+    </node>
+    <edge source="0" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Files landing in the S3 drop bucket kick off an SQS message.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Event-driven trigger on the S3 data lake bucket launches the complex Lambda job.</data>
+      <data key="d10">5</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="8" id="0">
+      <data key="d8">0</data>
+      <data key="d9">On-premises invoice-level sales data is piped through the VPN.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">SQS launches the initiator Lambda job.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Initiator Lambda queries DynamoDB for file metadata.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda uses the metadata to populate the data lake, pushing data into the appropriate structures in the raw and refined buckets.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Merged dataset and generated demand file are fed into Redshift for daily querying by business users and leadership.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">DynamoDB returns metadata and key information about the incoming files.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Redshift makes the data available to the data lake (and to other analytics and reports outside the lake).</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">0</data>
+      <data key="d9">DMS with CDC pulls the data coming through the VPN.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="9" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">DMS populates the sales data into the Redshift cluster.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Veritiv: Sales and Demand Analytics Data Lake Pipeline</data>
+    <data key="d1">https://www.youtube.com/watch?v=jg85DzUZ9Ac</data>
+    <data key="d2">Veritiv (Fortune 500 B2B distributor) built a pipeline for timely, accurate order and demand analytics. On-premises invoice-level sales data is replicated through VPN and DMS (CDC) into Redshift; ERP order/demand flat files land in an S3 drop bucket and are processed by SQS and Lambda into an S3 data lake, merged and statistically modelled, then loaded into Redshift for business users. Delivered in four to five weeks by a small agile team without increasing spend. Future work: CloudFormation automation, SageMaker/machine learning.</data>
+    <data key="d3">Analytics, Data Lake, Serverless</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

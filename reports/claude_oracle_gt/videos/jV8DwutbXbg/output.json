@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "1) An upstream account aggregation service (not drawn) publishes an 'account updated' event with an account ID on the first Kinesis stream. 2) Kinesis triggers a lean, fast Lambda. 3) That Lambda runs a SQL query against RDS (transactional data written by the other service) and receives the user's transactions. 4) It batches them (~100) and publishes transaction description strings to SQS. 5) SQS fans out to many instances of a second Lambda hosting the ANTLR-based NLP parser. 6) The NLP Lambda writes extracted fields plus model version to a second RDS table. 7) The NLP Lambda publishes a completion event to a second Kinesis stream for other teams to consume. The two Kinesis, two Lambda and two RDS icons perform distinct roles so they are kept separate. Jenkins/CloudFormation are deployment-only and omitted. The upstream aggregation service and downstream consumers are not drawn as components and are omitted.",
+  "graph": {
+    "name": "Tandem: Transaction Enrichment Data Pipeline with NLP on Lambda",
+    "link": "https://www.youtube.com/watch?v=jV8DwutbXbg",
+    "categories": "Data Pipeline, Serverless, Machine Learning, NLP, FinTech",
+    "graph_usable": true,
+    "notes": "Tandem bank aggregates transaction data from UK banks. An event-driven serverless pipeline (Kinesis -> Lambda -> SQS -> Lambda fan-out) extracts merchant name, currency, exchange rate, location and dates from raw transaction descriptions using an ANTLR-generated parser, stores the enriched data in RDS with the model version, and publishes a completion event to Kinesis. SQS was introduced because a single Lambda per Kinesis shard processing sequentially could not keep up with tens of millions of transactions."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Kinesis - Account Updated Event Stream",
+      "notes": "Receives an event containing an account ID, published by an upstream account aggregation service once a user's account has been updated (triggered on schedule or when the user logs in/refreshes the app)."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda - Transaction Reader / Batcher",
+      "notes": "Purposely lean and fast. Listens for the Kinesis event, runs a SQL query against RDS for the user's transactions, groups them into batches of about 100 and publishes the transaction description strings to SQS."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "RDS - Transactional Data",
+      "notes": "Stores raw transactional data (date, description, amount) written by the upstream account aggregation service."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS - Transaction Batch Queue",
+      "notes": "Holds messages containing batches of raw transaction description strings. Enables fan-out to many Lambdas, overcoming the one-Lambda-per-Kinesis-shard sequential processing limit."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda - NLP Extraction",
+      "notes": "Hosts the NLP model: ANTLR parser generated from a domain-specific grammar, compiled to Python and bundled into the Lambda. Extracts merchant name, currency, exchange rates, merchant location, dates. Processing takes a few seconds; many instances scale out to handle tens of millions of transactions. Originally connected directly to Kinesis. Deployed via Jenkins and CloudFormation using a custom open source bundling tool."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS - Extracted Data",
+      "notes": "Table with columns for all extracted fields. Stores processed transactions along with the version of the model used, enabling later analysis, comparison and model iteration."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Kinesis - Processing Completed Event Stream",
+      "notes": "Event stream signalling that the customer's transactions have finished processing. Other parts of the organization trigger from this event, e.g. refreshing the app with friendly descriptions."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Account-updated event (account ID) on the Kinesis stream triggers the Lambda."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda issues a SQL query to RDS for the transactions of the given user."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "RDS returns the user's transactions to the Lambda."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda publishes messages with batches of about 100 transaction description strings to SQS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "SQS messages trigger a fan-out of NLP Lambda invocations, delivering the transaction batches."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Writes the extracted/enriched transaction fields along with the model version to RDS."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "control",
+      "notes": "Publishes an event indicating that the customer's transactions have finished processing, for downstream consumers."
+    }
+  ]
+}

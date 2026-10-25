@@ -1,0 +1,176 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows two patterns separated by a line. Top (batch/daily): Expedia Group applications -> S3 (ingestion layer / data lake) -> Glue and, in parallel, EC2 -> second S3 (CSV) -> Salesforce Einstein Analytics. Bottom (real-time): ECS (hosting a Kafka consumer) -> Aurora -> Lambda -> SQS -> Salesforce. The two S3 icons are kept separate because they play different roles (raw ingestion vs. unified CSV output). The Kafka consumer is hosted on ECS and is recorded in the ECS node notes rather than as a separate node, since only ECS is drawn. Two edges come from the audio rather than from a drawn arrow: (a) Expedia Group -> ECS, because the speaker says the Kafka producer runs on Expedia Group applications and the consumer reads from that same instance; (b) S3 (CSV) -> Salesforce, because the speaker says the processed data is pushed to Salesforce Einstein Analytics, which only accepts CSV. The audio also states that from SQS 'we call a bunch of other Lambdas and then call our APIs' to push into Salesforce, so a second, distinct Lambda node is added between SQS and Salesforce instead of the direct SQS -> Salesforce arrow drawn on the board. Expedia Group is modelled as the company's internal platform (source applications) rather than ThirdParty as in the world model; Salesforce is ThirdParty. Fargate is only a future plan and is omitted.",
+  "graph": {
+    "name": "Expedia Group: Integrating AWS with Salesforce Einstein Analytics (Batch and Real-Time)",
+    "link": "https://www.youtube.com/watch?v=f5EJBUfGZtw",
+    "categories": "Analytics, Data Integration, ETL, Streaming, Serverless",
+    "graph_usable": true,
+    "notes": "Two patterns: a batch/daily pipeline (S3 -> Glue/EC2 -> S3 CSV -> Salesforce) processing 500-800 million rows per day, and a real-time pipeline (Kafka consumer on ECS -> Aurora -> Lambda -> SQS -> Lambdas/APIs -> Salesforce) consuming 5-10 million events per day. Future plan: adopt Fargate."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyInternalPlatform",
+      "name": "Expedia Group Applications",
+      "notes": "Various Expedia channels/platforms (some on-prem, mostly cloud) providing booking, VMIN and partner data. Also hosts the Kafka producer that emits real-time events."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 (Ingestion / Data Lake)",
+      "notes": "Data ingestion layer / data lake. Collects daily data from Expedia Group applications in heterogeneous formats (Parquet, CSV, JSON)."
+    },
+    {
+      "id": "2",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Serverless ETL: consumes and transforms the data into a unified format. At build time it lacked bookmark support for Parquet files."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Handles the Parquet processing (no Glue bookmark support at the time) and other customizations not possible in Glue."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (CSV)",
+      "notes": "Transformed data in a common CSV format, because Salesforce Einstein Analytics is limited to CSV."
+    },
+    {
+      "id": "5",
+      "service": "ECS",
+      "name": "ECS (Kafka Consumer)",
+      "notes": "Runs a Kafka consumer that consumes real-time events from the Kafka producer on Expedia Group applications. About 5-10 million events per day. Fargate planned for the future."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora",
+      "notes": "MySQL engine used for aggregating and sorting the real-time data; chosen over S3 and other solutions tried."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda (Processing)",
+      "notes": "Processes the data from Aurora and creates queueable messages for SQS."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues the messages produced by the processing Lambda."
+    },
+    {
+      "id": "9",
+      "service": "Lambda",
+      "name": "Lambda (Salesforce Push)",
+      "notes": "A bunch of other Lambdas called from SQS that call APIs to push data straight into Salesforce. Mentioned in audio, not drawn as a separate icon."
+    },
+    {
+      "id": "10",
+      "service": "ThirdParty",
+      "name": "Salesforce",
+      "notes": "Salesforce Einstein Analytics: reporting engine for business users. Accepts only CSV for batch data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Daily data from Expedia Group applications (booking, VMIN, partner data) lands in S3 in Parquet, CSV and JSON formats."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Glue consumes the raw data for ETL transformation."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "EC2 processes Parquet files and custom transformations not supported by Glue."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transformed data written in unified CSV format."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Transformed data written in unified CSV format."
+    },
+    {
+      "source": "4",
+      "target": "10",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "CSV data pushed to Salesforce Einstein Analytics; 500-800 million rows per day. Stated in audio, not drawn as a direct arrow."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Kafka consumer on ECS consumes real-time events from the Kafka producer running on Expedia Group applications. Stated in audio, not drawn."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Real-time events pushed to Aurora for aggregation and sorting."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda processes the data from Aurora."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda queues the processed data as messages in SQS."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "control",
+      "notes": "SQS messages invoke a bunch of other Lambdas."
+    },
+    {
+      "source": "9",
+      "target": "10",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambdas call APIs to push the real-time data straight into Salesforce. The board draws this as a direct SQS -> Salesforce arrow."
+    }
+  ]
+}

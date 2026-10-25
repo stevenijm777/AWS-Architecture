@@ -1,0 +1,174 @@
+{
+  "step_by_step_reasoning": "1) Nodes: the world model lists 8 entities and all are kept: S3, Lambda #1 (validation), Lambda #2 (processing/ingestion), UserConsumerWeb, OpenSearch, RDS, SES and the Novetiq backend (ThirdParty, Python backend). The two Lambdas perform distinct stages, so they stay separate. S3 is kept as the single logical node given in the world model (raw folder, validated folder, report bucket). No audio-driven expansion was needed. 2) Flows: flow 0 = event-driven data ingestion (raw CSV/Excel in S3 -> validation Lambda -> validated folder in S3 -> processing Lambda -> OpenSearch). Flow 1 = data retrieval (user -> front end -> browser -> backend -> data layer -> backend -> user). Flow 2 = large report delivery (backend uploads report to S3, user notified through SES with a pre-signed URL). 3) Ledger: every visual connection is emitted once with its original direction, including the repeated Lambda #1 -> S3 pair and the bidirectional pairs. The audio was used only to assign flow, sequence, type and notes. Three assignments are interpretations where the audio is not explicit: the second Lambda #1 -> S3 arrow (taken as discrepancy highlighting/raw data access), Lambda #2 -> S3 (taken as reading the validated data), and the User <-> S3 pair (taken as the Angular front-end request/response, with the pre-signed download noted on the return edge). 4) Self-check: visual_connections entries = 14; edges emitted = 14. No extra edges were added.",
+  "graph": {
+    "name": "Cybex Trade Data Processing and Retrieval with Amazon OpenSearch (Novetiq)",
+    "link": "https://www.youtube.com/watch?v=JYeXbUdFOdw",
+    "categories": "Analytics, Data Processing, Serverless, Search",
+    "graph_usable": true,
+    "notes": "Event-driven data ingestion and retrieval architecture for Cybex export/import trade data and reports. Grew from 1.5 billion records to about 5 billion (more than 3.5x) on the same architecture, still returning data and reports with 15 to 20 complex parameters within 2 to 4 seconds. Graviton2 instances for Amazon OpenSearch save 25 to 30 percent of operating cost (roughly 100K dollars). Reports with more than 10,000 records are uploaded to S3 and delivered through an SES notification with a pre-signed URL. Users access the data through a web application (Angular front end) or a mobile application; the backend is developed in Python."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3",
+      "notes": "S3 buckets: raw data in CSV or Excel format is uploaded here; a validated copy is stored in a different folder; reports with more than 10,000 records are uploaded here for download via pre-signed URL."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda #1",
+      "notes": "Triggered when raw data is uploaded; validates the data. Discrepancies are highlighted, otherwise a validated copy is uploaded to a different folder in S3."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Lambda #2",
+      "notes": "Triggered once the validated copy is available; processes the validated data and ingests it into the OpenSearch cluster."
+    },
+    {
+      "id": "3",
+      "service": "UserConsumerWeb",
+      "name": "UserConsumerWeb",
+      "notes": "User accessing the data through the web application (Angular front end via the web browser) or the mobile application (requests go directly to the backend)."
+    },
+    {
+      "id": "4",
+      "service": "OpenSearch",
+      "name": "OpenSearch",
+      "notes": "Amazon OpenSearch cluster on Graviton2 instances (25 to 30 percent operating cost savings, roughly 100K dollars). Query templates are created and mapped to relevant indexes; OpenSearch analyzer is used to fine-tune queries and enhance performance; an aggregated layer on top of the processed data serves complex reports such as trend analysis and aggregation reports. About 5 billion records, responses within 2 to 4 seconds."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Amazon RDS, part of the data layer queried by the backend application."
+    },
+    {
+      "id": "6",
+      "service": "SES",
+      "name": "SES",
+      "notes": "Sends a notification to the user to download large reports (more than 10,000 records) using a pre-signed URL."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Novetiq backend",
+      "notes": "Backend application developed in Python. Receives requests from the web browser or directly from the mobile app, queries the data layer and returns the response to the user."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "Raw data upload (CSV/Excel) to S3 triggers the Lambda that validates the data."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Validation of the raw data; any discrepancy within the data is highlighted."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "A copy of the validated data is uploaded to a different folder within the S3 buckets."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "The validated copy in S3 triggers the Lambda that processes the validated data."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Processing Lambda accesses the validated data in S3."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Processed data is ingested into the OpenSearch cluster (query templates mapped to indexes, aggregated layer for complex reports)."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "User sends the request to the front-end web application (Angular) via the web browser."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "The request goes back to the browser; also used to download large reports using the pre-signed URL."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Request goes from the browser to the backend application (Python); mobile app requests go directly to the backend."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Backend sends the request to the data layer."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Data layer returns the response to the backend application."
+    },
+    {
+      "source": "7",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Response is sent back to the user via the backend application; 15 to 20 complex parameters within 2 to 4 seconds."
+    },
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "When a requested report has more than 10,000 records, the report is uploaded to the S3 bucket."
+    },
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "A notification is sent to the user via SES to download the report using the pre-signed URL."
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "step_by_step_reasoning": "1) Whiteboard inventory: Developer, Git, EKS (Lagoon core) on the left of a dashed divider; on the right, a hosting EKS cluster with EC2 and EC2 Spot beneath it, and Aurora R6G, EBS GP3 and EFS at the bottom. The world model label 'AURORA RAG' is a misreading; the board and the transcript say Aurora R6G (Graviton2). 2) Developer is kept as the system entry point. Git is not an AWS service, so it is ThirdParty. 3) The two EKS icons are kept separate: one runs the Lagoon core, the other is the hosting zone for developer environments. EC2 and EC2 Spot are kept separate because they carry different workloads (base/production vs dev/non-production). 4) Edges follow the drawn arrows: Developer->Git (push), Git->Lagoon EKS (webhooks), Lagoon EKS->hosting EKS (deploy), EKS->EC2, EKS->EC2 Spot, EC2->Aurora, EC2 Spot->EBS GP3, EC2 Spot->EFS. 5) Flows: flow 0 is the deployment pipeline, flow 1 is database provisioning/use, flow 2 is storage provisioning/use by the operator on the cluster. No components were added beyond what is drawn.",
+  "graph": {
+    "name": "amazee.io Lagoon: Open Source Application Delivery Platform on Amazon EKS",
+    "link": "https://www.youtube.com/watch?v=90rWUjKjnAE",
+    "categories": "Containers, DevOps, Compute, Storage, Database",
+    "graph_usable": true,
+    "notes": "amazee.io built Lagoon, an open source application delivery platform that lets developers move applications into Kubernetes without deep Kubernetes knowledge. Developers push to Git; webhooks notify Lagoon (on EKS), which deploys environments to hosting-zone EKS clusters following an infrastructure-as-code paradigm. Base workloads run on EC2, dev/non-production on EC2 Spot (70-90% cost benefit). Operators provision storage (EFS or EBS GP3) and Aurora databases (R6G Graviton2) automatically. They migrated from OpenShift to Kubernetes. Next steps: more Spot, more R6G, lower costs with savings plans."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer",
+      "notes": "Developers create code and push it to their Git repositories. Everything to be deployed is defined in the Git repository (infrastructure as code)."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Git",
+      "notes": "Git repositories with webhooks connected to Lagoon. Feature branches and pull requests trigger deployments."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS (Lagoon)",
+      "notes": "Lagoon core, the open source application delivery platform, running on EKS. Listens to the repositories and decides what needs to be done (e.g. feature branch or pull request), then deploys to the hosting zones."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS (Hosting Zone)",
+      "notes": "Hosting-zone EKS cluster running the developer environments. Operators on the cluster provision storage and databases automatically. Migrated from OpenShift to Kubernetes for more flexibility and to stay on the bleeding edge of Kubernetes."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Normal EC2 instances running the base infrastructure / whole base workload of the EKS cluster."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 Spot",
+      "notes": "Spot instances for development or non-production infrastructure where failure or termination of a pod can be tolerated. Cost benefit of 70-90% versus EC2. Goal is to move more workloads from EC2 to Spot."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "Aurora R6G",
+      "notes": "Aurora database provisioned by an operator when a developer requests a database during deployment; exposed back to the project as a set of secrets. Uses Graviton2 R6G instances, started in non-production with no regressions seen, now moving more production workloads onto them."
+    },
+    {
+      "id": "7",
+      "service": "EBS",
+      "name": "EBS GP3",
+      "notes": "EBS GP3 volumes for specialized workloads such as a database or a search server (OpenSearch, Solr). Adopted mid-December 2020 right after announcement, rolled out during maintenance windows; lower storage cost and better IOPS performance."
+    },
+    {
+      "id": "8",
+      "service": "EFS",
+      "name": "EFS",
+      "notes": "EFS for normal file assets that do not need anything specific. Chosen transparently by the operator so developers do not need to think about storage."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developers push code to their Git repositories."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Webhooks notify Lagoon of repository events (feature branch, pull request)."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Lagoon goes to the hosting zone and deploys everything the environment needs."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "EKS runs the base workload on normal EC2 instances."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3'",
+      "type": "control",
+      "notes": "EKS runs development / non-production workloads on EC2 Spot instances."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "When a developer needs a database, an operator provisions an Aurora database (R6G) and exposes it back to the project as a set of secrets."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Specialized workloads (database, OpenSearch, Solr) store data on EBS GP3 volumes provisioned by the operator."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Normal file assets are stored in EFS provisioned by the operator."
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "step_by_step_reasoning": "1. I took the 9 entities in the World Model as the full node inventory. The two Kinesis Data Streams icons stay as separate nodes because they do different jobs: one collects cloud provider security events and the other queues events for the rule engine. Elasticsearch is mapped to OpenSearch. The custom Sharder and Slack are mapped to ThirdParty. Email is mapped to SES, following the World Model. The audio mentions the native event sources (CloudWatch events and Azure activity log), the collection framework and Splunk, but none of them are drawn as entities. I recorded them in the notes and did not add nodes for them.\n2. The ledger has 13 visual_connections. I emitted exactly one edge per entry and kept each direction as drawn. That includes both Neptune -> Rules Kinesis and Rules Kinesis -> Neptune.\n3. I grouped the edges into four flows using the audio:\n   - Flow 0, ingestion: Collect Kinesis -> Neptune. The consumer publishes 50M+ resources.\n   - Flow 1, backing stores: Neptune -> Elasticsearch and Neptune -> DynamoDB, in parallel.\n   - Flow 2, write scale-out and sharding: Neptune -> CloudWatch and Elasticsearch -> CloudWatch (metrics, in parallel), then CloudWatch -> Sharder (metric consumption), then Sharder -> Neptune (feedback for shard placement and load balancing).\n   - Flow 3, rule execution: Collect Kinesis -> Rules Kinesis (the incoming event) in parallel with Neptune -> Rules Kinesis (resource changes). Then Rules Kinesis -> Neptune (graph security checks), then Rules Kinesis -> DynamoDB (violations persisted), then Rules Kinesis -> Slack and Rules Kinesis -> Email in parallel (real-time notifications).\n4. Edge types: payload moves are 'data'. Event propagation and notifications are 'control'. Metrics and the sharder feedback loop are 'meta'.\n5. Self-check: there are 13 visual_connections and I emitted 13 edges.",
+  "graph": {
+    "name": "CloudHealth Secure State by VMware - Real-time Cloud Security and Compliance Monitoring",
+    "link": "https://www.youtube.com/watch?v=6EUknQqaV1w",
+    "categories": "Security, Compliance, Data Pipeline, Graph Database, Real-time Analytics",
+    "graph_usable": true,
+    "notes": "A cloud security and monitoring platform for 3 major cloud providers. It processes billions of events per day covering 50M+ cloud resources, and that number keeps growing. Ingestion starts from the cloud providers' native security event streams (CloudWatch events, Azure activity log). A collection framework works out the current state of each resource and publishes it to Kinesis. Neptune is the primary graph store: it is schema-less and provides read scale-out. A custom sharder scales writes across the provisioned Neptune clusters. The rule engine runs thousands of rules per event and sends notifications to Slack, email, Splunk and similar channels."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Collect)",
+      "notes": "Collection stream. The collection framework evaluates the cloud providers' native security events (CloudWatch events, Azure activity log), determines the current resource state and publishes the resources here. Handles billions of events per day from 3 cloud providers."
+    },
+    {
+      "id": "1",
+      "service": "Neptune",
+      "name": "Amazon Neptune",
+      "notes": "Primary persistence, used as a graph database for highly interconnected cloud resource data. Chosen because it is schema-less (agnostic to varied resource configurations across providers) and provides the read scale-out needed to execute rules. Stores 50M+ resources across multiple provisioned clusters."
+    },
+    {
+      "id": "2",
+      "service": "OpenSearch",
+      "name": "Elasticsearch",
+      "notes": "Backing store for reporting, analytics, search and aggregations, so customers can slice and dice the resource data."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "Amazon DynamoDB",
+      "notes": "Backing store for visualizing how resource configurations change over time. Also persists the security violations detected by the rule engine."
+    },
+    {
+      "id": "4",
+      "service": "KinesisDataStream",
+      "name": "Kinesis Data Streams (Rules)",
+      "notes": "Fronts the rule execution pipeline. The rule engine decides which rules (potentially thousands) to execute for each event and its resource changes, and runs them against the Neptune graph."
+    },
+    {
+      "id": "5",
+      "service": "CloudWatch",
+      "name": "Amazon CloudWatch",
+      "notes": "Collects CPU, memory and other metrics from Neptune and Elasticsearch. The sharder uses these metrics to determine shard capacity."
+    },
+    {
+      "id": "6",
+      "service": "ThirdParty",
+      "name": "Sharder Service",
+      "notes": "Custom service for write scale-out. It logically groups data across the provisioned Neptune clusters, uses CloudWatch metrics to decide whether a cluster is full, and load-balances customer data."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "Slack",
+      "notes": "Real-time security violation notification channel for customers."
+    },
+    {
+      "id": "8",
+      "service": "SES",
+      "name": "Email",
+      "notes": "Real-time security violation email notifications. Other supported channels include Splunk."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "The consumer publishes the ingested cloud resources (50M+) into Neptune."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Resource data is sent to Elasticsearch for reporting, analytics and search."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Resource data is sent to DynamoDB to track configuration history over time."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Neptune CPU, memory and other metrics are published to CloudWatch."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "meta",
+      "notes": "Elasticsearch metrics are published to CloudWatch."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "The sharder consumes CloudWatch metrics to determine the shard capacity of the Neptune clusters."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Feedback loop: shard placement decisions load-balance customer data across the provisioned Neptune clusters (write scale-out)."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "The incoming event is propagated to the rule execution pipeline."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Persisted resource changes are propagated to the rule execution pipeline."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "The rule engine runs thousands of rules over the Neptune graph to perform security checks, using Neptune's read scale-out."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "data",
+      "notes": "Detected security violations are persisted in DynamoDB."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "control",
+      "notes": "Real-time violation notification is sent to Slack."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "3'",
+      "type": "control",
+      "notes": "Real-time violation notification is sent by email."
+    }
+  ]
+}

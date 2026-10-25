@@ -1,0 +1,134 @@
+{
+  "step_by_step_reasoning": "1) The whiteboard shows two user actors (CLI developer and browser users), three EC2 icons, DynamoDB, SQS and one Lambda, with a green line that the speaker identifies as an account boundary. 2) The three EC2 icons perform distinct roles (deployment web service, backend queue consumer that creates Lambdas, and invocation service), so they are kept as separate nodes. 3) The ALB is mentioned in the audio only as something the deployment web service sits behind; it is not drawn, so it is recorded in the EC2 note rather than as a node. 4) V8 isolates are a runtime construct inside Lambda, so they are captured in the Lambda note. 5) Two flows are described: flow 0 is deployment (CLI -> EC2 web service -> DynamoDB state and SQS queue; backend EC2 reads from SQS and creates the Lambda in the separate account); flow 1 is invocation (browser -> internal EC2 service -> invoke Lambda -> data returned -> page fragment returned to browser). 6) The EC2 (backend) -> SQS edge follows the drawn arrow direction, representing the backend service reading deployment requests from the queue. 7) The return edges in flow 1 are included because the transcript explicitly states that the Lambda returns data and a page fragment is returned to the browser, although no return arrows are drawn.",
+  "graph": {
+    "name": "Atlassian Forge: Secure Multi-Tenant Serverless App Platform",
+    "link": "https://www.youtube.com/watch?v=H2fOkeXxpyw",
+    "categories": "Serverless, SaaS, Multi-Tenant, Security, Developer Platform",
+    "graph_usable": true,
+    "notes": "Atlassian Forge lets customers, developers and third-party vendors build custom apps that extend Atlassian products. There are two parts: deployment of customer code (CLI -> EC2 web service -> DynamoDB state + SQS queue -> backend EC2 -> Lambda creation) and invocation (browser -> internal EC2 service -> Lambda). The green line is an account boundary: customer code Lambdas run in their own separate AWS account, isolated from the Forge platform account. Lambdas are multi-tenant, and a V8 isolate is created per request for isolation."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer (CLI)",
+      "notes": "Developer writes code in JavaScript or TypeScript and deploys it using the Forge CLI. Thousands of customers."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Deployment Web Service",
+      "notes": "Web service that receives deployments from the CLI. Sits behind an ALB so it can scale to handle load from thousands of customers. Translates the customer's JavaScript function into a Lambda function deployment request."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores deployment state (in progress, completed, failed) so the result can be reported back to the user."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues deployment requests to decouple ingestion from Lambda creation and avoid Lambda control plane rate limits."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Backend Deployment Service",
+      "notes": "Backend service that reads deployment requests from SQS and creates the Lambda in its own time, when allowed, so it is not rate limited."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "AWS Lambda (Customer Code)",
+      "notes": "Runs customer code in a separate AWS account (account boundary) containing nothing else. Multi-tenant: a Lambda can be shared between multiple customers. A V8 isolate is spun up on every request and deleted after the invocation so no state or global variables leak between customers. No data is stored in the Lambda."
+    },
+    {
+      "id": "6",
+      "service": "UserConsumerWeb",
+      "name": "User (Browser)",
+      "notes": "Browser that invokes the deployed app and renders the returned page fragment."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 Invocation Service",
+      "notes": "Internal service that checks security permissions (whether the user is allowed to execute the Lambda), finds the right Lambda for that user and product, and invokes it with the correct parameters."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer deploys JavaScript/TypeScript code via the CLI to the deployment web service."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stores deployment state to track progress (completed, failed, etc.)."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queues the deployment request onto SQS."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Backend service reads deployment requests from SQS at its own pace (arrow drawn from EC2 to SQS)."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Creates the Lambda function with the customer code in the separate customer account, across the account boundary, when not rate limited."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Browser calls the internal service to invoke the app."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "After checking permissions and finding the right Lambda, the service invokes it, sending the correct parameters."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda returns data, which may be gathered from other systems or products. Stated in the audio; no return arrow is drawn."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "A page fragment is constructed and returned to the browser, which renders it. Stated in the audio; no return arrow is drawn."
+    }
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "1. Nodes: I transcribed all 10 entities from the whiteboard. The two S3 buckets do different jobs. The first is the ingestion layer or data lake for mixed formats (Parquet, CSV, JSON). The second holds the unified CSV output for Salesforce. Because they are separate steps, I kept them as separate nodes. Expedia Group and Salesforce are external systems, so both use the ThirdParty service type. ECS stays as the host of the Kafka consumer. The audio says the consumer runs on ECS, and no separate Kafka icon is drawn. Fargate is only mentioned as a future plan, so I did not add it.\n2. Flows: The speaker splits the board into two patterns. Flow 0 is the daily batch flow at the top: Expedia → S3 → EC2/Glue in parallel → S3 (CSV) → Salesforce Einstein Analytics. Flow 1 is the real-time flow at the bottom: Kafka events → ECS → Aurora → Lambda → SQS → Salesforce.\n3. Parallel steps: EC2 and Glue do the same transformation step side by side. EC2 handles Parquet bookmarking and custom work that Glue could not do. I marked these with the prime notation (1/1', 2/2').\n4. Extra edge from the audio: The speaker explicitly says the Kafka producer runs on the Expedia Group applications and the ECS Kafka consumer reads the real-time events from it. I added Expedia Group → ECS as a data edge so the real-time flow has a stated source.\n5. Self-check: There are 10 visual_connections entries. I emit 11 edges: the 10 from the ledger plus 1 grounded in the audio. 11 is not smaller than 10.",
+  "graph": {
+    "name": "Expedia Group - AWS to Salesforce Einstein Analytics Integration (Batch and Real-Time)",
+    "link": "https://www.youtube.com/watch?v=f5EJBUfGZtw",
+    "categories": "Data Integration, ETL, Batch Processing, Real-Time Streaming, Analytics, SaaS Integration",
+    "graph_usable": true,
+    "notes": "There are two patterns. The top pattern is daily batch processing of 500 to 800 million rows per day. Data from Expedia applications (bookings, partner data, etc.) is ingested into S3 and transformed by Glue and EC2 into a unified CSV format, which is then pushed to Salesforce Einstein Analytics. The bottom pattern is a real-time integration that handles 5 to 10 million events per day. A Kafka consumer on ECS writes to Aurora (MySQL) for aggregation and sorting. Lambda then processes the data and queues it in SQS, and further Lambdas call APIs that push the data to Salesforce. The team plans to adopt Fargate in the future."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Expedia Group",
+      "notes": "Source applications (bookings, partner data, etc.), both on-prem and mostly in the cloud. Data arrives in mixed formats such as Parquet, CSV and JSON. The Kafka producer for real-time events also runs on these applications."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3 (Data Lake / Ingestion)",
+      "notes": "Data ingestion layer, or data lake, that collects data from the Expedia Group applications daily in mixed formats (Parquet, CSV, JSON)."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Custom transformation. It is used because Glue lacked bookmark support for Parquet files at the time and because some customization could not be done in Glue."
+    },
+    {
+      "id": "3",
+      "service": "Glue",
+      "name": "Glue",
+      "notes": "Serverless ETL that consumes and transforms the mixed data into a unified format."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 (CSV)",
+      "notes": "Holds the transformed data in a common CSV format, because Salesforce Einstein Analytics only accepts CSV. The batch layer processes 500 to 800 million rows per day."
+    },
+    {
+      "id": "5",
+      "service": "ThirdParty",
+      "name": "Salesforce Einstein Analytics",
+      "notes": "Reporting engine that gives business users a unified global view. It receives both the batch CSV data and the real-time data."
+    },
+    {
+      "id": "6",
+      "service": "ECS",
+      "name": "ECS (Kafka Consumer)",
+      "notes": "Runs a Kafka consumer that reads real-time events from the Kafka producer on the Expedia applications. Kinesis and MSK were not used because the producer runs on the Expedia side. The layer handles 5 to 10 million events per day. Fargate adoption is planned."
+    },
+    {
+      "id": "7",
+      "service": "Aurora",
+      "name": "Aurora (MySQL)",
+      "notes": "Aggregates and sorts the data using the MySQL engine. It was chosen over S3 and other evaluated solutions."
+    },
+    {
+      "id": "8",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Processes records from Aurora and turns them into queueable messages."
+    },
+    {
+      "id": "9",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queues the messages. From SQS, additional Lambdas call APIs that push the data to Salesforce."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Daily batch ingestion of data from the Expedia applications in mixed formats (Parquet, CSV, JSON)."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "EC2 reads data for custom transformation, including Parquet bookmarking and customizations not supported by Glue."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Glue ETL consumes and transforms the data into a unified format."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Writes the transformed data in the common CSV format."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Writes the unified data in CSV format."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Pushes the CSV data to Salesforce Einstein Analytics, at 500 to 800 million rows per day."
+    },
+    {
+      "source": "0",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "The Kafka consumer on ECS reads real-time events from the Kafka producer running on the Expedia Group applications. This edge comes from the audio and is not drawn on the board."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Pushes real-time events into Aurora for aggregation and sorting, at 5 to 10 million events per day."
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda processes the aggregated data."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Queues the processed records as messages in SQS."
+    },
+    {
+      "source": "9",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "From SQS, additional Lambdas call APIs that push the data to Salesforce in real time."
+    }
+  ]
+}

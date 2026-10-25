@@ -1,0 +1,186 @@
+{
+  "step_by_step_reasoning": "1) Nodes: took the whiteboard inventory as drawn. EKS hosts the MetaManager microservices (the 'brains of the grid'), with the front end connecting to it. Elasticsearch/Neo4j is the MetaStore (document + graph database), mapped to OpenSearch as drawn. The central dashed box holds the S3 data lake (60 TB), Kafka (600 topics, mapped to MSK) and EMR. RDS and Vertica (drawn with an EC2 icon) are the consumption data stores. Below the line are Multiple Data Sources (RDS icon), Applications (ThirdParty) and the DA/DS actor. The two RDS icons are kept separate because they play different roles (source vs. consumption store). 2) DA/DS has no arrows on the board; it is kept because the audio explicitly says data analysts and data scientists consume the data from the stores, so the two edges into it are verbally grounded only. 3) Flow 0 (discover): data sources -> MetaManager -> MetaStore. Flow 1 (collect): data sources -> Kafka -> S3, and applications/APIs -> EMR -> S3. Flow 2 (consume): data lake -> RDS and Vertica -> DA/DS. Flow 3 (connect back): S3 -> Kafka -> data sources, and S3 -> EMR -> applications, following the drawn bidirectional arrows and the 'bring this data back to our business' statement. 4) No infrastructure-as-code or front-end node was added: neither is drawn as an icon, and the DevOps tooling is not a runtime participant.",
+  "graph": {
+    "name": "Majid Al Futtaim - The Grid: Enterprise Data Lake and Streaming Platform",
+    "link": "https://www.youtube.com/watch?v=9qTEHITVeLE",
+    "categories": "Analytics, Data Lake, Streaming, Big Data",
+    "graph_usable": true,
+    "notes": "Data platform ('the Grid') built on three pillars: collect, protect and connect the data. An EKS-based MetaManager discovers metadata and stores it in a MetaStore (Elasticsearch + Neo4j). Kafka and EMR bring data from multiple sources into an S3 data lake (60 TB). Data is published to RDS and Vertica for data analysts and data scientists, and flows back to business applications through the enterprise streaming platform. Infrastructure is defined as code and spun up and down on demand; the first MVP reached production in six months. Business benefit: a 360-degree customer view enabling cross-brand campaigns."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "EKS",
+      "name": "EKS (MetaManager)",
+      "notes": "MetaManager, the 'brains of the grid', running as a microservice architecture on EKS. Abstracts users from the complexity of the technology needed to move data. The front end connects to it. Discovers tables, schemas and APIs, and applies data protection rules on data moving in and out of the data lake."
+    },
+    {
+      "id": "1",
+      "service": "OpenSearch",
+      "name": "Elasticsearch / Neo4j (MetaStore)",
+      "notes": "MetaStore holding the discovered meta information; a combination of a document database (Elasticsearch) and a graph database (Neo4j)."
+    },
+    {
+      "id": "2",
+      "service": "MSK",
+      "name": "Kafka (600 topics)",
+      "notes": "Enterprise streaming platform shared across all the group's companies. 600 topics, 250 GB, 7-day average retention period. Brings data from sources in different networks, countries and technologies into the data lake, and connects data back to the business."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "Amazon EMR",
+      "notes": "Used together with Kafka to bring data into the centralized data lake; exchanges data with applications/APIs in both directions."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Data Lake (60 TB)",
+      "notes": "Centralized data lake where all data is stored, around 60 TB today. Data moves in and out, with protection applied by the MetaManager."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "Amazon RDS (consumption store)",
+      "notes": "Data store receiving data from the data lake for consumption; data can be published or consumed via APIs or OLTP."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "Vertica (EC2)",
+      "notes": "Vertica analytics database hosted on EC2, receiving data from the data lake for traditional analytics."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "Multiple Data Sources",
+      "notes": "Multiple source databases across different networks, countries and technologies. Their tables, schemas and APIs are discovered by the MetaManager."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "Applications",
+      "notes": "Business applications and APIs (e.g. the loyalty application). Data is consumed from them and brought back to the business, for example as push notifications and cross-brand campaigns."
+    },
+    {
+      "id": "9",
+      "service": "UserCompanyAnalyst",
+      "name": "DA/DS (Data Analysts / Data Scientists)",
+      "notes": "Data analysts and data scientists who consume the data, run models and build dashboards. Drawn without arrows on the whiteboard."
+    }
+  ],
+  "edges": [
+    {
+      "source": "7",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "MetaManager discovers the tables, schemas and APIs of the multiple data sources."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "MetaManager stores the discovered meta information in the MetaStore (document + graph database)."
+    },
+    {
+      "source": "7",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data from the multiple sources is streamed into Kafka."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kafka streams the collected data into the S3 data lake."
+    },
+    {
+      "source": "8",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Data from applications/APIs is ingested through EMR."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "EMR writes the collected data into the S3 data lake."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data from the data lake is sent to RDS for consumption."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Data from the data lake is sent to Vertica for analytics."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Data analysts and data scientists consume data from RDS. Stated in the audio; no arrow drawn."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Data analysts and data scientists consume data from Vertica to run models and build dashboards. Stated in the audio; no arrow drawn."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data flows out of the data lake to the Kafka enterprise streaming platform."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kafka delivers data back to the business systems."
+    },
+    {
+      "source": "4",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "data",
+      "notes": "EMR reads data from the data lake."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Data is brought back to business applications, e.g. loyalty app push notifications and cross-brand campaigns."
+    }
+  ]
+}

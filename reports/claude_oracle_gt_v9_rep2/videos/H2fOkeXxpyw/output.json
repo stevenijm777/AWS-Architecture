@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the whiteboard has 8 entities: CLI developer, browser user, three EC2 icons, SQS, DynamoDB and Lambda. 2) Fusion check: the three EC2 icons perform distinct steps (deployment web service, queue worker that creates Lambdas, invocation/permission service), so they stay as three separate nodes. 3) Pruning: the CLI developer and the browser user are system entry points, so both are kept. 4) ALB is only mentioned in the audio as what the deployment web service sits behind; it is not drawn and no ledger edge may be re-routed through it, so it is recorded as a note on the EC2 web service rather than as a node. 5) Flows: flow 0 is deployment (CLI -> EC2 web service -> DynamoDB state and SQS queue -> EC2 worker -> create Lambda in the separate customer-code account, plus state read back and status reported to the developer). Flow 1 is invocation (browser -> EC2 internal service for permission check and Lambda lookup -> invoke Lambda -> page fragment returned to browser). 6) Ledger self-check: visual_connections has 10 entries and I emit 10 edges, each with the same source and target as its ledger entry, including both directions for developer <-> EC2 web service and DynamoDB <-> EC2 web service. No edges were added beyond the ledger.",
+  "graph": {
+    "name": "Atlassian Forge: Multi-Tenant Serverless Platform for Custom App Deployment and Invocation",
+    "link": "https://www.youtube.com/watch?v=H2fOkeXxpyw",
+    "categories": "Serverless, SaaS, Multi-Tenant, Security, Developer Platform",
+    "graph_usable": true,
+    "notes": "Atlassian Forge lets customers, developers and third-party vendors build custom apps that extend Atlassian products. It has two parts: deployment of customer code (CLI -> EC2 web service -> DynamoDB/SQS -> EC2 worker -> Lambda) and invocation of that code (browser -> EC2 internal service -> Lambda -> browser). The Forge platform and the customer-code Lambdas run in separate AWS accounts (account boundary). Lambdas are multi-tenant; a V8 isolate is created per request and deleted afterwards to isolate tenants. SQS decouples deployment requests to avoid Lambda control-plane rate limiting. Serves thousands of customers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer (Forge CLI)",
+      "notes": "Developer writes code in JavaScript or TypeScript and deploys it with the Forge CLI. To the developer it looks like a normal JavaScript function, which Forge translates into a Lambda function."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Deployment Web Service",
+      "notes": "Web service that receives code deployments from developers. Sits behind an ALB so it can scale to handle load from thousands of customers. Stores deployment state in DynamoDB and queues deployment requests onto SQS instead of creating Lambdas directly."
+    },
+    {
+      "id": "2",
+      "service": "DynamoDB",
+      "name": "DynamoDB Deployment State",
+      "notes": "Stores the state of every deployment (in progress, completed, failed, etc.) so the outcome can be reported back to the user."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS Deployment Queue",
+      "notes": "Queues deployment requests because the Lambda control plane limits how many Lambdas can be created in a given time interval. Decouples ingestion from Lambda creation to avoid rate limiting."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Deployment Worker",
+      "notes": "Back-end service that reads deployment requests from SQS and creates the Lambda in its own time, when it is allowed to, so it is not rate limited."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda Customer Code",
+      "notes": "Runs customer code in a separate AWS account that contains nothing else (account boundary from the Forge platform account). Multi-tenant: a Lambda can be shared between multiple customers. On every request a V8 isolate (JavaScript V8 engine construct, like a tiny VM with nothing in it) is spun up to run the customer's code and deleted afterwards, so global variables and state are not shared across invocations. No data is stored in the Lambda."
+    },
+    {
+      "id": "6",
+      "service": "UserConsumerWeb",
+      "name": "Browser User",
+      "notes": "Browser that invokes the deployed app and renders the page fragment that is returned."
+    },
+    {
+      "id": "7",
+      "service": "EC2",
+      "name": "EC2 Invocation Service",
+      "notes": "Internal service that checks security permissions (is the user behind the browser allowed to execute that Lambda), finds the right Lambda associated with that user and product, and invokes it with the correct parameters."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer deploys JavaScript/TypeScript code through the CLI to the web service."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stores deployment state to track progress (completed, failed, etc.)."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Queues the deployment request onto SQS instead of creating the Lambda directly, to avoid Lambda control-plane rate limits."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Back-end service reads (polls) deployment requests from the queue."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Creates the Lambda function with the customer code when allowed to; the Lambda is in a different account (crosses the account boundary)."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Web service reads the deployment state/progress."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Reports back to the user what happened to the deployment."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Browser calls the internal service to invoke the app."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "After the permission check and Lambda lookup, invokes the right Lambda and sends it the correct parameters, since no data is stored in the Lambda."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda returns data; a page fragment is constructed and returned to the browser, which renders it."
+    }
+  ]
+}

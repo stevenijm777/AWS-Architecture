@@ -1,0 +1,146 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows a CI/CD pipeline: Developer commits to CodeCommit; CodePipeline moves the commit to CodeBuild; CodeBuild outputs a container image to ECR; the CloudFormation deploy stage (explicitly an active deploy stage: change set, approve, execute) is kicked off and deploys into the VPC an ECS task definition, an IAM role and an ALB. CloudFormation is kept because it is explicitly an active pipeline stage. CodePipeline is the orchestrator container of the stages (drawn above without arrows), kept as a node with control edges orchestrating the stages. VPC is kept as the deployment target (arrow from CloudFormation points to the VPC box), with ECS, IAM and ALB deployed inside it. Up to 100 parallel CloudFormation stages deploy to 100 customer VPCs.",
+  "graph": {
+    "name": "Aetion: Streamlined CI/CD for Application and Infrastructure Deployment with CodePipeline and CloudFormation",
+    "link": "https://www.youtube.com/watch?v=6YkguepAQuQ",
+    "categories": "DevOps, CI/CD, Containers, Infrastructure as Code, Healthcare",
+    "graph_usable": true,
+    "notes": "Healthcare analytics company pipeline that takes a developer commit through CodeCommit, CodeBuild, ECR and a CloudFormation deploy stage (change set, approve, execute) to deploy application and infrastructure (ECS task definition, IAM role, ALB) into per-customer VPCs, with up to 100 parallel CloudFormation stages."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer",
+      "notes": "Commits code changes, build definitions and CloudFormation templates to the repository; can modify build and infrastructure on demand by going back to the first stage."
+    },
+    {
+      "id": "1",
+      "service": "CodePipeline",
+      "name": "CodePipeline",
+      "notes": "Orchestrates the pipeline stages: source (CodeCommit), build (CodeBuild) and deploy (CloudFormation). Supports parallel deploy stages for up to 100 customers."
+    },
+    {
+      "id": "2",
+      "service": "CodeCommit",
+      "name": "CodeCommit",
+      "notes": "AWS repository where developers commit code; also holds the CloudFormation templates that define the entire application infrastructure and the build configuration."
+    },
+    {
+      "id": "3",
+      "service": "CodeBuild",
+      "name": "CodeBuild",
+      "notes": "Build stage; spins up a container and is paid only for the build duration. Build behaviour is controlled by the developer via the repository. Outputs a container image on a successful build."
+    },
+    {
+      "id": "4",
+      "service": "ECR",
+      "name": "Registry (ECR)",
+      "notes": "Amazon ECR registry holding the application container image, ready to be deployed."
+    },
+    {
+      "id": "5",
+      "service": "CloudFormation",
+      "name": "CloudFormation",
+      "notes": "Third (deploy) stage. Chosen over CodeDeploy, the ECS task definition deployer and Lambda because it deploys the application plus the underlying infrastructure. A single template is the baseline for all production environments; per-customer configuration supplies unique items (VPC name, ECS cluster). Three steps: 1) Change set, 2) Approve (by someone with the proper roles and permissions), 3) Execute. Up to 100 parallel stages for 100 customer VPCs."
+    },
+    {
+      "id": "6",
+      "service": "VPC",
+      "name": "VPC",
+      "notes": "Per-customer VPC hosting the deployed production product; each customer is deployed to a different VPC (e.g. 100 VPCs). Developer environments are separated from production and client QA environments."
+    },
+    {
+      "id": "7",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Elastic Container Service task definition deployed by CloudFormation; runs the application image."
+    },
+    {
+      "id": "8",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "IAM roles and permissions deployed by CloudFormation as part of the application infrastructure."
+    },
+    {
+      "id": "9",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer deployed by CloudFormation as part of the application infrastructure."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer commits code changes to the CodeCommit repository."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "CodePipeline picks up the commit in the source stage."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "The pipeline moves the commit to the next stage, CodeBuild."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "After a successful build, CodeBuild outputs the application container image to the ECR registry."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "Once the build is done and the image is in the registry, the CloudFormation deploy stage is kicked off (change set, approve, execute); up to 100 parallel stages."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "control",
+      "notes": "CloudFormation executes the change set and deploys infrastructure and application into the customer VPC (up to 100 different VPCs with the same changes)."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "control",
+      "notes": "Deploys the Elastic Container Service task definition."
+    },
+    {
+      "source": "5",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "6'",
+      "type": "control",
+      "notes": "Deploys the IAM role and permissions."
+    },
+    {
+      "source": "5",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "6''",
+      "type": "control",
+      "notes": "Deploys the application load balancer."
+    }
+  ]
+}

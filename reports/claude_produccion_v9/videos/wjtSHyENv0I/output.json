@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "1. Inventory: The world model lists 8 entities: the independent insurance agents, CloudFront, S3, API Gateway, the Lambda Authorizer, the main Python Lambda, EC2 (the legacy Tomcat app) and DynamoDB. All of them are active runtime participants, so none are pruned. The agent actor stays because it is the system's entry point and a valid vocabulary actor (UserCompanyAgent).\n2. Fusion check: There are two Lambda icons, but they do different jobs. One validates access as the custom authorizer. The other runs the Python business logic. I kept them as separate nodes.\n3. No audio-driven expansion was needed. The transcript does not mention any components beyond those drawn. On-prem Apache/Tomcat servers and load balancers are only mentioned as the old setup, so I did not add them as nodes.\n4. Flow segmentation:\n   - Flow 0 is SPA delivery. The agents request the single page application through CloudFront (seq 0), and CloudFront fetches the static assets from S3 (seq 1).\n   - Flow 1 is backend API calls. CloudFront routes API calls to API Gateway (seq 0). API Gateway first invokes the Lambda Authorizer (seq 1, control). It then forwards the authorized call to the Python Lambda (seq 2). The Lambda caches or reads user session data in DynamoDB (seq 3). For features not migrated yet, it calls the legacy Tomcat app on EC2 (seq 4), and EC2 calls back down to the Lambda (seq 5).\n5. Edge types: The authorizer invocation is a trigger, so it is 'control'. All other edges carry request or response payloads, so they are 'data'.\n6. Note assimilation: I added the transcript details to the notes, including the strangler-fig migration criteria, the regional DynamoDB cache shared across AZs, Python serverless scaling, and the business results (25 on-prem servers shut down, user satisfaction up 25%, 10% new users).\n7. Self-check: There are 8 visual_connections entries, and I emit 8 edges (8 >= 8). Both directions of Lambda<->EC2 are kept. I added no edges beyond the ledger.",
+  "graph": {
+    "name": "American Family Group / Main Street America - Independent Agent Application Modernization (Strangler Pattern)",
+    "link": "https://www.youtube.com/watch?v=wjtSHyENv0I",
+    "categories": "Application Modernization, Serverless, Legacy Migration, Web Application, Insurance",
+    "graph_usable": true,
+    "notes": "A legacy Java/Tomcat app for independent insurance agents is being modernized step by step with the strangler pattern. The SPA moved from on-prem Apache to S3 + CloudFront. Backend calls moved from load-balanced on-prem Tomcat servers to API Gateway + Lambda. Functionality that has not been migrated yet (e.g., user management) still runs on Tomcat on EC2. Code moves to the serverless Python stack when there is a new feature, a significant enhancement or a significant bug fix. Results: 25 on-prem servers shut down, user satisfaction up 25%, 10% new users, and lower cost than on-prem servers."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAgent",
+      "name": "Independent Agents",
+      "notes": "Independent insurance agents of Main Street America who use the application."
+    },
+    {
+      "id": "1",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Serves the modernized single page application (previously hosted on Apache) and routes API calls to the backend."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 (SPA Bucket)",
+      "notes": "Stores the static assets of the single page application."
+    },
+    {
+      "id": "3",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Entry point for backend calls. Replaced the load-balanced on-prem Tomcat servers."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda Authorizer",
+      "notes": "Modern custom Lambda authorizer. API Gateway invokes it first to check that the caller has access."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Lambda (Python Backend)",
+      "notes": "Serverless Python Lambda that scales up and down easily. Runs the modernized functions (new features, significant enhancements, significant bug fixes) and calls the legacy Tomcat app for functionality not migrated yet. Uses DynamoDB for caching because each invocation may hit a different Lambda instance."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 (Legacy Tomcat Java App)",
+      "notes": "Legacy Tomcat Java application that still hosts functionality not migrated yet, such as user management. It is being gradually strangled."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB (User Session Cache)",
+      "notes": "Regional table that caches user information. Lambdas running in different Availability Zones (A and B) share the cache, so if one AZ fails the others keep access without interruption."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Agents request the single page application through CloudFront."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CloudFront retrieves the static SPA assets from the S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Backend API calls from the SPA are routed to API Gateway."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "API Gateway first invokes the Lambda authorizer to check that the user has access."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Authorized calls are forwarded to the serverless Python Lambda."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "The Lambda caches and retrieves user information in the regional DynamoDB table, which Lambdas in all AZs share."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "For functionality not migrated yet (e.g., user management), the Lambda calls the legacy Tomcat app on EC2."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "The legacy Tomcat app calls back down to the serverless Lambda with the results."
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "step_by_step_reasoning": "1) Actors: the three stick figures all represent internal NHS Digital teams, so they are fused into one entry-point node (UserCompanyAnalyst), since they log in to analyse data. 2) Left of the dotted line: the EC2 instance is the public gateway running Guacamole; the drawn arrow goes from the users to this EC2 and from there to Active Directory (users authenticate via directory services; their role also drives Apache Ranger data access). 3) Right of the dotted line is the secure sandbox: the second EC2 has a drawn arrow to S3 (existing datasets converted to Parquet and stored in S3). The two EC2 icons are kept separate because they sit on different sides of the boundary and do different jobs. 4) EMR has a drawn arrow to S3; the audio says EMR reads the data from S3 to run analytics jobs. The edge is kept in the drawn direction (EMR -> S3) and the read semantics are recorded in the notes. 5) S3 -> KMS is drawn and described (KMS provides the key to encrypt the data, at rest and in transit). 6) KMS -> RDS is drawn; the audio only says any other information in the system is also encrypted, so the RDS role is not described further. 7) Apache Ranger, RStudio, JupyterHub and Hue are mentioned only as tooling, not drawn, so they are captured in notes rather than added as nodes. 8) Flows: flow 0 = user access and authentication; flow 1 = data ingestion and analytics; flow 2 = encryption.",
+  "graph": {
+    "name": "NHS Digital - Data Access Environment on AWS",
+    "link": "https://www.youtube.com/watch?v=SSWwnNVYi_Q",
+    "categories": "Analytics, Big Data, Security, Healthcare",
+    "graph_usable": true,
+    "notes": "Secure data access environment for NHS Digital internal teams, moving away from legacy systems. A public gateway (Guacamole on EC2) gives users access to a sandbox where they can analyse data but cannot extract it. Users authenticate via directory services; Apache Ranger enforces fine-grained access. Data is stored in S3 in Parquet format, encrypted with KMS at rest and in transit. EMR runs the analytics jobs; jobs that took hours now take minutes or seconds. Tooling includes RStudio, JupyterHub and Hue, with an aspiration towards machine learning."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyAnalyst",
+      "name": "NHS Digital Internal Teams",
+      "notes": "Internal NHS Digital teams (three user figures fused) who log in to look at and analyse data."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Public Gateway (Guacamole)",
+      "notes": "Public gateway on the left of the dotted line. Users log into Guacamole here and land in a sandbox where they can analyse data but cannot get it out of the system."
+    },
+    {
+      "id": "2",
+      "service": "DirectoryService",
+      "name": "Active Directory",
+      "notes": "Users authenticate via directory services so their identity is known. The user's role is also used by the data processing tools (Apache Ranger) so users only see the data they are meant to see."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 (Sandbox)",
+      "notes": "EC2 instance on the secure side of the dotted line, with an arrow to S3. Associated with moving existing datasets, converted to Parquet, into S3."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Data Store",
+      "notes": "Stores existing datasets converted to Parquet format. Confidential data, always encrypted at rest and in transit."
+    },
+    {
+      "id": "5",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs the analytics jobs and provides a consistent compute layer for the data. Reads the data from S3. Chosen over Cloudera and on-prem options for flexibility and scale. Jobs that took hours now take minutes or seconds. Supports tooling such as RStudio, JupyterHub and Hue."
+    },
+    {
+      "id": "6",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Provides the key used to encrypt the data. Everything is encrypted in transit and at rest, including any other information in the system."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "Amazon RDS",
+      "notes": "Database in the secure environment with an arrow drawn from KMS. Its role is not described in the audio beyond other information in the system also being encrypted."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Internal users log into the public gateway (Guacamole) to reach the sandbox."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Users are authenticated via directory services; their role determines data access (Apache Ranger)."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Existing datasets are converted to Parquet format and put into S3."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Arrow drawn from EMR to S3; per the audio, EMR reads the data from S3 to run analytics jobs."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "S3 uses a KMS key to encrypt the data (at rest and in transit)."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Arrow drawn from KMS to RDS; any other information in the system is also encrypted."
+    }
+  ]
+}

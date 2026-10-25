@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "1. Nodes: I transcribed the 8 entities from the World Model as they are. The Satellite stays as ThirdParty because it is the external NASA-type satellite imagery source and the entry point of the system. The Users icon stays as UserConsumerWebMobile because it stands for the farmers using the web map app, which is a system entry point. The transcript says the Lambda is 'a series of lambda functions'. They work as one processing pipeline and only one icon is drawn, so I kept a single Lambda node. No other services were mentioned in the audio, so nothing needed to be expanded.\n2. Flows:\n- Flow 0 (satellite ingestion): Satellite -> EC2 Spot (tiles arrive throughout the day), then EC2 Spot -> S3 (bulk data) and EC2 Spot -> RDS (metadata), which happen in parallel.\n- Flow 1 (user web tiles): Users send about 16 separate tile requests to Fargate. This is added because the transcript states it explicitly. Fargate then checks and writes the Redis cache in ElastiCache, looks up the source imagery in RDS, pulls data from S3 using HTTP range requests, stitches and processes the tile, and serves it back to the Users.\n- Flow 2 (field time-series analytics): Lambda looks up the source imagery in RDS, then reads it from S3, clips it to the farmer's area of interest, and computes the mean greenness about 1000 times to build the time series.\n3. Directionality: Every ledger entry keeps the source and target it has in the ledger. For bidirectional entries the note records that the arrow goes both ways. The only edge added outside the ledger is Users -> Fargate, which the audio explicitly grounds ('those come as individual requests to Fargate').\n4. Self-check: there are 9 visual_connections entries, and I emit 10 edges (9 ledger edges plus 1 explicitly stated in the audio). 10 >= 9.",
+  "graph": {
+    "name": "Indigo Carbon - Satellite Imagery Processing and Tile Serving for Regenerative Agriculture",
+    "link": "https://www.youtube.com/watch?v=FfSNnH2bbNc",
+    "categories": "Analytics, Geospatial, Serverless, Agriculture, Data Lake",
+    "graph_usable": true,
+    "notes": "Indigo Carbon helps farmers move to regenerative agriculture and earn carbon credits. It takes in satellite imagery (about 30-year catalog, mostly about 10 years, about 5 PB total, growing about 100 GB/day). The imagery is processed on EC2 Spot clusters, with bulk data stored in S3 and metadata in RDS. Web map tiles are generated on the fly by Fargate with an ElastiCache (Redis) tile cache. Field-level time series are computed on demand by a series of Lambda functions. Doing the processing on the fly saves orders of magnitude in cost."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "Satellite",
+      "notes": "Existing satellites from organizations like NASA. Sends a series of lightly processed and corrected tiles every day, throughout the day."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 SPOT",
+      "notes": "A large cluster of Spot instances that is started as quickly as possible to post-process incoming tiles (more correction and format conversion for downstream use), then shut down again."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Holds the bulk imagery data as fairly large compressed chunks. Catalog of about 30 years, mostly about 10 years, about 5 PB in total, growing about 100 GB/day and rising as data sources are added. HTTP range requests let readers fetch only part of an object."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Holds the imagery metadata, used to look up which source imagery belongs to a given tile or area."
+    },
+    {
+      "id": "4",
+      "service": "ElastiCache",
+      "name": "ELASTICACHE",
+      "notes": "Redis used as a central cache for tiles already generated. Common tiles, such as the full-US map shown to every user at login, are computed once and then served from the cache."
+    },
+    {
+      "id": "5",
+      "service": "Fargate",
+      "name": "AWS FARGATE",
+      "notes": "Web tile service. Each map load is split into about 16 tile requests. For each tile it looks up the source imagery in RDS, reads small parts of objects from S3 using HTTP range requests, stitches them together, downsamples, applies color correction (RGB) or color mapping (intensity values such as 0-1 greenness), and returns the tile."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "A series of Lambda functions that compute time series from the source data cube for a farmer-supplied custom field boundary. They look up imagery in RDS, read it from S3, build the tile of interest, clip it to the area of interest, and compute a summary (for example mean greenness), repeated about 1000 times to build the time series."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWebMobile",
+      "name": "Users",
+      "notes": "Farmers and app users who log in and view a map of the US with imagery layers, choosing the layer type and time frame."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Daily satellite tiles (lightly processed and corrected) are taken in for post-processing."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Processed output stored as bulk imagery data in S3."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Processed output metadata written to RDS."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "A map load is split into about 16 individual web tile requests sent to Fargate (added from explicit audio statement)."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Bidirectional arrow. Reads cached tiles from Redis, and writes newly computed tiles so common tiles are computed only once."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Bidirectional arrow. Looks up which source imagery corresponds to the requested tile."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Bidirectional arrow. Pulls only the needed parts of large compressed chunks using S3 HTTP range requests."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Bidirectional arrow. Serves back the stitched, downsampled, and color-corrected or color-mapped tile."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Looks up the source imagery needed for the farmer-supplied area of interest."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Reads the imagery from S3, then clips it to the field and computes the mean greenness about 1000 times to build the time series."
+    }
+  ]
+}

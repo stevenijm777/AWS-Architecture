@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">User</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">User uploads media files (any video format) and later plays back proxies in the browser.</data>
+    </node>
+    <node id="1">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Bucket receiving user uploaded video files; upload triggers the workflow.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Step Functions</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates video processing flows: kicks off transcode, triggers Lambdas to extract checksums and technical metadata, then triggers a further step function for Rekognition and Transcribe.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Elemental MediaConvert</data>
+      <data key="d6">MediaConvert</data>
+      <data key="d7">Transcodes video to create a proxy suitable for playback in the browser, giving users a visual check alongside the extracted metadata.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Rekognition</data>
+      <data key="d6">Rekognition</data>
+      <data key="d7">Analyzes video to identify celebrities, violence, nudity and other data; results are associated with time codes.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Transcribe</data>
+      <data key="d6">Transcribe</data>
+      <data key="d7">Converts the audio of the content into text.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Comprehend</data>
+      <data key="d6">Comprehend</data>
+      <data key="d7">Analyzes the transcribed text to extract entities and detect things like profanity.</data>
+    </node>
+    <node id="7">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Temporary data store for video metadata (checksums, frame rates, media info, highlights with time codes, transcription and text analysis) before ingest into Reach Engine.</data>
+    </node>
+    <node id="8">
+      <data key="d5">EC2 (Reach Engine)</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Hosts Reach Engine, the core product: content playback, metadata viewing and search, visualization of celebrity tracks, and an orchestration engine to distribute content for monetization.</data>
+    </node>
+    <node id="9">
+      <data key="d5">EKS (Reach Engine)</data>
+      <data key="d6">EKS</data>
+      <data key="d7">Hosts Reach Engine, the core product: content playback, metadata viewing and search, visualization of celebrity tracks, and an orchestration engine to distribute content for monetization.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User uploads a media file to the S3 bucket.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The upload triggers a step function.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step function kicks off the transcode in MediaConvert to create a browser playback proxy.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step function triggers Lambdas that extract checksums and standard technical metadata (frame rates, media info) and store it in DynamoDB.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">After basic metadata extraction, another step function is triggered that starts Rekognition on the video.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The same step function triggers Transcribe to convert the audio into text.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Proxy generation completes and the step function continues.</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="4" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Detected celebrities, violence, nudity and other data, associated with time codes, are stored in DynamoDB.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Transcribed text is sent to Comprehend for analysis.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Transcription output is stored in DynamoDB.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Extracted entities and text analysis (e.g., profanity occurrences) are stored in DynamoDB.</data>
+      <data key="d10">2'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9" />
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Once the data is in DynamoDB, an ingest into Reach Engine is triggered.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="9" id="0">
+      <data key="d8">3</data>
+      <data key="d9">Once the data is in DynamoDB, an ingest into Reach Engine is triggered.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Levels Beyond: Media to Cloud Workflow with Reach Engine</data>
+    <data key="d1">https://www.youtube.com/watch?v=07lfvavMdfU</data>
+    <data key="d2">Media to Cloud workflow: users upload video to S3, Step Functions orchestrates MediaConvert proxy transcoding, technical metadata extraction, Rekognition, Transcribe and Comprehend analysis; results are stored temporarily in DynamoDB and then ingested into Reach Engine running on EC2 and EKS.</data>
+    <data key="d3">Media &amp; Entertainment, Machine Learning, Serverless</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

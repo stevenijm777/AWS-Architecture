@@ -408,6 +408,33 @@ class KeyRotator:
         return len(self.keys) - len(self.retired)
 
 
+# Tokens de cada llamada exitosa de esta ejecución, para poder costear una corrida.
+# Los tokens de razonamiento se facturan como salida. No sobrevive a una reanudación
+# desde checkpoint: `calls` en run.json dice cuántas llamadas cubre el total.
+USAGE: list[dict] = []
+
+
+def _record_usage(res, model: str) -> None:
+    u = getattr(res, "usage_metadata", None)
+    if u is None:
+        return
+    USAGE.append({
+        "model": model,
+        "input": u.prompt_token_count or 0,
+        "output": u.candidates_token_count or 0,
+        "thinking": getattr(u, "thoughts_token_count", 0) or 0,
+    })
+
+
+def usage_summary() -> dict:
+    return {
+        "calls": len(USAGE),
+        "input_tokens": sum(x["input"] for x in USAGE),
+        "output_tokens": sum(x["output"] for x in USAGE),
+        "thinking_tokens": sum(x["thinking"] for x in USAGE),
+    }
+
+
 def call_gemini(rot: KeyRotator, prompt: str, image_b64: str | list[str], model: str,
                 schema=FinalArchitectureSchema) -> dict:
     """One Gemini call. Retries transient errors, rotates keys on quota.
@@ -441,6 +468,7 @@ def call_gemini(rot: KeyRotator, prompt: str, image_b64: str | list[str], model:
                     model=model, contents=contents, config=config
                 )
                 rot.note_success()
+                _record_usage(res, model)
                 return json.loads(res.text)
             except Exception as e:
                 err = str(e).upper()
@@ -572,7 +600,7 @@ def ensure_stage1(vids: list[str], stage1_tmpl: str, rot: KeyRotator, model: str
 def run_video(vid: str, stage2_tmpl: str, rot: KeyRotator, model: str,
               aws_str: str, users_str: str, catalog: dict, rag=None,
               conn_evidence: bool = False, wm_name: str = "world_model.json",
-              use_transcript: bool = True) -> dict:
+              use_transcript: bool = True, use_image: bool = True) -> dict:
     """Reuses the cached Stage 1 World Model; only Stage 2 costs an API call.
 
     `wm_name` selects which World Model to feed Stage 2. The default is the
@@ -626,7 +654,10 @@ def run_video(vid: str, stage2_tmpl: str, rot: KeyRotator, model: str,
     # Connection-evidence variant: a badged copy of the whiteboard plus the candidate
     # links between badges. The block goes in before the transcript so it reads as
     # input evidence alongside the World Model, not as a trailing instruction.
-    images = [image_b64]
+    # `use_image=False` corta el canal visual: junto con `use_transcript=False` deja a
+    # Stage 2 solo con el World Model, sin nada que lo contradiga. La pizarra se sigue
+    # leyendo para registrar su hash, pero no se envía.
+    images = [image_b64] if use_image else []
     ev_meta = None
     if conn_evidence:
         from scripts.ablation.connection_evidence import build_evidence  # noqa: E402
@@ -750,6 +781,11 @@ def main() -> None:
                          "y el World Model, sin el transcript del audio. Es la ablacion que "
                          "testea de forma directa si la topologia que falta vive en la "
                          "narracion. Combinable con --oracle para el diseño 2x2.")
+    ap.add_argument("--no-image", action="store_true",
+                    help="corta el canal visual: Stage 2 no recibe la imagen de la pizarra. "
+                         "Con --oracle y --no-transcript deja al World Model como unica "
+                         "entrada, para medir si Stage 2 pierde aristas por si mismo o porque "
+                         "la pizarra y el transcript contradicen al World Model.")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
@@ -836,7 +872,7 @@ def main() -> None:
 
     ev_tag = ("_connev" if args.connection_evidence else "") + \
              (f"_oracle-{args.oracle}" if args.oracle else "") + \
-             ("_notranscript" if args.no_transcript else "") + \
+             ("_notranscript" if args.no_transcript else "") +              ("_noimage" if args.no_image else "") + \
              (f"_rep{args.replicate}" if args.replicate else "")
     ckpt = checkpoint_path(entry["sha256"], args.model, args.panel, ev_tag)
     done = load_checkpoint(ckpt)
@@ -891,7 +927,8 @@ def main() -> None:
         try:
             r = run_video(vid, stage2, rot, args.model, aws_str, users_str, catalog,
                           rag, args.connection_evidence, wm_name,
-                          use_transcript=not args.no_transcript)
+                          use_transcript=not args.no_transcript,
+                          use_image=not args.no_image)
         except QuotaExhausted as e:
             # Stop here on purpose: burning the remaining videos would only
             # produce errors and would not save any work.
@@ -984,7 +1021,9 @@ def main() -> None:
                     "no por el dibujo.",
             "referencia": "la corrida con el MISMO world_model_file y transcript activado.",
         },
+        "image_enabled": not args.no_image,
         "replicate": args.replicate,
+        "usage": usage_summary(),
         "stage1_generated_now": stage1_generated,
         "stale_stage1_cache": stale,
         "metrics": {

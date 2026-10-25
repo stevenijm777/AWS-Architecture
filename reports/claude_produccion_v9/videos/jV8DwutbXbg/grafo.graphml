@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Kinesis (Ingest)</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Receives 'account updated' events containing an account ID. They are published by the upstream account-aggregation service (which scrapes other banks' websites), either on a schedule or when the user refreshes the app.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Lambda (Ingest)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Kept intentionally lean and fast. Runs a SQL query against RDS for the user's transactions, groups the descriptions into batches of about 100 and publishes them to SQS.</data>
+    </node>
+    <node id="2">
+      <data key="d5">RDS (Source Data)</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Holds the raw transaction data (date, description, amount) from third-party banks, written by the separate aggregation service.</data>
+    </node>
+    <node id="3">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Decouples ingest from processing and lets many NLP Lambdas work in parallel. It replaced the direct Kinesis-&gt;Lambda setup, which allowed only one Lambda per shard processing records sequentially and could not keep up with tens of millions of transactions.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Lambda (NLP Processing)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Second-tier Lambdas that scale out. Each takes a few seconds per batch. Runs an ANTLR-generated Python parser compiled from a domain-specific grammar to extract merchant name, merchant location, currencies, exchange rates and dates. Packaged by an in-house open-source tool that bundles Python dependencies, C extensions and shared objects, and deployed with Jenkins and CloudFormation.</data>
+    </node>
+    <node id="5">
+      <data key="d5">RDS (Enriched Data)</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Table with a column for each extracted field. Every processed transaction is stored with the version of the NLP model that produced it, so models can be compared and iterated on later.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Kinesis (Output Event)</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Event stream that signals a customer's transactions have been processed. Other teams in the organization consume it, for example to refresh the app with friendly descriptions.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">An account-updated event (account ID) triggers the Ingest Lambda.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Publishes batches of about 100 transaction description strings to the SQS queue.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The Ingest Lambda queries RDS with SQL to get the raw transactions for the user.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Messages fan out to many NLP Processing Lambdas that scale out in parallel.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Writes the enriched transaction fields plus the model version to RDS.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Emits a 'transactions processed' event so downstream teams can act on it, for example to refresh the app.</data>
+      <data key="d10">4'</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Tandem - Serverless NLP Transaction Enrichment Pipeline</data>
+    <data key="d1">https://www.youtube.com/watch?v=jV8DwutbXbg</data>
+    <data key="d2">Tandem (UK bank) collects transaction data from other UK banks through an account-aggregation service. That service writes raw transactions (CSV-like: date, description, amount) into RDS and publishes an account-updated event to Kinesis. A lean Lambda batches the transaction descriptions into SQS, and a fan-out tier of Lambdas parses them with an ANTLR-generated Python parser. The parser extracts merchant name, location, currencies, exchange rates and dates. Enriched results are stored in RDS together with the model version, and a completion event is published to Kinesis. SQS was added because a single Lambda per Kinesis shard, processing records sequentially and taking a few seconds each, could not keep up with tens of millions of transactions. Model packages are deployed with Jenkins and CloudFormation, which are not part of the runtime.</data>
+    <data key="d3">Data Pipeline, Serverless, NLP, FinTech, Fan-out</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

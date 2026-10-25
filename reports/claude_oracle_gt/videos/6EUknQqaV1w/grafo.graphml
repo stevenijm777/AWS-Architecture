@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Cloud Provider Security Event Streams</data>
+      <data key="d6">UserCompanyDataStream</data>
+      <data key="d7">Native security event streams from the cloud providers (e.g. CloudWatch events, Azure activity log). Three major cloud providers are supported, producing billions of events per day. A collection framework evaluates the events and determines the current state of each resource.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Kinesis Data Streams (Collect)</data>
+      <data key="d6">KinesisDataStream</data>
+      <data key="d7">Collection stream. The collection framework publishes the current state of cloud resources here; a consumer then publishes them into Neptune.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Amazon Neptune</data>
+      <data key="d6">Neptune</data>
+      <data key="d7">Primary persistence, used as a graph database for highly interconnected cloud resource data (50M+ resources and growing). Chosen for graph-based exploration, read scale-out for executing many rules, and being schema-less so the data layer is agnostic of varied resource configurations. Runs as provisioned clusters with writes scaled by sharding.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Elasticsearch</data>
+      <data key="d6">OpenSearch</data>
+      <data key="d7">Backing store for search, aggregations, reporting and analytics on cloud resource data. Its CloudWatch metrics are also used by the sharder service.</data>
+    </node>
+    <node id="4">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Backing store for other use cases, such as visualizing how resource configurations change over time. Also persists detected security violations.</data>
+    </node>
+    <node id="5">
+      <data key="d5">CloudWatch</data>
+      <data key="d6">CloudWatch</data>
+      <data key="d7">Metrics from Neptune and Elasticsearch (CPU, memory and a few other parameters) used to determine shard capacity.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Sharder Service</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Custom service that scales writes out. It provides a logical grouping of data to store in the provisioned Neptune clusters, uses CloudWatch metrics to decide whether a Neptune cluster is full, and load balances customer data across clusters.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Kinesis Data Streams (Rules)</data>
+      <data key="d6">KinesisDataStream</data>
+      <data key="d7">Fronts the rule execution pipeline. The rule engine determines which rules to execute for a given event and resource change (potentially thousands of rules) and runs the security checks over the Neptune graph.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Slack, Email, Splunk</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Channels for real-time notifications to customers about security violations.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The collection framework evaluates incoming security events and publishes the current resource state into the Kinesis data stream.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">A consumer publishes the ingested cloud resources into Amazon Neptune (50M+ resources).</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The incoming event is propagated to the rule execution pipeline.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Resource data is stored in Elasticsearch for search, aggregation, reporting and analytics.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Resource data is stored in DynamoDB as a backing store, e.g. for configuration changes over time.</data>
+      <data key="d10">2'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Neptune emits CloudWatch metrics (CPU, memory and other parameters).</data>
+      <data key="d10">0</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="2" target="7" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Resource changes are propagated to the rule execution pipeline once the data is persisted.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Elasticsearch emits CloudWatch metrics.</data>
+      <data key="d10">0'</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The sharder service uses the CloudWatch metrics to determine the shard capacity of the provisioned Neptune clusters.</data>
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="6" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Shard capacity information flows back to the ingestion front, so writes are load balanced across the provisioned Neptune clusters.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="7" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The rule engine executes rules (potentially thousands) over the Neptune graph database to perform security checks.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="4" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Detected security violations are persisted in DynamoDB.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="8" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Real-time notifications of security violations are sent to customers via Slack, email, Splunk and similar channels.</data>
+      <data key="d10">2'</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">CloudHealth by VMware: Secure State real-time cloud security monitoring with a graph database</data>
+    <data key="d1">https://www.youtube.com/watch?v=6EUknQqaV1w</data>
+    <data key="d2">CloudHealth Secure State is a cloud security and monitoring platform. It handles billions of events per day across three major cloud providers and monitors 50M+ resources. Neptune is the primary graph persistence, with Elasticsearch and DynamoDB as backing stores. A sharder service scales writes using CloudWatch metrics, and a rules pipeline detects violations and notifies customers.</data>
+    <data key="d3">Security, Analytics, Databases, Streaming</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

@@ -1,0 +1,186 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows the Levels Beyond Media to Cloud workflow. Nodes: web user (entry point), S3, Step Functions, MediaConvert, Rekognition, Transcribe, Comprehend, DynamoDB, EC2 and EKS (both hosting Reach Engine; kept as separate nodes since they are distinct services drawn separately). Lambdas are mentioned in audio but not drawn and not in the inventory; they are assimilated into the Step Functions -> DynamoDB edge notes. The ledger has 14 visual_connections entries; I emit 14 edges, one per entry, with the same source and target, including both directions StepFunctions<->MediaConvert and Transcribe<->DynamoDB. Flow 0: upload and transcode plus technical metadata. Flow 1: Rekognition analysis. Flow 2: Transcribe and Comprehend analysis. Flow 3: ingest from DynamoDB into Reach Engine (EC2/EKS). The DynamoDB -> Transcribe edge is not described in audio, so it is emitted as data with an empty note.",
+  "graph": {
+    "name": "Levels Beyond: Media to Cloud Workflow with Reach Engine",
+    "link": "https://www.youtube.com/watch?v=07lfvavMdfU",
+    "categories": "Media & Entertainment, Machine Learning, Serverless",
+    "graph_usable": true,
+    "notes": "Media to Cloud workflow: users upload video to S3, Step Functions orchestrates MediaConvert proxy transcoding, technical metadata extraction, Rekognition, Transcribe and Comprehend analysis; results are stored temporarily in DynamoDB and then ingested into Reach Engine running on EC2 and EKS."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "User",
+      "notes": "User uploads media files (any video format) and later plays back proxies in the browser."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Bucket receiving user uploaded video files; upload triggers the workflow."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates video processing flows: kicks off transcode, triggers Lambdas to extract checksums and technical metadata, then triggers a further step function for Rekognition and Transcribe."
+    },
+    {
+      "id": "3",
+      "service": "MediaConvert",
+      "name": "Elemental MediaConvert",
+      "notes": "Transcodes video to create a proxy suitable for playback in the browser, giving users a visual check alongside the extracted metadata."
+    },
+    {
+      "id": "4",
+      "service": "Rekognition",
+      "name": "Rekognition",
+      "notes": "Analyzes video to identify celebrities, violence, nudity and other data; results are associated with time codes."
+    },
+    {
+      "id": "5",
+      "service": "Transcribe",
+      "name": "Transcribe",
+      "notes": "Converts the audio of the content into text."
+    },
+    {
+      "id": "6",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Analyzes the transcribed text to extract entities and detect things like profanity."
+    },
+    {
+      "id": "7",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Temporary data store for video metadata (checksums, frame rates, media info, highlights with time codes, transcription and text analysis) before ingest into Reach Engine."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2 (Reach Engine)",
+      "notes": "Hosts Reach Engine, the core product: content playback, metadata viewing and search, visualization of celebrity tracks, and an orchestration engine to distribute content for monetization."
+    },
+    {
+      "id": "9",
+      "service": "EKS",
+      "name": "EKS (Reach Engine)",
+      "notes": "Hosts Reach Engine, the core product: content playback, metadata viewing and search, visualization of celebrity tracks, and an orchestration engine to distribute content for monetization."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User uploads a media file to the S3 bucket."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "The upload triggers a step function."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Step function kicks off the transcode in MediaConvert to create a browser playback proxy."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Proxy generation completes and the step function continues."
+    },
+    {
+      "source": "2",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Step function triggers Lambdas that extract checksums and standard technical metadata (frame rates, media info) and store it in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "After basic metadata extraction, another step function is triggered that starts Rekognition on the video."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Detected celebrities, violence, nudity and other data, associated with time codes, are stored in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "The same step function triggers Transcribe to convert the audio into text."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Transcribed text is sent to Comprehend for analysis."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Transcription output is stored in DynamoDB."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Extracted entities and text analysis (e.g., profanity occurrences) are stored in DynamoDB."
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Once the data is in DynamoDB, an ingest into Reach Engine is triggered."
+    },
+    {
+      "source": "7",
+      "target": "9",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Once the data is in DynamoDB, an ingest into Reach Engine is triggered."
+    }
+  ]
+}

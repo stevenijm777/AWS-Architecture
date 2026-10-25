@@ -1,0 +1,186 @@
+{
+  "step_by_step_reasoning": "1) Inventory: I kept all 10 entities from the world model. CloudFormation stays because a ledger arrow (CloudFormation -> EC2 Top) uses it, and ledger edges and their endpoints cannot be pruned. In the audio, CloudFormation is a deployment tool (about 40 YAML templates), so its edge is typed as 'control'.\n2) EC2 fusion decision: I kept the three EC2 nodes separate. The audio says each Availability Zone (AZ) in us-east-1 runs 10 channels, and the whiteboard writes '10' next to each instance. So each icon stands for a separate AZ deployment that provides redundancy, not one icon drawn three times. Keeping them separate also keeps the ledger edges one-to-one.\n3) ASG: This node has no arrow on the board. The audio says the primary and backup EC2 instances 'are supported also with auto scaling groups', so I added 3 control edges from ASG to the EC2 nodes. This keeps ASG from being an orphan node.\n4) Third-party/on-premises nodes: NYC Satellite (the Hudson Yards business continuity, or BCP, uplink), ATL Satellite (the Atlanta uplink to affiliates) and TWD/CNN Center (Techwood/CNN Center site where Linear Ops quality-checks master files) all use the ThirdParty service type.\n5) Flows:\n - Flow 0, main playout: TWD/CNN Center -> S3 (master files sent with Aspera, which the transcript calls 'Spera') -> EC2 x3 (parallel; Evertz Mediator registers the files, then they move to the ORT running on each instance) -> Direct Connect (x3 parallel; playout sent back on-premises as unicast over Evertz CloudBridge) -> TWD/CNN Center (the 'X chain', a tertiary path to air) -> ATL Satellite (compressed and uplinked to affiliates).\n - Flow 1, BCP: Direct Connect -> NYC Satellite (Hudson Yards, 8 channels).\n - Flow 2, deployment: CloudFormation -> EC2 Top.\n - Flow 3, scaling: ASG -> EC2 x3.\n6) Self-check: The world model has 11 visual_connections entries. I emitted 14 edges: all 11 ledger edges plus 3 ASG control edges grounded in the audio. 14 >= 11.",
+  "graph": {
+    "name": "WarnerMedia HBO Cloud Linear Playout",
+    "link": "https://www.youtube.com/watch?v=hMK2NJ-q9nc",
+    "categories": "Media & Entertainment, Broadcast Playout, Hybrid Cloud, Business Continuity",
+    "graph_usable": true,
+    "notes": "This cloud linear playout runs 30 channels in AWS us-east-1, with 10 channels per AZ and a primary and backup for each channel. It started as a business continuity (BCP) solution. It uses Evertz Mediator, ORT and Playtime software on EC2. Evertz CloudBridge runs at each end of the connection: in AWS, New York and Atlanta. The goal is five-nines availability. The deployment is repeatable through about 40 CloudFormation YAML templates. Future plans include live venue switching on the ORT and in-cloud multiplexing or compression handed directly to MVPDs."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFormation",
+      "name": "CloudFormation",
+      "notes": "The internal cloud team, AWS and Evertz scrubbed and edited about 40 YAML templates to make the deployment repeatable and expandable."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores the master files for all brands. Files arrive from Atlanta through Aspera and are registered in Evertz Mediator."
+    },
+    {
+      "id": "2",
+      "service": "AutoScaling",
+      "name": "ASG",
+      "notes": "Auto Scaling groups support the primary and backup EC2 instances for each channel."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 Top",
+      "notes": "One AZ in us-east-1 runs Evertz ORT/Playtime for 10 channels (primary and backup). Redundant with the other AZs."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Middle",
+      "notes": "One AZ in us-east-1 runs Evertz ORT/Playtime for 10 channels (primary and backup). Redundant with the other AZs."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2 Bottom",
+      "notes": "One AZ in us-east-1 runs Evertz ORT/Playtime for 10 channels (primary and backup). Redundant with the other AZs."
+    },
+    {
+      "id": "6",
+      "service": "DirectConnect",
+      "name": "Direct Connect",
+      "notes": "Carries the playout back on-premises as a unicast signal over Evertz CloudBridge, which is installed at each end of the connection."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "NYC Satellite",
+      "notes": "Hudson Yards BCP uplink for 8 channels. Runs CloudBridge in New York."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "ATL Satellite",
+      "notes": "Atlanta uplink that distributes channels to affiliates."
+    },
+    {
+      "id": "9",
+      "service": "ThirdParty",
+      "name": "TWD/CNN Center",
+      "notes": "Techwood/CNN Center site. Linear Ops quality-checks master files here. An auto changeover switch chooses between Techwood, CNN Center and cloud playout. The signal is compressed here before uplink. Runs CloudBridge in Atlanta."
+    }
+  ],
+  "edges": [
+    {
+      "source": "9",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Master files that Linear Ops quality-checked in Atlanta are sent to S3 with Aspera."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Once registered in Evertz Mediator, the files are transferred to the local EC2 instance running Evertz ORT."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Once registered in Evertz Mediator, the files are transferred to the local EC2 instance running Evertz ORT."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1''",
+      "type": "data",
+      "notes": "Once registered in Evertz Mediator, the files are transferred to the local EC2 instance running Evertz ORT."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Evertz Playtime playout is sent as a unicast signal over CloudBridge."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Evertz Playtime playout is sent as a unicast signal over CloudBridge."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2''",
+      "type": "data",
+      "notes": "Evertz Playtime playout is sent as a unicast signal over CloudBridge."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "The 'X chain', a tertiary path to air back on-premises, feeding the auto changeover switch."
+    },
+    {
+      "source": "9",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "The signal is compressed and sent to the uplink for distribution to affiliates."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "BCP path over Direct Connect to Hudson Yards for 8 channels, then fed to the uplink."
+    },
+    {
+      "source": "0",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Deploys the system from about 40 YAML templates in a repeatable process."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "The Auto Scaling group supports the primary and backup instances."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "0'",
+      "type": "control",
+      "notes": "The Auto Scaling group supports the primary and backup instances."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 3,
+      "seq": "0''",
+      "type": "control",
+      "notes": "The Auto Scaling group supports the primary and backup instances."
+    }
+  ]
+}

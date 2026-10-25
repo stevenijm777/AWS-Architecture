@@ -1,0 +1,126 @@
+{
+  "step_by_step_reasoning": "1) Nodes: I took the 8 entities in the World Model as the starting inventory. The drone is only a physical capture device. The external drone-processing software appears as '3rd Party' and uses the ThirdParty service. The on-prem mapping server and its database stay as separate OnPremDC nodes because they do different jobs: one serves map requests, the other stores raster proxies. The audio names three Lambda functions inside the Step Functions workflow, but the whiteboard shows only one Lambda icon. I kept a single Lambda node (the orchestrated function group) and described all three functions in its notes. The ledger arrows still separate their roles: the API check goes to 3rd Party, image storage goes to S3, and raster proxy creation goes to Database. 2) Edges: The ledger has 8 visual_connections. Flow 0 is the scheduled ingestion. A CloudWatch Event triggers Step Functions, which invokes Lambda. Lambda then calls the 3rd Party API to look for new flights or images, which is a polling check. The images then move from 3rd Party to S3, and Lambda writes them to S3. Flow 1 is raster proxy creation: Lambda reads the S3 images and writes raster proxies to the on-prem database. Flow 2 is the end-user viewing path: the mapping Server uses Storage Gateway to read imagery from S3. 3) Self-check: 8 visual_connections entries, 8 edges emitted. I added no extra edges.",
+  "graph": {
+    "name": "Marathon Oil - Serverless Drone Imagery Processing for Well Pad Monitoring",
+    "link": "https://www.youtube.com/watch?v=ww5fiygF6eg",
+    "categories": "Serverless, Hybrid Storage, Image Processing, Oil & Gas, Drones",
+    "graph_usable": true,
+    "notes": "Licensed third-party pilots fly drones over every well pad on a regular schedule. Third-party software processes the imagery into three files per well pad: an orthomosaic, a digital terrain model and a digital elevation model. On a schedule, a CloudWatch Event starts a Step Functions workflow with three Lambda functions that copy new imagery into S3 and create raster proxies. The on-prem mapping software can't read from S3 directly, so it uses Storage Gateway. The application didn't need any changes. Maintenance and operations teams use the images to find equipment issues, plan preventative maintenance and check well pad health."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "3rd Party (Drone Imagery Software)",
+      "notes": "Licensed third-party pilots fly drones over the well pads. The third-party software processes the imagery into 3 files per well pad (orthomosaic, digital terrain model, digital elevation model), stores them on its server, and exposes an API."
+    },
+    {
+      "id": "1",
+      "service": "CloudWatch",
+      "name": "CloudWatch Event",
+      "notes": "Runs on a schedule and starts the Step Functions workflow."
+    },
+    {
+      "id": "2",
+      "service": "StepFunctions",
+      "name": "Step Functions",
+      "notes": "Orchestrates three separate Lambda functions."
+    },
+    {
+      "id": "3",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Represents three functions. Lambda 1 calls the third-party API to check for new flights or images. Lambda 2 copies new images from the third party into S3. Lambda 3 reads the S3 images and creates raster proxies (URL-like references) so the on-prem mapping server can locate the images."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Bucket in Marathon Oil's environment that stores the processed drone imagery."
+    },
+    {
+      "id": "5",
+      "service": "StorageGateway",
+      "name": "Storage Gateway",
+      "notes": "Lets the on-prem mapping software read images directly from S3 with no application changes."
+    },
+    {
+      "id": "6",
+      "service": "OnPremDC",
+      "name": "Server (On-Prem Mapping Software)",
+      "notes": "On-prem mapping server that can't read from S3 directly. Users access it to view well pad imagery for maintenance and operations."
+    },
+    {
+      "id": "7",
+      "service": "OnPremDC",
+      "name": "Database (On-Prem)",
+      "notes": "Local database of the mapping server where the raster proxies are stored."
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "The scheduled CloudWatch Event starts the Step Functions workflow."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Step Functions invokes the Lambda functions in sequence."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Lambda 1 calls the third-party API to check whether new flights or images are available."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "New drone images are transferred from the third-party server into S3."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda 2 stores the retrieved images in the S3 bucket."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda 3 creates raster proxies from the S3 images and stores them in the on-prem server's local database."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "When a user views images, the mapping software requests the image files through Storage Gateway."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Storage Gateway retrieves the image files from S3 so the user can view them."
+    }
+  ]
+}

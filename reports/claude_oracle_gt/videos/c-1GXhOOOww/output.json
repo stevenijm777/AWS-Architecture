@@ -1,0 +1,268 @@
+{
+  "step_by_step_reasoning": "Nodes: two client actors (tenant/customer web-mobile client, and third-party reseller/OTA API client), CDN (ThirdParty), S3 static hosting, AppSync GraphQL gateway, API Gateway REST endpoint, a single fused Lambda, SQS, DynamoDB. Flow 0: tenant onboarding wizard: client -> CDN -> AppSync -> Lambda -> SQS fan-out -> Lambda reprocess -> DynamoDB. Flow 1: reseller/OTA: API client -> CDN -> API Gateway -> same Lambda -> DynamoDB. Flow 2: customer website: client -> CDN -> S3 static content, returned to client; dynamic content CDN -> AppSync -> Lambda or direct DynamoDB resolvers. Flow 3: check-in via mobile app: client -> CDN -> AppSync -> Lambda <-> DynamoDB, Lambda -> SQS -> Lambda for post-experience processing (review reminder email). Email service is not named or drawn, so no node is added.",
+  "graph": {
+    "name": "Anchor: Multi-Tenant Serverless Ticketing Platform",
+    "link": "https://www.youtube.com/watch?v=c-1GXhOOOww",
+    "categories": "Serverless, Multi-Tenant SaaS, Ticketing",
+    "graph_usable": true,
+    "notes": "Anchor is a ticketing platform with more than 40 tenants (20+ onboarded in the last six months) serving daytime experiences such as Statue of Liberty cruises, Niagara Falls, Alcatraz Island and NYC Ferry. Fully serverless: CDN in front of S3 static hosting, AppSync GraphQL and API Gateway REST, shared Lambda functions, SQS for fan-out and deferred processing, and DynamoDB with shared tables partitioned by tenant."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerMobile",
+      "name": "Tenant / Customer Client (Web & Mobile App)",
+      "notes": "Tenants using the onboarding wizard web application, customers buying via owned websites or mobile app, and the mobile check-in application used to look up bookings or scan tickets."
+    },
+    {
+      "id": "1",
+      "service": "UserConsumerAPI",
+      "name": "Third-Party Reseller / OTA",
+      "notes": "Omni-channel resellers (OTAs) such as Expedia, Viator and GetYourGuide selling the offerings through a third-party API implemented for them."
+    },
+    {
+      "id": "2",
+      "service": "ThirdParty",
+      "name": "CDN",
+      "notes": "First thing every client request hits. Returns static content from S3 to the client and routes dynamic requests to AppSync or API Gateway."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Bucket serving as an HTTP server hosting static content: event/ticket offering descriptions and pictures."
+    },
+    {
+      "id": "4",
+      "service": "AppSync",
+      "name": "AppSync",
+      "notes": "GraphQL gateway. Resolvers invoke Lambda; sometimes direct DynamoDB resolvers are used, mapped and reused via built-in pipeline resolvers."
+    },
+    {
+      "id": "5",
+      "service": "ApiGateway",
+      "name": "API Gateway",
+      "notes": "Regular REST endpoint for the third-party API used by resellers/OTAs; hits the same Lambdas as the other channels."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Shared functions for tenants and customers, triggered through AppSync and API Gateway. Fans out to subroutines by sending SQS messages, later reprocesses those messages, and interacts with DynamoDB."
+    },
+    {
+      "id": "7",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Holds fan-out messages for tenant setup and messages for anything after check-in (customer service, post-experience, review reminder email), later processed by Lambda."
+    },
+    {
+      "id": "8",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores all tenant data. Multi-tenancy: tables are shared, with a partition key per tenant so everything is partitioned by tenant."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Tenant uses the onboarding wizard web application; the request first hits the CDN."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "CDN forwards the request to AppSync, the GraphQL gateway."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "AppSync resolvers tell Lambda to fan out to different subroutines."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "control",
+      "notes": "Lambda sends a bunch of SQS messages for the fan-out."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "control",
+      "notes": "SQS messages are later reprocessed by Lambda."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda interacts with DynamoDB to finish setting up the tenancy, partitioned by tenant key."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Reseller/OTA request first hits the CDN."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "CDN routes the reseller request to the REST third-party API on API Gateway."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "API Gateway hits the same Lambdas used by the other channels."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda reads/writes booking data in DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Customer starts the journey on an owned website; request hits the CDN."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "CDN requests the static offering content from the S3 bucket acting as HTTP server."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "S3 returns event descriptions and pictures to the CDN."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "CDN returns the static content to the client, who can browse and navigate."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "For dynamic content the CDN hits AppSync (GraphQL)."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "control",
+      "notes": "AppSync takes a node of the graph and processes it using Lambda."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "5'",
+      "type": "data",
+      "notes": "Sometimes straight DynamoDB resolvers are used, mapped and reused with AppSync pipeline resolvers."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "6",
+      "type": "data",
+      "notes": "Lambda reads/writes data in DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Mobile check-in application looks up the booking or scans the ticket; request goes through the CDN."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Same flow: CDN forwards to AppSync."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "2",
+      "type": "control",
+      "notes": "AppSync invokes Lambda for the check-in."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda writes the check-in to DynamoDB."
+    },
+    {
+      "source": "8",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "4",
+      "type": "data",
+      "notes": "DynamoDB returns booking data to Lambda (bidirectional interaction)."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "5",
+      "type": "control",
+      "notes": "Lambda puts messages in SQS for anything after check-in: customer service, post-experience."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 3,
+      "seq": "6",
+      "type": "control",
+      "notes": "Messages are later processed by Lambda; an email is sent to the customer reminding them to write a review."
+    }
+  ]
+}

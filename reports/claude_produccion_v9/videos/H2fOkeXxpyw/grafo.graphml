@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">CLI</data>
+      <data key="d6">UserConsumerDeveloper</data>
+      <data key="d7">Developers write code in JavaScript or TypeScript and deploy it with the Forge CLI.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Browser</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">End-user browser. It triggers invocation of a Forge app and renders the page fragment that comes back.</data>
+    </node>
+    <node id="2">
+      <data key="d5">EC2 Deployment Service</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Deployment web service that sits behind an ALB, so it can scale to handle thousands of customers. It turns customer JS functions into Lambda functions.</data>
+    </node>
+    <node id="3">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores deployment state (in progress, completed, failed) so the outcome can be reported back to the user.</data>
+    </node>
+    <node id="4">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queues deployment requests. This decouples ingestion from Lambda creation and avoids the Lambda control-plane rate limits on how many functions can be created per time interval.</data>
+    </node>
+    <node id="5">
+      <data key="d5">EC2 Worker Service</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Backend service that reads deployment requests from SQS and creates the Lambdas at its own pace, when it is allowed to, so it is not rate limited.</data>
+    </node>
+    <node id="6">
+      <data key="d5">EC2 Internal Service</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Atlassian internal service. It checks whether the user is allowed to execute the Lambda, finds the right Lambda for that user and product, passes the correct parameters, and returns the constructed page fragment to the browser.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Customer code runs in a separate, dedicated customer Lambda account. The Lambdas are multi-tenant and can be shared between customers. Every invocation spins up a new V8 isolate and deletes it afterwards, so no state or global variables leak between customers. No data is stored in the Lambda. It can fetch data from other systems and products.</data>
+    </node>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The developer deploys customer code with the CLI to the deployment web service (through the ALB).</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The browser sends an invocation request to the internal service, which checks permissions and finds the Lambda for that user and product. The page fragment is returned to the browser to render.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Stores and tracks deployment state and progress (completed, failed, etc.).</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Queues the deployment request onto SQS to absorb load from thousands of customers.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The backend worker pulls deployment requests off the queue at its own pace.</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Creates or deploys the customer Lambda function across the account boundary, staying within Lambda control-plane rate limits.</data>
+      <data key="d10">4</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Invokes the customer Lambda in the customer account with the correct parameters. The Lambda runs the code in a fresh V8 isolate and returns data used to build the page fragment.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Atlassian Forge - Customer App Deployment and Invocation Platform</data>
+    <data key="d1">https://www.youtube.com/watch?v=H2fOkeXxpyw</data>
+    <data key="d2">Atlassian Forge lets customers, developers and third-party vendors build custom apps that extend Atlassian products such as Jira and Confluence. The platform has two parts: (1) deployment of customer JavaScript/TypeScript code as Lambda functions, and (2) invocation of that code from the browser. The Forge platform and the customer Lambdas run in separate AWS accounts (the account boundary is the green line), and neither account touches the other. The platform serves thousands of customers.</data>
+    <data key="d3">Serverless, Multi-tenant SaaS, Security, Decoupling/Queueing</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

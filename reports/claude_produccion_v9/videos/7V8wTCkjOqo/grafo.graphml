@@ -1,0 +1,105 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">NON-PROD</data>
+      <data key="d6">VPC</data>
+      <data key="d7">Service teams' non-production account. Their CI/CD pipelines run here, send build events, and make promote/deploy API calls to Deputy.</data>
+    </node>
+    <node id="1">
+      <data key="d5">ECS</data>
+      <data key="d6">ECS</data>
+      <data key="d7">Hosts Kong, the API gateway used to publish Deputy's endpoints. Receives pipeline events and promote/deploy API calls.</data>
+    </node>
+    <node id="2">
+      <data key="d5">LAMBDA x25</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">About 25 Lambda functions that hold Deputy's business logic. They capture build events and run the compliance assessment, with a black-and-white success or failure result. They also trigger promotion through SNS. Lambda was chosen to avoid managing infrastructure and operational overhead.</data>
+    </node>
+    <node id="3">
+      <data key="d5">DYNAMODB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores build events (key-value) from team pipelines, such as build started or code scan executed, along with the evidence. Chosen for performance and low operational overhead.</data>
+    </node>
+    <node id="4">
+      <data key="d5">RDS POSTGRESQL</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Holds the relational compliance framework: standards, controls, and how each control is met or tested. It also stores teams and the services they run, for 80-100 service teams.</data>
+    </node>
+    <node id="5">
+      <data key="d5">SNS</data>
+      <data key="d6">SNS</data>
+      <data key="d7">Securely sends promotion notifications into production accounts that Deputy has no access to. Provides fan-out to 80-100 service teams.</data>
+    </node>
+    <node id="6">
+      <data key="d5">PROD</data>
+      <data key="d6">VPC</data>
+      <data key="d7">Service teams' production account. Distributed Deputy Lambdas here handle the promotion and receive the copied artifacts. On deployment, an SQS notification message triggers the teams' deployment tools.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Pipelines in the non-prod account send all build events, and later promote API calls, to Kong running on ECS.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Promotion copies the artifacts from the non-prod account to the prod account. A deployment call then sends an SQS message that triggers the deployment tools.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Kong forwards the API requests and events to Lambda.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda captures the build events and stores them in DynamoDB.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">When compliance passes, Lambda publishes the promotion notification to SNS.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">On a promote call, Lambda reads the team's stored build events and evidence.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda reads the compliance standards and controls and matches them against the build events to run the pass/fail assessment.</data>
+      <data key="d10">0'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SNS fans the promotion trigger out to the distributed Lambdas in the PROD account.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">National Australia Bank - Deputy Compliance and Promotion Platform</data>
+    <data key="d1">https://www.youtube.com/watch?v=7V8wTCkjOqo</data>
+    <data key="d2">Deputy is an API-based platform built by NAB together with AWS Professional Services. It automates compliance attestation for 80-100 service teams that are moving thousands of workloads to AWS. Build events from non-production pipelines are captured in DynamoDB. On promotion, Lambda checks those events against the compliance framework in RDS PostgreSQL. The result is pass/fail. On success, SNS securely fans out the promotion to production accounts, artifacts are copied to PROD, and an SQS message triggers deployment tools. Lambda was chosen for low operational overhead and fast time to market.</data>
+    <data key="d3">Compliance, DevOps, CI/CD, Serverless, Financial Services</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

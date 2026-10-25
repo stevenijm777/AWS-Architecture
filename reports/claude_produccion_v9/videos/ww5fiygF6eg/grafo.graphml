@@ -1,0 +1,110 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">3rd Party (Drone Imagery Software)</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Licensed third-party pilots fly drones over the well pads. The third-party software processes the imagery into 3 files per well pad (orthomosaic, digital terrain model, digital elevation model), stores them on its server, and exposes an API.</data>
+    </node>
+    <node id="1">
+      <data key="d5">CloudWatch Event</data>
+      <data key="d6">CloudWatch</data>
+      <data key="d7">Runs on a schedule and starts the Step Functions workflow.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Step Functions</data>
+      <data key="d6">StepFunctions</data>
+      <data key="d7">Orchestrates three separate Lambda functions.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Represents three functions. Lambda 1 calls the third-party API to check for new flights or images. Lambda 2 copies new images from the third party into S3. Lambda 3 reads the S3 images and creates raster proxies (URL-like references) so the on-prem mapping server can locate the images.</data>
+    </node>
+    <node id="4">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Bucket in Marathon Oil's environment that stores the processed drone imagery.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Storage Gateway</data>
+      <data key="d6">StorageGateway</data>
+      <data key="d7">Lets the on-prem mapping software read images directly from S3 with no application changes.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Server (On-Prem Mapping Software)</data>
+      <data key="d6">OnPremDC</data>
+      <data key="d7">On-prem mapping server that can't read from S3 directly. Users access it to view well pad imagery for maintenance and operations.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Database (On-Prem)</data>
+      <data key="d6">OnPremDC</data>
+      <data key="d7">Local database of the mapping server where the raster proxies are stored.</data>
+    </node>
+    <edge source="0" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">New drone images are transferred from the third-party server into S3.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The scheduled CloudWatch Event starts the Step Functions workflow.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Step Functions invokes the Lambda functions in sequence.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda 1 calls the third-party API to check whether new flights or images are available.</data>
+      <data key="d10">2</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda 2 stores the retrieved images in the S3 bucket.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda 3 creates raster proxies from the S3 images and stores them in the on-prem server's local database.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Storage Gateway retrieves the image files from S3 so the user can view them.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">When a user views images, the mapping software requests the image files through Storage Gateway.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Marathon Oil - Serverless Drone Imagery Processing for Well Pad Monitoring</data>
+    <data key="d1">https://www.youtube.com/watch?v=ww5fiygF6eg</data>
+    <data key="d2">Licensed third-party pilots fly drones over every well pad on a regular schedule. Third-party software processes the imagery into three files per well pad: an orthomosaic, a digital terrain model and a digital elevation model. On a schedule, a CloudWatch Event starts a Step Functions workflow with three Lambda functions that copy new imagery into S3 and create raster proxies. The on-prem mapping software can't read from S3 directly, so it uses Storage Gateway. The application didn't need any changes. Maintenance and operations teams use the images to find equipment issues, plan preventative maintenance and check well pad health.</data>
+    <data key="d3">Serverless, Hybrid Storage, Image Processing, Oil &amp; Gas, Drones</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

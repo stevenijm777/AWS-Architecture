@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Kinesis (1)</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Inbound event stream. The upstream account aggregation service publishes an event saying a user's account has been updated; this is triggered on a schedule or when the user logs in and refreshes the app. The event carries an account ID. Only one Lambda can be connected to a Kinesis shard at a time and it processes sequentially.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Lambda (1)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Purposely very lean and fast function. Listens for the account-updated event, runs a SQL query against RDS for that user's transactions, gathers them into batches of about 100 and publishes the transaction description strings to SQS.</data>
+    </node>
+    <node id="2">
+      <data key="d5">RDS (1)</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Database holding the raw transaction data (date, description, amount) written by the upstream account aggregation service from third-party banks.</data>
+    </node>
+    <node id="3">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queue that receives batches of raw transaction description strings. It was introduced to decouple the heavy processing from Kinesis and enable fan-out, because the processing Lambda connected directly to Kinesis could not keep up with tens of millions of transactions.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Lambda (2)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Fan-out tier of many concurrent Lambda functions that does the NLP work; processing takes a few seconds per batch. Uses ANTLR parser generation: a domain-specific grammar file is compiled into Python code and bundled into the Lambda. Extracts merchant name, currencies, dates, exchange rates and merchant location. Bundled with Python dependencies and C extensions by a custom open source tool.</data>
+    </node>
+    <node id="5">
+      <data key="d5">RDS (2)</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Table with columns for all the extracted fields. Stores the processed, enriched transactions together with the version of the model that was run, for later analysis, comparison and model iteration.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Kinesis (2)</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Outbound event stream signalling that the customer's transactions have finished processing. Other parts of the organisation trigger from this event, for example to refresh the app with friendly descriptions.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The account-updated event (with account ID) on the Kinesis stream triggers the lean Lambda function.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda publishes messages with batches of about 100 transaction description strings to SQS.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda runs a SQL query and takes in the raw transactions for the user from RDS.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SQS delivers the batches to the fan-out tier of Lambda functions for NLP processing.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda writes the enriched transactions and the model version to the RDS table.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda publishes an event saying the customer's transactions have finished processing, for downstream consumers to trigger from.</data>
+      <data key="d10">4'</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Tandem: Serverless Transaction Enrichment Pipeline with NLP</data>
+    <data key="d1">https://www.youtube.com/watch?v=jV8DwutbXbg</data>
+    <data key="d2">Tandem (UK bank) enriches aggregated bank transaction data. An upstream account aggregation service (not drawn) scrapes third-party bank sites, writes raw transactions to RDS and publishes an 'account updated' event to Kinesis. A lean Lambda reads the transactions from RDS, batches them and publishes them to SQS. A fan-out tier of Lambda functions runs NLP parsing (ANTLR-generated parser) and writes the enriched transactions to RDS with the model version. It then publishes a completion event to a second Kinesis stream for other teams to consume. Lambda bundles are deployed through Jenkins and CloudFormation (deployment only, not modelled).</data>
+    <data key="d3">Serverless, Data Pipeline, Analytics, Machine Learning, FinTech</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

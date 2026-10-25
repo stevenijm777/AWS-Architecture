@@ -1,0 +1,90 @@
+{
+  "step_by_step_reasoning": "1. Inventory: the World Model lists 6 entities: Smart TV, Kinesis Data Streams, Kinesis Data Firehose, S3, Redshift and QuickSight. Each one is an active runtime participant, so each becomes one node. The Smart TV is kept as the system entry point (UserConsumerTV). It is not a generic human actor.\n2. Aurora is mentioned in the audio only as a past experiment that was replaced by Redshift. It is not drawn and is not part of the current runtime, so it is left out. Amazon Professional Services is about how the project was delivered, not a runtime component, so it is also left out. SPICE is QuickSight's built-in in-memory engine, so it is added to the QuickSight notes instead of becoming its own node.\n3. No nodes need to be fused or expanded. Every icon is a different service doing a different step.\n4. Connection ledger: there are 5 visual_connections entries, and I emit 5 edges, one for each, with the same direction.\n   - Flow 0 (telemetry ingestion and storage): TV -> Kinesis (seq 0), Kinesis -> Firehose (seq 1), then Firehose -> Redshift (seq 2) and Firehose -> S3 (seq 2') in parallel.\n   - Flow 1 (analytics and visualization): Redshift -> QuickSight (seq 0). Custom SQL loads data into SPICE datasets.\n5. All edges are type \"data\" because they carry payloads.\n6. Notes from the audio: 8 shards with no rescaling needed so far, no fixed schema, millions of devices, billions of events per month, S3 kept forever for reloads, only a subset of columns loaded into Redshift, columnar IO optimization, and about 6 weeks to production.\nSelf-check: 5 visual_connections entries in, 5 edges out.",
+  "graph": {
+    "name": "Vizio Smart TV Telemetry Analytics Pipeline",
+    "link": "https://www.youtube.com/watch?v=BlCXEMp_lqY",
+    "categories": "Analytics, Data Ingestion, Streaming, Data Warehousing, IoT/Telemetry, Business Intelligence",
+    "graph_usable": true,
+    "notes": "Vizio collects logs, performance telemetry and user data from millions of connected smart TVs (billions of events per month). Kinesis Data Streams is the ingestion front door. Kinesis Data Firehose delivers raw data to S3 for permanent storage and a subset of columns to Redshift. QuickSight with SPICE is used for reporting. The data is not tied to a fixed schema. Aurora was tried earlier but did not aggregate billions of rows well. The pipeline went to production in about 6 weeks with help from AWS Professional Services."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerTV",
+      "name": "Smart TV",
+      "notes": "Vizio smart TVs (millions of connected devices) send logs, performance telemetry and user/application usage data directly to Kinesis. Data comes in different formats and columns with no fixed schema."
+    },
+    {
+      "id": "1",
+      "service": "Kinesis",
+      "name": "Kinesis Data Streams",
+      "notes": "Front door to the cloud; everything is piped through it. Runs an 8-shard pipeline that has not yet needed resharding. Handles billions of events per month."
+    },
+    {
+      "id": "2",
+      "service": "Firehose",
+      "name": "Kinesis Data Firehose",
+      "notes": "Takes the data as-is from Kinesis Data Streams and dumps it into Redshift, and stores the raw data in S3."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 Bucket",
+      "notes": "Long-term raw data store kept forever for future use, since storage is cheap. Used to reload the full dataset into Redshift without data loss when migrating away from Aurora."
+    },
+    {
+      "id": "4",
+      "service": "RedShift",
+      "name": "Amazon Redshift",
+      "notes": "Columnar data warehouse that receives only a subset of the columns. Optimized IO for large aggregations over billions of rows. Replaced an earlier Aurora experiment."
+    },
+    {
+      "id": "5",
+      "service": "QuickSight",
+      "name": "Amazon QuickSight",
+      "notes": "Visualization and reporting. Uses the built-in in-memory SPICE engine, which is loaded from Redshift with custom SQL queries for fast slicing and dicing of the data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "TVs send logs, performance telemetry and user data directly to Kinesis Data Streams."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stream data is piped to Kinesis Data Firehose."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Firehose ingests the data as-is into Redshift (a subset of the columns)."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Raw data is stored in S3 permanently and can be used to reload the warehouse."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Custom SQL queries load data subsets from Redshift into QuickSight SPICE datasets for reporting."
+    }
+  ]
+}

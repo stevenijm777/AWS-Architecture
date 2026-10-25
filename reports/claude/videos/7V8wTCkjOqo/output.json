@@ -1,0 +1,164 @@
+{
+  "step_by_step_reasoning": "1) The whiteboard shows Service Teams, ECS, Lambda (x25), RDS PostgreSQL, DynamoDB, SNS, NON-PROD and PROD, with arrows NON-PROD->ECS, ECS->Lambda and NON-PROD->PROD. 2) The audio says pipelines in the service teams' non-production account send build events to Kong running on ECS (Kong publishes the Deputy endpoints), which goes to Lambda, which stores the events in DynamoDB. 3) To promote, the team makes an API call through the same path (NON-PROD -> Kong/ECS -> Lambda). Lambda runs the assessment by matching the build events in DynamoDB against the compliance framework (standards and controls) in RDS PostgreSQL, giving a success or failure result. 4) On success, promotion uses SNS to reach a Lambda running in the PROD account, which copies artifacts from NON-PROD to PROD. For deployment, an SQS message triggers the team's deployment tools. 5) SQS and the PROD-side Lambda are not drawn but are explicitly named in the audio, so they are added as nodes. The Service Teams human actor is pruned and folded into the NON-PROD entry-point node. Kong is hosted on ECS and is kept as the single ECS node. 6) Judgement calls: the audio does not say which component sends the SQS message, so it is attributed to the Deputy Lambda; the two read edges are drawn from the data store to Lambda to show the direction of data.",
+  "graph": {
+    "name": "National Australia Bank: Deputy Compliance Platform for Cloud Migration",
+    "link": "https://www.youtube.com/watch?v=7V8wTCkjOqo",
+    "categories": "Compliance, DevOps, Serverless, Financial Services",
+    "graph_usable": true,
+    "notes": "NAB's Deputy platform is an API solution that automates compliance attestation for workloads moving to AWS. It captures build events from service team pipelines, assesses them against a compliance framework (standards and controls), and on success promotes artifacts to and triggers deployment in production accounts. It is designed for 80 to 100 service teams."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "ThirdParty",
+      "name": "NON-PROD",
+      "notes": "Service teams' non-production account, where their pipelines run. Sends build events and makes the promote and deploy API calls to Deputy. Source of the artifacts to be promoted."
+    },
+    {
+      "id": "1",
+      "service": "ECS",
+      "name": "ECS (Kong)",
+      "notes": "Kong API gateway running on ECS; used to publish the Deputy API endpoints."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "LAMBDA (x25)",
+      "notes": "About 25 Lambda functions holding the business logic: capture build events, execute the compliance assessment (success or failure), and trigger promotion and deployment. Chosen for speed to market and no infrastructure or operational overhead."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DYNAMODB",
+      "notes": "Stores build events and evidence from team pipelines (e.g. build started, code scan executed) as key-value pairs. Low operational overhead and good performance."
+    },
+    {
+      "id": "4",
+      "service": "RDS",
+      "name": "RDS POSTGRESQL",
+      "notes": "Holds the relational compliance framework: standard, control and how it is tested. Also records which team is which and what services they run."
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Used for promotion: securely sends information to components in other teams' production accounts, which Deputy has no access to. Fans out to 80 to 100 service teams."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "LAMBDA (PROD)",
+      "notes": "Distributed Deputy component running as Lambda in the team's production account. Triggered via SNS to perform the promotion by copying artifacts from non-prod to prod."
+    },
+    {
+      "id": "7",
+      "service": "ThirdParty",
+      "name": "PROD",
+      "notes": "Service teams' production account. Receives the promoted artifacts and hosts the team's deployment tools."
+    },
+    {
+      "id": "8",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Carries the deployment notification message that triggers the team's deployment tools. Mentioned in the audio only, not drawn."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Pipelines in the non-prod account send all build events to Kong running on ECS."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Kong forwards the events to Lambda."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda captures the build events and stores them in DynamoDB."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "When ready, the team makes a promote API call from the non-prod account."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "Kong routes the promote request to Lambda."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda reads the stored build events for the assessment."
+    },
+    {
+      "source": "4",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "data",
+      "notes": "Lambda reads the compliance framework (standards and controls) and matches it against the build events; the result is success or failure."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "When compliance passes, Lambda publishes the promotion to SNS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS triggers the Deputy Lambda running in the production account."
+    },
+    {
+      "source": "0",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Artifacts are copied from the non-prod account to the prod account."
+    },
+    {
+      "source": "2",
+      "target": "8",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "control",
+      "notes": "After the deploy API call, a deployment notification message is sent to SQS. The sender is not named in the audio; Lambda is assumed."
+    },
+    {
+      "source": "8",
+      "target": "7",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "control",
+      "notes": "The SQS message triggers the team's deployment tools."
+    }
+  ]
+}

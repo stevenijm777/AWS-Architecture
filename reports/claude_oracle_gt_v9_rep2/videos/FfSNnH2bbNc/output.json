@@ -1,0 +1,214 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows 8 entities: Satellite, EC2 Spot, S3, RDS, ElastiCache, Fargate, Lambda, and web users. No fusion or expansion needed; the Lambda icon represents a series of functions acting as one logical unit, so it stays one node. Three flows: Flow 0 = ingestion (satellite tiles -> EC2 Spot cluster -> S3 bulk data + RDS metadata, with reverse ledger arrows S3->EC2 and RDS->EC2 kept). Flow 1 = user map tile serving (user -> Fargate -> ElastiCache cache check, RDS lookup, S3 HTTP range reads, cache write, tile back to user). Flow 2 = time series analytics (user area of interest -> Lambda -> RDS lookup -> S3 read -> summary back to user). Self-check: visual_connections entries = 19; edges emitted = 19. Every ledger entry is emitted once with its original direction, including both directions of bidirectional pairs.",
+  "graph": {
+    "name": "Indigo Carbon: Serverless Satellite Imagery Processing for Regenerative Agriculture",
+    "link": "https://www.youtube.com/watch?v=FfSNnH2bbNc",
+    "categories": "Serverless, Geospatial, Analytics, Agriculture",
+    "graph_usable": true,
+    "notes": "Indigo Carbon ingests satellite imagery (e.g., from NASA) with EC2 Spot clusters, stores bulk data in S3 and metadata in RDS, serves map web tiles on the fly via Fargate with a Redis ElastiCache tile cache, and computes field-level time series with Lambda functions. Catalog is ~5 PB spanning up to 30 years (mostly 10 years), growing ~100 GB/day. On-the-fly processing saves orders of magnitude of cost."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerSatellite",
+      "name": "Satellite",
+      "notes": "Existing satellites from organizations like NASA. Delivers a series of modestly processed and corrected imagery tiles every day throughout the day."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 Spot",
+      "notes": "Large cluster of Spot instances spun up as quickly as possible to post-process incoming satellite data (additional correction, conversion to more accessible formats), then spun back down. Autoscaled."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores the big bulk imagery data as relatively large compressed chunks. ~5 PB catalog (up to 30 years, mostly 10 years), growing ~100 GB/day. Read with HTTP range requests to fetch only part of an object."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Stores metadata; used to look up which source imagery corresponds to a tile or area."
+    },
+    {
+      "id": "4",
+      "service": "ElastiCache",
+      "name": "ElastiCache",
+      "notes": "Redis used as a central cache for already generated tiles (e.g., common whole-US tiles seen by everybody), computed once and then read/written as needed."
+    },
+    {
+      "id": "5",
+      "service": "Fargate",
+      "name": "AWS Fargate",
+      "notes": "Fargate cluster serving web tiles. A map is sliced into ~16 tiles, each an individual request. Stitches image parts together, downsamples to the right resolution, applies color correction (RGB) or color mapping (intensity values), and serves the tile."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Series of Lambda functions computing time series from the source data cube: looks up imagery in RDS, reads from S3, builds the tile of interest, clips to the farmer's area of interest, computes a summary (e.g., mean greenness), repeated ~1000 times to form the time series."
+    },
+    {
+      "id": "7",
+      "service": "UserConsumerWeb",
+      "name": "Users",
+      "notes": "Farmers/users logging into the app; see a US map with the most up-to-date imagery, select layer and time frame, and provide their custom field boundary."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Daily series of satellite imagery tiles arrive for post-processing."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stores processed bulk imagery data (~100 GB/day)."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Stores metadata for the processed imagery."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "3",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "7",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Map load is sliced into ~16 tiles, each sent as an individual request with the selected layer and time frame."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Checks the Redis cache for an already generated tile."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns the cached tile if present."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "Looks up which source imagery corresponds to the tile."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns the source imagery metadata."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "HTTP range requests to read only a small subsection of the large compressed objects."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "6",
+      "type": "data",
+      "notes": "Returns the image parts, which are stitched, downsampled and color corrected/mapped."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "7",
+      "type": "data",
+      "notes": "Serves the web tile back to the user."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "Farmer's custom area of interest (field boundary) is passed to the series of Lambda functions."
+    },
+    {
+      "source": "6",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Looks up the imagery needed for the area of interest."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "data",
+      "notes": "Returns the imagery metadata."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "3",
+      "type": "data",
+      "notes": "Reads the required imagery from S3."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "4",
+      "type": "data",
+      "notes": "Returns imagery, which is turned into the tile of interest, clipped to the field and summarized (e.g., mean greenness), ~1000 times over."
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 2,
+      "seq": "5",
+      "type": "data",
+      "notes": "Returns the computed time series (e.g., greenness curve over the year)."
+    }
+  ]
+}

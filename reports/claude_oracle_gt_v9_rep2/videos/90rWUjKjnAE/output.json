@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "1) Nodes: the world model lists 8 entities (Developer, Git server, EKS, EC2 on-demand, EC2 Spot, Aurora, EBS, EFS). All are kept. The developer is kept as the system entry point. The two EC2 entities stay separate because they play distinct roles (on-demand base infrastructure vs. Spot for non-production). EKS is kept as the single node listed in the world model; it covers both Lagoon (the core that listens to webhooks) and the hosting cluster that runs the developer environments. Git is a non-AWS component, so it is ThirdParty. 2) Edges: the ledger has 10 visual_connections entries and I emit 10 edges, one per entry, with the same source and target. No extra edges are added. 3) Flows: flow 0 is the deployment trigger (developer pushes code -> Git webhook -> Lagoon on EKS -> workloads on EC2 / EC2 Spot). Flow 1 is transparent storage provisioning by the operator on EKS (EFS for general files, EBS gp3 for specialised workloads). Flow 2 is database provisioning on explicit developer request (Aurora on r6g Graviton2, exposed back to the project as secrets). 4) Types: the webhook and the EKS scheduling onto instances are control; the code push and the storage/database access are data. 5) Notes carry the transcript details: 70-90% Spot cost benefit, gp3 lower cost and better IOPS (rolled out from mid-December 2020), r6g started on non-production, infrastructure as code defined in the Git repository. Self-check: visual_connections = 10, edges emitted = 10.",
+  "graph": {
+    "name": "amazee.io Lagoon: Open Source Application Delivery Platform on Amazon EKS",
+    "link": "https://www.youtube.com/watch?v=90rWUjKjnAE",
+    "categories": "Containers, Kubernetes, DevOps, Application Delivery, Cost Optimization",
+    "graph_usable": true,
+    "notes": "amazee.io built Lagoon, an open source application delivery platform that lets developers move applications into Kubernetes without deep Kubernetes knowledge. Developers push code to Git; webhooks notify Lagoon on EKS, which deploys environments (feature branches, pull requests) defined as infrastructure as code. Workloads run on on-demand EC2 (base infrastructure) and EC2 Spot (development/non-production, 70-90% cost benefit). Operators on EKS transparently provision storage (EFS for general files, EBS gp3 for specialised workloads) and Aurora databases on r6g Graviton2 instances. Next steps: move more from EC2 to Spot, adopt more r6g instances, and lower costs with Savings Plans."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerDeveloper",
+      "name": "Developer",
+      "notes": "Developers write code and push it to their Git repositories. Everything to be deployed is defined in the Git repository (infrastructure as code)."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "Git server",
+      "notes": "Git repositories holding the application code and deployment definitions. Webhooks are connected to Lagoon."
+    },
+    {
+      "id": "2",
+      "service": "EKS",
+      "name": "EKS (Lagoon)",
+      "notes": "Runs Lagoon, the open source application delivery platform, and the developer environments. Lagoon listens to Git webhooks and decides what to deploy (e.g. a feature branch or an opened pull request) to the hosting zones. Operators on the cluster detect storage and database needs and provision them. Migrated from OpenShift to Kubernetes for more flexibility and to stay on the bleeding edge."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "EC2 (on-demand)",
+      "notes": "Normal EC2 instances running the whole base infrastructure / base workload of the EKS cluster."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "EC2 Spot",
+      "notes": "Spot instances for development / non-productive infrastructure that can tolerate failure or termination of a pod. Cost benefit of 70-90% versus on-demand EC2. Plan is to move more workload from EC2 to Spot."
+    },
+    {
+      "id": "5",
+      "service": "Aurora",
+      "name": "Aurora (r6g)",
+      "notes": "Provisioned by an operator when the developer explicitly asks for a database during deployment; exposed back to the project as a set of secrets. Runs on Graviton2 r6g instances: started on non-production to check for regressions, now moving more production workload onto r6g. Holds the developer's application data."
+    },
+    {
+      "id": "6",
+      "service": "EBS",
+      "name": "EBS (gp3)",
+      "notes": "Used when the operator detects a workload needing specialised storage, e.g. a database or a search server such as OpenSearch or Solr. gp3 volumes adopted as soon as announced (test workloads mid-December 2020, then rolled out to every platform in maintenance windows) for lower storage cost and better IOPS performance. Holds the developer's application data."
+    },
+    {
+      "id": "7",
+      "service": "EFS",
+      "name": "EFS",
+      "notes": "Used when the operator detects a need for general file storage: normal assets/files that need nothing specific. Holds the developer's application data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developers create code and push it to their Git repositories."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Webhooks notify Lagoon on EKS; Lagoon listens to the repositories and decides what needs to be done (feature branch, pull request)."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "EKS deploys the base workload onto normal EC2 instances."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "control",
+      "notes": "EKS deploys development / non-productive workloads onto EC2 Spot instances (70-90% cost benefit)."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Workloads store normal files/assets in EFS when the operator detects general file storage is needed."
+    },
+    {
+      "source": "3",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Specialised workloads (database, search server such as OpenSearch or Solr) use EBS gp3 volumes."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Non-production workloads on Spot store normal files/assets in EFS."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "data",
+      "notes": "Non-production specialised workloads on Spot use EBS gp3 volumes."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "When the developer asks for a database, an operator provisions an Aurora database (r6g) and exposes it to the project as a set of secrets; the workload uses it for application data."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Non-production workloads on Spot use the Aurora database (r6g) provisioned by the operator; r6g was first adopted on non-production environments."
+    }
+  ]
+}

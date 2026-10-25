@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">CSV &amp; XL</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Raw import/export trade data source files in CSV or Excel format. Started at about 1.5 billion records and has grown to about 5 billion (more than 3.5x).</data>
+    </node>
+    <node id="1">
+      <data key="d5">Amazon S3 (Raw Data)</data>
+      <data key="d6">S3</data>
+      <data key="d7">S3 bucket that receives the uploaded raw CSV/Excel files. Upload events trigger the validation Lambda.</data>
+    </node>
+    <node id="2">
+      <data key="d5">AWS Lambda (Validation)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Triggered by the raw upload. Validates the data and highlights any discrepancies. If the data is valid, it copies it to a separate validated folder in S3.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Amazon S3 (Validated Data)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Separate folder in the S3 buckets that holds the validated data copy. Triggers the processing Lambda.</data>
+    </node>
+    <node id="4">
+      <data key="d5">AWS Lambda (Processing)</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Triggered when the validated copy lands. Processes the validated data and ingests it into the OpenSearch cluster.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Amazon OpenSearch Cluster (Graviton2)</data>
+      <data key="d6">OpenSearch</data>
+      <data key="d7">The two drawn OpenSearch icons (ingestion and retrieval) are fused into one cluster. Runs on Graviton2 instances, saving about 25-30% of operating cost (about $100K). Uses query templates mapped to relevant indexes and the OpenSearch analyzer to fine-tune queries. An aggregated layer on top of the processed data serves complex reports such as trend analysis. Serves reports with 15-20 complex parameters in 2-4 seconds over about 5 billion records.</data>
+    </node>
+    <node id="6">
+      <data key="d5">User (Web Browser / Mobile App)</data>
+      <data key="d6">UserConsumerWebMobile</data>
+      <data key="d7">End customer who reaches the data from anywhere at any time, either through the web application in a browser or through the mobile application.</data>
+    </node>
+    <node id="7">
+      <data key="d5">Front End (Angular)</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Web front-end application built with Angular. Web browser requests go here first.</data>
+    </node>
+    <node id="8">
+      <data key="d5">Back End (Python)</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Back-end application built with Python. Receives requests from the web app and directly from mobile apps, queries the data layer, and sends responses back to the user. Generates large reports (&gt;10,000 records).</data>
+    </node>
+    <node id="9">
+      <data key="d5">Amazon RDS</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Relational database in the retrieval data layer, queried by the back end. Not described in the audio.</data>
+    </node>
+    <node id="10">
+      <data key="d5">Amazon S3 (Reports)</data>
+      <data key="d6">S3</data>
+      <data key="d7">Stores generated reports with more than 10,000 records. Users download them through a pre-signed URL, which is good for security.</data>
+    </node>
+    <node id="11">
+      <data key="d5">Amazon SES</data>
+      <data key="d6">SES</data>
+      <data key="d7">Sends an email to the user with a pre-signed URL to download the large report from S3.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Raw CSV/Excel data files are uploaded into the S3 bucket.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The upload event triggers the Lambda that validates the data.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">If there are no discrepancies, a copy of the validated data is uploaded to a different folder in the S3 buckets.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The validated copy triggers the processing Lambda.</data>
+      <data key="d10">3</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">0</data>
+      <data key="d9">The processed validated data is ingested into the OpenSearch cluster (query templates, index mapping, aggregated layer).</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Web app path: the user sends a request to the Angular front end through the web browser.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="8" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The request reaches the Python back end, either from the web browser or directly from the mobile app.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The front end responds back to the user's browser.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The back end queries the data layer (OpenSearch). Reports with 15-20 parameters return in 2-4 seconds.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="9" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The back end queries the RDS database, which is part of the data layer.</data>
+      <data key="d10">3'</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The response is sent back to the user through the back end application.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="10" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Reports with more than 10,000 records are uploaded to the S3 bucket.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="8" target="11" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The back end has SES send a notice to the user (stated in the audio, not drawn).</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="10" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">The user downloads the large report from S3 through the pre-signed URL (stated in the audio, not drawn).</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="11" target="6" id="0">
+      <data key="d8">2</data>
+      <data key="d9">SES emails the user a pre-signed URL to download the report (stated in the audio, not drawn).</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <data key="d0">Cybex Trade Data Processing and Retrieval with Amazon OpenSearch (Novantec)</data>
+    <data key="d1">https://www.youtube.com/watch?v=JYeXbUdFOdw</data>
+    <data key="d2">Event-driven ingestion of import/export trade data from CSV/Excel into an Amazon OpenSearch cluster running on Graviton2. The system started with 1.5 billion records and has grown more than 3.5x to about 5 billion. Reports with 15-20 complex parameters return in 2-4 seconds. Graviton2 saves about 25-30% of operating cost (about $100K). Retrieval works through an Angular web front end or a mobile app via a Python back end. Large reports (&gt;10,000 records) are stored in S3 and delivered by an SES email with a pre-signed URL.</data>
+    <data key="d3">Analytics, Search, Event-Driven, Serverless, Data Processing</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

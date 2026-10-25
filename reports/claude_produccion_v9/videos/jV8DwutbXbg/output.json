@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the World Model lists 7 drawn entities: Kinesis (Ingest), Lambda (Ingest), RDS (Source Data), SQS, Lambda (NLP Processing), RDS (Enriched Data) and Kinesis (Output Event). All are native AWS services, so each one uses its exact name from the vocabulary.\n2) Fusion check: I kept the two Lambdas separate. One is a lean batching function and the other does the NLP processing, so they are different steps. I also kept the two RDS icons separate: one holds the raw transactions written by the aggregation service, and the other holds the enriched transactions plus the model version. The two Kinesis icons are separate too: one carries the incoming account-update event and the other carries the outgoing 'transactions done' event.\n3) Pruning: the transcript mentions an upstream account-aggregation service, but it is not a drawn entity, so I did not add it. Jenkins and CloudFormation are only used to deploy the model, not at runtime, so I left them out (No Unused Deployment Layers). There are no human actors to remove.\n4) Edges: there are 6 visual_connections, and I emit 6 edges, one for each entry, keeping the drawn direction. RDS (Source Data) -> Lambda (Ingest) keeps the drawn direction and has type data, because it is the result of the SQL query for the user's transactions.\n5) Flows: everything is one end-to-end pipeline (flow 0). The steps are: the Kinesis account-update event triggers the Ingest Lambda (control), the Lambda reads transactions from RDS (data), it publishes batches of about 100 to SQS (data), and SQS fans out to the NLP Lambdas (data). Then two things happen in parallel: the NLP Lambda writes enriched data to RDS (data, seq 4) and emits a completion event to Kinesis (control, seq 4').\n6) Self-check: 6 visual_connections entries, 6 edges emitted.",
+  "graph": {
+    "name": "Tandem - Serverless NLP Transaction Enrichment Pipeline",
+    "link": "https://www.youtube.com/watch?v=jV8DwutbXbg",
+    "categories": "Data Pipeline, Serverless, NLP, FinTech, Fan-out",
+    "graph_usable": true,
+    "notes": "Tandem (UK bank) collects transaction data from other UK banks through an account-aggregation service. That service writes raw transactions (CSV-like: date, description, amount) into RDS and publishes an account-updated event to Kinesis. A lean Lambda batches the transaction descriptions into SQS, and a fan-out tier of Lambdas parses them with an ANTLR-generated Python parser. The parser extracts merchant name, location, currencies, exchange rates and dates. Enriched results are stored in RDS together with the model version, and a completion event is published to Kinesis. SQS was added because a single Lambda per Kinesis shard, processing records sequentially and taking a few seconds each, could not keep up with tens of millions of transactions. Model packages are deployed with Jenkins and CloudFormation, which are not part of the runtime."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Kinesis (Ingest)",
+      "notes": "Receives 'account updated' events containing an account ID. They are published by the upstream account-aggregation service (which scrapes other banks' websites), either on a schedule or when the user refreshes the app."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda (Ingest)",
+      "notes": "Kept intentionally lean and fast. Runs a SQL query against RDS for the user's transactions, groups the descriptions into batches of about 100 and publishes them to SQS."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "RDS (Source Data)",
+      "notes": "Holds the raw transaction data (date, description, amount) from third-party banks, written by the separate aggregation service."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Decouples ingest from processing and lets many NLP Lambdas work in parallel. It replaced the direct Kinesis->Lambda setup, which allowed only one Lambda per shard processing records sequentially and could not keep up with tens of millions of transactions."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda (NLP Processing)",
+      "notes": "Second-tier Lambdas that scale out. Each takes a few seconds per batch. Runs an ANTLR-generated Python parser compiled from a domain-specific grammar to extract merchant name, merchant location, currencies, exchange rates and dates. Packaged by an in-house open-source tool that bundles Python dependencies, C extensions and shared objects, and deployed with Jenkins and CloudFormation."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS (Enriched Data)",
+      "notes": "Table with a column for each extracted field. Every processed transaction is stored with the version of the NLP model that produced it, so models can be compared and iterated on later."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Kinesis (Output Event)",
+      "notes": "Event stream that signals a customer's transactions have been processed. Other teams in the organization consume it, for example to refresh the app with friendly descriptions."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "An account-updated event (account ID) triggers the Ingest Lambda."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "The Ingest Lambda queries RDS with SQL to get the raw transactions for the user."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Publishes batches of about 100 transaction description strings to the SQS queue."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Messages fan out to many NLP Processing Lambdas that scale out in parallel."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Writes the enriched transaction fields plus the model version to RDS."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "control",
+      "notes": "Emits a 'transactions processed' event so downstream teams can act on it, for example to refresh the app."
+    }
+  ]
+}

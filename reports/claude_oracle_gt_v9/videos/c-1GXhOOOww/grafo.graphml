@@ -1,0 +1,163 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Web / Mobile Clients</data>
+      <data key="d6">UserConsumerMobile</data>
+      <data key="d7">Tenants using the onboarding wizard web app, customers buying through the owned website or mobile app, and the check-in mobile application that looks up bookings and scans tickets.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Third-Party Resellers (OTAs)</data>
+      <data key="d6">UserConsumerAPI</data>
+      <data key="d7">Online travel agency resellers such as Expedia, Viator and GetYourGuide that sell the offerings through a third-party API.</data>
+    </node>
+    <node id="2">
+      <data key="d5">CDN</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">First hop for every client request. Returns static content from S3 and routes dynamic requests to AppSync or API Gateway.</data>
+    </node>
+    <node id="3">
+      <data key="d5">S3</data>
+      <data key="d6">S3</data>
+      <data key="d7">Bucket serving as an HTTP server for the static website content: event descriptions, pictures and ticket offerings.</data>
+    </node>
+    <node id="4">
+      <data key="d5">AppSync</data>
+      <data key="d6">AppSync</data>
+      <data key="d7">GraphQL gateway. Resolvers invoke Lambda; direct DynamoDB resolvers are sometimes used and reused through pipeline resolvers.</data>
+    </node>
+    <node id="5">
+      <data key="d5">API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Regular REST endpoint implemented for third-party resellers (OTAs).</data>
+    </node>
+    <node id="6">
+      <data key="d5">Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Shared functions triggered through AppSync and API Gateway for both tenants and consumers. Fans out to subroutines via SQS and later processes those messages.</data>
+    </node>
+    <node id="7">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Holds fan-out messages for tenant setup and deferred post-check-in work (customer service, post-experience tasks, review-reminder email).</data>
+    </node>
+    <node id="8">
+      <data key="d5">DynamoDB</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Stores all tenant data. Multi-tenancy uses shared tables with a partition key per tenant.</data>
+    </node>
+    <edge source="0" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Tenant uses the onboarding wizard web application; the request first hits the CDN.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="2" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Customer starts the journey on the owned website or mobile app; the request hits the CDN.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">A reseller (OTA) request first hits the CDN.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="4" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CDN forwards the request to the AppSync GraphQL gateway. The same path is used for dynamic content and check-in.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">CDN routes reseller requests to the REST endpoint on API Gateway.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Response returned to the reseller through the CDN.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="3" id="0">
+      <data key="d8">2</data>
+      <data key="d9">CDN requests static content from the S3 bucket acting as an HTTP server.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="0" id="0">
+      <data key="d8">2</data>
+      <data key="d9">CDN returns the content to the client so the customer can browse and navigate.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">S3 returns the static offering content: event descriptions and pictures.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">AppSync resolvers invoke Lambda to fan out to different subroutines; also processes GraphQL nodes for booking and check-in.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="2" id="0">
+      <data key="d8">2</data>
+      <data key="d9">AppSync returns the dynamic GraphQL response through the CDN.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">API Gateway invokes the same Lambdas used by the owned mobile and web channels.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="7" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda sends a batch of SQS messages for tenant setup; after check-in it queues post-experience work such as the review-reminder email.</data>
+      <data key="d10">3</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="6" target="8" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Lambda interacts with DynamoDB to finish setting up the tenancy; data is partitioned by tenant key.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="7" target="6" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Queued messages are processed later by Lambda.</data>
+      <data key="d10">4</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="8" target="4" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Direct DynamoDB resolvers return data to AppSync for dynamic content; reusable through pipeline resolvers.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Anchor: Multi-Tenant Serverless Ticketing Platform</data>
+    <data key="d1">https://www.youtube.com/watch?v=c-1GXhOOOww</data>
+    <data key="d2">Anchor is a ticketing platform for daytime experiences (Statue of Liberty cruises, Niagara Falls, Alcatraz Island, NYC Ferry) with more than 40 tenants, over 20 of them onboarded in the last six months. Fully serverless: CDN in front of S3 static hosting, AppSync GraphQL, a REST API Gateway for third-party resellers, shared Lambdas, SQS for fan-out and deferred processing, and DynamoDB shared tables partitioned by tenant.</data>
+    <data key="d3">Serverless, Multi-Tenant SaaS, Ticketing</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

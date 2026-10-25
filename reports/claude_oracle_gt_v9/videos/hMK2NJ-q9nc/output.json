@@ -1,0 +1,92 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the whiteboard shows S3, CloudFormation, EC2 (three AZ groups under an Auto Scaling group), Direct Connect, the on-prem Techwood/CNN Center site (UserCompanyDataStream) and the satellite uplinks (UserCompanyEdge). 2) Fusion: the three EC2 icons act as one logical playout tier (10 channels per AZ, primary and backup, auto scaling), so they are a single node. The Evertz software (Mediator, ORT, Playtime, CloudBridge) is hosted on EC2 and is recorded in notes rather than as separate nodes, since it is not drawn. 3) Pruning: CloudFormation was only used to deploy the system (about 40 YAML templates) and is not a runtime participant, so it is omitted; it has no ledger connections. 4) Main flow (flow 0): master files QC'd in Atlanta are sent via Aspera to S3, transferred to EC2 running Evertz ORT, played out over Direct Connect back to prem as a unicast signal, then compressed and sent to the uplink for distribution to affiliates (the 'X chain', a tertiary path to air). 5) BCP flow (flow 1): the transcript explicitly states that playout goes via Direct Connect to Hudson Yards (NYC), 8 channels, and is fed to an uplink; the board shows this as a 'BCP' arrow from Direct Connect to the NYC dish, so one extra edge DirectConnect -> UserCompanyEdge is added outside the ledger. 6) Self-check: visual_connections has 5 entries; 6 edges are emitted (5 ledger edges plus 1 explicitly stated BCP edge).",
+  "graph": {
+    "name": "WarnerMedia HBO: Cloud Linear Playout",
+    "link": "https://www.youtube.com/watch?v=hMK2NJ-q9nc",
+    "categories": "Media & Entertainment, Linear Playout, Business Continuity, Hybrid Connectivity",
+    "graph_usable": true,
+    "notes": "Cloud linear playout for HBO/WarnerMedia in AWS us-east-1 supporting 30 channels. It started as a BCP (business continuity) solution. Deployed through about 40 scrubbed CloudFormation YAML templates as a repeatable process (deployment only, not a runtime participant). Multi-AZ redundancy targeting five nines availability. Evertz CloudBridge bookends the connection between AWS, New York and Atlanta. Future plans: live venue inputs on the ORT with switching between live and pre-recorded content, and muxing/compression in the cloud to hand off directly to an MVPD."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDataStream",
+      "name": "TWD/CNN Center (Atlanta on-prem)",
+      "notes": "Techwood / CNN Center on-prem site in Atlanta. Linear Ops QCs the master files here. Receives the cloud playout as a unicast signal, compresses it and brings it to the uplink. An on-site auto changeover switch selects between Techwood playout, CNN Center playout and cloud playout. Evertz CloudBridge endpoint in Atlanta."
+    },
+    {
+      "id": "1",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores all master files for all the brands. Files arrive via Aspera and are registered in Evertz Mediator."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2 (Evertz ORT playout)",
+      "notes": "EC2 instances running Evertz ORT software; files are played out using Evertz Playtime. 10 channels per AZ in us-east-1 (30 channels total), each channel with a primary and a backup. Supported by Auto Scaling groups. Multi-AZ redundancy targeting five nines availability. Evertz CloudBridge carries the signal from the ORT back to site."
+    },
+    {
+      "id": "3",
+      "service": "DirectConnect",
+      "name": "Direct Connect",
+      "notes": "Carries the playout back to prem as a unicast signal. Evertz CloudBridge bookends the connection (AWS, New York, Atlanta). Also carries the BCP path to Hudson Yards in New York."
+    },
+    {
+      "id": "4",
+      "service": "UserCompanyEdge",
+      "name": "Uplink (ATL / NYC)",
+      "notes": "Satellite uplinks for distribution to affiliates. The Atlanta uplink is fed from the on-prem site after compression; the NYC (Hudson Yards) uplink is fed by the BCP path with 8 channels."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Master files QC'd by Linear Ops in Atlanta are sent via Aspera up to S3."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Once registered in Evertz Mediator, the files are transferred to the local EC2 running Evertz ORT."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Playout from Evertz Playtime goes out via Direct Connect, using Evertz CloudBridge."
+    },
+    {
+      "source": "3",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Playout returns to prem as a unicast signal: the 'X chain', a tertiary path to air."
+    },
+    {
+      "source": "0",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "The signal is compressed and brought to the uplink for distribution to affiliates."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "BCP path: Direct Connect to Hudson Yards (NYC), 8 channels, also fed to an uplink. Stated in the audio; not in the connection ledger."
+    }
+  ]
+}

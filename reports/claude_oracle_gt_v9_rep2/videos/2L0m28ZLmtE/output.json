@@ -1,0 +1,204 @@
+{
+  "step_by_step_reasoning": "1) Nodes: all 13 World Model entities are kept as separate nodes. The two S3 icons play distinct roles (static web app vs. data lake), so they are not fused. The human users icon is pruned; CloudFront is the system entry point. CloudFormation is only mentioned as the deployment mechanism behind Service Catalog products, so it is not added as a node. RStudio is kept as the EC2 node (hosted proprietary app). 2) Ledger: visual_connections has 11 entries, and all 11 are emitted with the same source and target. The duplicated S3 Static Web App -> ServiceCatalog pair is emitted twice, once for the RStudio product request and once for the SageMaker product request. 3) Audio-grounded additions: the transcript says users extract data from the Data Lake into their home S3 bucket and then process it in RStudio, SageMaker, Translate or Comprehend. To avoid leaving the Data Lake orphaned, 3 edges are added from the Data Lake to EC2 (RStudio), SageMaker and Lambda (Lambda being the component that calls Translate/Comprehend through the SDK). These 3 are inferred from that statement, not drawn as arrows. 4) Flows: flow 0 = portal access and authentication; flow 1 = dynamic part / traceability; flow 2 = product provisioning through Service Catalog; flow 3 = NLP services through Lambda; flow 4 = data lake consumption. Self-check: visual_connections entries = 11; edges emitted = 14 (11 ledger + 3 audio-grounded).",
+  "graph": {
+    "name": "Sanofi Darwin - Secure Data Analytics Portal for Data Scientists (Real World Evidence)",
+    "link": "https://www.youtube.com/watch?v=2L0m28ZLmtE",
+    "categories": "Analytics, Machine Learning, Data Lake, Healthcare, Security",
+    "graph_usable": true,
+    "notes": "Sanofi and partner Teamwork built a secure self-service data science portal on AWS for the Darwin Real World Evidence ecosystem. A static S3 website behind CloudFront authenticates users via Cognito federated with Sanofi SSO. API Gateway and DynamoDB provide traceability. Service Catalog provisions per-user RStudio and SageMaker environments. Lambda functions call Translate and Comprehend / Comprehend Medical. Sensitive data stays in the S3 data lake and per-user home buckets and cannot be downloaded to workstations. In production since early August; grew from 5-10 beta testers to 30-40 users within 2-3 weeks. Lake Formation is being considered for the future."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "CloudFront",
+      "name": "CloudFront",
+      "notes": "Distribution in front of the static website; used to reduce costs and holds the certificate. Entry point for users."
+    },
+    {
+      "id": "1",
+      "service": "Cognito",
+      "name": "Cognito",
+      "notes": "Identifies portal users through identity federation with the Sanofi SSO."
+    },
+    {
+      "id": "2",
+      "service": "S3",
+      "name": "S3 — Static Web App",
+      "notes": "Static website (S3 static website feature) hosting the Data Analytics portal."
+    },
+    {
+      "id": "3",
+      "service": "S3",
+      "name": "S3 — Data Lake",
+      "notes": "Data lake holding highly sensitive data. Users extract data into their own home-user S3 bucket; data is segregated, encrypted, audited, accessible only per predefined rights, and cannot be downloaded to a workstation."
+    },
+    {
+      "id": "4",
+      "service": "ApiGateway",
+      "name": "ApiGateway",
+      "notes": "Dynamic part of the portal, used to implement data traceability."
+    },
+    {
+      "id": "5",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "User activity log: stores user metadata and all actions performed on the Data Analytics portal; strong traceability of users and of each dataset used."
+    },
+    {
+      "id": "6",
+      "service": "ServiceCatalog",
+      "name": "ServiceCatalog",
+      "notes": "Portfolio of products (SageMaker and RStudio) built via CloudFormation, offered to users from the portal; repeatable deployments with a focus on security and user isolation."
+    },
+    {
+      "id": "7",
+      "service": "Lambda",
+      "name": "Lambda",
+      "notes": "Lambda functions that call Translate and Comprehend / Comprehend Medical directly through the SDK."
+    },
+    {
+      "id": "8",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "RStudio (proprietary app) provisioned per user as a Service Catalog product."
+    },
+    {
+      "id": "9",
+      "service": "SageMaker",
+      "name": "SageMaker",
+      "notes": "Per-user SageMaker notebooks, encrypted, with a 100 GB disk for data, and traced; each user only accesses the dataset they are entitled to."
+    },
+    {
+      "id": "10",
+      "service": "Translate",
+      "name": "Translate",
+      "notes": "Bulk translation of raw files from an automatically detected language to a target language chosen by the user."
+    },
+    {
+      "id": "11",
+      "service": "Comprehend",
+      "name": "Comprehend",
+      "notes": "Specifically Comprehend Medical: identifies data/metadata inside raw files. Comprehend is also used to auto-detect the source language for translation."
+    },
+    {
+      "id": "12",
+      "service": "ThirdParty",
+      "name": "Sanofi SSO",
+      "notes": "Sanofi corporate SSO acting as the identity provider federated with Cognito."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "CloudFront serves the static web portal hosted in S3."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "The portal authenticates users with Cognito."
+    },
+    {
+      "source": "1",
+      "target": "12",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Identity federation with the Sanofi SSO."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "The portal calls API Gateway for the dynamic part (traceability)."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Stores and reads user metadata and all portal actions in DynamoDB."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "The user requests provisioning of the RStudio product from the portal."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "control",
+      "notes": "The user requests provisioning of the SageMaker product from the portal."
+    },
+    {
+      "source": "6",
+      "target": "8",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "control",
+      "notes": "Service Catalog provisions the RStudio environment (via CloudFormation)."
+    },
+    {
+      "source": "6",
+      "target": "9",
+      "flow_id": 2,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Service Catalog provisions an encrypted per-user SageMaker notebook with a 100 GB disk (via CloudFormation)."
+    },
+    {
+      "source": "7",
+      "target": "11",
+      "flow_id": 3,
+      "seq": "0",
+      "type": "data",
+      "notes": "Lambda calls Comprehend through the SDK to auto-detect the language, and Comprehend Medical to identify metadata in raw files."
+    },
+    {
+      "source": "7",
+      "target": "10",
+      "flow_id": 3,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda calls Translate through the SDK for bulk translation of raw files into the target language chosen by the user."
+    },
+    {
+      "source": "3",
+      "target": "8",
+      "flow_id": 4,
+      "seq": "0",
+      "type": "data",
+      "notes": "Data extracted from the data lake into the user's home bucket is processed in RStudio. Inferred from the audio, not a drawn arrow."
+    },
+    {
+      "source": "3",
+      "target": "9",
+      "flow_id": 4,
+      "seq": "0'",
+      "type": "data",
+      "notes": "Data extracted from the data lake into the user's home bucket is processed in SageMaker. Inferred from the audio, not a drawn arrow."
+    },
+    {
+      "source": "3",
+      "target": "7",
+      "flow_id": 4,
+      "seq": "0''",
+      "type": "data",
+      "notes": "Raw files from the data lake / home bucket are processed by the Lambda functions for Translate and Comprehend. Inferred from the audio, not a drawn arrow."
+    }
+  ]
+}

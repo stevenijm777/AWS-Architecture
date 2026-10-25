@@ -1,0 +1,104 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the whiteboard shows seven icons: Kinesis (input), Lambda (1), RDS (1), SQS, Lambda (2), RDS (2) and Kinesis (2). All map directly to the valid vocabulary. 2) Fusion check: the two Lambdas do different jobs (a lean batching function versus the NLP parsing worker), so they stay separate. The two Kinesis icons are different event streams (inbound 'account updated' versus outbound 'transactions finished'), so they stay separate. The two RDS icons are drawn separately and play different roles (raw transaction source versus enriched results table with model version), so they are kept as drawn. 3) Pruning: the upstream account aggregation service and the downstream consumer are only mentioned verbally and have no icon, so they are captured in notes rather than as nodes. Jenkins and CloudFormation are deployment tooling, not runtime participants, so they are omitted. 4) Edges follow the six drawn arrows exactly: Kinesis(1)->Lambda(1) is a control trigger carrying an account ID; RDS(1)->Lambda(1) is a data read by SQL query; Lambda(1)->SQS is data (batches of about 100 transaction descriptions); SQS->Lambda(2) is typed as data because the message carries the payload to the fan-out workers; Lambda(2)->RDS(2) is a data write; Lambda(2)->Kinesis(2) is a control event saying processing is complete. 5) Everything belongs to one logical workflow (flow 0), sequenced chronologically, with the two outputs of Lambda (2) treated as parallel (4 and 4').",
+  "graph": {
+    "name": "Tandem: Serverless Transaction Enrichment Pipeline with NLP",
+    "link": "https://www.youtube.com/watch?v=jV8DwutbXbg",
+    "categories": "Serverless, Data Pipeline, Analytics, Machine Learning, FinTech",
+    "graph_usable": true,
+    "notes": "Tandem (UK bank) enriches aggregated bank transaction data. An upstream account aggregation service (not drawn) scrapes third-party bank sites, writes raw transactions to RDS and publishes an 'account updated' event to Kinesis. A lean Lambda reads the transactions from RDS, batches them and publishes them to SQS. A fan-out tier of Lambda functions runs NLP parsing (ANTLR-generated parser) and writes the enriched transactions to RDS with the model version. It then publishes a completion event to a second Kinesis stream for other teams to consume. Lambda bundles are deployed through Jenkins and CloudFormation (deployment only, not modelled)."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "Kinesis",
+      "name": "Kinesis (1)",
+      "notes": "Inbound event stream. The upstream account aggregation service publishes an event saying a user's account has been updated; this is triggered on a schedule or when the user logs in and refreshes the app. The event carries an account ID. Only one Lambda can be connected to a Kinesis shard at a time and it processes sequentially."
+    },
+    {
+      "id": "1",
+      "service": "Lambda",
+      "name": "Lambda (1)",
+      "notes": "Purposely very lean and fast function. Listens for the account-updated event, runs a SQL query against RDS for that user's transactions, gathers them into batches of about 100 and publishes the transaction description strings to SQS."
+    },
+    {
+      "id": "2",
+      "service": "RDS",
+      "name": "RDS (1)",
+      "notes": "Database holding the raw transaction data (date, description, amount) written by the upstream account aggregation service from third-party banks."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Queue that receives batches of raw transaction description strings. It was introduced to decouple the heavy processing from Kinesis and enable fan-out, because the processing Lambda connected directly to Kinesis could not keep up with tens of millions of transactions."
+    },
+    {
+      "id": "4",
+      "service": "Lambda",
+      "name": "Lambda (2)",
+      "notes": "Fan-out tier of many concurrent Lambda functions that does the NLP work; processing takes a few seconds per batch. Uses ANTLR parser generation: a domain-specific grammar file is compiled into Python code and bundled into the Lambda. Extracts merchant name, currencies, dates, exchange rates and merchant location. Bundled with Python dependencies and C extensions by a custom open source tool."
+    },
+    {
+      "id": "5",
+      "service": "RDS",
+      "name": "RDS (2)",
+      "notes": "Table with columns for all the extracted fields. Stores the processed, enriched transactions together with the version of the model that was run, for later analysis, comparison and model iteration."
+    },
+    {
+      "id": "6",
+      "service": "Kinesis",
+      "name": "Kinesis (2)",
+      "notes": "Outbound event stream signalling that the customer's transactions have finished processing. Other parts of the organisation trigger from this event, for example to refresh the app with friendly descriptions."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "control",
+      "notes": "The account-updated event (with account ID) on the Kinesis stream triggers the lean Lambda function."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Lambda runs a SQL query and takes in the raw transactions for the user from RDS."
+    },
+    {
+      "source": "1",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Lambda publishes messages with batches of about 100 transaction description strings to SQS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "SQS delivers the batches to the fan-out tier of Lambda functions for NLP processing."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Lambda writes the enriched transactions and the model version to the RDS table."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4'",
+      "type": "control",
+      "notes": "Lambda publishes an event saying the customer's transactions have finished processing, for downstream consumers to trigger from."
+    }
+  ]
+}

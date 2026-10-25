@@ -1,0 +1,98 @@
+{
+  "step_by_step_reasoning": "1) Nodes: the World Model lists 6 entities (UserCompanyDeveloper, Route53, ALB, EKS, SNS, SQS). All are kept as individual nodes; the developer is the system entry point (the user of the Orion internal developer platform). Spot instances are drawn next to EKS but appear in the inventory only as a note on EKS, so they are assimilated into the EKS notes rather than added as a separate node. 2) Ledger edges: visual_connections has 5 entries (UserCompanyDeveloper->Route53, Route53->ALB, ALB->EKS, EKS->SNS, SNS->SQS). Each is emitted once with its original direction. 3) Audio-grounded addition: the transcript explicitly says the replacement Kubernetes job 'watches out the AWS SQS' and 'checks SQS if there is anything pending to be processed', so one extra edge EKS->SQS is added as a meta (polling) edge. 4) Flows: flow 0 is the environment-creation request path (developer -> Route53 -> ALB -> EKS). Flow 1 is the job-state resilience path (EKS job emits event to SNS -> SNS fans out to SQS -> replacement job polls SQS). 5) Self-check: visual_connections entries = 5; edges emitted = 6 (5 ledger + 1 explicitly stated in the audio). 6 >= 5.",
+  "graph": {
+    "name": "OLX Autos: Orion Internal Developer Platform on Amazon EKS with 100% Spot Instances",
+    "link": "https://www.youtube.com/watch?v=1aYoIZvabbk",
+    "categories": "Containers, DevOps, Cost Optimization, Application Integration",
+    "graph_usable": true,
+    "notes": "OLX Autos (operating in 11 countries) built an internal developer platform (Orion portal) to reduce time to market and increase deployment velocity. Users request replica environments; an application pod on Amazon EKS (100% Spot instances) creates one Kubernetes job per microservice. Job state is published through SNS to SQS so that a replacement job can resume unfinished work after a Spot termination."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "UserCompanyDeveloper",
+      "notes": "End user (developer) who opens the Orion portal to request a new environment, providing the environment name, business use case and business vertical."
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "Route53",
+      "notes": "DNS resolution for the Orion portal URL; resolves to the Application Load Balancer."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer that forwards the request to the Kubernetes pods."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Container orchestrator running all workloads. Uses 100% Spot instances for cost efficiency. The main application pod creates one Kubernetes job per microservice (an environment for a business vertical may need 70+ microservices). AWS Node Termination Handler listens for Spot termination events and drains nodes so workloads shift to another node. Scaled from 100 pods to 10,000+ pods."
+    },
+    {
+      "id": "4",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Receives an event whenever a job is triggered to create a microservice and fans the message out to SQS."
+    },
+    {
+      "id": "5",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Holds job state messages. A replacement job watches the queue to detect unfinished jobs (e.g. a microservice launch interrupted by Spot termination) and completes them, keeping a consistent state for provisioning and maintenance of environments."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User opens the Orion portal URL; DNS resolution goes to Amazon Route 53."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route 53 resolves the DNS to the Application Load Balancer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "ALB sends the environment-creation request (name, business use case, business vertical) to the application pod running on EKS."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Each Kubernetes job triggered to create a microservice sends an event to Amazon SNS."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS fans out the job message to SQS, storing the job state."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "The replacement job watches (polls) SQS for unfinished jobs and completes the pending microservice launch."
+    }
+  ]
+}

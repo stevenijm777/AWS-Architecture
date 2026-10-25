@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Independent Agents</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">Independent insurance agents of Main Street America using the single page application in a browser.</data>
+    </node>
+    <node id="1">
+      <data key="d5">CloudFront</data>
+      <data key="d6">CloudFront</data>
+      <data key="d7">Serves the single page application to agents from the S3 bucket. Replaces the former Apache server.</data>
+    </node>
+    <node id="2">
+      <data key="d5">S3 SPA Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Bucket hosting the single page application static content.</data>
+    </node>
+    <node id="3">
+      <data key="d5">API Gateway</data>
+      <data key="d6">ApiGateway</data>
+      <data key="d7">Entry point for backend calls; replaces load-balanced on-prem Tomcat servers. First invokes the Lambda authorizer, then calls the backend Lambda.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Lambda Authorizer</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Separate Lambda authorizer (ACL) that validates the caller has access.</data>
+    </node>
+    <node id="5">
+      <data key="d5">Backend Python Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Serverless Python Lambda that scales up and down easily. Hosts the modernized functions (new features, significant enhancements, significant bug fixes) and decides whether to handle a request itself or delegate to the legacy Tomcat application.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Legacy Tomcat Application (EC2)</data>
+      <data key="d6">EC2</data>
+      <data key="d7">Legacy Tomcat Java application holding functionality not yet migrated (e.g., user management). Being slowly strangled. No autoscaling, no spot.</data>
+    </node>
+    <node id="7">
+      <data key="d5">DynamoDB User Cache</data>
+      <data key="d6">DynamoDB</data>
+      <data key="d7">Regional table caching user information. Used because successive API calls can hit different Lambda instances, so caching locally is not possible; accessible from Lambdas in any Availability Zone and survives an AZ failure without pause.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Agents request the single page application.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="1" id="1">
+      <data key="d8">1</data>
+      <data key="d9">The agents' application makes calls to the backend.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="0" id="0">
+      <data key="d8">0</data>
+      <data key="d9">CloudFront delivers the single page application to the agents.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Backend API calls reach API Gateway (arrow drawn from CloudFront to API Gateway).</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SPA content is served from the S3 bucket through CloudFront.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">API Gateway first invokes the Lambda authorizer to validate that the caller has access.</data>
+      <data key="d10">2</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">API Gateway calls the serverless Python Lambda.</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Authorizer returns the access validation result.</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="7" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda stores and reads cached user information in the regional DynamoDB table.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">For functionality not yet migrated (e.g., user management), the Lambda calls up to the legacy Tomcat application.</data>
+      <data key="d10">6</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">The legacy Tomcat application calls back down to the Lambda.</data>
+      <data key="d10">7</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">American Family Group (Main Street America): Strangler Modernization of a Legacy Agent Application to Serverless</data>
+    <data key="d1">https://www.youtube.com/watch?v=wjtSHyENv0I</data>
+    <data key="d2">Legacy Apache/Tomcat application for independent insurance agents being incrementally modernized (strangler pattern) into a serverless Python stack. New features, significant enhancements and significant bug fixes are moved to Lambda. Benefits: 25 on-prem servers shut down, user satisfaction up 25%, 10% new users, lower cost.</data>
+    <data key="d3">Modernization, Serverless, Migration</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

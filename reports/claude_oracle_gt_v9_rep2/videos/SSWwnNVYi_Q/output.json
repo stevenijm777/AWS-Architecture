@@ -1,0 +1,142 @@
+{
+  "step_by_step_reasoning": "The world model lists 8 entities: web users, EC2 auth gateway (Guacamole), EC2 data processing/parquet conversion, RDS, EMR, Directory Service, S3 and KMS. No fusion is applied: the two EC2 instances perform distinct roles (public gateway/auth vs. data conversion), so they stay separate. RDS is drawn on the board but has no ledger connection and no flow is described in the audio, so it is kept as a node without edges. Flows: flow 0 = user login and authentication through the gateway EC2 and Directory Service; flow 1 = ingestion of existing datasets converted to Parquet and stored encrypted in S3 with KMS keys; flow 2 = EMR analytics reading data from S3. The ledger has 10 visual_connections entries and I emit 10 edges, one per entry, preserving both directions for each bidirectional pair.",
+  "graph": {
+    "name": "NHS Digital Data Access Environment on AWS",
+    "link": "https://www.youtube.com/watch?v=SSWwnNVYi_Q",
+    "categories": "Analytics, Security, Healthcare, Big Data",
+    "graph_usable": true,
+    "notes": "Secure data access environment for NHS Digital internal teams. Users log in via a public gateway (Guacamole on EC2) into a sandbox where they can analyse data but cannot extract it. Authentication is via Directory Service; user roles drive data access with Apache Ranger. Existing datasets are converted to Parquet and stored in S3, encrypted with KMS keys (at rest and in transit). EMR runs analytics jobs on S3 data; jobs that took hours now take minutes or seconds. Tooling includes RStudio, JupyterHub and Hue."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "UserConsumerWeb",
+      "notes": "Internal teams within NHS Digital accessing the data access environment."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 - Auth service (Guacamole gateway)",
+      "notes": "Public gateway where users log into Guacamole; from there they enter a sandbox where they can view and analyse data but cannot take data out of the system."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "EC2 - Data processing and conversion to Parquet",
+      "notes": "Processes existing datasets and converts them to Parquet format before storing them in S3."
+    },
+    {
+      "id": "3",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Drawn inside the secure side of the environment; no flow explicitly described in the audio."
+    },
+    {
+      "id": "4",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs analytics jobs and provides a consistent compute layer; reads data from S3. Apache Ranger ensures users only see the data they are allowed to see. Chosen over Cloudera and on-prem options for flexibility and scale. Jobs that took hours now take minutes or seconds. Tooling such as RStudio, JupyterHub and Hue."
+    },
+    {
+      "id": "5",
+      "service": "DirectoryService",
+      "name": "DirectoryService",
+      "notes": "Active Directory used to authenticate users; the user's role is also used by the data processing tools to grant access to the right data."
+    },
+    {
+      "id": "6",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Stores the converted Parquet files, always encrypted (at rest and in transit)."
+    },
+    {
+      "id": "7",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Provides the keys used to encrypt the data."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Internal users log into the public gateway (Guacamole)."
+    },
+    {
+      "source": "1",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Gateway authenticates the user against directory services."
+    },
+    {
+      "source": "5",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "Directory returns the authentication result and user role."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "User is given a sandbox session where data can be analysed but not extracted."
+    },
+    {
+      "source": "2",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Existing datasets are converted to Parquet format and put into S3."
+    },
+    {
+      "source": "6",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "6",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 requests an encryption key from KMS for the data."
+    },
+    {
+      "source": "7",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "KMS provides the key used to encrypt the data at rest."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR requests the data for analytics jobs."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "EMR reads the Parquet data from S3 to run analytics jobs."
+    }
+  ]
+}

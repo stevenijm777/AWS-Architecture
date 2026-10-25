@@ -1,0 +1,208 @@
+{
+  "step_by_step_reasoning": "Nodes: the world model lists 7 entities and I kept all 7. The three EC2 icons perform distinct roles (web server/job manager, G3 GPU processing cluster with asset manager, IMF wrapping), so they are not fused. The database is unspecified in the audio, so it stays as ThirdParty. The web browser is kept as the system entry point. Flows: Flow 0 covers login, clip upload and metadata extraction through Lambda (MediaInfo), cached in the database and shown in the browser. Flow 1 covers job submission, GPU processing on G3 and the copy of outputs back to the customer's S3 bucket. Flow 2 covers the optional IMF wrapping path. Ledger self-check: visual_connections has 19 entries and I emit 19 edges, one per entry with the same source and target. Both directions are kept where listed, and the repeated pairs (job manager -> database twice, job manager -> G3 twice) are emitted as distinct steps. Two ledger arrows are not described in the audio and are emitted as data edges with inferred or minimal notes: the second job manager -> database arrow (read as the web server's query) and S3 -> IMF.",
+  "graph": {
+    "name": "Cinnafilm PixelStrings: GPU-Accelerated Video Processing Platform on AWS",
+    "link": "https://www.youtube.com/watch?v=BZ32w0SSAoY",
+    "categories": "Media & Entertainment, Video Processing, GPU Compute",
+    "graph_usable": true,
+    "notes": "PixelStrings is a web-based service for video retiming (Wormhole), deinterlacing (SpaceTime), and noise removal/retexturing (Dark Energy), all GPU accelerated. Users bring their own S3 bucket and enter their S3 keys. A single EC2 instance hosts the web server and job manager; G3 GPU instances process jobs in parallel (up to 200 jobs per region); optional IMF wrapping for Netflix delivery. GPU clusters are in US West, US East and Ireland."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "Web Browser",
+      "notes": "User accesses PixelStrings through a regular web browser (Chrome recommended) over a regular internet connection; logs in, creates an account, enters S3 keys, selects clips and workflows (including output codec and optional IMF metadata), reviews the cost estimate and submits jobs."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "Web Server / Job Manager",
+      "notes": "PixelStrings server hosting the web server and the job manager. Single instance so far (no real-time failover yet; could be switched to a different EC2 instance to handle more users). Handles about 100 users and 200 jobs per region. The job manager dispatches jobs to G3 GPUs in parallel; on a GPU startup glitch a timeout occurs and it shuts down that GPU and starts a new one. The web server does not talk directly to the job manager; it reads metadata from the database."
+    },
+    {
+      "id": "2",
+      "service": "EC2",
+      "name": "G3 GPU Cluster (Asset Manager)",
+      "notes": "G3 GPU instances for video processing: Wormhole (retiming), SpaceTime (deinterlacing), Dark Energy (noise removal and retexturing), plus encoding. The asset manager copies input clips to the G3 local disk; outputs are written to local disk first and then copied back to the customer's S3 bucket when the job manager says so. Up to 200 parallel jobs per region, limited by the G3 allocation. Available in US West, US East and Ireland to reduce egress cost from users' buckets."
+    },
+    {
+      "id": "3",
+      "service": "EC2",
+      "name": "IMF",
+      "notes": "Converts/wraps processed videos into Interoperable Master Format (IMF), the format Netflix encourages for submissions. Used only when the workflow selects IMF output."
+    },
+    {
+      "id": "4",
+      "service": "ThirdParty",
+      "name": "Database (unspecified AWS database service)",
+      "notes": "Database that caches video clip metadata. The job manager saves metadata here and the web server reads it from here."
+    },
+    {
+      "id": "5",
+      "service": "S3",
+      "name": "S3",
+      "notes": "Customer-managed S3 bucket (under the customer's account) holding user-uploaded input clips and processed output videos."
+    },
+    {
+      "id": "6",
+      "service": "Lambda",
+      "name": "Lambda (MediaInfo)",
+      "notes": "MediaInfo running inside a Lambda function; captures metadata for each video clip in the S3 bucket (used to estimate job cost). Calls run in the background, so metadata fills in on the browser every second or two."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "User logs in / creates an account on the PixelStrings web server and enters S3 keys so the job manager can talk to the S3 bucket."
+    },
+    {
+      "source": "0",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "User uploads input video clips to the S3 bucket they manage."
+    },
+    {
+      "source": "1",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "control",
+      "notes": "Job manager invokes Lambda (MediaInfo) to get metadata for each clip in the bucket."
+    },
+    {
+      "source": "6",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Lambda accesses the clips in the S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Clip data is read by MediaInfo to extract metadata."
+    },
+    {
+      "source": "6",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "5",
+      "type": "data",
+      "notes": "Lambda returns the clip metadata to the job manager."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "6",
+      "type": "data",
+      "notes": "Job manager caches the processed metadata in the database."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "7",
+      "type": "data",
+      "notes": "Web server queries the database for metadata (it does not talk directly to the job manager)."
+    },
+    {
+      "source": "4",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "8",
+      "type": "data",
+      "notes": "Database returns the cached metadata to the web server."
+    },
+    {
+      "source": "1",
+      "target": "0",
+      "flow_id": 0,
+      "seq": "9",
+      "type": "data",
+      "notes": "Web server shows the clip list with metadata filling in every second or two, and the cost estimate for a job."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Job manager sends one job to each GPU (up to 200 in parallel per region) and tells the asset manager to copy the input clip to the G3 local disk."
+    },
+    {
+      "source": "5",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Asset manager copies the input clip from the customer's S3 bucket to the G3 local disk."
+    },
+    {
+      "source": "2",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "G3 tells the job manager that video processing and encoding are done (output written to local disk)."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "control",
+      "notes": "Job manager tells the asset manager to put the output data into S3."
+    },
+    {
+      "source": "2",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Asset manager copies the output clip from local disk back to the customer's S3 bucket."
+    },
+    {
+      "source": "5",
+      "target": "0",
+      "flow_id": 1,
+      "seq": "5",
+      "type": "data",
+      "notes": "Processed output files are available to the user in their S3 bucket."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "For IMF jobs, the processed and encoded output is sent to IMF for wrapping instead of being copied straight to S3."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "0'",
+      "type": "data",
+      "notes": ""
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "After IMF wrapping, the asset manager copies the result back to the customer's S3 bucket."
+    }
+  ]
+}

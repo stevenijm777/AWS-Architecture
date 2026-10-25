@@ -1,0 +1,84 @@
+{
+  "step_by_step_reasoning": "1) Inventory: the world model has 9 entities and 10 visual_connections. 2) Nodes: I kept all 9 entities. DEVELOPERS is kept as UserCompanyDeveloper because it is the system entry point and an endpoint of ledger edges. GITHUB is ThirdParty. The narrator says ES is an in-house Elasticsearch service, not Amazon's yet, so it is mapped to ThirdParty instead of OpenSearch. The two ECS Fargate icons do different jobs (one is the clone/analysis worker, the other is the Compute Engine), so they stay as separate nodes and are not fused. EC2 hosts the API/UI that receives reports. 3) Flows: Flow 0 is the analysis pipeline: Developers push to GitHub -> webhook event triggers Lambda -> Lambda sends the analysis request to SQS -> the Fargate worker pulls from the queue -> clones the repo from GitHub -> pushes the analysis report to the EC2 API -> EC2 stores it in Aurora. Flow 1 is the Compute Engine: it pulls reports from Aurora, which it uses like a queue, computes metrics and writes them back to Aurora. In parallel it writes optimized search data to ES. Flow 2 is developers reading results through the UI/API on EC2. 4) The Aurora<->Compute Engine connection is bidirectional, so it is emitted as two directed edges (Aurora->Compute Engine for the report pull and Compute Engine->Aurora for the metrics update). 5) Self-check: 10 visual_connections entries; 11 edges emitted (10 + 1 extra for the bidirectional entry). 11 >= 10.",
+  "graph": {
+    "name": "SonarSource SonarCloud AutoScan Code Analysis Architecture",
+    "link": "https://www.youtube.com/watch?v=u3ZwnulzLnU",
+    "categories": "DevTools, Code Analysis, Serverless, Containers, Queue-based Processing",
+    "graph_usable": true,
+    "notes": "SonarCloud AutoScan by SonarSource. It supports 27 programming languages and up to 150k analyses per week, with around 300,000 organizations in the ecosystem. Currently it supports only non-compiled languages (TypeScript, Python, etc.); Java and C# are planned. Future plans: move to a managed Elasticsearch service and replace the Aurora-based queue with a proper SQS queue."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "DEVELOPERS",
+      "notes": "Developers write code and push it to GitHub repos. They later view results through the UI or the API."
+    },
+    {
+      "id": "1",
+      "service": "ThirdParty",
+      "name": "GITHUB",
+      "notes": "External GitHub repositories. A code push triggers an event (webhook)."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "LAMBDA",
+      "notes": "Captures the GitHub push event, does triage and analysis, and creates an analysis request."
+    },
+    {
+      "id": "3",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Analysis request queue. It levels the load so the Fargate cluster isn't overwhelmed, and the Fargate service auto-scaling is plugged directly into it."
+    },
+    {
+      "id": "4",
+      "service": "Fargate",
+      "name": "ECS FARGATE",
+      "notes": "Auto-scaling worker service that pulls the queue, clones the code (largest code base is 9 MB) using only ephemeral storage, analyzes it, and pushes analysis reports."
+    },
+    {
+      "id": "5",
+      "service": "EC2",
+      "name": "EC2",
+      "notes": "Hosts the API that receives analysis reports, plus the UI/API that users use to get results."
+    },
+    {
+      "id": "6",
+      "service": "Aurora",
+      "name": "AURORA",
+      "notes": "Database that stores reports and state. It is also used as temporary report storage, working like a queue (planned to be replaced by a proper SQS queue)."
+    },
+    {
+      "id": "7",
+      "service": "Fargate",
+      "name": "ECS FARGATE Compute Engine",
+      "notes": "The Compute Engine. It pulls the database to extract reports, computes code quality metrics, updates the database with the final analysis report, and writes optimized search data."
+    },
+    {
+      "id": "8",
+      "service": "ThirdParty",
+      "name": "ES",
+      "notes": "In-house Elasticsearch service (not Amazon yet; a move to the managed Amazon version is planned). Stores shared data in an optimized format for search."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developers push code changes to the GitHub repo."
+    },
+    {
+      "source": "1",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "4",
+      "type": "data",
+      "notes": "Placeholder - see corrected edge below."
+    }
+  ]
+}

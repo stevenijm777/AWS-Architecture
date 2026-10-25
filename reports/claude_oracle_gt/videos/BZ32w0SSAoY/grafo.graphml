@@ -1,0 +1,153 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Web Browser</data>
+      <data key="d6">UserConsumerWeb</data>
+      <data key="d7">User accesses PixelStrings with a regular web browser (Chrome recommended), creates an account/logs in, enters S3 keys, selects clips and workflows (including output codec and optional IMF metadata), reviews the cost estimate and submits jobs.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Web Server / Job Manager</data>
+      <data key="d6">EC2</data>
+      <data key="d7">PixelStrings server on a single EC2 instance hosting the web server and the job manager. Handles about 100 users; up to 200 jobs per region. Not highly available yet (single instance; real-time failover planned). The web server does not talk directly to the job manager; it reads from the database. The job manager uses the user's S3 keys, calls Lambda for metadata, dispatches jobs to G3 instances, and on timeout shuts down a failed GPU instance and starts a new one.</data>
+    </node>
+    <node id="2">
+      <data key="d5">Database (unspecified AWS database service)</data>
+      <data key="d6">ThirdParty</data>
+      <data key="d7">Caches video clip metadata. Job manager writes metadata; web server reads it to display to the user.</data>
+    </node>
+    <node id="3">
+      <data key="d5">Customer S3 Bucket</data>
+      <data key="d6">S3</data>
+      <data key="d7">Bucket managed by the user under their own account. Holds uploaded input clips and receives processed output clips. Buckets in US West, US East or Ireland avoid large egress costs.</data>
+    </node>
+    <node id="4">
+      <data key="d5">MediaInfo Lambda</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Runs MediaInfo inside a Lambda function to capture metadata for each clip in the S3 bucket. Metadata fills in on the browser every second or two; used for cost estimation (clip length).</data>
+    </node>
+    <node id="5">
+      <data key="d5">G3 GPU Cluster (with Asset Manager)</data>
+      <data key="d6">EC2</data>
+      <data key="d7">G3 GPU instances performing video processing: Wormhole (retiming), SpaceTime (de-interlacing), Dark Energy (noise removal and retexturing), plus encoding. One job per GPU, up to 200 jobs in parallel per region (limited by G3 allocation). Asset manager copies input clips from S3 to local disk and outputs back to S3. Outputs are written to local disk first. Available in US West, US East and Ireland.</data>
+    </node>
+    <node id="6">
+      <data key="d5">IMF Wrapper</data>
+      <data key="d6">EC2</data>
+      <data key="d7">EC2 instance that wraps processed videos into Interoperable Master Format (IMF), required for publishing to Netflix. Used only when the workflow selects IMF output.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User logs in / creates an account on the PixelStrings web server over a regular internet connection and enters S3 keys.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="0" target="1" id="1">
+      <data key="d8">2</data>
+      <data key="d9">User selects clips and workflows, accepts the cost estimate and submits the job.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="0" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">User uploads input video clips to an S3 bucket they manage.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Job manager invokes the Lambda function (MediaInfo) to get metadata for each clip.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Job manager saves (caches) the metadata in the database.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="0" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Metadata is progressively filled in on the browser; cost estimate is shown to the user.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Job manager sends one job per GPU (up to 200 in parallel per region) and tells the asset manager to copy the input clip to the G3 local disk.</data>
+      <data key="d10">1</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="5" id="1">
+      <data key="d8">2</data>
+      <data key="d9">Job manager tells the asset manager to copy the output clip back to the customer's bucket.</data>
+      <data key="d10">4</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Web server reads metadata from the database (it does not talk directly to the job manager).</data>
+      <data key="d10">4</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda reads the clips from the S3 bucket to extract metadata.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="5" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Asset manager copies the input clip from the customer's S3 bucket to the local disk of the G3 instance.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="1" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Lambda returns clip metadata to the job manager.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="1" id="0">
+      <data key="d8">2</data>
+      <data key="d9">G3 signals the job manager that GPU processing and encoding are done (output written to local disk); timeouts let the job manager detect failures.</data>
+      <data key="d10">3</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="5" target="3" id="0">
+      <data key="d8">2</data>
+      <data key="d9">Asset manager copies the output clip from local disk back to the customer's S3 bucket.</data>
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="5" target="6" id="0">
+      <data key="d8">3</data>
+      <data key="d9">For IMF jobs, the processed and encoded output is sent to IMF for wrapping instead of being copied directly to S3.</data>
+      <data key="d10">0</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="3" id="0">
+      <data key="d8">3</data>
+      <data key="d9">After IMF wrapping, the asset manager copies the result back to the user's S3 bucket.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Cinefilm PixelStrings: GPU-accelerated video processing platform on AWS</data>
+    <data key="d1">https://www.youtube.com/watch?v=BZ32w0SSAoY</data>
+    <data key="d2">PixelStrings is a web-based service for retiming (Wormhole), de-interlacing (SpaceTime), and noise removal/retexturing (Dark Energy) of video clips on G3 GPU instances. Users bring their own S3 bucket. Up to 100 users on the web server and 200 parallel jobs per region. GPU clusters in US West, US East and Ireland. Optional IMF (Interoperable Master Format) output wrapping.</data>
+    <data key="d3">Media &amp; Entertainment, Video Processing, GPU Compute</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>

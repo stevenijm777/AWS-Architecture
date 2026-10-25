@@ -1,0 +1,112 @@
+{
+  "step_by_step_reasoning": "1. Entities: USER, ROUTE 53, ALB, EKS, SPOT (EC2 Spot), SNS and SQS. I kept the USER because it is the system entry point (a developer opening the Orion internal developer platform portal over HTTPS). Its edge is also in the connection ledger, so it cannot be pruned. I mapped it to UserCompanyDeveloper because Orion is an internal developer platform. SPOT is mapped to EC2, since the pods run on 100% Spot instances. No entities were fused, and none needed audio-driven expansion. The AWS Node Termination Handler and the Kubernetes jobs (MS1/MS2/MS3) were mentioned, but they are not drawn as separate service icons. I recorded them in the notes instead.\n2. Flow 0 (environment request): The user goes to Route53 for DNS resolution (seq 0). Route53 resolves to the ALB (seq 1). The ALB routes to EKS (seq 2), and in parallel to the application pods on Spot (seq 2'). These are data edges.\n3. Flow 1 (job state and consistency): When a job for a microservice is triggered on EKS, EKS sends an event to SNS (control). SNS fans the message out to SQS (control). New replacement jobs on Spot watch SQS for unfinished tasks. This is a polling connection, so its type is meta.\n4. Self-check: There are 7 visual_connections entries, and I emit 7 edges.",
+  "graph": {
+    "name": "OLX Autos - Orion Internal Developer Platform on EKS with 100% Spot",
+    "link": "https://www.youtube.com/watch?v=1aYoIZvabbk",
+    "categories": "Containers, Kubernetes, Cost Optimization, Developer Platform, Messaging",
+    "graph_usable": true,
+    "notes": "OLX Autos runs in 11 countries (up from 9 in December 2021). Orion is an internal developer platform that creates replica environments of the OLX Autos stack, to reduce time to market and speed up deployments. All workloads run on EKS on 100% Spot instances. EKS has scaled from 100 pods to more than 10,000. The AWS Node Termination Handler drains nodes when a Spot interruption is coming. SNS and SQS persist the state of the job for each microservice, so that replacement jobs can resume unfinished provisioning."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "USER",
+      "notes": "Developer or end user who opens the Orion portal over HTTPS to request a new environment. The request gives the environment name, business use case and business vertical."
+    },
+    {
+      "id": "1",
+      "service": "Route53",
+      "name": "ROUTE 53",
+      "notes": "Does DNS resolution for the Orion portal and resolves to the Application Load Balancer."
+    },
+    {
+      "id": "2",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application Load Balancer that sends requests to the Kubernetes application pods."
+    },
+    {
+      "id": "3",
+      "service": "EKS",
+      "name": "EKS",
+      "notes": "Container orchestrator for all workloads. It has scaled from 100 to more than 10,000 pods. The main application pod creates one Kubernetes job per microservice (a business vertical may need more than 70 microservices). EKS replaces jobs that are disrupted by Spot terminations."
+    },
+    {
+      "id": "4",
+      "service": "EC2",
+      "name": "SPOT",
+      "notes": "100% Spot instances run the pods and the microservice jobs, chosen to keep costs efficient. The AWS Node Termination Handler listens for termination events and drains nodes so workloads move to other nodes."
+    },
+    {
+      "id": "5",
+      "service": "SNS",
+      "name": "SNS",
+      "notes": "Receives an event whenever a job is triggered to create a microservice. It fans the message out to SQS."
+    },
+    {
+      "id": "6",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Holds the job state and unfinished jobs. Replacement jobs watch the queue to finish tasks interrupted by Spot terminations, which keeps environment provisioning consistent."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "The user opens the Orion portal over HTTPS, and DNS resolution goes to Route 53."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "Route 53 resolves the DNS name to the Application Load Balancer."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "The ALB sends the environment creation request to the Kubernetes pods that EKS orchestrates."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "2'",
+      "type": "data",
+      "notes": "The request reaches the application pod running on the underlying Spot instances."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Whenever a job is triggered to create a microservice, it sends an event to SNS."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SNS fans the message out to the SQS queue, which stores the job state."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "meta",
+      "notes": "The replacement job on Spot watches SQS for unfinished jobs, for example a microservice launch that failed when the Spot node was terminated, and finishes them."
+    }
+  ]
+}

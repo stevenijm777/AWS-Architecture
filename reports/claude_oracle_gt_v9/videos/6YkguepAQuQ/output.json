@@ -1,0 +1,178 @@
+{
+  "step_by_step_reasoning": "1) Nodes: all 10 World Model entities are kept. The developer is the system entry point and a ledger endpoint. CloudFormation is kept because the transcript describes it as the active deploy stage of the pipeline, not a passive management layer. CodePipeline is kept as the drawn orchestrator, but no arrows are drawn to or from it, so it gets no edges. No fusion or audio-driven expansion was needed. 2) Ledger: visual_connections has 10 entries and each is emitted once with its original source and target, including the reverse directions (CodeCommit->Developer, CodeBuild->CodeCommit, ECR->CodeBuild, ECR->CloudFormation, VPC->CloudFormation). 3) Added edges: the transcript explicitly says CloudFormation deploys an ECS task definition, an IAM role and an application load balancer, so 3 edges were added (CloudFormation->ECS, ->IAM, ->ALB). 4) Flows: flow 0 is commit, build and push image to the registry; flow 1 is the CloudFormation deploy stage (change set, approve, execute) into the VPC; flow 2 holds the reverse/feedback arrows, which the audio only loosely explains (the developer controls the build and infrastructure by modifying the repository). 5) Self-check: 10 visual_connections entries; 13 edges emitted (10 ledger + 3 audio-grounded).",
+  "graph": {
+    "name": "Aetion: Streamlined Application and Infrastructure Deployment with CodePipeline and CloudFormation",
+    "link": "https://www.youtube.com/watch?v=6YkguepAQuQ",
+    "categories": "DevOps, CI/CD, Containers, Infrastructure as Code, Healthcare Analytics",
+    "graph_usable": true,
+    "notes": "Healthcare analytics company streamlines the path from developer commit to production. A pipeline runs CodeCommit (source), then CodeBuild (build container image, push to ECR), then CloudFormation (deploy stage). CloudFormation deploys the application and its infrastructure (ECS task definition, IAM role, ALB) into per-customer VPCs, with parallel stages for up to 100 customers from a single template. Governance is a three-step deploy: change set, approval, execute."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserCompanyDeveloper",
+      "name": "Developer",
+      "notes": "Commits application code, build definitions and CloudFormation templates to the repository. Can change the build or the infrastructure on demand by modifying the repository (going back to the first stage)."
+    },
+    {
+      "id": "1",
+      "service": "CodePipeline",
+      "name": "CodePipeline",
+      "notes": "Orchestrates the stages: source (CodeCommit), build (CodeBuild), deploy (CloudFormation). Moves each commit to the next stage automatically. Parallel deploy stages accommodate up to 100 customers."
+    },
+    {
+      "id": "2",
+      "service": "CodeCommit",
+      "name": "CodeCommit",
+      "notes": "AWS source repository. Holds the application code and the CloudFormation templates that define the entire application infrastructure."
+    },
+    {
+      "id": "3",
+      "service": "CodeBuild",
+      "name": "CodeBuild",
+      "notes": "Build stage. Spins up a container and is paid for only for the duration of the build. The build is controlled by the developer through the repository. On a successful build it outputs a container image to ECR."
+    },
+    {
+      "id": "4",
+      "service": "CloudFormation",
+      "name": "CloudFormation",
+      "notes": "Deploy stage, chosen over CodeDeploy, the ECS task definition deployer and Lambda because it also deploys the underlying infrastructure. One baseline template is used for all production environments, with a small per-customer configuration (VPC name, ECS cluster). Runs in parallel to up to 100 customer VPCs. Three-step process: 1) change set, 2) approve or reject by someone with the proper roles and permissions, 3) execute the change set."
+    },
+    {
+      "id": "5",
+      "service": "ECR",
+      "name": "ECR Registry",
+      "notes": "Container registry that stores the built application image, ready to be deployed."
+    },
+    {
+      "id": "6",
+      "service": "VPC",
+      "name": "VPC",
+      "notes": "Production environment. Each customer is deployed to a different VPC (up to 100), all receiving the same changes from the single template. Developer environments are kept separate from production and client QA environments."
+    },
+    {
+      "id": "7",
+      "service": "ECS",
+      "name": "ECS",
+      "notes": "Elastic Container Service task definition deployed by CloudFormation to run the application image. The cluster name comes from the per-customer configuration."
+    },
+    {
+      "id": "8",
+      "service": "IAM",
+      "name": "IAM",
+      "notes": "IAM roles and permissions required by the application, deployed by CloudFormation."
+    },
+    {
+      "id": "9",
+      "service": "ALB",
+      "name": "ALB",
+      "notes": "Application load balancer required by the application, deployed by CloudFormation."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Developer commits code changes to the CodeCommit repository."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "The pipeline moves the commit into the next stage, CodeBuild."
+    },
+    {
+      "source": "3",
+      "target": "5",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "At the end of a successful build, CodeBuild outputs the application container image to the ECR registry."
+    },
+    {
+      "source": "5",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "As soon as the build is done and the image is in the registry, the CloudFormation deploy stage is kicked off."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "data",
+      "notes": "Drawn arrow, not described in the audio; presumably the deployment referencing the application image in the registry."
+    },
+    {
+      "source": "4",
+      "target": "6",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "control",
+      "notes": "CloudFormation deploys the infrastructure and application to the customer VPC by change set, approval, then execute. Pushes the same changes in parallel to up to 100 VPCs."
+    },
+    {
+      "source": "4",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "2'",
+      "type": "control",
+      "notes": "CloudFormation deploys the ECS task definition."
+    },
+    {
+      "source": "4",
+      "target": "8",
+      "flow_id": 1,
+      "seq": "2''",
+      "type": "control",
+      "notes": "CloudFormation deploys the IAM role and permissions."
+    },
+    {
+      "source": "4",
+      "target": "9",
+      "flow_id": 1,
+      "seq": "2'''",
+      "type": "control",
+      "notes": "CloudFormation deploys the application load balancer."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "meta",
+      "notes": "Drawn arrow, not described in the audio; presumably deployment status or feedback from the VPC to CloudFormation."
+    },
+    {
+      "source": "2",
+      "target": "0",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "meta",
+      "notes": "Drawn arrow; the developer can go back to the first stage at any time to modify the build or infrastructure through the repository."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "meta",
+      "notes": "Drawn arrow; the build is controlled by what the developer defines in the repository."
+    },
+    {
+      "source": "5",
+      "target": "3",
+      "flow_id": 2,
+      "seq": "2",
+      "type": "meta",
+      "notes": "Drawn arrow, not described in the audio; presumably feedback from the registry to the build stage."
+    }
+  ]
+}

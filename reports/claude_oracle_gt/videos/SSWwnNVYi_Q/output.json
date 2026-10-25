@@ -1,0 +1,110 @@
+{
+  "step_by_step_reasoning": "1) Internal NHS Digital teams log in to an EC2 public gateway running Guacamole (left of the dotted line). 2) The gateway authenticates users through Directory Service (AD); the user's role is later used by Apache Ranger for data access. 3) A second EC2 instance converts existing data sets to Parquet and writes them to S3. 4) S3 uses a KMS key for encryption, in transit and at rest. 5) The whiteboard shows an arrow from KMS to RDS; the transcript only says 'any other information within the system is also encrypted', so this edge rests on the drawing alone. 6) EMR reads the data from S3 to run analytics jobs; the edge is recorded EMR -> S3 as the arrow is drawn, although the payload moves from S3 to EMR. No edge was added from the gateway to the sandbox services because none is drawn or stated. The user node keeps the world-model type UserConsumerWeb even though the users are internal teams.",
+  "graph": {
+    "name": "NHS Digital - Secure Data Access Environment on AWS",
+    "link": "https://www.youtube.com/watch?v=SSWwnNVYi_Q",
+    "categories": "Analytics, Security, Healthcare, Big Data",
+    "graph_usable": true,
+    "notes": "Secure data access environment for NHS Digital, replacing legacy systems. Users enter through a public Guacamole gateway on EC2, authenticate via Directory Service, and work in a sandbox from which data cannot be extracted. Data sets are converted to Parquet, stored in S3 encrypted with KMS, and analysed with EMR. Analytics jobs that took hours now take minutes or seconds."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "UserConsumerWeb",
+      "name": "NHS Digital internal users",
+      "notes": "Internal teams within NHS Digital who log in to analyse data."
+    },
+    {
+      "id": "1",
+      "service": "EC2",
+      "name": "EC2 public gateway (Guacamole)",
+      "notes": "Public gateway on the left of the dotted line. Users log in to Guacamole and land in a sandbox where they can view and analyse data but cannot get it out."
+    },
+    {
+      "id": "2",
+      "service": "DirectoryService",
+      "name": "Directory Service (AD)",
+      "notes": "Authenticates users. The user's role is also used in the data processing tools (Apache Ranger) so users only see the data they are meant to see."
+    },
+    {
+      "id": "3",
+      "service": "EMR",
+      "name": "EMR",
+      "notes": "Runs analytics jobs and provides a consistent compute layer. Reads data from S3. Chosen over Cloudera and on-prem options for flexibility and scale. Tooling mentioned: Apache Ranger, RStudio, JupyterHub, Hue."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 data store",
+      "notes": "Stores existing data sets converted to Parquet. Encrypted at rest and in transit."
+    },
+    {
+      "id": "5",
+      "service": "KMS",
+      "name": "KMS",
+      "notes": "Provides the key used to encrypt the data. Other information in the system is also encrypted."
+    },
+    {
+      "id": "6",
+      "service": "EC2",
+      "name": "EC2 data processing (Parquet conversion)",
+      "notes": "Processes existing data sets, converts them to Parquet and puts them into S3."
+    },
+    {
+      "id": "7",
+      "service": "RDS",
+      "name": "RDS",
+      "notes": "Drawn in the secure sandbox with an arrow from KMS. Its role is not described in the transcript."
+    }
+  ],
+  "edges": [
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Internal users log in to the Guacamole public gateway on EC2."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "control",
+      "notes": "Users are authenticated via Directory Service; their role determines data access."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "data",
+      "notes": "Existing data sets are converted to Parquet and written to S3."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "S3 uses a KMS key to encrypt the data at rest."
+    },
+    {
+      "source": "5",
+      "target": "7",
+      "flow_id": 1,
+      "seq": "1'",
+      "type": "control",
+      "notes": "Arrow drawn from KMS to RDS; taken to mean KMS also encrypts other information in the system."
+    },
+    {
+      "source": "3",
+      "target": "4",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "data",
+      "notes": "EMR reads the Parquet data from S3 to run analytics jobs. Direction follows the drawn arrow."
+    }
+  ]
+}

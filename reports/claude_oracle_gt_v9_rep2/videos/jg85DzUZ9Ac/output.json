@@ -1,0 +1,162 @@
+{
+  "step_by_step_reasoning": "The whiteboard shows 10 entities: S3 drop bucket, SQS, initiator Lambda, DynamoDB, S3 data lake, complex Lambda, Redshift, on-prem database (UserCompanyDataStream), VPN and DMS. The two S3 icons are distinct (drop bucket vs. data lake with raw/refined buckets) and the two Lambdas perform distinct stages, so all are kept separate. No fusion or expansion needed. CloudFormation and SageMaker are only mentioned as future work, so they are omitted. Flows: flow 0 = on-prem sales data via VPN and DMS (CDC) into Redshift and then made available to the data lake; flow 1 = flat file ingestion S3 drop bucket -> SQS -> initiator Lambda <-> DynamoDB -> data lake; flow 2 = S3 event trigger on the data lake -> complex Lambda (merge, stats) -> Redshift. Ledger self-check: visual_connections has 11 entries; I emit 11 edges, one per entry with the same source and target, including both directions between the initiator Lambda and DynamoDB.",
+  "graph": {
+    "name": "Veritiv: Demand and Sales Analytics Data Lake Pipeline",
+    "link": "https://www.youtube.com/watch?v=jg85DzUZ9Ac",
+    "categories": "Analytics, Data Lake, Serverless",
+    "graph_usable": true,
+    "notes": "Veritiv (Fortune 500 B2B distributor) built an event-driven pipeline to produce timelier, more accurate order and demand analytics. On-premises invoice-level sales data is replicated via VPN and DMS (CDC) into Redshift. Order-level flat files from the ERP land in an S3 drop bucket, flow through SQS and an initiator Lambda (using DynamoDB metadata) into the data lake raw/refined buckets, then a complex Lambda merges datasets and computes demand with Python stats packages, loading results into Redshift for business users. Delivered in 4-5 weeks by a small agile team. Future: CloudFormation automation, SageMaker/ML."
+  },
+  "nodes": [
+    {
+      "id": "0",
+      "service": "S3",
+      "name": "S3 Drop Bucket",
+      "notes": "S3 drop bucket receiving flat files at the order level and demand data from the ERP system. File arrival kicks off SQS."
+    },
+    {
+      "id": "1",
+      "service": "SQS",
+      "name": "SQS",
+      "notes": "Handles all messaging; launches the initiator Lambda job when files land."
+    },
+    {
+      "id": "2",
+      "service": "Lambda",
+      "name": "Initiator Lambda",
+      "notes": "Initiator Lambda job: talks to DynamoDB and pulls the metadata and other key information about incoming files, then populates the data lake by pushing data into the appropriate structures in the raw and refined buckets."
+    },
+    {
+      "id": "3",
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "notes": "Stores metadata and other key information about the input files coming through the pipeline."
+    },
+    {
+      "id": "4",
+      "service": "S3",
+      "name": "S3 Data Lake",
+      "notes": "Data lake with raw and refined buckets. An event-driven S3 trigger launches the next Lambda job. Also receives data made available from Redshift."
+    },
+    {
+      "id": "5",
+      "service": "Lambda",
+      "name": "Complex Lambda (merge and demand)",
+      "notes": "Complex Lambda job: merges order sales and inventory sales datasets from the two pipelines, applies logic, rules and exceptions on orders, creates a new file and applies Python stats model packages to produce current and future demand."
+    },
+    {
+      "id": "6",
+      "service": "RedShift",
+      "name": "Redshift",
+      "notes": "Redshift cluster populated with on-premises sales data via DMS and with the demand output. Makes data available to the data lake and to other analytics and reports; business users and leadership query it daily with many tools."
+    },
+    {
+      "id": "7",
+      "service": "UserCompanyDataStream",
+      "name": "On-Premises Sales Database",
+      "notes": "On-premises database storing sales data at the invoice level and other key attributes."
+    },
+    {
+      "id": "8",
+      "service": "VPN",
+      "name": "VPN",
+      "notes": "VPN through which on-premises data is piped into AWS."
+    },
+    {
+      "id": "9",
+      "service": "DMS",
+      "name": "DMS",
+      "notes": "DMS with CDC (change data capture) pulls the on-premises data through the VPN and populates the Redshift cluster."
+    }
+  ],
+  "edges": [
+    {
+      "source": "7",
+      "target": "8",
+      "flow_id": 0,
+      "seq": "0",
+      "type": "data",
+      "notes": "Invoice-level sales data from the on-premises database is piped through the VPN."
+    },
+    {
+      "source": "8",
+      "target": "9",
+      "flow_id": 0,
+      "seq": "1",
+      "type": "data",
+      "notes": "DMS with CDC pulls the data through the VPN."
+    },
+    {
+      "source": "9",
+      "target": "6",
+      "flow_id": 0,
+      "seq": "2",
+      "type": "data",
+      "notes": "DMS populates the Redshift cluster with the sales data."
+    },
+    {
+      "source": "6",
+      "target": "4",
+      "flow_id": 0,
+      "seq": "3",
+      "type": "data",
+      "notes": "Redshift makes the data available to the data lake (as well as other analytics and reports outside the lake)."
+    },
+    {
+      "source": "0",
+      "target": "1",
+      "flow_id": 1,
+      "seq": "0",
+      "type": "control",
+      "notes": "Files landing in the S3 drop bucket kick off an SQS message."
+    },
+    {
+      "source": "1",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "1",
+      "type": "control",
+      "notes": "SQS launches the initiator Lambda job."
+    },
+    {
+      "source": "2",
+      "target": "3",
+      "flow_id": 1,
+      "seq": "2",
+      "type": "data",
+      "notes": "Initiator Lambda talks to DynamoDB to request metadata about the incoming files."
+    },
+    {
+      "source": "3",
+      "target": "2",
+      "flow_id": 1,
+      "seq": "3",
+      "type": "data",
+      "notes": "DynamoDB returns the metadata and other key information about the files."
+    },
+    {
+      "source": "2",
+      "target": "4",
+      "flow_id": 1,
+      "seq": "4",
+      "type": "data",
+      "notes": "Using the metadata, the Lambda populates the data lake, pushing data into the appropriate structures in the raw and refined buckets."
+    },
+    {
+      "source": "4",
+      "target": "5",
+      "flow_id": 2,
+      "seq": "0",
+      "type": "control",
+      "notes": "Event-driven trigger on the S3 data lake bucket launches the complex Lambda job."
+    },
+    {
+      "source": "5",
+      "target": "6",
+      "flow_id": 2,
+      "seq": "1",
+      "type": "data",
+      "notes": "Merged order/inventory data and the generated demand file are fed into Redshift for daily querying by business users."
+    }
+  ]
+}

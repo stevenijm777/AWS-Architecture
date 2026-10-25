@@ -1,0 +1,123 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key id="d11" for="edge" attr.name="type" attr.type="string" />
+  <key id="d10" for="edge" attr.name="seq" attr.type="string" />
+  <key id="d9" for="edge" attr.name="notes" attr.type="string" />
+  <key id="d8" for="edge" attr.name="flow_id" attr.type="long" />
+  <key id="d7" for="node" attr.name="notes" attr.type="string" />
+  <key id="d6" for="node" attr.name="service" attr.type="string" />
+  <key id="d5" for="node" attr.name="name" attr.type="string" />
+  <key id="d4" for="graph" attr.name="graph_usable" attr.type="boolean" />
+  <key id="d3" for="graph" attr.name="categories" attr.type="string" />
+  <key id="d2" for="graph" attr.name="notes" attr.type="string" />
+  <key id="d1" for="graph" attr.name="link" attr.type="string" />
+  <key id="d0" for="graph" attr.name="name" attr.type="string" />
+  <graph edgedefault="directed">
+    <node id="0">
+      <data key="d5">Kinesis #1</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Input event stream. An upstream account aggregation service publishes an event saying a user's account has been updated (triggered on a schedule or when the user logs in and refreshes the app). The event carries an account ID.</data>
+    </node>
+    <node id="1">
+      <data key="d5">Lambda - Reads user data from RDS and puts it to SQS</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Purposely very lean and fast. Listens for the Kinesis event, runs a SQL query on RDS for the user's transactions, gathers them into batches of about 100 and publishes a message to SQS containing the transaction description strings.</data>
+    </node>
+    <node id="2">
+      <data key="d5">RDS - Stores transactional data</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Stores the raw transactional data (date, description, amount) returned from third-party banks, written by the upstream account aggregation service.</data>
+    </node>
+    <node id="3">
+      <data key="d5">SQS</data>
+      <data key="d6">SQS</data>
+      <data key="d7">Queue holding batches of raw transaction description strings. Decouples the Kinesis shard (one sequential Lambda per shard) from processing and enables fan-out to many Lambdas.</data>
+    </node>
+    <node id="4">
+      <data key="d5">Lambda - Hosts NLP model to extract required information</data>
+      <data key="d6">Lambda</data>
+      <data key="d7">Second tier of Lambda that does the heavy work; processing takes a few seconds per batch with tens of millions of transactions incoming, so many instances scale out from SQS. Runs a parser generated with ANTLR from a domain-specific grammar file compiled to Python, bundled with Python dependencies and C extensions. Extracts merchant name, merchant location, currencies, exchange rates and dates.</data>
+    </node>
+    <node id="5">
+      <data key="d5">RDS - Stores the extracted data</data>
+      <data key="d6">RDS</data>
+      <data key="d7">Table with columns for all extracted fields. Processed transactions are stored along with the version of the model that was run, so results can be analyzed and compared later.</data>
+    </node>
+    <node id="6">
+      <data key="d5">Kinesis #2</data>
+      <data key="d6">Kinesis</data>
+      <data key="d7">Output event stream. Signals that the customer's transactions have finished processing; another part of the organization triggers from this event, e.g. refreshing the app with friendly descriptions.</data>
+    </node>
+    <edge source="0" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Account-updated event carrying an account ID triggers the Lambda.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="1" target="2" id="0">
+      <data key="d8">0</data>
+      <data key="d9">SQL query requesting the transactions for the given user.</data>
+      <data key="d10">1</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="1" target="3" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Publishes messages with batches of about 100 transaction description strings.</data>
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="2" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9">Returns the user's transactions to the Lambda.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="3" target="1" id="0">
+      <data key="d8">0</data>
+      <data key="d9" />
+      <data key="d10">4</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="3" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Queue messages trigger the NLP Lambdas, fanning out to many concurrent instances.</data>
+      <data key="d10">0</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="4" target="3" id="0">
+      <data key="d8">1</data>
+      <data key="d9" />
+      <data key="d10">1</data>
+      <data key="d11">meta</data>
+    </edge>
+    <edge source="4" target="5" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Writes the processed transactions with extracted fields and the version of the model used.</data>
+      <data key="d10">2</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="4" target="6" id="0">
+      <data key="d8">1</data>
+      <data key="d9">Publishes an event that the customer's transactions have finished processing, for downstream consumers.</data>
+      <data key="d10">4</data>
+      <data key="d11">control</data>
+    </edge>
+    <edge source="5" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9" />
+      <data key="d10">3</data>
+      <data key="d11">data</data>
+    </edge>
+    <edge source="6" target="4" id="0">
+      <data key="d8">1</data>
+      <data key="d9" />
+      <data key="d10">5</data>
+      <data key="d11">data</data>
+    </edge>
+    <data key="d0">Tandem: Transaction Enrichment Data Pipeline with Kinesis, Lambda, SQS and NLP</data>
+    <data key="d1">https://www.youtube.com/watch?v=jV8DwutbXbg</data>
+    <data key="d2">Tandem bank consumes transaction data aggregated from other UK banks. An 'account updated' event on Kinesis triggers a lean Lambda that reads the user's transactions from RDS and publishes batches to SQS. A second tier of Lambdas fans out from SQS to run an ANTLR-based NLP parser, stores the extracted fields with the model version in RDS, and publishes a completion event to a second Kinesis stream. Lambda bundles are deployed through Jenkins and CloudFormation (not a runtime participant).</data>
+    <data key="d3">Data Pipeline, Serverless, NLP, Financial Services</data>
+    <data key="d4">True</data>
+  </graph>
+</graphml>
