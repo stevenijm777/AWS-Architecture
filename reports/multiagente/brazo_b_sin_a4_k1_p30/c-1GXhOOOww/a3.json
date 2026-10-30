@@ -1,0 +1,221 @@
+{
+ "razonamiento": "Merged visual nodes with spoken services: UserConsumerMobile (b0) represents the mobile/checking app, UserConsumerAPI (b1) represents the third-party reseller/API client, b8 represents the external CDN, b2 is S3 for web hosting, b3 is AppSync, b4 is API Gateway, b5 is SQS, b6 is Lambda, and b7 is DynamoDB. Visual duplicate line b0->b8 was consolidated. Bidirectional flows between clients/S3/AppSync and the CDN were preserved as drawn and narrated across three main flows: static web hosting, GraphQL operations via AppSync, and external API requests via API Gateway.",
+ "nombre": "Serverless Multi-Tenant Event-Driven Architecture with AppSync and API Gateway",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserConsumerMobile",
+   "name": "Mobile Application",
+   "notes": "Mobile consumer and check-in client application",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "UserConsumerAPI",
+   "name": "Third-Party API / Reseller",
+   "notes": "External third-party reseller API client",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "S3",
+   "name": "Amazon S3",
+   "notes": "Serves static web application assets",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "AppSync",
+   "name": "AWS AppSync",
+   "notes": "GraphQL gateway using pipeline resolvers",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "ApiGateway",
+   "name": "Amazon API Gateway",
+   "notes": "REST API entry point for reseller traffic",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "SQS",
+   "name": "Amazon SQS",
+   "notes": "Buffers asynchronous tasks for Lambda reprocessing",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "Lambda",
+   "name": "AWS Lambda",
+   "notes": "Executes application logic and asynchronous fan-out processing",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "DynamoDB",
+   "name": "Amazon DynamoDB",
+   "notes": "Stores tenancy configuration and application data",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "ThirdParty",
+   "name": "CDN (Third-Party)",
+   "notes": "Edge caching and routing layer",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "8",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "Mobile client accesses application through CDN",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b8; 'the first thing we hit is the CDN'"
+  },
+  {
+   "source": "8",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "CDN requests static assets from S3",
+   "procedencia": "dibujada",
+   "respaldo": "line b8->b2"
+  },
+  {
+   "source": "2",
+   "target": "8",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "S3 serves web app assets to CDN",
+   "procedencia": "ambas",
+   "respaldo": "line b2->b8; 'hosted on the S3 bucket serving as an HTTP server'"
+  },
+  {
+   "source": "8",
+   "target": "0",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "CDN returns content to mobile client",
+   "procedencia": "ambas",
+   "respaldo": "line b8->b0; 'the CDN returns back that to the client'"
+  },
+  {
+   "source": "8",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "CDN forwards GraphQL requests to AppSync",
+   "procedencia": "ambas",
+   "respaldo": "line b8->b3; 'hits the AppSync that is our GraphQL gateway'"
+  },
+  {
+   "source": "3",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "control",
+   "notes": "Pipeline resolvers trigger Lambda execution",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b6; 'resolvers that basically tell Lambda that it needs to go and fan out'"
+  },
+  {
+   "source": "6",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "Lambda queues asynchronous subroutines in SQS",
+   "procedencia": "ambas",
+   "respaldo": "line b6->b5; 'Lambda sets a bunch of SQS messages'"
+  },
+  {
+   "source": "5",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "control",
+   "notes": "SQS triggers Lambda for message reprocessing",
+   "procedencia": "ambas",
+   "respaldo": "line b5->b6; 'later will get reprocessed by Lambda'"
+  },
+  {
+   "source": "6",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "data",
+   "notes": "Lambda completes tenancy setup in DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "line b6->b7; 'interaction that happens between Lambda and DynamoDB'"
+  },
+  {
+   "source": "7",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "5",
+   "type": "data",
+   "notes": "DynamoDB provides data back to AppSync",
+   "procedencia": "dibujada",
+   "respaldo": "line b7->b3"
+  },
+  {
+   "source": "3",
+   "target": "8",
+   "flow_id": 1,
+   "seq": "6",
+   "type": "data",
+   "notes": "AppSync sends response back to CDN",
+   "procedencia": "dibujada",
+   "respaldo": "line b3->b8"
+  },
+  {
+   "source": "1",
+   "target": "8",
+   "flow_id": 2,
+   "seq": "0",
+   "type": "data",
+   "notes": "Third-party reseller sends requests to CDN",
+   "procedencia": "ambas",
+   "respaldo": "line b1->b8; 'purchasing from... a third-party reseller'"
+  },
+  {
+   "source": "8",
+   "target": "4",
+   "flow_id": 2,
+   "seq": "1",
+   "type": "data",
+   "notes": "CDN routes API traffic to API Gateway",
+   "procedencia": "dibujada",
+   "respaldo": "line b8->b4"
+  },
+  {
+   "source": "4",
+   "target": "6",
+   "flow_id": 2,
+   "seq": "2",
+   "type": "control",
+   "notes": "API Gateway invokes Lambda functions",
+   "procedencia": "ambas",
+   "respaldo": "line b4->b6; 'go to API Gateway, and then it's going to hit the same lambdas'"
+  },
+  {
+   "source": "8",
+   "target": "1",
+   "flow_id": 2,
+   "seq": "3",
+   "type": "data",
+   "notes": "CDN returns API response to third-party reseller",
+   "procedencia": "dibujada",
+   "respaldo": "line b8->b1"
+  }
+ ]
+}

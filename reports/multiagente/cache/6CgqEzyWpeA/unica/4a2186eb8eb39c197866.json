@@ -1,0 +1,272 @@
+{
+ "cuando": "2026-10-28T02:53:47+00:00",
+ "video": "6CgqEzyWpeA",
+ "agente": "unica",
+ "modelo": "gemini-3.8-flash",
+ "prompt": "unica_llamada_v1.txt@fe995a4a5374",
+ "replica": 0,
+ "imagenes": 1,
+ "latencia_s": 51.0,
+ "entrada": 3777,
+ "salida": 2713,
+ "thinking": 4928,
+ "respuesta": {
+  "razonamiento": "The architecture diagram shows Sunday Sky's Rendering as a Service (RaaS) pipeline. Video requests from user devices hit API Gateway, which forwards to a frontend Lambda function. The Lambda sends rendering tasks to an SQS queue pulled by EC2 spot instances inside an Auto Scaling Group. The EC2 instances immediately post a response to a second SQS queue, which the frontend Lambda reads to return a playlist link back to the user device. The EC2 instances render video segments and upload them to S3, which are served via CloudFront to the user devices. In addition, there are two management flows: a custom auto-scaling mechanism where EC2 instances push metrics to CloudWatch, polled by a scaling Lambda invoked by Step Functions every 15 seconds to adjust the ASG; and a spot interruption handler where CloudWatch triggers an interruption Lambda that instructs the specific EC2 instance to drain jobs.",
+  "nombre": "Sunday Sky Rendering as a Service Architecture",
+  "nodes": [
+   {
+    "id": "0",
+    "service": "UserConsumerWebMobile",
+    "name": "User Devices",
+    "notes": "Mobile and PC devices",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "1",
+    "service": "ApiGateway",
+    "name": "API Gateway",
+    "notes": "Configured with usage plans and API keys to control load",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "2",
+    "service": "Lambda",
+    "name": "RAS Frontend Lambda",
+    "notes": "Validates requests and returns playlist link",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "3",
+    "service": "SQS",
+    "name": "Rendering Instructions Queue",
+    "notes": "Holds rendering instructions for engine instances",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "4",
+    "service": "SQS",
+    "name": "Response Queue",
+    "notes": "Receives immediate responses polled by frontend Lambda",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "5",
+    "service": "EC2",
+    "name": "Rendering Engine Instances",
+    "notes": "Spot instances across multiple AZs with diversified types",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "6",
+    "service": "AutoScaling",
+    "name": "Auto Scaling Group",
+    "notes": "Manages spot instance fleet",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "7",
+    "service": "S3",
+    "name": "S3",
+    "notes": "Stores uploaded video segments",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "8",
+    "service": "CloudFront",
+    "name": "CloudFront",
+    "notes": "Pulls video segments from S3 origin to play to user",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "9",
+    "service": "StepFunctions",
+    "name": "Step Functions",
+    "notes": "Triggers scaling Lambda every 15 seconds",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "10",
+    "service": "Lambda",
+    "name": "Scaling Lambda",
+    "notes": "Consumes metrics and scales the Auto Scaling group",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "11",
+    "service": "CloudWatch",
+    "name": "CloudWatch",
+    "notes": "Collects rendering metrics and issues spot interruption events",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "12",
+    "service": "Lambda",
+    "name": "Interruption Handler Lambda",
+    "notes": "Handles spot interruption notices and signals instance to drain",
+    "evidencia": "ambas"
+   }
+  ],
+  "edges": [
+   {
+    "source": "0",
+    "target": "1",
+    "flow_id": 0,
+    "seq": "0",
+    "type": "data",
+    "notes": "User requests monthly personalized video",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from user devices to API Gateway; transcript: 'That request arrives into our RAS ecosystem. First stop is the API Gateway'"
+   },
+   {
+    "source": "1",
+    "target": "2",
+    "flow_id": 0,
+    "seq": "1",
+    "type": "control",
+    "notes": "Invokes frontend Lambda",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from API Gateway to Lambda; transcript: 'That request arrives into a Lambda function, which is our service, RAS service frontend'"
+   },
+   {
+    "source": "2",
+    "target": "3",
+    "flow_id": 0,
+    "seq": "2",
+    "type": "data",
+    "notes": "Pushes rendering instructions",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from Lambda to upper SQS queue; transcript: 'pushes rendering instruction to an SQS queue'"
+   },
+   {
+    "source": "3",
+    "target": "5",
+    "flow_id": 0,
+    "seq": "3",
+    "type": "data",
+    "notes": "Instances pull jobs when capacity is available",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from upper SQS queue to EC2; transcript: 'where we have engine service that are part of the RAS ecosystem pulling in for rendering jobs'"
+   },
+   {
+    "source": "5",
+    "target": "4",
+    "flow_id": 0,
+    "seq": "4",
+    "type": "data",
+    "notes": "EC2 immediately responds to response queue",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from EC2 to lower SQS queue; transcript: 'we immediately respond to an SQS queue'"
+   },
+   {
+    "source": "4",
+    "target": "2",
+    "flow_id": 0,
+    "seq": "5",
+    "type": "data",
+    "notes": "Frontend Lambda pulls response from queue",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow between lower SQS queue and Lambda; transcript: 'which the same Lambda function invocation pulls from'"
+   },
+   {
+    "source": "2",
+    "target": "0",
+    "flow_id": 0,
+    "seq": "6",
+    "type": "data",
+    "notes": "Returns playlist file link",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow labeled playlist pointing to user devices; transcript: 'from that, a moment on, we have a link to a playlist file'"
+   },
+   {
+    "source": "5",
+    "target": "7",
+    "flow_id": 0,
+    "seq": "7",
+    "type": "data",
+    "notes": "Uploads rendered video segments",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from EC2 to S3; transcript: 'video segments that the rendering engine uploads to S3'"
+   },
+   {
+    "source": "0",
+    "target": "8",
+    "flow_id": 0,
+    "seq": "8",
+    "type": "data",
+    "notes": "Player requests video segment via CloudFront link",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from user devices to CloudFront; transcript: 'when the player on the mobile device or PC device asks for this video segment to show'"
+   },
+   {
+    "source": "7",
+    "target": "8",
+    "flow_id": 0,
+    "seq": "9",
+    "type": "data",
+    "notes": "CloudFront pulls video segments from S3 origin",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from S3 to CloudFront; transcript: 'the link to CloudFront actually pulls from the origin a video segment and plays it to the user'"
+   },
+   {
+    "source": "5",
+    "target": "11",
+    "flow_id": 1,
+    "seq": "0",
+    "type": "meta",
+    "notes": "Instances push metrics to CloudWatch",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from EC2 down to CloudWatch; transcript: 'CloudWatch metrics that are pushed from the rendering instances'"
+   },
+   {
+    "source": "9",
+    "target": "10",
+    "flow_id": 1,
+    "seq": "1",
+    "type": "control",
+    "notes": "Step Functions triggers scaling Lambda every 15s",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from Step Functions to Lambda; transcript: 'consumed by Lambda function that is triggered by a step function every 15 seconds'"
+   },
+   {
+    "source": "10",
+    "target": "11",
+    "flow_id": 1,
+    "seq": "2",
+    "type": "meta",
+    "notes": "Scaling Lambda reads CloudWatch metrics",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from scaling Lambda to CloudWatch; transcript: 'CloudWatch metrics that are pushed from the rendering instances and consumed by Lambda function'"
+   },
+   {
+    "source": "10",
+    "target": "6",
+    "flow_id": 1,
+    "seq": "3",
+    "type": "control",
+    "notes": "Instructs ASG to adjust instance capacity",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from scaling Lambda to Auto Scaling Group; transcript: 'Lambda function interacts with the auto scaling group telling it to increase the amount of instances'"
+   },
+   {
+    "source": "11",
+    "target": "12",
+    "flow_id": 2,
+    "seq": "0",
+    "type": "control",
+    "notes": "CloudWatch event triggers interruption Lambda",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from CloudWatch to Lambda; transcript: 'CloudWatch notifies a Lambda function via a CloudWatch event that a certain instance ID is about to be taken'"
+   },
+   {
+    "source": "12",
+    "target": "5",
+    "flow_id": 2,
+    "seq": "1",
+    "type": "control",
+    "notes": "Calls instance API to stop pulling jobs and drain current tasks",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow from interruption Lambda up to EC2; transcript: 'That Lambda function interacts with that instance via an API call telling that instance specifically to stop pulling requests'"
+   }
+  ]
+ }
+}

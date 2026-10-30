@@ -1,0 +1,195 @@
+{
+ "razonamiento": "The whiteboard architecture depicts Snapchat's messaging and media delivery pipeline running on AWS. An EKS boundary encompasses five internal microservices: Gateway (GW), Media, Friend Graph, Messaging Core Service (MCS), and SnapDB (Snap's custom caching/abstraction layer over DynamoDB). The workflow splits into media ingestion (iOS sends snap via GW to Media, which stores in CloudFront/S3 and queries Friend Graph), metadata persistence (MCS writes to SnapDB, which writes to DynamoDB), message delivery to the recipient (MCS queries ElastiCache to locate the active persistent server connection in GW, and GW pushes the notification to Android), and media retrieval (Android fetches the snap from CloudFront).",
+ "nombre": "Snapchat Messaging and Media Delivery Architecture",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserConsumerMobile",
+   "name": "iOS",
+   "notes": "Sender mobile client",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "UserConsumerMobile",
+   "name": "Android",
+   "notes": "Recipient mobile client",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "EKS",
+   "name": "GW",
+   "notes": "Gateway service on EKS managing persistent client connections",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "EKS",
+   "name": "Media",
+   "notes": "Media delivery microservice on EKS",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "CloudFront",
+   "name": "CloudFront",
+   "notes": "CDN caching media closer to recipients",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "S3",
+   "name": "S3",
+   "notes": "Media persistence layer",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "EKS",
+   "name": "Friend Graph",
+   "notes": "Microservice for managing friend relationships and suggestions",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "EKS",
+   "name": "MCS",
+   "notes": "Messaging Core Service on EKS",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "EKS",
+   "name": "SnapDB",
+   "notes": "Custom database abstraction layer handling transactions, TTL, and ephemeral data",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "9",
+   "service": "DynamoDB",
+   "name": "DynamoDB",
+   "notes": "400 TB metadata store; nightly scans process 2B rows/min",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "10",
+   "service": "ElastiCache",
+   "name": "ElastiCache",
+   "notes": "Stores connection IDs and server IDs for routing push messages",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "iOS app initiates snap upload via the gateway",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink arrow from iOS to GW; transcript: 'the iOS app uses our gateway, which is an EKS service which we have built'"
+  },
+  {
+   "source": "2",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "Gateway routes upload request to Media delivery service",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink arrow from GW to MEDIA; transcript: 'to talk to the media delivery service'"
+  },
+  {
+   "source": "3",
+   "target": "4",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Media delivery service uploads media to CloudFront",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink arrow from MEDIA to CloudFront; transcript: 'and send the snap to CloudFront'"
+  },
+  {
+   "source": "4",
+   "target": "5",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "CloudFront persists media into S3 storage",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink arrow from CloudFront to S3; transcript: 'and purchase it in S3, just so that it\\'s closer to the recipient'"
+  },
+  {
+   "source": "3",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "2'",
+   "type": "data",
+   "notes": "Media service interacts with Friend Graph",
+   "procedencia": "dibujada",
+   "respaldo": "Drawn line between MEDIA and FRIEND GRAPH microservices"
+  },
+  {
+   "source": "7",
+   "target": "8",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "Messaging service persists snap metadata via SnapDB",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink arrow from MCS to SnapDB; transcript: 'So we\\'re going to go into our own database called SnapDB'"
+  },
+  {
+   "source": "8",
+   "target": "9",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "data",
+   "notes": "SnapDB synchronizes metadata with DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "Drawn curved pink arrow from SnapDB to DynamoDB; transcript: 'SnapDB, which under the covers uses DynamoDB'"
+  },
+  {
+   "source": "7",
+   "target": "10",
+   "flow_id": 2,
+   "seq": "0",
+   "type": "data",
+   "notes": "Messaging service queries ElastiCache for recipient server/connection ID",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink arrow from MCS to ElastiCache; transcript: 'the messaging service does is it looks up a connection ID, a server ID from ElastiCache'"
+  },
+  {
+   "source": "7",
+   "target": "2",
+   "flow_id": 2,
+   "seq": "1",
+   "type": "control",
+   "notes": "Messaging service routes notification through recipient's connected gateway server",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink line connecting MCS to GW; transcript: 'We find the server, which this client is already connected to. And through that gateway, we basically send the message to the recipient'"
+  },
+  {
+   "source": "2",
+   "target": "1",
+   "flow_id": 2,
+   "seq": "2",
+   "type": "data",
+   "notes": "Gateway pushes message notification to Android recipient over persistent connection",
+   "procedencia": "ambas",
+   "respaldo": "Drawn pink arrow pointing up from GW to Android; transcript: 'send the message to the recipient'"
+  },
+  {
+   "source": "1",
+   "target": "4",
+   "flow_id": 2,
+   "seq": "3",
+   "type": "data",
+   "notes": "Android client fetches media from CloudFront using media ID",
+   "procedencia": "hablada",
+   "respaldo": "Transcript: 'So we use that media ID to kind of get the information from CloudFront'"
+  }
+ ]
+}

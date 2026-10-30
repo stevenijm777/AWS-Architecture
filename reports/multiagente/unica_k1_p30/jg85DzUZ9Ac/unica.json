@@ -1,0 +1,178 @@
+{
+ "razonamiento": "Veritiv's architecture processes on-premises invoice sales data and ERP flat file orders to calculate demand analytics. The on-premises database connects through a VPN to AWS DMS, which populates an Amazon Redshift cluster that loads data into the data lake. In parallel, flat files land in an Amazon S3 drop bucket, triggering Amazon SQS, which invokes an initiator AWS Lambda function. This function queries Amazon DynamoDB for file metadata and places the structured data into the data lake. An S3 event trigger on the data lake then invokes a complex AWS Lambda function to merge datasets, run stats models, and feed the output demand data back into Amazon Redshift.",
+ "nombre": "Veritiv Serverless Data Lake and Demand Analytics Architecture",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "OnPremDC",
+   "name": "On-Premises Database",
+   "notes": "stores sales data at invoice level",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "VPN",
+   "name": "VPN",
+   "notes": "",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "DMS",
+   "name": "AWS DMS",
+   "notes": "uses CDC",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "RedShift",
+   "name": "Amazon Redshift",
+   "notes": "",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "LakeFormation",
+   "name": "Data Lake",
+   "notes": "raw and refined S3 buckets",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "S3",
+   "name": "Amazon S3",
+   "notes": "drop bucket for flat files",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "SQS",
+   "name": "Amazon SQS",
+   "notes": "handles messaging services",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "Lambda",
+   "name": "Initiator Lambda",
+   "notes": "",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "DynamoDB",
+   "name": "Amazon DynamoDB",
+   "notes": "stores file metadata",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "9",
+   "service": "Lambda",
+   "name": "Complex Lambda",
+   "notes": "merges datasets and applies Python stats models",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "pipes sales data through VPN",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from ONPREM to VPN; 'That data is actually piped through our VPN'"
+  },
+  {
+   "source": "1",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "DMS pulls data across VPN via CDC",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from VPN to DMS; 'we use DMS and CDC to be able to pull that data out of our VPN'"
+  },
+  {
+   "source": "2",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "populates Redshift cluster",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from DMS to REDSHIFT; 'pull that data and then populate it into our Redshift cluster'"
+  },
+  {
+   "source": "3",
+   "target": "4",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "makes data available to data lake",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from REDSHIFT to DATA LAKE; 'makes it available to not only our data lake and read back completely in'"
+  },
+  {
+   "source": "5",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "control",
+   "notes": "lands flat files and kicks off SQS message",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from S3 to SQS; 'When those files landed, they actually kick off an SQS'"
+  },
+  {
+   "source": "6",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "control",
+   "notes": "launches initiator Lambda job",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from SQS to initiator LAMBDA; 'SQS will launch what we call our initiator Lambda job'"
+  },
+  {
+   "source": "7",
+   "target": "8",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "queries DynamoDB for file metadata",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from initiator LAMBDA to DYNAMODB; 'This Lambda job actually talks to DynamoDB and it pulls the metadata'"
+  },
+  {
+   "source": "7",
+   "target": "4",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "data",
+   "notes": "populates raw and refined data lake structures",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from initiator LAMBDA to DATA LAKE; 'be able to understand how to populate our data lake and push that information into the appropriate structures'"
+  },
+  {
+   "source": "4",
+   "target": "9",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "control",
+   "notes": "event-driven S3 trigger launches complex Lambda",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from DATA LAKE to bottom LAMBDA; 'we have a trigger on our S3 bucket that's event driven and it will launch our next Lambda job'"
+  },
+  {
+   "source": "9",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "5",
+   "type": "data",
+   "notes": "feeds merged demand analytics back into Redshift",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from bottom LAMBDA to REDSHIFT; 'Once that completes, that is fed into Redshift again'"
+  }
+ ]
+}

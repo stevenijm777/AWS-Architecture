@@ -1,0 +1,130 @@
+{
+ "cuando": "2026-10-28T03:17:49+00:00",
+ "video": "jV8DwutbXbg",
+ "agente": "unica",
+ "modelo": "gemini-3.8-flash",
+ "prompt": "unica_llamada_v1.txt@fe995a4a5374",
+ "replica": 0,
+ "imagenes": 1,
+ "latencia_s": 59.4,
+ "entrada": 4606,
+ "salida": 1251,
+ "thinking": 7545,
+ "respuesta": {
+  "razonamiento": "The architecture shows Tandem's transaction enrichment pipeline. The diagram features an initial Kinesis event stream, a lean batching Lambda, an input RDS instance storing raw bank transactions, an SQS queue for fan-out, a second-tier NLP processing Lambda, an output RDS storing enriched transactions with model versioning, and an output Kinesis stream for notifying downstream systems. All seven components are clearly drawn on the board and discussed in the transcript.",
+  "nombre": "Tandem Money Transaction Enrichment Pipeline",
+  "nodes": [
+   {
+    "id": "0",
+    "service": "Kinesis",
+    "name": "Kinesis (Account Events)",
+    "notes": "Receives account updated events with account ID",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "1",
+    "service": "RDS",
+    "name": "RDS (Raw Transactions)",
+    "notes": "Stores raw scraped transaction data",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "2",
+    "service": "Lambda",
+    "name": "Batching Lambda",
+    "notes": "Queries RDS for user transactions and batches ~100 to SQS",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "3",
+    "service": "SQS",
+    "name": "SQS",
+    "notes": "Buffers transaction descriptions for horizontal scaling and fan-out",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "4",
+    "service": "Lambda",
+    "name": "NLP Processing Lambda",
+    "notes": "Performs NLP with compiled ANTLR parser to extract transaction metadata",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "5",
+    "service": "RDS",
+    "name": "RDS (Enriched Transactions)",
+    "notes": "Stores cleansed transaction data with model version",
+    "evidencia": "ambas"
+   },
+   {
+    "id": "6",
+    "service": "Kinesis",
+    "name": "Kinesis (Completion Events)",
+    "notes": "Publishes event indicating customer transaction enrichment is complete",
+    "evidencia": "ambas"
+   }
+  ],
+  "edges": [
+   {
+    "source": "0",
+    "target": "2",
+    "flow_id": 0,
+    "seq": "0",
+    "type": "control",
+    "notes": "Triggers Lambda when account update event arrives",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow pointing right from Kinesis to Lambda; transcript: 'What we get here on the Kinesis stream is an account ID and we're listening for this event to happen'."
+   },
+   {
+    "source": "1",
+    "target": "2",
+    "flow_id": 0,
+    "seq": "1",
+    "type": "data",
+    "notes": "Lambda reads user's raw transactions from RDS",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow pointing left from RDS to Lambda; transcript: 'taking in transactions which are in the RDS database... do a SQL query to RDS'."
+   },
+   {
+    "source": "2",
+    "target": "3",
+    "flow_id": 0,
+    "seq": "2",
+    "type": "data",
+    "notes": "Publishes batches of raw transaction description strings",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow pointing down from Lambda to SQS; transcript: 'gathering those up into batches of say a hundred and then publishing a new message to SQS'."
+   },
+   {
+    "source": "3",
+    "target": "4",
+    "flow_id": 0,
+    "seq": "3",
+    "type": "control",
+    "notes": "Fans out messages to multiple NLP Lambda workers",
+    "procedencia": "ambas",
+    "respaldo": "Multiple fan-out arrows drawn from SQS to Lambda; transcript: 'using SQS and Lambda with a second tier of Lambda, you've got a fan out system'."
+   },
+   {
+    "source": "4",
+    "target": "5",
+    "flow_id": 0,
+    "seq": "4",
+    "type": "data",
+    "notes": "Writes enriched transaction data and model version to RDS",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow pointing down-left to RDS; transcript: 'writing that cleansed data or that enriched data... to RDS... storing those process transactions along with a version of the model'."
+   },
+   {
+    "source": "4",
+    "target": "6",
+    "flow_id": 0,
+    "seq": "4'",
+    "type": "data",
+    "notes": "Publishes completion events for downstream services to consume",
+    "procedencia": "ambas",
+    "respaldo": "Drawn arrow pointing down-right to Kinesis; transcript: 'customer transactions have been finished... publish the results... up to another part within the organization to trigger from that event'."
+   }
+  ]
+ }
+}

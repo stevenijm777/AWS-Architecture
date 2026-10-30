@@ -1,0 +1,259 @@
+{
+ "razonamiento": "Merged visual and spoken elements into a single architecture graph. b4 and b5 represent the same SQS rendering instruction queue (one visual text label, one visual icon) and are merged into node 4. Container c0 ('EC2 AUTO SCALING') represents both the EC2 Spot rendering instances (node 6) and the Auto Scaling group (node 7); lines connected to c0 were mapped according to narration (workload/metrics to EC2, scaling interactions to AutoScaling). Drawn line directions were preserved per Rule 4, including b3->b6, c0->b10, and b10->b11. The spoken flow of the scaling Lambda consuming CloudWatch metrics was included as a spoken edge (9->11). The spot termination Lambda described in speech was omitted as a separate node because the whiteboard drew CloudWatch Events directly targeting the EC2 instances (12->6).",
+ "nombre": "Video Rendering as a Service (RaaS) on EC2 Spot Instances",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserConsumerWebMobile",
+   "name": "Client Devices",
+   "notes": "Mobile and PC devices requesting rendering and playing video",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "CloudFront",
+   "name": "CloudFront",
+   "notes": "CDN caching and distributing video segments",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "ApiGateway",
+   "name": "API Gateway",
+   "notes": "Entry point for incoming rendering requests",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "Lambda",
+   "name": "RaaS Frontend Lambda",
+   "notes": "Validates request payload and checks response queue",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "SQS",
+   "name": "Rendering Job Queue",
+   "notes": "Buffers rendering instructions for engine workers",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "SQS",
+   "name": "Response Queue",
+   "notes": "Receives rapid job acknowledgement polled by frontend Lambda",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "EC2",
+   "name": "EC2 Spot Instances",
+   "notes": "Rendering engine running on diversified Spot instances",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "AutoScaling",
+   "name": "EC2 Auto Scaling",
+   "notes": "Manages Spot fleet diversity and capacity",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "S3",
+   "name": "S3",
+   "notes": "Stores rendered video segments",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "9",
+   "service": "Lambda",
+   "name": "Auto Scaling Controller Lambda",
+   "notes": "Custom scaling logic triggered every 15 seconds",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "10",
+   "service": "StepFunctions",
+   "name": "Step Functions",
+   "notes": "Orchestrates periodic 15-second scaling cycle",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "11",
+   "service": "CloudWatch",
+   "name": "CloudWatch",
+   "notes": "Collects rendering engine metrics and alerts",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "12",
+   "service": "EventBridge",
+   "name": "CloudWatch Events",
+   "notes": "Receives spot termination warning events",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "User initiates request from mobile or PC",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b2, quote 'from your mobile device. That request arrives into our RAS ecosystem. First stop is the API Gateway'"
+  },
+  {
+   "source": "2",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "API Gateway triggers RaaS frontend Lambda",
+   "procedencia": "ambas",
+   "respaldo": "line b2->b3, quote 'That request arrives into a Lambda function, which is our service, RAS service frontend.'"
+  },
+  {
+   "source": "3",
+   "target": "4",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Lambda pushes validated rendering instructions to SQS",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b4, quote 'pushes rendering instruction to an SQS queue'"
+  },
+  {
+   "source": "4",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "Rendering engine instances poll queue for rendering jobs",
+   "procedencia": "ambas",
+   "respaldo": "line b5->c0, quote 'where we have engine service that are part of the RAS ecosystem pulling in for rendering jobs'"
+  },
+  {
+   "source": "6",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "Rendering engine immediately pushes response message to SQS",
+   "procedencia": "ambas",
+   "respaldo": "line c0->b6, quote 'So, we immediately respond to an SQS queue'"
+  },
+  {
+   "source": "3",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "control",
+   "notes": "Frontend Lambda polls SQS response queue",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b6, quote 'which the same Lambda function invocation pulls from.'"
+  },
+  {
+   "source": "6",
+   "target": "8",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "Rendering engine uploads video segments to S3",
+   "procedencia": "ambas",
+   "respaldo": "line c0->b9, quote 'video segments that the rendering engine uploads to S3.'"
+  },
+  {
+   "source": "8",
+   "target": "1",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "data",
+   "notes": "CloudFront fetches video segments from S3 origin",
+   "procedencia": "ambas",
+   "respaldo": "line b9->b1 (label 'RaaS'), quote 'then the link to CloudFront actually pulls from the origin a video segment'"
+  },
+  {
+   "source": "0",
+   "target": "1",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "data",
+   "notes": "Client player requests video segment via CloudFront",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b1, quote 'when the player on the mobile device or PC device asks for this video segment to show'"
+  },
+  {
+   "source": "6",
+   "target": "0",
+   "flow_id": 1,
+   "seq": "5",
+   "type": "data",
+   "notes": "Rendering engine provides playlist to client player",
+   "procedencia": "ambas",
+   "respaldo": "line c0->b0 (label 'playlist')"
+  },
+  {
+   "source": "6",
+   "target": "11",
+   "flow_id": 2,
+   "seq": "0",
+   "type": "meta",
+   "notes": "Rendering instances send custom metrics to CloudWatch",
+   "procedencia": "ambas",
+   "respaldo": "line c0->b13, quote 'CloudWatch metrics that are pushed from the rendering instances'"
+  },
+  {
+   "source": "11",
+   "target": "12",
+   "flow_id": 2,
+   "seq": "1",
+   "type": "control",
+   "notes": "CloudWatch routes spot interruption event to CloudWatch Events",
+   "procedencia": "ambas",
+   "respaldo": "line b13->b12, quote 'CloudWatch notifies a Lambda function via a CloudWatch event'"
+  },
+  {
+   "source": "12",
+   "target": "6",
+   "flow_id": 2,
+   "seq": "2",
+   "type": "control",
+   "notes": "Termination event signal sent to instance to stop pulling jobs",
+   "procedencia": "dibujada",
+   "respaldo": "line b12->c0"
+  },
+  {
+   "source": "7",
+   "target": "9",
+   "flow_id": 3,
+   "seq": "0",
+   "type": "control",
+   "notes": "Auto Scaling group capacity adjustment interaction with Lambda",
+   "procedencia": "ambas",
+   "respaldo": "line c0->b10, quote 'the Lambda function interacts with the auto scaling group telling it to increase the amount of instances'"
+  },
+  {
+   "source": "9",
+   "target": "10",
+   "flow_id": 3,
+   "seq": "1",
+   "type": "control",
+   "notes": "Scaling Lambda is coordinated with Step Functions workflow",
+   "procedencia": "ambas",
+   "respaldo": "line b10->b11, quote 'consumed by Lambda function that is triggered by a step function every 15 seconds.'"
+  },
+  {
+   "source": "9",
+   "target": "11",
+   "flow_id": 3,
+   "seq": "2",
+   "type": "meta",
+   "notes": "Scaling Lambda retrieves and evaluates custom CloudWatch metrics",
+   "procedencia": "hablada",
+   "respaldo": "quote 'CloudWatch metrics that are pushed from the rendering instances and consumed by Lambda function'"
+  }
+ ]
+}

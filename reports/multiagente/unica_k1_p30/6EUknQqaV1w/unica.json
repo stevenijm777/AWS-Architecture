@@ -1,0 +1,191 @@
+{
+ "razonamiento": "The architecture shows CloudHealth Secure State by VMware. Cloud events are ingested into a collection Kinesis Data Stream, which feeds into Amazon Neptune and a Rules Kinesis Data Stream. Data from Neptune is also backed into Elasticsearch (OpenSearch) and DynamoDB. Neptune and Elasticsearch send metrics to CloudWatch, which the Sharder Service reads to load balance data across Neptune clusters. The Rules Kinesis Data Stream queries Neptune for graph-based security rule checks, writes violations to DynamoDB, and sends notifications to external channels including Slack and Email.",
+ "nombre": "CloudHealth Secure State Real-Time Security and Monitoring Architecture",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "KinesisDataStream",
+   "name": "Collect Kinesis Data Streams",
+   "notes": "Handles ingestion of cloud security events",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "Neptune",
+   "name": "Neptune",
+   "notes": "50M+ cloud resources in graph database",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "OpenSearch",
+   "name": "Elasticsearch",
+   "notes": "Backing store for search, aggregations, and analytics",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "CloudWatch",
+   "name": "CloudWatch",
+   "notes": "Tracks CPU and memory metrics for Neptune clusters",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "ThirdParty",
+   "name": "Sharder Service",
+   "notes": "Determines shard capacity to scale out writes",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "KinesisDataStream",
+   "name": "Rules Kinesis Data Streams",
+   "notes": "Fronts the rule execution pipeline",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "DynamoDB",
+   "name": "DynamoDB",
+   "notes": "Backing store for history and detected security violations",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "ThirdParty",
+   "name": "Slack",
+   "notes": "Notification target for security alerts",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "ThirdParty",
+   "name": "Email",
+   "notes": "Notification target for security alerts",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "Publishes evaluated cloud resources to Neptune",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Collect Kinesis to Neptune with '50M+' label, confirmed in transcript: 'consumer, which publishes those resources into Amazon Neptune'"
+  },
+  {
+   "source": "0",
+   "target": "5",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "Propagates incoming events and resource changes to rules pipeline",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow pointing from Collect Kinesis to Rules Kinesis, confirmed in transcript: 'incoming event along with the resource changes are then propagated to our rule execution pipeline'"
+  },
+  {
+   "source": "1",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Stores resource data for search and analytics",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Neptune to Elasticsearch, spoken as backing store for analytics"
+  },
+  {
+   "source": "1",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "Stores resource configuration history over time",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Neptune to DynamoDB, spoken as backing store"
+  },
+  {
+   "source": "1",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "meta",
+   "notes": "Emits CPU and memory metrics",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Neptune to CloudWatch, spoken: 'uses this CloudWatch metrics from Neptune'"
+  },
+  {
+   "source": "2",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "meta",
+   "notes": "Emits operational metrics",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Elasticsearch to CloudWatch, spoken: 'CloudWatch metrics from Neptune and Elasticsearch'"
+  },
+  {
+   "source": "3",
+   "target": "4",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "Sharder service evaluates metrics to determine shard capacity",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from CloudWatch to SHARD box, spoken: 'sharder service... uses this CloudWatch metrics'"
+  },
+  {
+   "source": "4",
+   "target": "1",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "control",
+   "notes": "Load balances resource writes into provisioned Neptune clusters",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from SHARD curving down toward Neptune, spoken: 'allows us to efficiently load balance our customers' data in the provision Neptune clusters'"
+  },
+  {
+   "source": "5",
+   "target": "1",
+   "flow_id": 2,
+   "seq": "0",
+   "type": "data",
+   "notes": "Executes security rules across the Neptune graph",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Rules Kinesis pointing to Neptune, spoken: 'we exercise this over the Neptune graph database to perform those security checks'"
+  },
+  {
+   "source": "5",
+   "target": "6",
+   "flow_id": 2,
+   "seq": "1",
+   "type": "data",
+   "notes": "Persists detected security violations",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Rules Kinesis to DynamoDB, spoken: 'if it detects any security violations, those are again persisted in our DynamoDB'"
+  },
+  {
+   "source": "5",
+   "target": "7",
+   "flow_id": 2,
+   "seq": "2",
+   "type": "data",
+   "notes": "Sends real-time violation notifications to Slack",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow curving from Rules Kinesis to Slack logo, spoken: 'real-time notifications to our customers through various channels. We have support for Slack'"
+  },
+  {
+   "source": "5",
+   "target": "8",
+   "flow_id": 2,
+   "seq": "3",
+   "type": "data",
+   "notes": "Sends real-time violation notifications via email",
+   "procedencia": "hablada",
+   "respaldo": "Envelope drawn on board, spoken: 'notifications to our customers through various channels. We have support for Slack, email, Splunk'"
+  }
+ ]
+}

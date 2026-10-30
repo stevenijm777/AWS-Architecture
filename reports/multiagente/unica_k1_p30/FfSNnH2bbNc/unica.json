@@ -1,0 +1,184 @@
+{
+ "razonamiento": "Indigo Carbon collects satellite data from providers like NASA and processes it to generate carbon credits and serve imagery to farmers. The architecture consists of an ingestion pipeline (Satellites -> EC2 Spot -> S3 and RDS), an interactive user map-tile serving workflow (User <-> AWS Fargate <-> ElastiCache, RDS, and S3), and an on-demand time-series analytics pipeline (User -> Lambda -> RDS, S3).",
+ "nombre": "Indigo Carbon Satellite Imagery Processing Architecture",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserConsumerSatellite",
+   "name": "Satellites",
+   "notes": "Daily imagery tiles from sources like NASA",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "EC2",
+   "name": "EC2 Spot",
+   "notes": "Spot instance cluster spun up to correct and reformat tiles",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "S3",
+   "name": "S3",
+   "notes": "~5 PB bulk data, growing ~100 GB/day",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "RDS",
+   "name": "RDS",
+   "notes": "Stores catalog and imagery metadata",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "Fargate",
+   "name": "AWS Fargate",
+   "notes": "Processes and serves web tiles on the fly",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "ElastiCache",
+   "name": "ElastiCache",
+   "notes": "Redis cache for common precomputed map tiles",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "Lambda",
+   "name": "Lambda",
+   "notes": "Series of functions computing field time series",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "UserConsumerFarmer",
+   "name": "Farmers / Users",
+   "notes": "",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "Stream daily satellite tiles for processing",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Satellite to EC2 Spot; transcript confirms receiving tiles into spot instances"
+  },
+  {
+   "source": "1",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "Store processed bulk imagery data",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from EC2 Spot to S3; transcript notes storing bulk data outputs in S3"
+  },
+  {
+   "source": "1",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "1'",
+   "type": "data",
+   "notes": "Store tile metadata",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from EC2 Spot to RDS; transcript notes storing metadata in RDS"
+  },
+  {
+   "source": "7",
+   "target": "4",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "User requests map tiles via app",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between Users and Fargate; transcript describes map requests arriving at Fargate"
+  },
+  {
+   "source": "4",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "data",
+   "notes": "Check and store tiles in cache",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between Fargate and ElastiCache; transcript describes reading/writing tiles to Redis"
+  },
+  {
+   "source": "5",
+   "target": "4",
+   "flow_id": 1,
+   "seq": "1'",
+   "type": "data",
+   "notes": "Return cached tiles",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between Fargate and ElastiCache; transcript mentions serving precomputed tiles from cache"
+  },
+  {
+   "source": "4",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "Query RDS to find source imagery for tile",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Fargate to RDS; transcript states Fargate looks up source imagery in RDS"
+  },
+  {
+   "source": "4",
+   "target": "2",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "data",
+   "notes": "Fetch image subsections using HTTP range requests",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Fargate to S3; transcript describes pulling chunks from S3 via HTTP range requests"
+  },
+  {
+   "source": "4",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "data",
+   "notes": "Serve stitched, color-corrected tiles to user",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between Fargate and Users; transcript describes serving back tiles"
+  },
+  {
+   "source": "7",
+   "target": "6",
+   "flow_id": 2,
+   "seq": "0",
+   "type": "data",
+   "notes": "Submit custom field boundaries for analysis",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from farmer field diagram to Lambda; transcript confirms farmer provides field area to Lambda functions"
+  },
+  {
+   "source": "6",
+   "target": "3",
+   "flow_id": 2,
+   "seq": "1",
+   "type": "data",
+   "notes": "Look up required imagery metadata",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Lambda to RDS; transcript describes Lambda looking up imagery in RDS"
+  },
+  {
+   "source": "6",
+   "target": "2",
+   "flow_id": 2,
+   "seq": "2",
+   "type": "data",
+   "notes": "Pull raw imagery subsections from S3",
+   "procedencia": "hablada",
+   "respaldo": "Transcript states Lambda pulls data by 'reading stuff from S3'"
+  }
+ ]
+}

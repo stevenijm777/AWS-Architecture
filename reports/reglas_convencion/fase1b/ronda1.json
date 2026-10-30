@@ -1,0 +1,89 @@
+{
+ "propuesta": {
+  "analisis": "Al comparar ambos grupos, se observa que la divergencia entre anotaciones unidireccionales (ONE_WAY) y bidireccionales (TWO_WAY) responde a la naturaleza funcional del sistema y la forma en que los ponentes relatan el flujo de información. En GROUP ONE_WAY, la arquitectura se expone casi invariablemente como un pipeline unidireccional de ingesta, procesamiento por lotes, transcodificación de medios o despliegue de infraestructura (ej. Lancom, Splunk, Hudl, Media Analysis, Western Union). Al ser narrado como una secuencia continua de etapas hacia adelante (A empuja a B, B pasa a C), los anotadores omitieron las respuestas HTTP o acuses de recibo implícitos y codificaron únicamente el avance de los datos. Por el contrario, en GROUP TWO_WAY los sistemas son interactivos y orientados a servicios síncronos: plataformas de comercio electrónico (Ticketmaster, Love Bonito), bloqueo concurrente distribuido (Nasuni), bancos de pruebas automatizados con retorno de resultados (Wix), gemelos digitales con lazo cerrado (Flutura) o motores de analítica y observabilidad con consultas a bases de datos (Epsagon, Intent). En estos casos, la narración destaca explícitamente consultas y lecturas hacia bases de datos, devoluciones de respuestas a los clientes o lectura y escritura sobre el mismo componente, lo cual impulsó a los anotadores a trazar aristas en ambas direcciones.",
+  "hipotesis": [
+   {
+    "nombre": "pipeline_unidireccional_vs_sistema_interactivo",
+    "pregunta": "¿El sistema se describe primordialmente como una canalización (pipeline) unidireccional de ingesta, transcodificación de medios, procesamiento por lotes o despliegue CI/CD, sin un ciclo interactivo de solicitud-respuesta con el usuario final?",
+    "two_way": false,
+    "razon": "En GROUP ONE_WAY, los 8 sistemas son tratados como canalizaciones de procesamiento de flujo continuo o pipelines de despliegue (transcodificación en Lancom y Hudl; ingesta/almacenamiento en Splunk; análisis por lotes en Media Analysis; verificación de credenciales en MATTR; túneles y provisionamiento en Salesforce; CI/CD en Western Union; y sincronización de eventos en Pushpay). En GROUP TWO_WAY, los sistemas son aplicaciones interactivas de usuario, comercio web, observabilidad consultable o bucles cerrados de control. Contradicciones menores: Hudl menciona en su introducción devolver video a los entrenadores (pero describe solo el pipeline interno de transcodificación), e Intent posee una fase de volcado a S3 que luego es consultada por Athena."
+   },
+   {
+    "nombre": "solicitud_respuesta_directa_al_cliente",
+    "pregunta": "¿La narración describe explícitamente que un cliente, desarrollador o usuario final emite peticiones y recibe directamente una respuesta, resultado o confirmación (por ejemplo, páginas web renderizadas, resultados de tests en JSON, consultas DNS/bloqueo de archivos, o confirmaciones vía WebSockets/GraphQL)?",
+    "two_way": true,
+    "razon": "En GROUP TWO_WAY, todos los sistemas con usuarios tienen aristas bidireccionales con ellos porque el vídeo enfatiza la respuesta devuelta: Ticketmaster responde compras con WebSockets y GraphQL; Wix retorna un JSON de resultado de las pruebas al portátil del desarrollador; Nasuni resuelve bloqueos o errores 503 al cliente que abre un archivo; Love Bonito sirve contenido a los usuarios web; Flutura entrega predicciones y retroalimenta la planta en lazo cerrado; Epsagon permite al usuario consultar invocaciones específicas y ver resultados en Athena; AC3 retorna archivos LandXML convertidos. En GROUP ONE_WAY, las acciones de los usuarios se presentan como 'subir video', 'enviar logs' o 'hacer commit' sin detallar el ciclo de respuesta síncrono al cliente."
+   },
+   {
+    "nombre": "lectura_o_consulta_activa_de_base_de_datos",
+    "pregunta": "¿La arquitectura incluye y describe activamente la lectura, consulta o comprobación de registros en una base de datos o motor de consulta interactivo (como DynamoDB, Aurora/MySQL, PostgreSQL, Athena u OpenTSDB)?",
+    "two_way": true,
+    "razon": "En GROUP TWO_WAY, prácticamente todos los casos hacen lecturas o consultas sobre almacenes estructurados: Ticketmaster (lectura en DynamoDB), Nasuni (consulta de registros en DynamoDB para verificar bloqueos), Love Bonito (réplicas de lectura de MySQL Aurora y caché Redis), Epsagon (consultas en Aurora y Athena), Intent (analistas consultando en Athena), Flutura (lectura de histórico en OpenTSDB y metadatos en Postgres) y AC3 (consulta y actualización de estado en DynamoDB). En GROUP ONE_WAY, 6 de los 8 vídeos no utilizan bases de datos gestionadas; Salesforce solo menciona DynamoDB para eliminar metadatos al destruir la conexión y Pushpay solo menciona escribir eventos en DynamoDB para event sourcing sin describir consultas directas."
+   },
+   {
+    "nombre": "lectura_y_escritura_sobre_el_mismo_servicio",
+    "pregunta": "¿La narración describe componentes que leen/consumen datos de un servicio y a su vez escriben, actualizan o publican de vuelta en ese mismo servicio o almacén (patrón de lectura-modificación o bucle cerrado)?",
+    "two_way": true,
+    "razon": "En GROUP TWO_WAY, se mencionan de forma recurrente interacciones bidireccionales con un mismo servicio: Flutura (Spark lee de Kafka y publica de vuelta en Kafka; bucle cerrado al campo), Epsagon (Lambda lee eventos de Kinesis y escribe registros procesados en Kinesis; lee de DynamoDB y actualiza DynamoDB), Intent (Lambda consume y emite flujos a Kinesis; Firehose y S3), Love Bonito (EKS monta S3 bidireccionalmente vía S3Fuse y lee/escribe en Aurora y Redis). En GROUP ONE_WAY, los componentes intermedios suelen actuar como relevos unidireccionales (por ejemplo, en Lancom Fargate lee de SQS pero escribe en S3; en Pushpay el ciclo comprende tres nodos distintos en anillo sin pares bidireccionales)."
+   },
+   {
+    "nombre": "desacoplamiento_por_colas_asincronas_sqs",
+    "pregunta": "¿La arquitectura utiliza colas de mensajería asíncrona como Amazon SQS para amortiguar y distribuir tareas de procesamiento por lotes o escalado de cómputo?",
+    "two_way": false,
+    "razon": "La presencia de colas SQS suele ser indicativa de patrones 'worker/queue' puramente unidireccionales donde las peticiones se depositan y se consumen sin retorno. En GROUP ONE_WAY aparece SQS en Lancom (cola para procesar grabaciones en Fargate) y en Hudl (colas para repartir transcodificaciones en Spot Fleet). Ningún vídeo de GROUP TWO_WAY utiliza Amazon SQS (usan llamadas síncronas, Kinesis/Kafka bidireccional o Step Functions directos). Contradicción: no todos los casos de ONE_WAY usan SQS (los otros 6 recurren a otros métodos de transporte unidireccional)."
+   }
+  ]
+ },
+ "medidas": [
+  {
+   "hipotesis": "pipeline_unidireccional_vs_sistema_interactivo",
+   "n": 100,
+   "si": 31,
+   "exactitud_balanceada": 58.0,
+   "spearman": 0.075,
+   "f1_politica": 60.53,
+   "f1_nunca": 61.3,
+   "f1_oraculo": 65.65
+  },
+  {
+   "hipotesis": "solicitud_respuesta_directa_al_cliente",
+   "n": 100,
+   "si": 46,
+   "exactitud_balanceada": 59.6,
+   "spearman": 0.154,
+   "f1_politica": 61.46,
+   "f1_nunca": 61.3,
+   "f1_oraculo": 65.65
+  },
+  {
+   "hipotesis": "lectura_o_consulta_activa_de_base_de_datos",
+   "n": 100,
+   "si": 49,
+   "exactitud_balanceada": 52.9,
+   "spearman": 0.187,
+   "f1_politica": 61.05,
+   "f1_nunca": 61.3,
+   "f1_oraculo": 65.65
+  },
+  {
+   "hipotesis": "lectura_y_escritura_sobre_el_mismo_servicio",
+   "n": 100,
+   "si": 4,
+   "exactitud_balanceada": 48.9,
+   "spearman": 0.025,
+   "f1_politica": 61.16,
+   "f1_nunca": 61.3,
+   "f1_oraculo": 65.65
+  },
+  {
+   "hipotesis": "desacoplamiento_por_colas_asincronas_sqs",
+   "n": 100,
+   "si": 14,
+   "exactitud_balanceada": 54.9,
+   "spearman": 0.035,
+   "f1_politica": 59.73,
+   "f1_nunca": 61.3,
+   "f1_oraculo": 65.65
+  }
+ ]
+}

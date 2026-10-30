@@ -1,0 +1,218 @@
+{
+ "razonamiento": "The visual diagram presents a 10-node architecture for Snap's messaging and media delivery pipeline running on AWS. The narration describes an iOS mobile client sending media and messages through EKS services: media is routed via an EKS media delivery service to CloudFront and S3; messages are handled by an EKS messaging gateway interacting with auxiliary EKS microservices, SnapDB (backed by DynamoDB), and ElastiCache for active connection/server lookups, before delivering messages to the recipient mobile client (Android). All 10 visual nodes are preserved and mapped to their appropriate AWS or UserConsumerMobile services.",
+ "nombre": "Snap Messaging and Media Delivery Architecture on AWS",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserConsumerMobile",
+   "name": "iOS App",
+   "notes": "Sender client",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "UserConsumerMobile",
+   "name": "Android App",
+   "notes": "Recipient client",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "EKS",
+   "name": "Media Delivery Service",
+   "notes": "Runs on EKS",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "EKS",
+   "name": "Messaging Service / Gateway",
+   "notes": "Core routing on EKS",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "EKS",
+   "name": "EKS Microservice",
+   "notes": "",
+   "evidencia": "visual"
+  },
+  {
+   "id": "5",
+   "service": "EKS",
+   "name": "SnapDB Service",
+   "notes": "Metadata service layer",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "CloudFront",
+   "name": "CloudFront",
+   "notes": "Content delivery network",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "S3",
+   "name": "S3",
+   "notes": "Media storage",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "ElastiCache",
+   "name": "ElastiCache",
+   "notes": "Connection and server ID lookup",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "9",
+   "service": "DynamoDB",
+   "name": "DynamoDB",
+   "notes": "Underlying storage for SnapDB",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "Sends snap media upload request",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b2 / 'to talk to the media delivery service'"
+  },
+  {
+   "source": "2",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "Routes media upload to CloudFront",
+   "procedencia": "ambas",
+   "respaldo": "line b2->b6 / 'send the snap to CloudFront'"
+  },
+  {
+   "source": "6",
+   "target": "7",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Stores media into S3",
+   "procedencia": "ambas",
+   "respaldo": "line b6->b7 / 'and purchase it in S3'"
+  },
+  {
+   "source": "7",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "Retrieval/acknowledgment between S3 and CloudFront",
+   "procedencia": "dibujada",
+   "respaldo": "line b7->b6"
+  },
+  {
+   "source": "0",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "Sends message payload to messaging gateway",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b3 / 'the iOS app uses our gateway'"
+  },
+  {
+   "source": "3",
+   "target": "4",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "control",
+   "notes": "Calls internal microservice",
+   "procedencia": "dibujada",
+   "respaldo": "line b3->b4"
+  },
+  {
+   "source": "4",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "Returns microservice response",
+   "procedencia": "dibujada",
+   "respaldo": "line b4->b3"
+  },
+  {
+   "source": "3",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "data",
+   "notes": "Persists metadata via SnapDB service",
+   "procedencia": "dibujada",
+   "respaldo": "line b3->b5"
+  },
+  {
+   "source": "5",
+   "target": "9",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "data",
+   "notes": "Writes metadata to DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "line b5->b9 / 'into our own database called SnapDB which under the covers uses DynamoDB'"
+  },
+  {
+   "source": "9",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "5",
+   "type": "data",
+   "notes": "Confirms metadata write or read",
+   "procedencia": "dibujada",
+   "respaldo": "line b9->b5"
+  },
+  {
+   "source": "5",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "6",
+   "type": "data",
+   "notes": "Returns metadata response to messaging gateway",
+   "procedencia": "dibujada",
+   "respaldo": "line b5->b3"
+  },
+  {
+   "source": "3",
+   "target": "8",
+   "flow_id": 1,
+   "seq": "7",
+   "type": "control",
+   "notes": "Looks up server ID / persistent connection in ElastiCache",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b8 / 'looks up a connection ID, a server ID from ElastiCache'"
+  },
+  {
+   "source": "8",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "8",
+   "type": "data",
+   "notes": "Returns connection details",
+   "procedencia": "dibujada",
+   "respaldo": "line b8->b3"
+  },
+  {
+   "source": "3",
+   "target": "1",
+   "flow_id": 1,
+   "seq": "9",
+   "type": "data",
+   "notes": "Delivers message to the recipient client",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b1 / 'through that gateway, we basically send the message to the recipient'"
+  }
+ ]
+}

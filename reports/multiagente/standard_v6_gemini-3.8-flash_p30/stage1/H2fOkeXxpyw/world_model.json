@@ -1,0 +1,96 @@
+{
+  "entities": [
+    {
+      "service": "UserConsumerDeveloper",
+      "name": "CLI",
+      "type": "actor",
+      "rationale": "Developer using the Atlassian Forge CLI to write and deploy custom code."
+    },
+    {
+      "service": "EC2",
+      "name": "EC2 (Deployment API)",
+      "type": "compute",
+      "rationale": "Ingestion web service on EC2 behind an ALB that receives deployment requests from the CLI."
+    },
+    {
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "type": "database",
+      "rationale": "Stores the deployment state and progress to report back to the user."
+    },
+    {
+      "service": "SQS",
+      "name": "SQS",
+      "type": "queue",
+      "rationale": "Queues deployment requests to decouple ingestion and avoid rate limiting Lambda creation."
+    },
+    {
+      "service": "EC2",
+      "name": "EC2 (Deployment Worker)",
+      "type": "compute",
+      "rationale": "Backend service on EC2 that reads deployment requests from SQS and creates Lambda functions."
+    },
+    {
+      "service": "UserConsumerWeb",
+      "name": "Browser",
+      "type": "actor",
+      "rationale": "End users accessing Atlassian products via a browser to render page fragments."
+    },
+    {
+      "service": "EC2",
+      "name": "EC2 (Internal Service)",
+      "type": "compute",
+      "rationale": "Internal service that handles authentication, finds the appropriate customer Lambda, and passes invocation parameters."
+    },
+    {
+      "service": "Lambda",
+      "name": "Lambda",
+      "type": "compute",
+      "rationale": "Multi-tenant Lambda running customer code isolated inside V8 isolates in a separate dedicated customer account."
+    }
+  ],
+  "visual_connections": [
+    {
+      "source_label": "CLI",
+      "target_label": "EC2 (Deployment API)",
+      "arrow_direction": "source_to_target",
+      "description": "CLI deploys application code to the ingestion EC2 service."
+    },
+    {
+      "source_label": "EC2 (Deployment API)",
+      "target_label": "DynamoDB",
+      "arrow_direction": "source_to_target",
+      "description": "Deployment service records and updates deployment state in DynamoDB."
+    },
+    {
+      "source_label": "EC2 (Deployment API)",
+      "target_label": "SQS",
+      "arrow_direction": "source_to_target",
+      "description": "Deployment service pushes deployment requests onto the SQS queue."
+    },
+    {
+      "source_label": "EC2 (Deployment Worker)",
+      "target_label": "SQS",
+      "arrow_direction": "source_to_target",
+      "description": "Deployment worker polls and reads deployment requests from the SQS queue."
+    },
+    {
+      "source_label": "EC2 (Deployment Worker)",
+      "target_label": "Lambda",
+      "arrow_direction": "source_to_target",
+      "description": "Worker creates the Lambda function across the account boundary in the customer account."
+    },
+    {
+      "source_label": "Browser",
+      "target_label": "EC2 (Internal Service)",
+      "arrow_direction": "source_to_target",
+      "description": "Browser sends invocation and data requests to the internal EC2 service."
+    },
+    {
+      "source_label": "EC2 (Internal Service)",
+      "target_label": "Lambda",
+      "arrow_direction": "source_to_target",
+      "description": "Internal service invokes the target Lambda function across the account boundary."
+    }
+  ]
+}

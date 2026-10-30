@@ -1,0 +1,178 @@
+{
+ "razonamiento": "The diagram illustrates Euler Hermes's modernization architecture migrating data from an on-premises legacy IBM DB2 database into AWS (DynamoDB and Elasticsearch/OpenSearch). The architecture consists of two primary pipelines: a batch initialization flow and a real-time CDC synchronization flow. In the batch path, AWS DMS copies data from IBM DB2 to S3. An ephemeral Amazon EMR cluster runs Spark ETL jobs to clean, validate, and load the data into both DynamoDB and Elasticsearch. In the real-time path, DMS captures DB2 change logs and publishes events to Amazon Kinesis. A Node.js Lambda function consumes the Kinesis stream and updates DynamoDB. DynamoDB Streams then triggers a second Node.js Lambda function, which propagates the updates to Elasticsearch. Above Elasticsearch, a search API is drawn and described as the interface used by clients and frontends.",
+ "nombre": "Euler Hermes Legacy DB2 Migration and Real-Time Sync to DynamoDB and Elasticsearch",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "ThirdParty",
+   "name": "IBM DB2",
+   "notes": "Legacy database holding company insurance data",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "DMS",
+   "name": "DMS",
+   "notes": "Handles batch migration to S3 and CDC event capture",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "S3",
+   "name": "S3",
+   "notes": "Staging bucket for initial batch data",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "EMR",
+   "name": "EMR",
+   "notes": "Ephemeral cluster running Spark ETL for cleaning, validation, and loading",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "Kinesis",
+   "name": "Kinesis",
+   "notes": "Event bus receiving DB2 change events",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "Lambda",
+   "name": "Lambda",
+   "notes": "Node.js function consuming Kinesis stream and writing to DynamoDB",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "DynamoDB",
+   "name": "DynamoDB",
+   "notes": "Primary reference datastore with DynamoDB Streams enabled",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "Lambda",
+   "name": "Lambda",
+   "notes": "Node.js function consuming DynamoDB Streams and writing to Elasticsearch",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "OpenSearch",
+   "name": "Elasticsearch",
+   "notes": "Search engine supporting search queries across global company data",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "9",
+   "service": "ApiGateway",
+   "name": "API",
+   "notes": "Search API exposed to clients and frontends",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "DMS performs full batch extract from IBM DB2",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from IBM DB2 to DMS and spoken: 'faire une copie intégrale des données de la base DB2 vers un bucket S3'"
+  },
+  {
+   "source": "1",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "DMS writes raw extracted data to S3",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from DMS to S3 and spoken: 'migrer les données sur S3'"
+  },
+  {
+   "source": "2",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Ephemeral EMR Spark job reads data from S3",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from S3 to EMR and spoken: 'qui prend les données depuis S3 donc vraiment en extract qui les transforme'"
+  },
+  {
+   "source": "3",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "EMR Spark ETL writes processed data into DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from EMR down to DynamoDB and spoken: 'va enregistrer ces données préparées et raffinées dans nos deux systèmes qui sont DynamoDB et Elasticsearch'"
+  },
+  {
+   "source": "3",
+   "target": "8",
+   "flow_id": 0,
+   "seq": "3'",
+   "type": "data",
+   "notes": "EMR Spark ETL writes processed data into Elasticsearch",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from EMR down-right to Elasticsearch and spoken: 'va enregistrer ces données préparées et raffinées dans nos deux systèmes qui sont DynamoDB et Elasticsearch'"
+  },
+  {
+   "source": "0",
+   "target": "4",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "DB2 commit logs and changes are captured by DMS and streamed to Kinesis",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from the base of DB2 to Kinesis and spoken: 'mécanisme de création d'événements basé sur le commit log et les changements d'IBM DB2 qui sont utilisés à nouveau par le service DMS pour créer et pousser un événement vers un bus kinésis'"
+  },
+  {
+   "source": "4",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "data",
+   "notes": "Lambda function subscribes to Kinesis stream",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Kinesis to Lambda and spoken: 'des lambdas qui viennent en fait s'abonner à ce flux kinésis et consommer les mises à jour'"
+  },
+  {
+   "source": "5",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "Lambda applies transformations and writes updates to DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Lambda to DynamoDB and spoken: 'pour les répercuter. Premièrement sur DynamoDB'"
+  },
+  {
+   "source": "6",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "data",
+   "notes": "DynamoDB Streams triggers second Lambda on table modifications",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from DynamoDB to Lambda and spoken: 'on utilise la fonctionnalité DynamoStreams de DynamoDB ... via une lambda, de souscrire aux changements sur cette table'"
+  },
+  {
+   "source": "7",
+   "target": "8",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "data",
+   "notes": "Lambda replicates updates to Elasticsearch",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Lambda to Elasticsearch and spoken: 'et de répercuter les changements dans Elasticsearch'"
+  }
+ ]
+}

@@ -1,0 +1,194 @@
+{
+ "razonamiento": "The architecture shows an automated data processing and search pipeline alongside a web application backend. S3 receives raw CSV/Excel files and triggers a validation Lambda, which writes validated data back to S3. Next, an ingestion Lambda is triggered to ingest the validated records into OpenSearch and write reporting data to S3, which initiates email notifications through SES. A web user also interacts with the Novetiq backend, which communicates with Amazon RDS and S3. Components b1 and b2 are kept as separate Lambda functions performing distinct validation and ingestion steps.",
+ "nombre": "Data Ingestion and Search Pipeline with OpenSearch and Novetiq Backend",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "S3",
+   "name": "Amazon S3",
+   "notes": "Stores raw data, validated files, and reports",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "Lambda",
+   "name": "Validation Lambda",
+   "notes": "Validates raw CSV/Excel files",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "Lambda",
+   "name": "Ingestion Lambda",
+   "notes": "Processes validated data and ingests into OpenSearch",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "UserConsumerWeb",
+   "name": "Web User",
+   "notes": "",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "OpenSearch",
+   "name": "Amazon OpenSearch Service",
+   "notes": "Uses Graviton2 instances and OpenSearch analyzer",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "RDS",
+   "name": "Amazon RDS",
+   "notes": "Relational data layer",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "SES",
+   "name": "Amazon SES",
+   "notes": "Sends email notifications to users",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "ThirdParty",
+   "name": "Novetiq Backend",
+   "notes": "",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "3",
+   "target": "0",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "User uploads raw CSV/Excel data to S3",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b0; 'First of all, the raw data which is in the format of the CSV or in the Excel file, it's get uploaded into the S3 buckets.'"
+  },
+  {
+   "source": "0",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "control",
+   "notes": "S3 triggers validation Lambda",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b1; 'Then a Lambda get triggered to validate this data.'"
+  },
+  {
+   "source": "1",
+   "target": "0",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Validation Lambda writes validated copy back to S3",
+   "procedencia": "ambas",
+   "respaldo": "line b1->b0; 'Once we have the validated copy here'"
+  },
+  {
+   "source": "0",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "control",
+   "notes": "S3 triggers ingestion Lambda on validated data",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b2; 'then the Lambda get triggered to process this validated data'"
+  },
+  {
+   "source": "2",
+   "target": "4",
+   "flow_id": 0,
+   "seq": "4",
+   "type": "data",
+   "notes": "Ingestion Lambda ingests processed data into OpenSearch cluster",
+   "procedencia": "ambas",
+   "respaldo": "line b2->b4; 'Lambda get triggered to process this validated data and ingest it into the OpenSearch cluster.'"
+  },
+  {
+   "source": "2",
+   "target": "0",
+   "flow_id": 0,
+   "seq": "5",
+   "type": "data",
+   "notes": "Lambda writes report or processing state to S3",
+   "procedencia": "dibujada",
+   "respaldo": "line b2->b0"
+  },
+  {
+   "source": "0",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "6",
+   "type": "control",
+   "notes": "S3 triggers SES notification",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b6; 'we upload the report in this S3 bucket and then send an intimation to the user via SES'"
+  },
+  {
+   "source": "0",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "7",
+   "type": "data",
+   "notes": "User retrieves report from S3",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b3; 'The user can access the data either using the web application'"
+  },
+  {
+   "source": "3",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "User sends requests to Novetiq backend",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b7; 'user sends the request to the front-end application via the web browser... come back to the backend application'"
+  },
+  {
+   "source": "7",
+   "target": "5",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "data",
+   "notes": "Backend queries RDS data layer",
+   "procedencia": "ambas",
+   "respaldo": "line b7->b5; 'Then request goes directly to the data layer'"
+  },
+  {
+   "source": "5",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "RDS returns query results to backend",
+   "procedencia": "ambas",
+   "respaldo": "line b5->b7; 'and then to the data layer and then response comes back.'"
+  },
+  {
+   "source": "7",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "data",
+   "notes": "Backend sends response back to user",
+   "procedencia": "ambas",
+   "respaldo": "line b7->b3; 'and then response sends back to the user via the backend application.'"
+  },
+  {
+   "source": "7",
+   "target": "0",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "data",
+   "notes": "Backend reads/writes files or reports in S3",
+   "procedencia": "dibujada",
+   "respaldo": "line b7->b0"
+  }
+ ]
+}

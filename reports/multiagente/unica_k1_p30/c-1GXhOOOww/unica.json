@@ -1,0 +1,221 @@
+{
+ "razonamiento": "The architecture shows Anchor's multi-tenant ticketing and booking platform. Customers and tenants access the platform via a CDN (CloudFront). Static web content is served from S3 back to the client. Dynamic requests go through AWS AppSync (GraphQL gateway), which invokes AWS Lambda resolvers or interacts directly with Amazon DynamoDB via pipeline resolvers. Third-party resellers (OTAs) interact via a REST API on Amazon API Gateway through the CDN, routing into Lambda. Lambda writes to and reads from DynamoDB (partitioned by tenant) and queues asynchronous background tasks (such as check-in post-processing or tenant provisioning fan-out) to Amazon SQS, which triggers Lambda for reprocessing.",
+ "nombre": "Anchor Multi-Tenant Ticketing and Booking Platform",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserConsumerWebMobile",
+   "name": "Customer / Tenant Client",
+   "notes": "Web and mobile app clients",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "UserCompanyAPI",
+   "name": "Reseller / OTA",
+   "notes": "Third-party resellers like Expedia, Viator, GetYourGuide",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "CloudFront",
+   "name": "CDN",
+   "notes": "",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "S3",
+   "name": "S3",
+   "notes": "Serves static web content",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "AppSync",
+   "name": "AppSync",
+   "notes": "GraphQL gateway",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "ApiGateway",
+   "name": "API Gateway",
+   "notes": "REST endpoint for third-party resellers",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "Lambda",
+   "name": "Lambda",
+   "notes": "Business logic and async reprocessing",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "DynamoDB",
+   "name": "DynamoDB",
+   "notes": "Multi-tenant partitioned database",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "SQS",
+   "name": "SQS",
+   "notes": "Asynchronous task queue",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "Requests static content / web app",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from top stick figure to CDN and discussed: 'the first thing we hit is the CDN'"
+  },
+  {
+   "source": "2",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "Fetches static assets from S3",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between CDN and S3; spoken: 'that's all going to be hosted on the S3 bucket serving as an HTTP server'"
+  },
+  {
+   "source": "3",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Returns static assets to CDN",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between CDN and S3; spoken: 'hits the CDN, the CDN returns back that to the client'"
+  },
+  {
+   "source": "2",
+   "target": "0",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "data",
+   "notes": "Serves rendered UI back to client",
+   "procedencia": "ambas",
+   "respaldo": "Drawn curved arrow from CDN back to top stick figure; spoken: 'returns back that to the client'"
+  },
+  {
+   "source": "0",
+   "target": "2",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "Sends dynamic GraphQL requests",
+   "procedencia": "ambas",
+   "respaldo": "Drawn line to CDN; spoken: 'When it's time to service the dynamic content, then the CDN knows now it's time to hit AppSync'"
+  },
+  {
+   "source": "2",
+   "target": "4",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "data",
+   "notes": "Routes dynamic requests to AppSync",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from CDN to AppSync; spoken: 'it hits the AppSync that is our GraphQL gateway'"
+  },
+  {
+   "source": "4",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "control",
+   "notes": "Invokes Lambda resolver functions",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from AppSync to Lambda; spoken: 'resolvers that basically tell Lambda that it needs to go and fan out'"
+  },
+  {
+   "source": "4",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "2'",
+   "type": "data",
+   "notes": "Direct AppSync pipeline resolver to DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "Drawn line bypassing Lambda from AppSync directly to DynamoDB; spoken: 'We sometimes use also straight Dynamo resolvers'"
+  },
+  {
+   "source": "6",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "3",
+   "type": "data",
+   "notes": "Writes tenant and booking records",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between Lambda and DynamoDB; spoken: 'interaction that happens between Lambda and DynamoDB'"
+  },
+  {
+   "source": "7",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "4",
+   "type": "data",
+   "notes": "Reads tenant partitioned data",
+   "procedencia": "ambas",
+   "respaldo": "Drawn double-headed arrow between Lambda and DynamoDB; spoken: 'everything is partitioned by the tenant'"
+  },
+  {
+   "source": "6",
+   "target": "8",
+   "flow_id": 1,
+   "seq": "5",
+   "type": "control",
+   "notes": "Enqueues asynchronous tasks and fan-out messages",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from Lambda to SQS; spoken: 'Lambda sets a bunch of SQS messages'"
+  },
+  {
+   "source": "8",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "6",
+   "type": "control",
+   "notes": "Triggers Lambda for message processing",
+   "procedencia": "ambas",
+   "respaldo": "Drawn curved arrow from SQS back to Lambda; spoken: 'that later will get reprocessed by Lambda'"
+  },
+  {
+   "source": "1",
+   "target": "2",
+   "flow_id": 2,
+   "seq": "0",
+   "type": "data",
+   "notes": "Sends REST API booking requests",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from lower stick figure to CDN; spoken: 'the request is going to first hit the CDN, right, from the client'"
+  },
+  {
+   "source": "2",
+   "target": "5",
+   "flow_id": 2,
+   "seq": "1",
+   "type": "data",
+   "notes": "Forwards API traffic to API Gateway",
+   "procedencia": "ambas",
+   "respaldo": "Drawn arrow from CDN to API Gateway; spoken: 'if it is a reseller... it will go to API Gateway'"
+  },
+  {
+   "source": "5",
+   "target": "6",
+   "flow_id": 2,
+   "seq": "2",
+   "type": "control",
+   "notes": "Invokes backend Lambda handlers",
+   "procedencia": "ambas",
+   "respaldo": "Drawn curved arrow from API Gateway to Lambda; spoken: 'it's going to hit the same lambdas that the other channels... go through'"
+  }
+ ]
+}

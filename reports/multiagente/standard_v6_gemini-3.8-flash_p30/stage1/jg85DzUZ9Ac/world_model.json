@@ -1,0 +1,126 @@
+{
+  "entities": [
+    {
+      "service": "S3",
+      "name": "S3",
+      "type": "storage",
+      "rationale": "S3 drop bucket where order flat files arrive from the ERP system."
+    },
+    {
+      "service": "SQS",
+      "name": "SQS",
+      "type": "queue",
+      "rationale": "Queue triggered by incoming S3 files to handle messaging."
+    },
+    {
+      "service": "Lambda",
+      "name": "Initiator Lambda",
+      "type": "compute",
+      "rationale": "Launched by SQS to retrieve metadata from DynamoDB and push structured data to the data lake."
+    },
+    {
+      "service": "DynamoDB",
+      "name": "DynamoDB",
+      "type": "database",
+      "rationale": "Stores metadata and pipeline configuration queried by the initiator Lambda."
+    },
+    {
+      "service": "LakeFormation",
+      "name": "Data Lake",
+      "type": "storage",
+      "rationale": "S3/Lake Formation data lake containing raw and refined buckets."
+    },
+    {
+      "service": "Lambda",
+      "name": "Processing Lambda",
+      "type": "compute",
+      "rationale": "Triggered by data lake S3 events to merge order and inventory datasets and run stats models."
+    },
+    {
+      "service": "Redshift",
+      "name": "Redshift",
+      "type": "analytics",
+      "rationale": "Data warehouse cluster storing invoice, demand, and analytics data for business reporting."
+    },
+    {
+      "service": "OnPremDC",
+      "name": "On Prem",
+      "type": "on_premises",
+      "rationale": "On-premises database storing enterprise sales and invoice data."
+    },
+    {
+      "service": "VPN",
+      "name": "VPN",
+      "type": "network",
+      "rationale": "Secure network connection bridging the on-premises environment into AWS."
+    },
+    {
+      "service": "DMS",
+      "name": "DMS",
+      "type": "database",
+      "rationale": "AWS Database Migration Service using CDC to replicate on-premises sales data into Redshift."
+    }
+  ],
+  "visual_connections": [
+    {
+      "source_label": "S3",
+      "target_label": "SQS",
+      "arrow_direction": "out",
+      "description": "Drop bucket generates events into the SQS queue."
+    },
+    {
+      "source_label": "SQS",
+      "target_label": "Initiator Lambda",
+      "arrow_direction": "out",
+      "description": "SQS message triggers the initiator Lambda job."
+    },
+    {
+      "source_label": "Initiator Lambda",
+      "target_label": "DynamoDB",
+      "arrow_direction": "out",
+      "description": "Initiator Lambda queries DynamoDB for file metadata."
+    },
+    {
+      "source_label": "Initiator Lambda",
+      "target_label": "Data Lake",
+      "arrow_direction": "out",
+      "description": "Initiator Lambda writes structured data into the Data Lake."
+    },
+    {
+      "source_label": "Data Lake",
+      "target_label": "Processing Lambda",
+      "arrow_direction": "out",
+      "description": "Event trigger in Data Lake launches the processing/merging Lambda."
+    },
+    {
+      "source_label": "Processing Lambda",
+      "target_label": "Redshift",
+      "arrow_direction": "out",
+      "description": "Processing Lambda loads transformed demand files into Redshift."
+    },
+    {
+      "source_label": "Redshift",
+      "target_label": "Data Lake",
+      "arrow_direction": "out",
+      "description": "Data from Redshift is integrated back into the Data Lake."
+    },
+    {
+      "source_label": "On Prem",
+      "target_label": "VPN",
+      "arrow_direction": "out",
+      "description": "On-premises sales database traffic routes across the VPN."
+    },
+    {
+      "source_label": "VPN",
+      "target_label": "DMS",
+      "arrow_direction": "out",
+      "description": "DMS captures CDC data streaming across the VPN connection."
+    },
+    {
+      "source_label": "DMS",
+      "target_label": "Redshift",
+      "arrow_direction": "out",
+      "description": "DMS loads replicated invoice-level data into Redshift."
+    }
+  ]
+}

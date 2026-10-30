@@ -1,0 +1,164 @@
+{
+ "razonamiento": "The visual diagram illustrates two distinct workflows: a deployment pipeline initiated by a developer using a CLI against an EC2 web service backed by DynamoDB and SQS to create customer Lambda functions, and an execution pipeline where a web user interacts through an EC2 internal service executing those Lambda functions. ALB is mentioned in the narration as sitting in front of the web service but is not drawn on the whiteboard and not part of the explicit flows, so it was omitted in favor of the drawn and narrated architecture components. All 8 visual boxes match the spoken services and flows cleanly.",
+ "nombre": "Serverless Deployment and Execution Architecture",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserConsumerWeb",
+   "name": "Browser Client",
+   "notes": "Renders page fragments",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "EC2",
+   "name": "Deployment Web Service",
+   "notes": "Handles CLI deployment requests",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "EC2",
+   "name": "Deployment Worker Service",
+   "notes": "Reads deployment queue and provisions Lambdas",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "EC2",
+   "name": "Internal Request Service",
+   "notes": "Coordinates user requests to customer functions",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "UserCompanyDeveloper",
+   "name": "Developer CLI",
+   "notes": "Writes and deploys JS/TS code",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "SQS",
+   "name": "Deployment Queue",
+   "notes": "Queues deployment requests",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "DynamoDB",
+   "name": "State Store",
+   "notes": "Persists deployment state",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "Lambda",
+   "name": "Customer Function",
+   "notes": "Executes customer code",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "4",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "Developer submits deployment via CLI",
+   "procedencia": "ambas",
+   "respaldo": "line b4->b1; They then deploy that using our CLI to one of our services."
+  },
+  {
+   "source": "1",
+   "target": "6",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "Store deployment state in DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "line b1->b6; To do that, we store the state in DynamoDB."
+  },
+  {
+   "source": "6",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Read state confirmation",
+   "procedencia": "dibujada",
+   "respaldo": "line b6->b1"
+  },
+  {
+   "source": "1",
+   "target": "5",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "control",
+   "notes": "Enqueue deployment job",
+   "procedencia": "ambas",
+   "respaldo": "line b1->b5; what we do is we queue the deployment request onto SQS."
+  },
+  {
+   "source": "5",
+   "target": "2",
+   "flow_id": 0,
+   "seq": "4",
+   "type": "control",
+   "notes": "Backend service dequeues deployment request",
+   "procedencia": "ambas",
+   "respaldo": "line b5->b2; Then on the back end, we have a service that reads the deployment request from SQS."
+  },
+  {
+   "source": "2",
+   "target": "7",
+   "flow_id": 0,
+   "seq": "5",
+   "type": "control",
+   "notes": "Create or update Lambda function",
+   "procedencia": "ambas",
+   "respaldo": "line b2->b7; It can then, in its own time, create the Lambda when it's allowed to do that."
+  },
+  {
+   "source": "1",
+   "target": "4",
+   "flow_id": 0,
+   "seq": "6",
+   "type": "meta",
+   "notes": "Deployment status feedback to developer CLI",
+   "procedencia": "dibujada",
+   "respaldo": "line b1->b4"
+  },
+  {
+   "source": "0",
+   "target": "3",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "Browser makes request to internal service",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b3; the browser makes a call to one of our internal services that does various things."
+  },
+  {
+   "source": "3",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "control",
+   "notes": "Internal service invokes customer Lambda with parameters",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b7; the service actually sends the correct parameters to the Lambda, so the Lambda knows what to do."
+  },
+  {
+   "source": "7",
+   "target": "0",
+   "flow_id": 1,
+   "seq": "2",
+   "type": "data",
+   "notes": "Lambda returns page fragment to the browser",
+   "procedencia": "ambas",
+   "respaldo": "line b7->b0; which is returned to the browser, and the browser will then render that page fragment."
+  }
+ ]
+}

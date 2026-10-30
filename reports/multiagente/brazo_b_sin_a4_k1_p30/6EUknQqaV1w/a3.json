@@ -1,0 +1,181 @@
+{
+ "razonamiento": "The architecture shows an event collection and security rule evaluation pipeline. All components from the whiteboard correspond cleanly to AWS services or third-party tools mentioned in the narration: UserCompanyDataStream (representing the collection framework/source events), two Kinesis Data Streams (one for ingestion, one for the rule execution pipeline), Amazon Neptune for graph storage, Elasticsearch/OpenSearch and DynamoDB as backing/violation stores, CloudWatch and a custom Shard Service for operational scaling/sharding, and external alert channels (Slack, email, Splunk). All 11 visual lines are represented in the graph and mapped to their corresponding narration flows.",
+ "nombre": "Cloud Resource Inventory and Security Rule Engine Architecture",
+ "nodes": [
+  {
+   "id": "0",
+   "service": "UserCompanyDataStream",
+   "name": "UserCompanyDataStream",
+   "notes": "Collection framework evaluating event streams",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "1",
+   "service": "KinesisDataStream",
+   "name": "Kinesis Data Stream (Ingestion)",
+   "notes": "Ingests evaluated resource state events",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "2",
+   "service": "KinesisDataStream",
+   "name": "Kinesis Data Stream (Rule Pipeline)",
+   "notes": "Feeds the rule execution pipeline and engine",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "3",
+   "service": "Neptune",
+   "name": "Amazon Neptune",
+   "notes": "Graph database storing resource states and relationships",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "4",
+   "service": "OpenSearch",
+   "name": "OpenSearch",
+   "notes": "Backing store mentioned as Elasticsearch",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "5",
+   "service": "ThirdParty",
+   "name": "Shard Service",
+   "notes": "Custom sharding service",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "6",
+   "service": "ThirdParty",
+   "name": "Slack, email, splunk",
+   "notes": "Notification and alerting destinations",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "7",
+   "service": "DynamoDB",
+   "name": "Amazon DynamoDB",
+   "notes": "Backing store and security violation persistence",
+   "evidencia": "ambas"
+  },
+  {
+   "id": "8",
+   "service": "CloudWatch",
+   "name": "Amazon CloudWatch",
+   "notes": "Monitoring and metrics triggering sharding",
+   "evidencia": "ambas"
+  }
+ ],
+ "edges": [
+  {
+   "source": "0",
+   "target": "1",
+   "flow_id": 0,
+   "seq": "0",
+   "type": "data",
+   "notes": "Collection framework publishes resource events to ingestion stream",
+   "procedencia": "ambas",
+   "respaldo": "line b0->b1; 'publishes those resources into a Kinesis data stream'"
+  },
+  {
+   "source": "1",
+   "target": "3",
+   "flow_id": 0,
+   "seq": "1",
+   "type": "data",
+   "notes": "Consumer writes resources to Amazon Neptune",
+   "procedencia": "ambas",
+   "respaldo": "line b1->b3; 'publishes those resources into Amazon Neptune'"
+  },
+  {
+   "source": "3",
+   "target": "4",
+   "flow_id": 0,
+   "seq": "2",
+   "type": "data",
+   "notes": "Syncs resource data to OpenSearch backing store",
+   "procedencia": "dibujada",
+   "respaldo": "line b3->b4"
+  },
+  {
+   "source": "3",
+   "target": "7",
+   "flow_id": 0,
+   "seq": "2'",
+   "type": "data",
+   "notes": "Persists state into DynamoDB backing store",
+   "procedencia": "dibujada",
+   "respaldo": "line b3->b7"
+  },
+  {
+   "source": "3",
+   "target": "8",
+   "flow_id": 0,
+   "seq": "3",
+   "type": "meta",
+   "notes": "Emits Neptune metrics/events to CloudWatch",
+   "procedencia": "dibujada",
+   "respaldo": "line b3->b8"
+  },
+  {
+   "source": "4",
+   "target": "8",
+   "flow_id": 0,
+   "seq": "3'",
+   "type": "meta",
+   "notes": "Emits OpenSearch metrics/events to CloudWatch",
+   "procedencia": "dibujada",
+   "respaldo": "line b4->b8"
+  },
+  {
+   "source": "8",
+   "target": "5",
+   "flow_id": 0,
+   "seq": "4",
+   "type": "control",
+   "notes": "CloudWatch triggers or provides metrics to Shard Service",
+   "procedencia": "dibujada",
+   "respaldo": "line b8->b5"
+  },
+  {
+   "source": "1",
+   "target": "2",
+   "flow_id": 1,
+   "seq": "0",
+   "type": "data",
+   "notes": "Routes events from ingestion to rule execution stream",
+   "procedencia": "dibujada",
+   "respaldo": "line b1->b2"
+  },
+  {
+   "source": "3",
+   "target": "2",
+   "flow_id": 1,
+   "seq": "0'",
+   "type": "data",
+   "notes": "Graph state changes propagated to rule execution pipeline",
+   "procedencia": "ambas",
+   "respaldo": "line b3->b2; 'are then propagated to our rule execution pipeline'"
+  },
+  {
+   "source": "2",
+   "target": "7",
+   "flow_id": 1,
+   "seq": "1",
+   "type": "data",
+   "notes": "Persists detected security violations to DynamoDB",
+   "procedencia": "ambas",
+   "respaldo": "line b2->b7; 'if it detects any security violations, those are again persisted in our DynamoDB'"
+  },
+  {
+   "source": "2",
+   "target": "6",
+   "flow_id": 1,
+   "seq": "1'",
+   "type": "data",
+   "notes": "Sends violation alerts to Slack, email, and Splunk",
+   "procedencia": "ambas",
+   "respaldo": "line b2->b6; 'We have support for Slack, email, Splunk, and the like'"
+  }
+ ]
+}
